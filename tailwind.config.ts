@@ -12,6 +12,11 @@ export default {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      fontFamily: {
+        'sharp': ['Sharp Grotesk', 'sans-serif'],
+        'actay': ['Actay', 'sans-serif'],
+        'actay-wide': ['Actay Wide', 'sans-serif'],
+      },
     },
   },
   plugins: [],

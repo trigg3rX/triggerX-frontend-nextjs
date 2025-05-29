@@ -2,20 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Sharp Grotesk';
+  src: url('/fonts/SharpGrotesk-300.otf') format('opentype');
+  font-weight: 300;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Actay';
+  src: url('/fonts/Actay-400.otf') format('opentype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Actay Wide';
+  src: url('/fonts/ActayWide-700.otf') format('opentype');
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+  --foreground: #ededed;
   }
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-image: url("/images/grid.png");
+  background-repeat: repeat;
+}
+
+.headerbg {
+  background-image: url("/images/grid.png");
+  background-repeat: repeat;
+}
+
+[data-rk] .ju367vn, [data-rk] .ju367va3 {
+  border-radius: 50px !important;
 }
