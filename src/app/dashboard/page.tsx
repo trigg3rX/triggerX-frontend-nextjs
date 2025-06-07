@@ -1,7 +1,7 @@
 import React from "react";
 
-const page = () => {
-  return <div>Dashboard</div>;
-};
+function Dashboard() {
+  return <div>Dashboard Page</div>;
+}
 
-export default page;
+export default Dashboard;
