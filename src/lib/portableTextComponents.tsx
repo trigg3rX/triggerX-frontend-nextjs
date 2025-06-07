@@ -1,10 +1,11 @@
-import React from 'react';
-import { PortableTextComponents, PortableTextBlock } from '@portabletext/react';
-import { FaExclamationTriangle } from 'react-icons/fa';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { useState } from 'react';
-import { PortableText } from '@portabletext/react';
+import React from "react";
+import { PortableTextComponents, PortableTextBlock } from "@portabletext/react";
+import { FaExclamationTriangle } from "react-icons/fa";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { useState } from "react";
+import { PortableText } from "@portabletext/react";
+import Image from "next/image";
 
 // ButtonLink Component
 const ButtonLink = ({ value }: { value: { url?: string; text?: string } }) => {
@@ -28,7 +29,11 @@ const ButtonLink = ({ value }: { value: { url?: string; text?: string } }) => {
 };
 
 // Disclaimer Component
-const Disclaimer = ({ value }: { value: { title?: string; text?: string } }) => {
+const Disclaimer = ({
+  value,
+}: {
+  value: { title?: string; text?: string };
+}) => {
   if (!value?.text) {
     return null;
   }
@@ -48,7 +53,11 @@ const Disclaimer = ({ value }: { value: { title?: string; text?: string } }) => 
 };
 
 // CodeBlock Component
-const CodeBlock = ({ value }: { value: { code?: string; language?: string; filename?: string } }) => {
+const CodeBlock = ({
+  value,
+}: {
+  value: { code?: string; language?: string; filename?: string };
+}) => {
   const [isCopied, setIsCopied] = useState(false);
 
   if (!value?.code) {
@@ -133,7 +142,18 @@ const CodeBlock = ({ value }: { value: { code?: string; language?: string; filen
 };
 
 // StepsAccordion Component
-const StepsAccordion = ({ value }: { value: { heading?: string; steps?: Array<{ _key?: string; title?: string; content?: PortableTextBlock[] }> } }) => {
+const StepsAccordion = ({
+  value,
+}: {
+  value: {
+    heading?: string;
+    steps?: Array<{
+      _key?: string;
+      title?: string;
+      content?: PortableTextBlock[];
+    }>;
+  };
+}) => {
   const [openSteps, setOpenSteps] = useState<Record<number, boolean>>({});
 
   if (!value?.steps || value.steps.length === 0) {
@@ -192,7 +212,10 @@ const StepsAccordion = ({ value }: { value: { heading?: string; steps?: Array<{ 
               <div className="px-5 pb-5 pt-2 bg-[#242323]">
                 {step.content && (
                   <div className="prose prose-invert max-w-none">
-                    <PortableText value={step.content} components={portableTextComponents} />
+                    <PortableText
+                      value={step.content}
+                      components={portableTextComponents}
+                    />
                   </div>
                 )}
               </div>
@@ -209,7 +232,7 @@ export const portableTextComponents: PortableTextComponents = {
     image: ({ value }) => (
       <div className="my-10 w-full h-auto">
         {value?.asset?.url && (
-          <img
+          <Image
             src={value.asset.url}
             alt={value.alt || "Blog Image"}
             width={2500}
@@ -269,7 +292,9 @@ export const portableTextComponents: PortableTextComponents = {
   ),
   block: {
     h2: ({ children }) => {
-      const text = Array.isArray(children) ? children[0]?.toString() : children?.toString();
+      const text = Array.isArray(children)
+        ? children[0]?.toString()
+        : children?.toString();
       return (
         <h2
           id={text}
@@ -280,7 +305,9 @@ export const portableTextComponents: PortableTextComponents = {
       );
     },
     h3: ({ children }) => {
-      const text = Array.isArray(children) ? children[0]?.toString() : children?.toString();
+      const text = Array.isArray(children)
+        ? children[0]?.toString()
+        : children?.toString();
       return (
         <h3
           id={text}
@@ -301,4 +328,4 @@ export const portableTextComponents: PortableTextComponents = {
       </blockquote>
     ),
   },
-}; 
+};

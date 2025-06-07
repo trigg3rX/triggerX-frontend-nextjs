@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import sanityClient from '@/lib/sanityClient';
-import { DevHubPost } from '@/types/sanity';
+import { useState, useEffect } from "react";
+import sanityClient from "@/lib/sanityClient";
+import { DevHubPost } from "@/types/sanity";
 
 interface UseDevHubPostReturn {
   post: DevHubPost | null;
@@ -9,7 +9,9 @@ interface UseDevHubPostReturn {
   refetch: () => Promise<void>;
 }
 
-const getBlogQuery = (slug: string) => `*[_type == "post" && slug.current == "${slug}"][0] {
+const getBlogQuery = (
+  slug: string,
+) => `*[_type == "post" && slug.current == "${slug}"][0] {
   _id,
   title,
   subtitle,
@@ -76,7 +78,7 @@ export const useDevHubPost = (slug: string): UseDevHubPostReturn => {
     setIsLoading(true);
     setPost(null);
     setError(null);
-    
+
     try {
       const data = await sanityClient.fetch(getBlogQuery(slug));
       if (data) {
@@ -86,7 +88,9 @@ export const useDevHubPost = (slug: string): UseDevHubPostReturn => {
       }
     } catch (err) {
       console.error("Error fetching post from Sanity:", err);
-      setError(err instanceof Error ? err : new Error('Failed to load post data.'));
+      setError(
+        err instanceof Error ? err : new Error("Failed to load post data."),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +98,7 @@ export const useDevHubPost = (slug: string): UseDevHubPostReturn => {
 
   useEffect(() => {
     fetchPost();
-  }, [slug]);
+  });
 
   return { post, isLoading, error, refetch: fetchPost };
-}; 
+};

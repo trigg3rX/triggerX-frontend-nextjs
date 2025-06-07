@@ -1,6 +1,6 @@
-"use client"; 
+"use client";
 
-import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
 interface WalletContextType {
   refreshBalance: number;
@@ -10,14 +10,14 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 interface WalletProviderProps {
-  children: ReactNode; 
+  children: ReactNode;
 }
 
 export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [refreshBalance, setRefreshBalance] = useState<number>(0);
 
   const triggerBalanceRefresh = (): void => {
-    setRefreshBalance(prev => prev + 1);
+    setRefreshBalance((prev) => prev + 1);
   };
 
   const contextValue: WalletContextType = {
@@ -35,7 +35,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
 export const useWallet = (): WalletContextType => {
   const context = useContext(WalletContext);
   if (context === undefined) {
-    throw new Error('useWallet must be used within a WalletProvider');
+    throw new Error("useWallet must be used within a WalletProvider");
   }
   return context;
 };

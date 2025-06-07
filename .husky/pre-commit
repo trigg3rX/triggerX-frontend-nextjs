@@ -1,0 +1,15 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+echo "🧹 Running lint-staged (Prettier + ESLint)..."
+npx lint-staged || { echo "❌ Lint-staged failed. Fix issues and try again."; exit 1; }
+
+echo "🔧 Checking TypeScript compilation..."
+yarn type-check || { echo "❌ Type errors found. Fix them before committing."; exit 1; }
+
+echo "🏗️ Running build to catch errors..."
+yarn build || { echo "❌ Build failed. Resolve the issues and try again."; exit 1; }
+
+echo "✅ All pre-commit checks passed!"
