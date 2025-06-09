@@ -3,22 +3,22 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: 'Sharp Grotesk';
-  src: url('/fonts/SharpGrotesk-300.otf') format('opentype');
+  font-family: "Sharp Grotesk";
+  src: url("/fonts/SharpGrotesk-300.otf") format("opentype");
   font-weight: 300;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Actay';
-  src: url('/fonts/Actay-400.otf') format('opentype');
+  font-family: "Actay";
+  src: url("/fonts/Actay-400.otf") format("opentype");
   font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Actay Wide';
-  src: url('/fonts/ActayWide-700.otf') format('opentype');
+  font-family: "Actay Wide";
+  src: url("/fonts/ActayWide-700.otf") format("opentype");
   font-weight: 700;
   font-display: swap;
 }
@@ -31,22 +31,30 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-  --foreground: #ededed;
+    --foreground: #ededed;
   }
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
+  width: 100%;
   color: var(--foreground);
   background: var(--background);
   background-image: url("/images/grid.png");
-  background-repeat: repeat;
+  background-size: cover;
 }
 
 .headerbg {
   background-image: url("/images/grid.png");
-  background-repeat: repeat;
+  background-size: cover;
 }
 
-[data-rk] .ju367vn, [data-rk] .ju367va3 {
+[data-rk] .ju367vn,
+[data-rk] .ju367va3 {
   border-radius: 50px !important;
 }

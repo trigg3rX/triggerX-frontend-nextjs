@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -9,6 +9,8 @@ import MobileMenu from "./MobileMenu";
 import BalanceDisplay from "../ui/BalanceDisplay";
 import logo from "@/app/assets/logo.svg";
 import landingImg from "@/app/assets/navbar-landing.svg";
+import Link from "next/link";
+import { HoverHighlight } from "./HoverHighlight";
 
 const navItems = [
   { href: "/devhub", label: "Dev Hub" },
@@ -20,50 +22,11 @@ const navItems = [
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-
-  const [highlightStyle, setHighlightStyle] = useState<React.CSSProperties>({
-    opacity: 0,
-    width: "0px",
-    height: "0px",
-    transform: "translateX(0px)",
-    transition: "none",
-  });
-  const [prevRect, setPrevRect] = useState<DOMRect | undefined>();
-  const navRef = useRef<HTMLDivElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
-
-  const handleMouseEnter = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    const hoveredElement = event.currentTarget;
-    if (!hoveredElement || !navRef.current) return;
-
-    const rect = hoveredElement.getBoundingClientRect();
-    const navBoundingRect = navRef.current.getBoundingClientRect();
-
-    setHighlightStyle({
-      opacity: 1,
-      width: `${rect.width}px`,
-      height: `${rect.height}px`,
-      transform: `translateX(${rect.left - navBoundingRect.left}px)`, // Use rect.left
-      transition: prevRect
-        ? "all 0.3s ease"
-        : "opacity 0.1s linear, transform 0.3s ease, width 0.3s ease", // Smoother initial transition
-    });
-    setPrevRect(rect);
-  };
-
-  const handleMouseLeaveNav = () => {
-    // Renamed to avoid conflict if NavLink had its own
-    setHighlightStyle((prev) => ({
-      ...prev,
-      opacity: 0,
-      transition: "all 0.3s ease",
-    }));
-    // setPrevRect(undefined); // Optionally reset prevRect
-  };
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50); // Adjust threshold as needed
+      setIsScrolled(window.scrollY > 50);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -72,27 +35,27 @@ const Header: React.FC = () => {
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
       {/* Desktop Header */}
-      <div className="md:w-[90%] mx-auto my-6 md:my-8 header hidden lg:flex items-center justify-between">
+      <div className="w-[90%] mx-auto my-6 md:my-8 header hidden lg:flex items-center justify-between">
         <div>
-          <a
+          <Link
             href="https://www.triggerx.network/"
             target="_blank"
             rel="noopener noreferrer"
           >
             <Image
               src={logo}
-              alt="TriggerX Logo"
+              alt="TriggerX"
               width={180}
               height={40}
               priority
-              className="xl:w-[200px]"
+              className="w-[170px] h-auto"
             />
-          </a>
+          </Link>
         </div>
 
-        <div className="relative flex flex-col items-center">
+        <div className="relative">
           <div
-            className="absolute z-0 h-auto transition-all duration-700 ease-out"
+            className="absolute z-0 w-[500px] h-max transition-all duration-700 ease-out"
             style={{
               top: isScrolled ? -300 : -50, // Adjust as needed
               left: "50%",
@@ -104,32 +67,23 @@ const Header: React.FC = () => {
               alt="Navigation Background Design"
               width={500}
               height={150}
-              className="lg:max-w-min lg:w-[500px] md:w-[200px]"
+              className="w-full h-auto"
             />
           </div>
 
-          <nav
-            ref={navRef}
-            className="relative bg-[#181818F0] rounded-xl z-10"
-            onMouseLeave={handleMouseLeaveNav}
-          >
-            <div
-              className="absolute bg-gradient-to-r from-[#D9D9D924] to-[#14131324] rounded-xl border border-[#4B4A4A]"
-              style={highlightStyle}
-            />
-            <div className="relative flex">
+          <nav className="relative bg-[#181818F0] rounded-xl z-10">
+            <HoverHighlight>
               {navItems.map((item) => (
                 <NavLink
                   key={item.href}
                   href={item.href}
                   label={item.label}
                   isActive={pathname === item.href}
-                  onMouseEnter={handleMouseEnter}
                   className="text-center xl:w-[150px] lg:w-[120px] lg:text-[13px] xl:text-base text-gray-200 hover:text-white"
                   onClick={() => setMenuOpen(false)}
                 />
               ))}
-            </div>
+            </HoverHighlight>
           </nav>
         </div>
 
@@ -139,7 +93,7 @@ const Header: React.FC = () => {
             accountStatus="address"
             showBalance={false}
           />
-          <BalanceDisplay />
+          {/* <BalanceDisplay /> */}
         </div>
       </div>
 
