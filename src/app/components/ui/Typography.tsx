@@ -15,27 +15,32 @@ type TypographyProps = {
     | "warning"
     | "info"
     | "success"
+    | "blue"
+    | "gray"
     | "inherit";
+
   align?: "left" | "center" | "right" | "justify";
   noWrap?: boolean;
 };
 
 const variantStyles: Record<TypographyVariant, string> = {
   h1: "font-sharp text-3xl sm:text-4xl lg:text-7xl mx-auto w-max",
-  h2: "text-3xl md:text-4xl font-bold tracking-tight mx-auto w-max",
+  h2: "text-[16px] md:text-[20px] font-actay-wide mx-auto w-max",
   h3: "text-2xl md:text-3xl font-semibold mx-auto w-max",
-  h4: "text-xl md:text-2xl font-semibold mx-auto w-max",
-  body: "text-base mx-auto w-max",
+  h4: "text-[14px] md:text-[16px] font-semibold mx-auto w-max",
+  body: "text-[13px] md:text-[14px] mx-auto w-max",
   button: "text-sm font-medium uppercase tracking-wide mx-auto w-max",
 };
 
 const colorStyles: Record<string, string> = {
-  primary: "text-white",
+  primary: "text-[#EDEDED]",
   secondary: "text-gray-600 ",
   error: "text-red-600",
   warning: "text-yellow-600",
   info: "text-blue-600",
   success: "text-green-600",
+  blue: "text-[#C07AF6]",
+  gray: "text-[#A2A2A2]",
 };
 
 const alignStyles: Record<string, string> = {

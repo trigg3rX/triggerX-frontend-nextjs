@@ -22,7 +22,7 @@ export default function RootLayout({
         <WalletProvider>
           <Providers>
             <Header />
-            <main className="max-w-[1600px] mx-auto mt-[270px] min-h-[500px]">
+            <main className="max-w-[1600px] mx-auto lg:mt-[270px] min-h-[500px] w-[85%] mt-[170px]">
               {children}
             </main>
             <Footer />
