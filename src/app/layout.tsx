@@ -4,7 +4,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import Providers from "./providers";
 import { WalletProvider } from "@/contexts/WalletContext";
 import Header from "./components/common/Header";
-// import Footer from "./components/common/Footer";
+import Footer from "./components/common/Footer";
 
 export const metadata: Metadata = {
   title: "TriggerX",
@@ -18,11 +18,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased`}>
+      <body className={`antialiased font-actay`}>
         <WalletProvider>
           <Providers>
             <Header />
-            {children}
+            <main className="max-w-[1600px] mx-auto mt-[270px] min-h-[500px]">
+              {children}
+            </main>
+            <Footer />
           </Providers>
         </WalletProvider>
       </body>
