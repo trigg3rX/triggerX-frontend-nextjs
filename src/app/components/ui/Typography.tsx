@@ -1,7 +1,7 @@
 import React, { ElementType } from "react";
 import { twMerge } from "tailwind-merge";
 
-type TypographyVariant = "h1" | "h2" | "h3" | "h4" | "body" | "button";
+type TypographyVariant = "h1" | "h2" | "h3" | "h4" | "h5" | "body" | "button";
 
 type TypographyProps = {
   variant?: TypographyVariant;
@@ -18,18 +18,20 @@ type TypographyProps = {
     | "blue"
     | "gray"
     | "inherit";
-
   align?: "left" | "center" | "right" | "justify";
   noWrap?: boolean;
+  maxWidth?: "none" | "200" | "300" | "400" | "500" | "600" | "800" | "full";
+  centered?: boolean;
 };
 
 const variantStyles: Record<TypographyVariant, string> = {
-  h1: "font-sharp text-3xl sm:text-4xl lg:text-7xl mx-auto w-max",
-  h2: "text-[16px] md:text-[20px] font-actay-wide mx-auto w-max",
-  h3: "text-2xl md:text-3xl font-semibold mx-auto w-max",
-  h4: "text-[14px] md:text-[16px] font-semibold mx-auto w-max",
-  body: "text-[13px] md:text-[14px] mx-auto w-max",
-  button: "text-sm font-medium uppercase tracking-wide mx-auto w-max",
+  h1: "font-sharp text-3xl sm:text-4xl lg:text-7xl ",
+  h2: "text-[16px] md:text-[20px] font-actay-wide ",
+  h3: "text-2xl md:text-3xl font-semibold ",
+  h4: "text-[14px] md:text-[16px] font-semibold ",
+  h5: "text-[10px] md:text-[20px] font-actay-wide ",
+  body: "text-[13px] md:text-[14px] ",
+  button: "text-sm font-medium uppercase tracking-wide ",
 };
 
 const colorStyles: Record<string, string> = {
@@ -50,11 +52,23 @@ const alignStyles: Record<string, string> = {
   justify: "text-justify",
 };
 
+const maxWidthStyles: Record<string, string> = {
+  none: "",
+  "200": "max-w-[200px]",
+  "300": "max-w-[300px]",
+  "400": "max-w-[400px]",
+  "500": "max-w-[500px]",
+  "600": "max-w-[600px]",
+  "800": "max-w-[800px]",
+  full: "max-w-full",
+};
+
 const defaultElements: Record<TypographyVariant, ElementType> = {
   h1: "h1",
   h2: "h2",
   h3: "h3",
   h4: "h4",
+  h5: "h5",
   body: "p",
   button: "span",
 };
@@ -66,6 +80,8 @@ export const Typography: React.FC<TypographyProps> = ({
   as,
   color = "primary",
   align = "center",
+  maxWidth = "none",
+  centered = false,
   noWrap = false,
 }) => {
   const Component = (as || defaultElements[variant]) as ElementType;
@@ -73,14 +89,18 @@ export const Typography: React.FC<TypographyProps> = ({
   const baseStyles = variantStyles[variant];
   const colorStyle = colorStyles[color];
   const alignStyle = alignStyles[align];
+  const maxWidthStyle = maxWidthStyles[maxWidth];
   const noWrapStyle = noWrap
     ? "whitespace-nowrap overflow-hidden text-ellipsis"
     : "";
+  const centeredStyle = centered ? "mx-auto" : "";
 
   const combinedClassName = twMerge(
     baseStyles,
     colorStyle,
     alignStyle,
+    maxWidthStyle,
+    centeredStyle,
     noWrapStyle,
     className,
   );

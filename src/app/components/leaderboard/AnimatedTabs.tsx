@@ -1,5 +1,6 @@
 import React from "react";
 import { HoverHighlight } from "../common/HoverHighlight";
+import { Typography } from "../ui/Typography";
 
 type TabType = "keeper" | "developer" | "contributor";
 
@@ -23,14 +24,16 @@ const AnimatedTabs: React.FC<AnimatedTabsProps> = ({
       {TABS_DATA.map((tabInfo) => (
         <button
           key={tabInfo.id}
-          className={`w-[33%] text-[#FFFFFF] text-[10px] xs:text-xs md:text-lg lg:text-xl p-2 xs:p-3 sm:p-4 rounded-lg relative z-[1] ${
+          className={`w-[33%] text-[#FFFFFF] text-[10px] xs:text-xs md:text-lg lg:text-xl p-2 xs:p-3 sm:p-4 rounded-[10px] relative z-[1] ${
             activeTab === tabInfo.id
               ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A]"
               : "bg-transparent"
           }`}
           onClick={() => setActiveTab(tabInfo.id)}
         >
-          <h2>{tabInfo.label}</h2>
+          <Typography variant="h5" noWrap={false}>
+            {tabInfo.label}
+          </Typography>
         </button>
       ))}
     </HoverHighlight>

@@ -10,7 +10,7 @@ interface HoverHighlightProps {
 export const HoverHighlight: React.FC<HoverHighlightProps> = ({
   children,
   className = "",
-  highlightClassName = "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A] rounded-lg",
+  highlightClassName = "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A] rounded-[10px]",
 }) => {
   const [highlightStyle, setHighlightStyle] = useState({
     width: "0px",

@@ -45,16 +45,64 @@ body {
   width: 100%;
   color: var(--foreground);
   background: var(--background);
-  background-image: url("/images/grid.png");
-  background-size: cover;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-attachment: fixed;
 }
 
 .headerbg {
-  background-image: url("/images/grid.png");
-  background-size: cover;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-attachment: fixed;
 }
 
 [data-rk] .ju367vn,
 [data-rk] .ju367va3 {
   border-radius: 50px !important;
+}
+
+[data-rk] .ju367v1h {
+  font-weight: 400 !important;
+}
+
+[data-rk] .ju367v16 {
+  font-family: "Actay" !important;
+}
+
+[data-rk] .ju367va3 {
+  background: #f8ff7c !important;
+}
+[data-rk] .ju367vcl {
+  border-color: transparent !important;
+}
+
+[data-rk] .ju367vfu {
+  color: black !important;
+}
+
+@media screen and (max-width: 620px) {
+  [data-rk] .iekbcc0 {
+    font-size: 12px !important;
+  }
+
+  [data-rk] .ju367v2g {
+    height: 30px !important;
+  }
+
+  [data-rk] .ju367v7t {
+    padding-right: 10px !important;
+  }
+  [data-rk] .ju367v78 {
+    padding-left: 10px !important;
+  }
+  [data-rk] .ju367v8a {
+    padding-top: 4px !important;
+  }
+  [data-rk] .ju367v6j {
+    padding-bottom: 4px !important;
+  }
 }
