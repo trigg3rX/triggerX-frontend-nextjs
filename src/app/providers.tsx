@@ -1,28 +1,14 @@
 "use client";
 
-import { getDefaultWallets } from "@rainbow-me/rainbowkit";
-import { createConfig, http } from "wagmi";
-import { baseSepolia, optimismSepolia } from "wagmi/chains";
-import { WagmiProvider } from "wagmi";
 import { RainbowKitProvider, darkTheme } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
-const { connectors } = getDefaultWallets({
-  appName: "My RainbowKit App",
-  projectId: "f8a6524307e28135845a9fe5811fcaa2",
-});
-
-const config = createConfig({
-  chains: [baseSepolia, optimismSepolia],
-  connectors,
-  transports: {
-    [baseSepolia.id]: http(),
-    [optimismSepolia.id]: http(),
-  },
-});
-
-const queryClient = new QueryClient();
+import { WagmiProvider } from "wagmi";
+import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
+import { WalletConnectionProvider } from "@/contexts/WalletConnectionContext";
+import { JobDetailsProvider } from "@/contexts/JobDetailsContext";
+import { WalletProvider } from "@/contexts/WalletContext";
+import { config } from "@/lib/wagmiConfig";
+import { useState } from "react";
 
 const customTheme = darkTheme({
   accentColor: "#F8FF7C",
@@ -32,10 +18,29 @@ const customTheme = darkTheme({
 });
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  // Create QueryClient inside the component to prevent re-initialization
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+            retry: false,
+          },
+        },
+      }),
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
-        <RainbowKitProvider theme={customTheme}>{children}</RainbowKitProvider>
+        <RainbowKitProvider theme={customTheme}>
+          <WalletConnectionProvider>
+            <JobDetailsProvider>
+              <WalletProvider>{children}</WalletProvider>
+            </JobDetailsProvider>
+          </WalletConnectionProvider>
+        </RainbowKitProvider>
       </WagmiProvider>
     </QueryClientProvider>
   );

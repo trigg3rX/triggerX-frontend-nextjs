@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { NavLinkProps } from "./NavLink";
+import { NavLinkProps } from "./header/NavLink";
 
 interface HoverHighlightProps {
   children: React.ReactElement<Partial<NavLinkProps>>[];

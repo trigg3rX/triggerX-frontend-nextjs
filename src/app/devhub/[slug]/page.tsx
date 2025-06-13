@@ -5,11 +5,12 @@ import { useParams } from "next/navigation";
 import { PortableText } from "@portabletext/react";
 import { useDevHubPost } from "@/hooks/useDevHubPost";
 import { DevHubTableOfContents } from "@/app/components/devhub/DevHubTableOfContents";
-import { ActionButton } from "@/app/components/ui/ActionButton";
+// import { ActionButton } from "@/app/components/ui/ActionButton";
 import { portableTextComponents } from "@/lib/portableTextComponents";
 import { urlFor } from "@/lib/sanityImageUrl";
 import DevhubItemSkeleton from "./DevhubItemSkeleton";
-import { FaGithub } from "react-icons/fa";
+import Image from "next/image";
+// import { FaGithub } from "react-icons/fa";
 
 export default function DevHubPostPage() {
   const { slug } = useParams();
@@ -40,8 +41,18 @@ export default function DevHubPostPage() {
   }, [post, isLoading, error]);
 
   if (isLoading) return <DevhubItemSkeleton />;
-  if (error) return <div className="flex justify-center items-center min-h-screen text-red-500"><p>Error: {error.message}</p></div>;
-  if (!post) return <div className="flex justify-center items-center min-h-screen"><p>Post not found.</p></div>;
+  if (error)
+    return (
+      <div className="flex justify-center items-center min-h-screen text-red-500">
+        <p>Error: {error.message}</p>
+      </div>
+    );
+  if (!post)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Post not found.</p>
+      </div>
+    );
 
   const headerImageUrl = urlFor(post.image)?.width(1200).auto("format").url();
 
@@ -51,7 +62,7 @@ export default function DevHubPostPage() {
         <div className="mb-8">
           {headerImageUrl ? (
             <div className="w-[95%] mx-auto rounded-3xl overflow-hidden h-max">
-              <img
+              <Image
                 src={headerImageUrl}
                 alt={post.title || "Header image"}
                 className="!relative w-full h-auto"
@@ -73,13 +84,13 @@ export default function DevHubPostPage() {
           </div>
 
           <div className="flex justify-center">
-            <ActionButton
+            {/* <ActionButton
               text="Open Github"
               href={post.githubUrl || '#'}
               icon={<FaGithub />}
               variant="secondary"
               openInNewTab
-            />
+            /> */}
           </div>
         </div>
       </div>
@@ -91,32 +102,29 @@ export default function DevHubPostPage() {
         />
 
         <article className="w-full md:w-3/4 mt-10">
-          <PortableText
-            value={post.body}
-            components={portableTextComponents}
-          />
+          <PortableText value={post.body} components={portableTextComponents} />
 
           <div className="bg-[#141414] rounded-2xl w-full relative h-[300px] flex flex-col gap-3 items-center justify-center p-[50px] overflow-hidden">
             <p className="relative z-30 max-w-[500px] lg:max-w-[600px] mx-auto text-wrap text-center">
               View the complete code and our ready-to-use template
             </p>
-            <ActionButton
+            {/* <ActionButton
               text="Open Github"
               href={post.githubUrl || '#'}
               icon={<FaGithub />}
               variant="secondary"
               openInNewTab
-            />
+            /> */}
           </div>
         </article>
       </div>
 
       <div className="my-16 flex justify-center">
-        <ActionButton
+        {/* <ActionButton
           text="Go Back to DevHub"
           href="/devhub"
           variant="secondary"
-        />
+        /> */}
       </div>
     </div>
   );

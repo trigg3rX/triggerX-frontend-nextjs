@@ -3,7 +3,6 @@
 import React from "react";
 import DevHubPostCard from "./DevHubPostCard";
 import DevHubPostCardSkeleton from "./DevHubPostCardSkeleton";
-import { ActionButton } from "../ui/ActionButton";
 import { DevHubPost } from "@/types/sanity";
 
 interface DevHubPageProps {
@@ -76,14 +75,14 @@ const DevHubPage: React.FC<DevHubPageProps> = ({
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-left text-white mb-4 sm:mb-0 flex items-center gap-3">
           Total
           <span className="text-[#FBF197] text-[25px] font-normal">
-          {` { ${posts.length} } `}
+            {` { ${posts.length} } `}
           </span>
         </h1>
-        <ActionButton
+        {/* <ActionButton
           text="API Services"
           href="/api"
           className="mt-4 sm:mt-0"
-        />
+        /> */}
       </div>
 
       <div className="max-w-[1600px] mx-auto">

@@ -1,7 +1,16 @@
 import React, { ElementType } from "react";
 import { twMerge } from "tailwind-merge";
 
-type TypographyVariant = "h1" | "h2" | "h3" | "h4" | "body" | "button";
+type TypographyVariant =
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "body"
+  | "button"
+  | "badge"
+  | "subtitle"
+  | "caption";
 
 type TypographyProps = {
   variant?: TypographyVariant;
@@ -16,22 +25,27 @@ type TypographyProps = {
     | "info"
     | "success"
     | "inherit";
+  bgColor?: string;
   align?: "left" | "center" | "right" | "justify";
   noWrap?: boolean;
 };
 
 const variantStyles: Record<TypographyVariant, string> = {
-  h1: "font-sharp text-3xl sm:text-4xl lg:text-7xl mx-auto w-max",
-  h2: "text-3xl md:text-4xl font-bold tracking-tight mx-auto w-max",
-  h3: "text-2xl md:text-3xl font-semibold mx-auto w-max",
-  h4: "text-xl md:text-2xl font-semibold mx-auto w-max",
-  body: "text-base mx-auto w-max",
-  button: "text-sm font-medium uppercase tracking-wide mx-auto w-max",
+  h1: "font-sharp text-3xl sm:text-4xl lg:text-7xl",
+  h2: "font-actay-wide text-sm sm:text-lg md:text-xl",
+  h3: "text-sm sm:text-base text-nowrap",
+  h4: "text-xs md:text-base",
+  body: "text-[10px] xs:text-xs sm:text-sm",
+  button: "text-[10px] xs:text-xs lg:text-sm xl:text-base",
+  badge:
+    "text-xs md:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full tracking-wider",
+  subtitle: "text-sm sm:text-base font-medium",
+  caption: "text-xs text-gray-400",
 };
 
 const colorStyles: Record<string, string> = {
   primary: "text-white",
-  secondary: "text-gray-600 ",
+  secondary: "text-gray-300",
   error: "text-red-600",
   warning: "text-yellow-600",
   info: "text-blue-600",
@@ -52,6 +66,9 @@ const defaultElements: Record<TypographyVariant, ElementType> = {
   h4: "h4",
   body: "p",
   button: "span",
+  badge: "span",
+  subtitle: "h5",
+  caption: "span",
 };
 
 export const Typography: React.FC<TypographyProps> = ({
@@ -60,6 +77,7 @@ export const Typography: React.FC<TypographyProps> = ({
   className = "",
   as,
   color = "primary",
+  bgColor,
   align = "center",
   noWrap = false,
 }) => {
@@ -71,12 +89,14 @@ export const Typography: React.FC<TypographyProps> = ({
   const noWrapStyle = noWrap
     ? "whitespace-nowrap overflow-hidden text-ellipsis"
     : "";
+  const bgStyle = variant === "badge" && bgColor ? bgColor : "";
 
   const combinedClassName = twMerge(
     baseStyles,
     colorStyle,
     alignStyle,
     noWrapStyle,
+    bgStyle,
     className,
   );
 
