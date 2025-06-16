@@ -67,7 +67,7 @@ function Leaderboard() {
       {!isConnected && (
         <WalletBanner message="Please connect your wallet to see your performance metrics in the leaderboard" />
       )}
-      <MainTable />
+      <MainTable activeTab={activeTab} />
     </div>
   );
 }
