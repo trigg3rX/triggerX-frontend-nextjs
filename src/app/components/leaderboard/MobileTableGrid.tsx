@@ -1,5 +1,15 @@
 import React from "react";
 import { CopyButton } from "../ui/CopyButton";
+import { Card } from "../ui/Card";
+import { Card2 } from "../ui/Card2";
+import { Typography } from "../ui/Typography";
+
+// Utility function to truncate Ethereum addresses
+const truncateAddress = (address: string): string => {
+  if (!address) return "";
+  if (address.length < 10) return address;
+  return `${address.slice(0, 5)}...${address.slice(-4)}`;
+};
 
 interface BaseEntity {
   id: number;
@@ -14,9 +24,8 @@ interface KeeperData extends BaseEntity {
 }
 
 interface DeveloperData extends BaseEntity {
-  projectsCompleted: number;
-  codeContributions: number;
-  pullRequests: number;
+  totalJobs: number;
+  taskPerformed: number;
 }
 
 interface ContributorData extends BaseEntity {
@@ -33,6 +42,7 @@ interface MobileTableGridProps {
   sortField: string;
   sortDirection: "asc" | "desc";
   onSort: (field: string) => void;
+  onItemClick?: (item: TableData) => void;
 }
 
 const TAB_COLUMNS: Record<
@@ -46,68 +56,71 @@ const TAB_COLUMNS: Record<
     { key: "points", label: "Points", sortable: true },
   ],
   developer: [
-    { key: "name", label: "Developer", sortable: true },
-    { key: "projectsCompleted", label: "Projects", sortable: true },
-    { key: "codeContributions", label: "Contributions", sortable: true },
-    { key: "pullRequests", label: "Pull Requests", sortable: true },
+    { key: "address", label: "Address", sortable: false },
+    { key: "totalJobs", label: "Total Jobs", sortable: true },
+    { key: "jobPerformed", label: "Job Performed", sortable: true },
     { key: "points", label: "Points", sortable: true },
   ],
-  contributor: [
-    { key: "name", label: "Contributor", sortable: true },
-    { key: "contributions", label: "Contributions", sortable: true },
-    { key: "communityPoints", label: "Community Points", sortable: true },
-    { key: "points", label: "Points", sortable: true },
-  ],
+  contributor: [],
 };
 
-export function MobileTableGrid({ data, activeTab }: MobileTableGridProps) {
+export function MobileTableGrid({
+  data,
+  activeTab,
+  onItemClick,
+}: MobileTableGridProps) {
   const columns = TAB_COLUMNS[activeTab];
 
   return (
-    <div className="grid grid-cols-1 gap-4 p-4">
-      {data.map((item) => (
-        <div
-          key={item.id}
-          className="bg-gray-800 rounded-lg p-4 space-y-3 border border-gray-700"
-        >
-          {/* Header with Name and Points */}
-          <div className="flex justify-between items-center">
-            <div className="text-gray-200 font-medium text-base">
-              {item.name}
-            </div>
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-yellow-400 text-black font-semibold text-sm min-w-[80px] justify-center">
-              {item.points.toFixed(2)}
-            </div>
-          </div>
-
-          {/* Address with Copy Button */}
-          <div className="flex items-center gap-2">
-            <span className="text-gray-400 font-mono text-sm truncate">
-              {item.address}
-            </span>
-            <CopyButton text={item.address} />
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            {columns.slice(1, -1).map((column) => (
-              <div key={column.key} className="flex flex-col space-y-1">
-                <div className="text-gray-400 text-xs">{column.label}</div>
-                <div className="text-gray-200 text-sm">
-                  {item[column.key as keyof typeof item]}
+    <>
+      <Card className="p-3">
+        <div className="grid grid-cols-1 gap-4 ">
+          {data.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => onItemClick?.(item)}
+              className="cursor-pointer"
+            >
+              <Card2 className="p-3">
+                <div className="grid grid-cols-1 gap-3 pt-2">
+                  <div className="flex justify-between items-center">
+                    <Typography variant="h4" color="primary">
+                      Address
+                    </Typography>
+                    <div className="flex justify-between items-center gap-2">
+                      <Typography variant="body" color="gray" noWrap>
+                        {truncateAddress(item.address)}
+                      </Typography>
+                      <CopyButton text={item.address} />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Typography variant="h4" color="primary">
+                      Points
+                    </Typography>
+                    <Typography variant="body" color="gray">
+                      {item.points.toFixed(2)}
+                    </Typography>
+                  </div>
+                  {columns.slice(1, -1).map((column) => (
+                    <div
+                      key={column.key}
+                      className="flex flex-row space-y-1 justify-between"
+                    >
+                      <Typography variant="body" color="primary">
+                        {column.label}
+                      </Typography>
+                      <Typography variant="body" color="gray">
+                        {item[column.key as keyof typeof item]}
+                      </Typography>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* View Profile Button */}
-          <div className="pt-2">
-            <button className="w-full text-gray-300 hover:text-white font-medium text-sm underline underline-offset-2 transition-colors">
-              View Profile
-            </button>
-          </div>
+              </Card2>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </Card>
+    </>
   );
 }

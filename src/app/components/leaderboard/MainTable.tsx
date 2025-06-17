@@ -15,6 +15,9 @@ import { CopyButton } from "../ui/CopyButton";
 import { TablePagination } from "../ui/TablePagination";
 import { MobileTableGrid } from "./MobileTableGrid";
 import { Card } from "../ui/Card";
+import { Typography } from "../ui/Typography";
+import EmptyState from "./EmptyState";
+import HighlightedData from "./HighlightedData";
 
 // Data types for different tabs
 interface BaseEntity {
@@ -30,9 +33,8 @@ interface KeeperData extends BaseEntity {
 }
 
 interface DeveloperData extends BaseEntity {
-  projectsCompleted: number;
-  codeContributions: number;
-  pullRequests: number;
+  totalJobs: number;
+  taskPerformed: number;
 }
 
 interface ContributorData extends BaseEntity {
@@ -52,12 +54,13 @@ interface Column {
 interface MainTableProps {
   activeTab: TabType;
   data?: TableData[];
+  onViewProfile?: (address: string) => void;
 }
 
 // Column configurations for each tab
 const TAB_COLUMNS: Record<TabType, Column[]> = {
   keeper: [
-    { key: "name", label: "Operator", sortable: true },
+    { key: "name", label: "Operator", sortable: false },
     { key: "address", label: "Address", sortable: false },
     { key: "jobPerformed", label: "Job Performed", sortable: true },
     { key: "jobAttested", label: "Job Attested", sortable: true },
@@ -67,9 +70,8 @@ const TAB_COLUMNS: Record<TabType, Column[]> = {
   developer: [
     { key: "name", label: "Developer", sortable: true },
     { key: "address", label: "Address", sortable: false },
-    { key: "projectsCompleted", label: "Projects", sortable: true },
-    { key: "codeContributions", label: "Contributions", sortable: true },
-    { key: "pullRequests", label: "Pull Requests", sortable: true },
+    { key: "totalJobs", label: "Total Jobs", sortable: true },
+    { key: "taskPerformed", label: "Task Performed", sortable: true },
     { key: "points", label: "Points", sortable: true },
     { key: "profile", label: "Profile", sortable: false },
   ],
@@ -108,7 +110,7 @@ const sampleData: Record<TabType, TableData[]> = {
       address: "0x5acce90436492...676d",
       jobPerformed: 2,
       jobAttested: 0,
-      points: 1360.0,
+      points: 13658.0,
     },
     {
       id: 4,
@@ -140,31 +142,25 @@ const sampleData: Record<TabType, TableData[]> = {
       id: 1,
       name: "DevMaster",
       address: "0x1234...5678",
-      projectsCompleted: 5,
-      codeContributions: 120,
-      pullRequests: 45,
+      totalJobs: 10,
+      taskPerformed: 8,
       points: 1500.0,
     },
   ],
-  contributor: [
-    {
-      id: 1,
-      name: "CommunityHero",
-      address: "0xabcd...efgh",
-      contributions: 25,
-      communityPoints: 800,
-      points: 1000.0,
-    },
-  ],
+  contributor: [],
 };
 
 export default function MainTable({
   activeTab = "keeper",
   data = sampleData[activeTab],
+  onViewProfile,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("points");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [selectedItem, setSelectedItem] = useState<TableData | null>(
+    data.length > 0 ? data[0] : null,
+  );
   const itemsPerPage = 5;
 
   const columns = TAB_COLUMNS[activeTab];
@@ -198,21 +194,37 @@ export default function MainTable({
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
 
+  const handleRowClick = (item: TableData) => {
+    setSelectedItem(item);
+  };
+
   return (
     <>
+      {selectedItem && (
+        <div className="mb-6">
+          <HighlightedData
+            data={selectedItem}
+            type={activeTab}
+            onViewProfile={onViewProfile}
+          />
+        </div>
+      )}
+
       {/* Desktop View */}
-      <Card className="hidden md:block w-full overflow-hidden">
+      <Card className="hidden md:block w-full overflow-auto whitespace-nowrap">
         <Table>
           <TableHeader>
-            <TableRow className="border-gray-800 hover:bg-gray-800/50">
+            <TableRow className="border-gray-800 ">
               {columns.map((column) => (
                 <TableHead
                   key={column.key}
-                  className="text-gray-300 font-medium text-base h-14 px-6 cursor-pointer"
+                  className="h-14 px-6 cursor-pointer "
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
                   <div className="flex items-center gap-1">
-                    {column.label}
+                    <Typography variant="h4" color="primary" align="left">
+                      {column.label}
+                    </Typography>
                     {column.sortable && (
                       <ChevronDownIcon
                         className={`h-4 w-4 transition-transform ${
@@ -228,52 +240,85 @@ export default function MainTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedAndPaginatedData.map((item) => (
-              <TableRow
-                key={item.id}
-                className="border-gray-800 hover:bg-gray-800/30 transition-colors"
-              >
-                <TableCell className="px-6 py-4">
-                  <div className="text-gray-200 font-medium text-base">
-                    {item.name}
-                  </div>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400 font-mono text-sm">
-                      {item.address}
-                    </span>
-                    <CopyButton text={item.address} />
-                  </div>
-                </TableCell>
-                {columns.slice(2, -1).map((column) => (
-                  <TableCell key={column.key} className="px-6 py-4">
-                    <span className="text-gray-300 text-base">
-                      {item[column.key as keyof typeof item]}
-                    </span>
+            {activeTab === "contributor" && data.length === 0 ? (
+              <EmptyState type="contributor" />
+            ) : (
+              sortedAndPaginatedData.map((item) => (
+                <TableRow
+                  key={item.id}
+                  className=""
+                  onClick={() => handleRowClick(item)}
+                >
+                  <TableCell className="px-6 py-4">
+                    <Typography variant="body" color="primary" align="left">
+                      {item.name}
+                    </Typography>
                   </TableCell>
-                ))}
-                <TableCell className="px-6 py-4">
-                  <button className="text-gray-300 hover:text-white font-medium text-base underline underline-offset-2 transition-colors">
-                    View
-                  </button>
-                </TableCell>
-              </TableRow>
-            ))}
+                  <TableCell className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <Typography
+                        variant="body"
+                        color="gray"
+                        align="left"
+                        className="font-mono"
+                      >
+                        {item.address}
+                      </Typography>
+                      <CopyButton text={item.address} />
+                    </div>
+                  </TableCell>
+                  {columns.slice(2, -1).map((column) => (
+                    <TableCell key={column.key} className="px-6 py-4">
+                      <Typography
+                        variant="body"
+                        color="primary"
+                        align="left"
+                        className={
+                          column.key === "points"
+                            ? "bg-[#F8FF7C] px-3 py-1 rounded-full text-black w-[90px] text-center "
+                            : ""
+                        }
+                      >
+                        {column.key === "points"
+                          ? Number(
+                              item[column.key as keyof typeof item],
+                            ).toFixed(2)
+                          : item[column.key as keyof typeof item]}
+                      </Typography>
+                    </TableCell>
+                  ))}
+                  <TableCell className="px-6 py-4">
+                    <Typography
+                      variant="body"
+                      color="primary"
+                      align="left"
+                      className="underline underline-offset-2"
+                    >
+                      View
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </Card>
 
       {/* Mobile View */}
-      <div className="md:hidden">
-        <MobileTableGrid
-          data={sortedAndPaginatedData}
-          activeTab={activeTab}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={handleSort}
-        />
-      </div>
+      <Card className="md:hidden  w-full overflow-auto whitespace-nowrap">
+        {activeTab === "contributor" && data.length === 0 ? (
+          <EmptyState type="contributor" />
+        ) : (
+          <MobileTableGrid
+            data={sortedAndPaginatedData}
+            activeTab={activeTab}
+            sortField={sortField}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+            onItemClick={handleRowClick}
+          />
+        )}
+      </Card>
 
       <TablePagination
         currentPage={currentPage}

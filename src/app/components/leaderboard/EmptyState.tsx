@@ -10,7 +10,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type }) => {
   return (
     <tr>
       <td
-        colSpan={type === "contributor" ? 3 : 6}
+        colSpan={type === "contributor" ? 6 : 6}
         className="text-center text-[#A2A2A2] py-5"
       >
         <div className="flex flex-col items-center justify-center h-[200px] text-[#A2A2A2]">
