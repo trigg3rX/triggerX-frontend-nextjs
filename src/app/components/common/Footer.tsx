@@ -179,7 +179,7 @@ const Footer: React.FC = () => {
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
 
   return (
-    <footer className="relative flex flex-col items-center justify-center gap-[5px] md:gap-[90px] lg:gap-[120px] 2xl:gap-[120px]">
+    <footer className="relative flex flex-col items-center justify-center gap-[5px] md:gap-[40px] lg:gap-[80px] 2xl:gap-[120px] mt-[80px] lg:mt-0">
       {/* Main Content Area */}
       <div className="z-40 flex mt-10 md:mt-20 flex-col-reverse md:flex-row items-start md:items-end justify-between gap-10 w-[88%] md:w-[80%] xl:w-[70%] mx-auto">
         {/* Left Section: Social Links & Copyright */}

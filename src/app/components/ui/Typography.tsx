@@ -9,7 +9,6 @@ type TypographyVariant =
   | "body"
   | "button"
   | "badge"
-  | "subtitle"
   | "caption";
 
 type TypographyProps = {
@@ -39,8 +38,7 @@ const variantStyles: Record<TypographyVariant, string> = {
   button: "text-[10px] xs:text-xs lg:text-sm xl:text-base",
   badge:
     "text-xs md:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full tracking-wider",
-  subtitle: "text-sm sm:text-base font-medium",
-  caption: "text-xs text-gray-400",
+  caption: "text-xs",
 };
 
 const colorStyles: Record<string, string> = {
@@ -67,8 +65,7 @@ const defaultElements: Record<TypographyVariant, ElementType> = {
   body: "p",
   button: "span",
   badge: "span",
-  subtitle: "h5",
-  caption: "span",
+  caption: "p",
 };
 
 export const Typography: React.FC<TypographyProps> = ({

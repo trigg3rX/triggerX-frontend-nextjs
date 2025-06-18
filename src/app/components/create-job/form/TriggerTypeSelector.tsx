@@ -7,11 +7,12 @@ import conditionBasedSvg from "@/app/assets/create-job/condition-based.svg";
 import conditionBasedGif from "@/app/assets/create-job/condition-based.gif";
 import eventBasedSvg from "@/app/assets/create-job/event-based.svg";
 import eventBasedGif from "@/app/assets/create-job/event-based.gif";
-import { useJobForm } from "@/hooks/useJobForm";
 import { WalletConnectionCard } from "../../common/WalletConnectionCard";
 import { TriggerButton } from "./TriggerButton";
 import { TriggerOption } from "@/types/job";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
+import { IoMdNotifications } from "react-icons/io";
+import { useJobFormContext } from "@/hooks/useJobFormContext";
 
 const options: TriggerOption[] = [
   {
@@ -36,13 +37,13 @@ const options: TriggerOption[] = [
 
 export const TriggerTypeSelector = () => {
   const { isConnected } = useWalletConnectionContext();
-  const { jobType, handleJobTypeChange } = useJobForm();
+
+  const { jobType, handleJobTypeChange } = useJobFormContext();
 
   const handleTriggerSelect = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, value: number) => {
       if (isConnected) {
         handleJobTypeChange(e, value);
-        console.log("Selected Job Type:", value);
       }
     },
     [isConnected, handleJobTypeChange],
@@ -55,7 +56,7 @@ export const TriggerTypeSelector = () => {
           variant="h3"
           align="left"
           color="secondary"
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           Trigger Type
         </Typography>
@@ -70,6 +71,21 @@ export const TriggerTypeSelector = () => {
           ))}
         </div>
       </Card>
+      {isConnected && !jobType && (
+        <Card>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <IoMdNotifications className="w-5 h-5 border rounded-full p-[2px] text-gray-300" />
+            <Typography
+              variant="body"
+              align="center"
+              color="secondary"
+              className="text-wrap mt-0 sm:mt-[3px]"
+            >
+              Select trigger type to create a new job
+            </Typography>
+          </div>
+        </Card>
+      )}
       <WalletConnectionCard className="mt-4" />
     </>
   );

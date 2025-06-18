@@ -20,17 +20,17 @@ export const WalletConnectionCard: React.FC<WalletConnectionCardProps> = ({
   if (isConnected) return null;
 
   return (
-    <Card className={`p-6 ${className}`}>
+    <Card className={`${className}`}>
       <div className="flex flex-col items-center justify-center gap-4">
-        <AiFillExclamationCircle className="w-8 h-8 text-gray-300" />
+        <AiFillExclamationCircle className="w-6 h-6 sm:w-8 sm:h-8 text-gray-300" />
         <Typography variant="h3" align="center" color="secondary">
           {title}
         </Typography>
         <Typography
-          variant="h3"
+          variant="body"
           align="center"
           color="secondary"
-          className="opacity-70"
+          className="opacity-70 text-wrap w-[90%] mx-auto"
         >
           {description}
         </Typography>

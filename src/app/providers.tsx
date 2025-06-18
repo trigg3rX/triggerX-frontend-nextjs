@@ -5,7 +5,6 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { WalletConnectionProvider } from "@/contexts/WalletConnectionContext";
-import { JobDetailsProvider } from "@/contexts/JobDetailsContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { config } from "@/lib/wagmiConfig";
 import { useState } from "react";
@@ -36,9 +35,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <WagmiProvider config={config}>
         <RainbowKitProvider theme={customTheme}>
           <WalletConnectionProvider>
-            <JobDetailsProvider>
-              <WalletProvider>{children}</WalletProvider>
-            </JobDetailsProvider>
+            <WalletProvider>{children}</WalletProvider>
           </WalletConnectionProvider>
         </RainbowKitProvider>
       </WagmiProvider>

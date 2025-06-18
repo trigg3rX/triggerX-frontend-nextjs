@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { IoIosArrowDown } from "react-icons/io";
 import { twMerge } from "tailwind-merge";
+import { Typography } from "./Typography";
 
 export interface DropdownOption {
   id: string | number;
@@ -9,7 +10,7 @@ export interface DropdownOption {
 }
 
 interface DropdownProps {
-  label: string;
+  label?: string;
   options: DropdownOption[];
   selectedOption: string;
   onChange: (option: DropdownOption) => void;
@@ -43,13 +44,15 @@ export const Dropdown: React.FC<DropdownProps> = ({
   }, []);
 
   return (
-    <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-      <label className="block text-sm sm:text-base font-medium text-gray-300 text-nowrap">
-        {label}
-      </label>
+    <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+      {label && (
+        <Typography variant="h3" color="secondary" align="left">
+          {label}
+        </Typography>
+      )}
       <div
         ref={dropdownRef}
-        className={twMerge("relative w-full md:w-[70%] xl:w-[80%]", className)}
+        className={twMerge("relative w-full md:w-[70%]", className)}
       >
         <div
           className="text-sm xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-3 px-4 rounded-lg cursor-pointer border border-white/10 flex items-center gap-5"
@@ -60,7 +63,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
               {icons[selectedOption]}
             </span>
           )}
-          {selectedOption}
+          <Typography variant="body" color="primary">
+            {selectedOption}
+          </Typography>
           <IoIosArrowDown className="absolute top-3 right-4 text-white text-xs" />
         </div>
 
@@ -78,7 +83,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 {icons[option.name] && (
                   <span className="w-6 h-6">{icons[option.name]}</span>
                 )}
-                {option.name}
+                <Typography variant="body" color="primary">
+                  {option.name}
+                </Typography>
               </div>
             ))}
           </div>
