@@ -1,7 +1,16 @@
 import React, { ElementType } from "react";
 import { twMerge } from "tailwind-merge";
 
-type TypographyVariant = "h1" | "h2" | "h3" | "h4" | "h5" | "body" | "button";
+type TypographyVariant =
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "h5"
+  | "body"
+  | "button"
+  | "badge1"
+  | "badge2";
 
 type TypographyProps = {
   variant?: TypographyVariant;
@@ -10,6 +19,8 @@ type TypographyProps = {
   as?: ElementType;
   color?:
     | "primary"
+    | "white"
+    | "black"
     | "secondary"
     | "error"
     | "warning"
@@ -30,19 +41,23 @@ const variantStyles: Record<TypographyVariant, string> = {
   h3: "text-2xl md:text-3xl font-semibold ",
   h4: "text-[14px] md:text-[16px] font-semibold ",
   h5: "text-[10px] md:text-[20px] font-actay-wide ",
-  body: "text-[13px] md:text-[14px] ",
+  body: "text-[13px] md:text-[14px] font-bold tracking-wider",
   button: "text-sm font-medium uppercase tracking-wide ",
+  badge1: "text-xs font-medium  py-3 px-4  rounded-full  bg-[#F8FF7C]",
+  badge2: "text-xs font-medium  py-3 px-4  rounded-full  bg-[#FFFFFF]",
 };
 
 const colorStyles: Record<string, string> = {
   primary: "text-[#EDEDED]",
-  secondary: "text-gray-600 ",
+  secondary: "text-[D9D9D9] ",
   error: "text-red-600",
   warning: "text-yellow-600",
   info: "text-blue-600",
   success: "text-green-600",
   blue: "text-[#C07AF6]",
   gray: "text-[#A2A2A2]",
+  white: "text-white",
+  black: "text-black",
 };
 
 const alignStyles: Record<string, string> = {
@@ -71,6 +86,8 @@ const defaultElements: Record<TypographyVariant, ElementType> = {
   h5: "h5",
   body: "p",
   button: "span",
+  badge1: "span",
+  badge2: "span",
 };
 
 export const Typography: React.FC<TypographyProps> = ({

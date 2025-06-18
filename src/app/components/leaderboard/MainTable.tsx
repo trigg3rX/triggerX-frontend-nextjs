@@ -18,6 +18,7 @@ import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import EmptyState from "./EmptyState";
 import HighlightedData from "./HighlightedData";
+import styles from "@/app/styles/scrollbar.module.css";
 
 // Data types for different tabs
 interface BaseEntity {
@@ -153,7 +154,6 @@ const sampleData: Record<TabType, TableData[]> = {
 export default function MainTable({
   activeTab = "keeper",
   data = sampleData[activeTab],
-  onViewProfile,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("points");
@@ -202,48 +202,46 @@ export default function MainTable({
     <>
       {selectedItem && (
         <div className="mb-6">
-          <HighlightedData
-            data={selectedItem}
-            type={activeTab}
-            onViewProfile={onViewProfile}
-          />
+          <HighlightedData data={selectedItem} type={activeTab} />
         </div>
       )}
 
       {/* Desktop View */}
-      <Card className="hidden md:block w-full overflow-auto whitespace-nowrap">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-gray-800 ">
-              {columns.map((column) => (
-                <TableHead
-                  key={column.key}
-                  className="h-14 px-6 cursor-pointer "
-                  onClick={() => column.sortable && handleSort(column.key)}
-                >
-                  <div className="flex items-center gap-1">
-                    <Typography variant="h4" color="primary" align="left">
-                      {column.label}
-                    </Typography>
-                    {column.sortable && (
-                      <ChevronDownIcon
-                        className={`h-4 w-4 transition-transform ${
-                          sortField === column.key && sortDirection === "asc"
-                            ? "rotate-180"
-                            : ""
-                        }`}
-                      />
-                    )}
-                  </div>
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {activeTab === "contributor" && data.length === 0 ? (
-              <EmptyState type="contributor" />
-            ) : (
-              sortedAndPaginatedData.map((item) => (
+      <Card
+        className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
+      >
+        {data.length === 0 ? (
+          <EmptyState type={activeTab} />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="border-gray-800 ">
+                {columns.map((column) => (
+                  <TableHead
+                    key={column.key}
+                    className="h-14 px-6 cursor-pointer "
+                    onClick={() => column.sortable && handleSort(column.key)}
+                  >
+                    <div className="flex items-center gap-1">
+                      <Typography variant="h4" color="primary" align="left">
+                        {column.label}
+                      </Typography>
+                      {column.sortable && (
+                        <ChevronDownIcon
+                          className={`h-4 w-4 transition-transform ${
+                            sortField === column.key && sortDirection === "asc"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedAndPaginatedData.map((item) => (
                 <TableRow
                   key={item.id}
                   className=""
@@ -298,16 +296,18 @@ export default function MainTable({
                     </Typography>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
 
       {/* Mobile View */}
-      <Card className="md:hidden  w-full overflow-auto whitespace-nowrap">
-        {activeTab === "contributor" && data.length === 0 ? (
-          <EmptyState type="contributor" />
+      <Card
+        className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
+      >
+        {data.length === 0 ? (
+          <EmptyState type={activeTab} />
         ) : (
           <MobileTableGrid
             data={sortedAndPaginatedData}

@@ -1,5 +1,6 @@
 import { CopyIcon, CheckIcon } from "lucide-react";
 import { useState } from "react";
+import { ActionButton } from "./ActionButton";
 
 interface CopyButtonProps {
   text: string;
@@ -26,15 +27,19 @@ export function CopyButton({ text, className = "", onCopy }: CopyButtonProps) {
   };
 
   return (
-    <button
+    <ActionButton
       onClick={handleCopy}
-      className={`text-gray-500 hover:text-gray-300 transition-colors ${className}`}
-    >
-      {copied ? (
-        <CheckIcon className="h-4 w-4 text-green-500" />
-      ) : (
-        <CopyIcon className="h-4 w-4" />
-      )}
-    </button>
+      variant="ghost"
+      size="sm"
+      className={className}
+      icon={
+        copied ? (
+          <CheckIcon className="h-4 w-4 text-gray-500" />
+        ) : (
+          <CopyIcon className="h-4 w-4" />
+        )
+      }
+      text=""
+    />
   );
 }

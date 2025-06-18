@@ -1,7 +1,6 @@
 import React from "react";
 import { CopyButton } from "../ui/CopyButton";
 import { Card } from "../ui/Card";
-import { Card2 } from "../ui/Card2";
 import { Typography } from "../ui/Typography";
 
 // Utility function to truncate Ethereum addresses
@@ -73,54 +72,52 @@ export function MobileTableGrid({
 
   return (
     <>
-      <Card className="p-3">
-        <div className="grid grid-cols-1 gap-4 ">
-          {data.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => onItemClick?.(item)}
-              className="cursor-pointer"
-            >
-              <Card2 className="p-3">
-                <div className="grid grid-cols-1 gap-3 pt-2">
-                  <div className="flex justify-between items-center">
-                    <Typography variant="h4" color="primary">
-                      Address
+      <div className="grid grid-cols-1 gap-4 ">
+        {data.map((item) => (
+          <div
+            key={item.id}
+            onClick={() => onItemClick?.(item)}
+            className="cursor-pointer"
+          >
+            <Card className="p-3">
+              <div className="grid grid-cols-1 gap-3 pt-2">
+                <div className="flex justify-between items-center">
+                  <Typography variant="h4" color="primary">
+                    Address
+                  </Typography>
+                  <div className="flex justify-between items-center gap-2">
+                    <Typography variant="body" color="gray" noWrap>
+                      {truncateAddress(item.address)}
                     </Typography>
-                    <div className="flex justify-between items-center gap-2">
-                      <Typography variant="body" color="gray" noWrap>
-                        {truncateAddress(item.address)}
-                      </Typography>
-                      <CopyButton text={item.address} />
-                    </div>
+                    <CopyButton text={item.address} />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <Typography variant="h4" color="primary">
-                      Points
+                </div>
+                <div className="flex justify-between items-center">
+                  <Typography variant="h4" color="primary">
+                    Points
+                  </Typography>
+                  <Typography variant="body" color="gray">
+                    {item.points.toFixed(2)}
+                  </Typography>
+                </div>
+                {columns.slice(1, -1).map((column) => (
+                  <div
+                    key={column.key}
+                    className="flex flex-row space-y-1 justify-between"
+                  >
+                    <Typography variant="body" color="primary">
+                      {column.label}
                     </Typography>
                     <Typography variant="body" color="gray">
-                      {item.points.toFixed(2)}
+                      {item[column.key as keyof typeof item]}
                     </Typography>
                   </div>
-                  {columns.slice(1, -1).map((column) => (
-                    <div
-                      key={column.key}
-                      className="flex flex-row space-y-1 justify-between"
-                    >
-                      <Typography variant="body" color="primary">
-                        {column.label}
-                      </Typography>
-                      <Typography variant="body" color="gray">
-                        {item[column.key as keyof typeof item]}
-                      </Typography>
-                    </div>
-                  ))}
-                </div>
-              </Card2>
-            </div>
-          ))}
-        </div>
-      </Card>
+                ))}
+              </div>
+            </Card>
+          </div>
+        ))}
+      </div>
     </>
   );
 }

@@ -1,7 +1,7 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ButtonProps, buttonVariants } from "@/components/ui/button";
+import { ActionButton } from "./ActionButton";
 
 // Base Pagination Components
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
@@ -36,26 +36,24 @@ PaginationItem.displayName = "PaginationItem";
 
 type PaginationLinkProps = {
   isActive?: boolean;
-} & Pick<ButtonProps, "size"> &
-  React.ComponentProps<"a">;
+  onClick?: () => void;
+  text: string;
+  className?: string;
+};
 
 const PaginationLink = ({
   className,
   isActive,
-  size = "icon",
+  onClick,
+  text,
   ...props
 }: PaginationLinkProps) => (
-  <a
-    aria-current={isActive ? "page" : undefined}
-    className={cn(
-      buttonVariants({
-        size,
-      }),
-      isActive
-        ? "border-[#C07AF6] text-white bg-[#271039] font-bold w-10 h-10 rounded-xl flex items-center justify-center border hover:bg-[#271039] hover:text-white"
-        : "text-white rounded-xl border border-white hover:bg-[#FFFFFF] hover:text-black",
-      className,
-    )}
+  <ActionButton
+    variant={isActive ? "paginationActive" : "paginationInactive"}
+    size="sm"
+    className={className}
+    onClick={onClick}
+    text={text}
     {...props}
   />
 );
@@ -63,55 +61,46 @@ PaginationLink.displayName = "PaginationLink";
 
 const PaginationPrevious = ({
   className,
+  onClick,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to previous page"
-    size="default"
-    className={cn(
-      "gap-1 pl-2.5 bg-white text-black rounded-xl hover:bg-white hover:text-black",
-      className,
-    )}
+}: Omit<PaginationLinkProps, "text" | "isActive">) => (
+  <ActionButton
+    variant="paginationArrow"
+    size="sm"
+    className={className}
+    icon={<ChevronLeft />}
+    text=""
+    onClick={onClick}
     {...props}
-  >
-    <ChevronLeft className="h-4 w-4" />
-  </PaginationLink>
+  />
 );
 PaginationPrevious.displayName = "PaginationPrevious";
 
 const PaginationNext = ({
   className,
+  onClick,
   ...props
-}: React.ComponentProps<typeof PaginationLink>) => (
-  <PaginationLink
-    aria-label="Go to next page"
-    size="default"
-    className={cn(
-      "gap-1 pr-2.5 bg-white text-black rounded-xl hover:bg-white hover:text-black",
-      className,
-    )}
+}: Omit<PaginationLinkProps, "text" | "isActive">) => (
+  <ActionButton
+    variant="paginationArrow"
+    size="sm"
+    className={className}
+    icon={<ChevronRight />}
+    text=""
+    onClick={onClick}
     {...props}
-  >
-    <ChevronRight className="h-4 w-4" />
-  </PaginationLink>
+  />
 );
 PaginationNext.displayName = "PaginationNext";
 
-const PaginationEllipsis = ({
-  className,
-  ...props
-}: React.ComponentProps<"span">) => (
-  <span
-    aria-hidden
-    className={cn(
-      "flex h-9 w-9 items-center justify-center bg-[#2D2D2D] text-white rounded-xl hover:bg-[#2D2D2D] hover:text-white",
-      className,
-    )}
-    {...props}
-  >
-    <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">More pages</span>
-  </span>
+const PaginationEllipsis = ({ className }: { className?: string }) => (
+  <ActionButton
+    variant="paginationEllipsis"
+    size="sm"
+    className={className}
+    text={"..."}
+    disabled
+  />
 );
 PaginationEllipsis.displayName = "PaginationEllipsis";
 
@@ -151,9 +140,8 @@ export function TablePagination({
           <PaginationLink
             onClick={() => onPageChange(i)}
             isActive={currentPage === i}
-          >
-            {i}
-          </PaginationLink>
+            text={i.toString()}
+          />
         </PaginationItem>,
       );
     }

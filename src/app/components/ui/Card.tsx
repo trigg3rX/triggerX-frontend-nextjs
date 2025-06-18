@@ -1,35 +1,38 @@
 import React from "react";
 import { twMerge } from "tailwind-merge";
 
-type CardVariant = "default" | "gradient";
-
 interface CardProps {
-  children: React.ReactNode;
+  label?: string;
+  value?: number | string;
   className?: string;
-  variant?: CardVariant;
-  isActive?: boolean;
+  children?: React.ReactNode;
 }
 
 export const Card: React.FC<CardProps> = ({
-  children,
+  label,
+  value,
   className = "",
-  variant = "default",
-  isActive = false,
+  children,
 }) => {
-  const baseStyles = "rounded-2xl p-6 transition-all duration-300";
+  const baseStyles =
+    "rounded-xl transition-all duration-300 bg-[#1a1a1a] border border-[#5F5F5F] p-3";
 
-  const variantStyles = {
-    default: "bg-[#141414] backdrop-blur-xl border border-white/10 ",
-    gradient: isActive
-      ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white"
-      : "bg-white/5 border border-white/10",
-  };
+  const combinedClassName = twMerge(baseStyles, className);
 
-  const combinedClassName = twMerge(
-    baseStyles,
-    variantStyles[variant],
-    className,
+  return (
+    <div className={combinedClassName}>
+      {children ? (
+        children
+      ) : (
+        <>
+          {label && <div className="text-gray-400 text-sm mb-1">{label}</div>}
+          {value !== undefined && (
+            <div className="text-white font-semibold">
+              {typeof value === "number" ? value.toFixed(2) : value}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
-
-  return <div className={combinedClassName}>{children}</div>;
 };

@@ -76,7 +76,7 @@ const DevHubPage: React.FC<DevHubPageProps> = ({
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-left text-white mb-4 sm:mb-0 flex items-center gap-3">
           Total
           <span className="text-[#FBF197] text-[25px] font-normal">
-          {` { ${posts.length} } `}
+            {` { ${posts.length} } `}
           </span>
         </h1>
         <ActionButton

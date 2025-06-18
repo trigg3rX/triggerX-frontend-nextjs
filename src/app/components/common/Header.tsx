@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import NavLink from "./NavLink";
 import MobileMenu from "./MobileMenu";
-import BalanceDisplay from "../ui/BalanceDisplay";
 import logo from "@/app/assets/logo.svg";
 import landingImg from "@/app/assets/navbar-landing.svg";
 import Link from "next/link";
@@ -131,12 +130,6 @@ const Header: React.FC = () => {
         </div>
 
         <div className="relative flex items-center gap-2 md:gap-4 z-10">
-          <BalanceDisplay className="hidden sm:flex" />
-          <ConnectButton
-            chainStatus="none"
-            accountStatus="address"
-            showBalance={false}
-          />
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="text-white text-2xl p-2 focus:outline-none"
