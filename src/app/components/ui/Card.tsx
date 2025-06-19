@@ -6,6 +6,7 @@ interface CardProps {
   value?: number | string;
   className?: string;
   children?: React.ReactNode;
+  expanded?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -13,11 +14,18 @@ export const Card: React.FC<CardProps> = ({
   value,
   className = "",
   children,
+  expanded = false,
 }) => {
   const baseStyles =
     "rounded-xl transition-all duration-300 bg-[#1a1a1a] border border-[#5F5F5F] p-3";
+  const expandedStyles =
+    "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border-2 border-white shadow-lg";
 
-  const combinedClassName = twMerge(baseStyles, className);
+  const combinedClassName = twMerge(
+    baseStyles,
+    expanded ? expandedStyles : "",
+    className,
+  );
 
   return (
     <div className={combinedClassName}>

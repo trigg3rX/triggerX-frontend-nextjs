@@ -28,6 +28,7 @@ type TypographyProps = {
     | "success"
     | "blue"
     | "gray"
+    | "yellow"
     | "inherit";
   align?: "left" | "center" | "right" | "justify";
   noWrap?: boolean;
@@ -58,6 +59,7 @@ const colorStyles: Record<string, string> = {
   gray: "text-[#A2A2A2]",
   white: "text-white",
   black: "text-black",
+  yellow: "text-[#F8FF7C]",
 };
 
 const alignStyles: Record<string, string> = {

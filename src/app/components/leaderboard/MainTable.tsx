@@ -16,7 +16,7 @@ import { TablePagination } from "../ui/TablePagination";
 import { MobileTableGrid } from "./MobileTableGrid";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
-import EmptyState from "./EmptyState";
+import EmptyState from "../common/EmptyState";
 import HighlightedData from "./HighlightedData";
 import styles from "@/app/styles/scrollbar.module.css";
 
