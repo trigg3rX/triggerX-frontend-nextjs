@@ -5,7 +5,7 @@ import { Typography } from "../ui/Typography";
 
 const TgBalance = () => {
   return (
-    <MainContainer className="bg-[#1C1C1C] backdrop-blur-xl rounded-2xl p-8">
+    <MainContainer>
       <Typography variant="h3" color="white" align="left" className="mb-5">
         Your Balance
       </Typography>

@@ -5,7 +5,7 @@ import Providers from "./providers";
 import { WalletProvider } from "@/contexts/WalletContext";
 import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
-import { TooltipProvider } from "./components/common/tooltip";
+import { TooltipProvider } from "./components/common/Tooltip";
 
 export const metadata: Metadata = {
   title: "TriggerX",

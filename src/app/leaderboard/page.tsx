@@ -7,11 +7,15 @@ import AnimatedTabs from "../components/leaderboard/AnimatedTabs";
 import WalletBanner from "../components/common/WalletBanner";
 import MainTable from "../components/leaderboard/MainTable";
 
-type TabType = "keeper" | "developer" | "contributor";
+const tabs = [
+  { id: "keeper", label: "Keeper" },
+  { id: "developer", label: "Developer" },
+  { id: "contributor", label: "Contributor" },
+];
 
 function Leaderboard() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<TabType>("keeper");
+  const [activeTab, setActiveTab] = useState<string>("keeper");
   const { isConnected } = useAccount();
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,7 +66,11 @@ function Leaderboard() {
           />
         </div>
       </div>
-      <AnimatedTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      <AnimatedTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
 
       {!isConnected && (
         <WalletBanner message="Please connect your wallet to see your performance metrics in the leaderboard" />

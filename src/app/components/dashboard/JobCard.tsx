@@ -1,4 +1,4 @@
-import { Tooltip, TooltipTrigger, TooltipContent } from "../common/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent } from "../common/Tooltip";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import React from "react";

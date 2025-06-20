@@ -25,7 +25,7 @@ export const QuickActions = () => {
   };
 
   return (
-    <MainContainer className="bg-[#1C1C1C] backdrop-blur-xl rounded-2xl p-8">
+    <MainContainer>
       <Typography variant="h3" color="white" align="left">
         Your Balance
       </Typography>

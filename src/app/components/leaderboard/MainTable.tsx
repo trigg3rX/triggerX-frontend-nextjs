@@ -14,11 +14,11 @@ import { useState, useMemo } from "react";
 import { CopyButton } from "../ui/CopyButton";
 import { TablePagination } from "../ui/TablePagination";
 import { MobileTableGrid } from "./MobileTableGrid";
-import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
 import HighlightedData from "./HighlightedData";
 import styles from "@/app/styles/scrollbar.module.css";
+import { MainContainer } from "../ui/MainContainer";
 
 // Data types for different tabs
 interface BaseEntity {
@@ -53,7 +53,7 @@ interface Column {
 }
 
 interface MainTableProps {
-  activeTab: TabType;
+  activeTab: string;
   data?: TableData[];
   onViewProfile?: (address: string) => void;
 }
@@ -153,7 +153,7 @@ const sampleData: Record<TabType, TableData[]> = {
 
 export default function MainTable({
   activeTab = "keeper",
-  data = sampleData[activeTab],
+  data = sampleData[activeTab as TabType] || [],
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("points");
@@ -163,7 +163,7 @@ export default function MainTable({
   );
   const itemsPerPage = 5;
 
-  const columns = TAB_COLUMNS[activeTab];
+  const columns = TAB_COLUMNS[activeTab as TabType] || [];
 
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -202,16 +202,16 @@ export default function MainTable({
     <>
       {selectedItem && (
         <div className="mb-6">
-          <HighlightedData data={selectedItem} type={activeTab} />
+          <HighlightedData data={selectedItem} type={activeTab as TabType} />
         </div>
       )}
 
       {/* Desktop View */}
-      <Card
+      <MainContainer
         className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
       >
         {data.length === 0 ? (
-          <EmptyState type={activeTab} />
+          <EmptyState type={activeTab as TabType} />
         ) : (
           <Table>
             <TableHeader>
@@ -300,25 +300,25 @@ export default function MainTable({
             </TableBody>
           </Table>
         )}
-      </Card>
+      </MainContainer>
 
       {/* Mobile View */}
-      <Card
+      <MainContainer
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
         {data.length === 0 ? (
-          <EmptyState type={activeTab} />
+          <EmptyState type={activeTab as TabType} />
         ) : (
           <MobileTableGrid
             data={sortedAndPaginatedData}
-            activeTab={activeTab}
+            activeTab={activeTab as TabType}
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
             onItemClick={handleRowClick}
           />
         )}
-      </Card>
+      </MainContainer>
 
       <TablePagination
         currentPage={currentPage}

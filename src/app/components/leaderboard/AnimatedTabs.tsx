@@ -2,29 +2,28 @@ import React from "react";
 import { HoverHighlight } from "../common/HoverHighlight";
 import { Typography } from "../ui/Typography";
 
-type TabType = "keeper" | "developer" | "contributor";
-
-interface AnimatedTabsProps {
-  activeTab: TabType;
-  setActiveTab: (tab: TabType) => void;
+interface Tab {
+  id: string;
+  label: string;
 }
 
-const TABS_DATA = [
-  { id: "keeper" as TabType, label: "Keeper" },
-  { id: "developer" as TabType, label: "Developer" },
-  { id: "contributor" as TabType, label: "Contributor" },
-];
+interface AnimatedTabsProps {
+  tabs: Tab[];
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}
 
 const AnimatedTabs: React.FC<AnimatedTabsProps> = ({
+  tabs,
   activeTab,
   setActiveTab,
 }) => {
   return (
     <HoverHighlight className="my-5 sm:my-10 p-2">
-      {TABS_DATA.map((tabInfo) => (
+      {tabs.map((tabInfo) => (
         <button
           key={tabInfo.id}
-          className={`w-[33%] text-[#FFFFFF] text-[10px] xs:text-xs md:text-lg lg:text-xl p-2 xs:p-3 sm:p-4 rounded-[10px] relative z-[1] ${
+          className={`w-full  text-[#FFFFFF] text-[10px] xs:text-xs md:text-lg lg:text-xl p-2 xs:p-3 sm:p-4 rounded-[10px] relative z-[1] ${
             activeTab === tabInfo.id
               ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A]"
               : "bg-transparent"
