@@ -10,6 +10,8 @@ type ButtonVariant =
   | "paginationArrow"
   | "paginationActive"
   | "paginationInactive"
+  | "cancel"
+  | "delete"
   | "paginationEllipsis";
 type ButtonSize = "sm" | "md" | "lg";
 
@@ -25,7 +27,6 @@ interface ActionButtonProps {
   openInNewTab?: boolean; // For links
   disabled?: boolean;
   type?: "button" | "submit" | "reset"; // HTML button type
-  ariaLabel?: string;
 }
 
 const ActionButton: React.FC<ActionButtonProps> = ({
@@ -40,7 +41,6 @@ const ActionButton: React.FC<ActionButtonProps> = ({
   openInNewTab = false,
   disabled = false,
   type = "button",
-  ariaLabel,
 }) => {
   const baseClasses = "inline-flex items-center justify-center font-medium ";
   const sizeClasses = {
@@ -62,6 +62,10 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       "bg-transparent border border-white text-white w-10 h-10 rounded-xl flex items-center justify-center hover:bg-[#FFFFFF] hover:text-black", // transparent, white border
     paginationEllipsis:
       "bg-[#2D2D2D] text-white w-10 h-10 rounded-xl flex items-center justify-center cursor-default",
+    cancel:
+      "px-0 py-3 bg-white/10 rounded-full font-semibold hover:bg-white/20 transition-all duration-300 w-full",
+    delete:
+      "px-0 py-3 bg-[#FF5757] rounded-full font-semibold hover:bg-[#ff4444] transition-all duration-300 w-full",
   };
 
   // Special animated background for 'secondary' variant
@@ -104,18 +108,14 @@ const ActionButton: React.FC<ActionButtonProps> = ({
           className={combinedClasses}
           target={target}
           rel={rel}
-          aria-label={ariaLabel || text}
+          aria-label={text}
         >
           {content}
         </a>
       );
     }
     return (
-      <Link
-        href={href}
-        className={combinedClasses}
-        aria-label={ariaLabel || text}
-      >
+      <Link href={href} className={combinedClasses} aria-label={text}>
         {content}
       </Link>
     );
@@ -127,7 +127,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({
       onClick={onClick}
       className={combinedClasses}
       disabled={disabled}
-      aria-label={ariaLabel || text}
+      aria-label={text}
     >
       {content}
     </button>

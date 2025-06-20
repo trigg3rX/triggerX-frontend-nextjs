@@ -6,6 +6,8 @@ import { mockLinkedJobs } from "./LinkedJobs";
 import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
 
+import DeleteDialog from "../common/DeleteDialog";
+
 // Mock data with linked jobs imported from LinkedJobs
 const mockJobs: JobType[] = [
   {
@@ -53,6 +55,8 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const [expandedLinkedJobDetails, setExpandedLinkedJobDetails] = useState<{
     [key: number]: boolean;
   }>({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => ({
@@ -76,8 +80,20 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   };
 
   const showDeleteConfirmation = (jobId: number) => {
-    // Implement delete confirmation logic
-    console.log("Delete job:", jobId);
+    setJobIdToDelete(jobId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    // TODO: Replace with actual delete logic
+    console.log("Confirmed delete job:", jobIdToDelete);
+    setDeleteDialogOpen(false);
+    setJobIdToDelete(null);
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setJobIdToDelete(null);
   };
 
   const getFilteredJobs = () => {
@@ -115,6 +131,16 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
 
   return (
     <>
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Job"
+        description="Are you sure you want to delete this job? This action cannot be undone."
+        onCancel={handleCancelDelete}
+        onConfirm={handleDelete}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
         {getPaginatedData(getFilteredJobs()).length === 0 ? (
           <EmptyState type="keeper" jobType={mapToJobTypeTab(selectedType)} />
