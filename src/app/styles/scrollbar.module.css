@@ -1,7 +1,7 @@
 .customScrollbar {
   /* Custom scrollbar styles */
   scrollbar-width: thin;
-  scrollbar-color: #1c1c1c #2a2a2a;
+  scrollbar-color: #1c1c1c transparent;
 }
 
 .customScrollbar::-webkit-scrollbar {

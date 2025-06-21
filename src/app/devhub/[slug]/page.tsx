@@ -57,7 +57,7 @@ export default function DevHubPostPage() {
   const headerImageUrl = urlFor(post.image)?.width(1200).auto("format").url();
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 min-h-screen md:mt-[17rem] mt-[10rem]">
+    <div>
       <div className="bg-[#131313] rounded-3xl border border-gray-700 p-6 w-[90%] mx-auto">
         <div className="mb-8">
           {headerImageUrl ? (

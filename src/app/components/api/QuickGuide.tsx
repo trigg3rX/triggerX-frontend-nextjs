@@ -1,6 +1,6 @@
 import React from "react";
-import { MainContainer } from "../../ui/MainContainer";
-import { Typography } from "../../ui/Typography";
+import { MainContainer } from "../ui/MainContainer";
+import { Typography } from "../ui/Typography";
 
 const QuickStartGuide = () => (
   <MainContainer className="p-0 w-full lg:w-[30%]">

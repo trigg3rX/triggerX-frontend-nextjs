@@ -11,7 +11,7 @@ function Dashboard() {
       <Typography variant="h1" color="primary" className="mb-10">
         Dashboard
       </Typography>
-      <div className="flex max-w-[1600px] mx-auto justify-evenly gap-5 lg:flex-row flex-col ">
+      <div className="flex  justify-evenly gap-5 lg:flex-row flex-col ">
         <div className="xl:w-[73%] lg:w-[70%] w-full">
           <ActiveJobs />
         </div>

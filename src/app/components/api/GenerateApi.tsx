@@ -2,11 +2,11 @@
 
 import React from "react";
 import { useAccount } from "wagmi";
-import WalletNotConnected from "../../common/WalletNotConnected";
-import { MainContainer } from "../../ui/MainContainer";
-import { Button } from "../../ui/Button";
-import { InputField } from "../../ui/InputField";
-import { Typography } from "../../ui/Typography";
+import WalletNotConnected from "../common/WalletNotConnected";
+import { MainContainer } from "../ui/MainContainer";
+import { Button } from "../ui/Button";
+import { InputField } from "../ui/InputField";
+import { Typography } from "../ui/Typography";
 // import { CopyButton } from "../../ui/CopyButton";
 
 const GenerateApi: React.FC = () => {

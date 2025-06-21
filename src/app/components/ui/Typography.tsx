@@ -12,6 +12,9 @@ type TypographyVariant =
   | "button"
   | "badgeYellow"
   | "badgeGreen"
+  | "put"
+  | "post"
+  | "get"
   | "badgeWhite";
 
 type TypographyProps = {
@@ -29,6 +32,9 @@ type TypographyProps = {
     | "info"
     | "success"
     | "blue"
+    | "put"
+    | "post"
+    | "get"
     | "gray"
     | "yellow"
     | "inherit";
@@ -48,8 +54,11 @@ const variantStyles: Record<TypographyVariant, string> = {
   span: "text-[13px] md:text-[15px] font-bold tracking-wider",
   button: "text-sm font-medium uppercase tracking-wide ",
   badgeYellow: "text-xs font-medium  py-3 px-4  rounded-full  bg-[#F8FF7C]",
-  badgeWhite: "text-xs font-medium  py-3 px-4  rounded-full  bg-[#FFFFFF]",
-  badgeGreen: "px-3 py-1 bg-green-500/20 rounded-full tracking-wider ",
+  badgeWhite: "text-xs font-medium py-3 px-4 rounded-full bg-[#FFFFFF]",
+  badgeGreen: "px-3 py-1 bg-green-500/20 rounded-full tracking-wider",
+  put: "px-2 py-1 rounded-full text-[10px] lg:text-xs text-center min-w-[50px] lg:min-w-[60px] bg-yellow-500",
+  post: "bg-blue-500 px-2 py-1 rounded-full text-[10px] lg:text-xs text-center min-w-[50px] lg:min-w-[60px]",
+  get: "bg-green-500 px-2 py-1 rounded-full text-[10px] lg:text-xs text-center min-w-[50px] lg:min-w-[60px]",
 };
 
 const colorStyles: Record<string, string> = {
@@ -96,6 +105,9 @@ const defaultElements: Record<TypographyVariant, ElementType> = {
   badgeYellow: "span",
   badgeWhite: "span",
   badgeGreen: "p",
+  put: "span",
+  post: "span",
+  get: "span",
 };
 
 export const Typography: React.FC<TypographyProps> = ({
