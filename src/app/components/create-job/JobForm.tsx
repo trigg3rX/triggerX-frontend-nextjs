@@ -335,7 +335,7 @@ export const JobForm: React.FC = () => {
       </form>
 
       <JobFeeModal
-        isOpen={true}
+        isOpen={isModalOpen}
         setIsOpen={setIsModalOpen}
         estimatedFee={estimatedFee}
       />

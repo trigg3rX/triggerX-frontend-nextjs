@@ -3,7 +3,7 @@ import { Typography } from "./Typography";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
-  color?: "yellow" | "white";
+  color?: "yellow" | "white" | "purple";
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -13,7 +13,14 @@ export const Button: React.FC<ButtonProps> = ({
   color = "white",
   ...props
 }) => {
-  const bgColor = color === "yellow" ? "bg-[#F8FF7C]" : "bg-[#FFFFFF]";
+  let bgColor = "bg-[#FFFFFF]";
+  let textColor = "text-black";
+  if (color === "yellow") bgColor = "bg-[#F8FF7C]";
+  else if (color === "purple") {
+    bgColor = "bg-[#C07AF6]";
+    textColor = "text-white";
+  }
+
   return (
     <button
       className={`relative bg-[#222222] border border-[#222222] px-4 py-1.5 xs:px-6 xs:py-2 sm:px-8 sm:py-3 text-nowrap rounded-full group transition-transform
@@ -29,7 +36,7 @@ export const Button: React.FC<ButtonProps> = ({
         className={`absolute inset-0 ${bgColor} rounded-full scale-100 translate-y-0 group-hover:translate-y-0`}
       ></span>
       <span className="relative z-10 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 ease-out">
-        <Typography variant="button" className="text-black">
+        <Typography variant="button" className={textColor}>
           {children}
         </Typography>
       </span>

@@ -28,9 +28,12 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
-            <Toaster position="bottom-center" />
           </TGBalanceProvider>
         </Providers>
+        <Toaster
+          position="bottom-center"
+          toastOptions={{ style: { zIndex: 2147483647 } }}
+        />
       </body>
     </html>
   );
