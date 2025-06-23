@@ -11,7 +11,9 @@ interface TextInputProps {
   type?: "text" | "number" | "password";
   onFocus?: () => void;
   onBlur?: () => void;
-  required?: boolean;
+  error?: string | null;
+  onValueChange?: (value: string) => void;
+  id?: string;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -23,7 +25,9 @@ export const TextInput: React.FC<TextInputProps> = ({
   type = "text",
   onFocus,
   onBlur,
-  required = false,
+  error = null,
+  onValueChange,
+  id,
 }) => {
   const inputWidthClass = label ? "w-full md:w-[70%]" : "w-full";
 
@@ -34,21 +38,29 @@ export const TextInput: React.FC<TextInputProps> = ({
           {label}
         </Typography>
       )}
-      <input
-        type={type}
-        className={twMerge(
-          "text-sm xs:text-sm sm:text-base bg-white/5 text-white py-3 px-4 rounded-lg border border-white/10 placeholder-gray-400 outline-none focus:border-white/50",
-          "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]",
-          inputWidthClass,
-          className,
+      <div className={twMerge("flex flex-col items-start", inputWidthClass)}>
+        <input
+          type={type}
+          className={twMerge(
+            "w-full text-sm xs:text-sm sm:text-base bg-white/5 text-white py-3 px-4 rounded-lg border border-white/10 placeholder-gray-400 outline-none focus:border-white/50",
+            "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]",
+            error ? "border-red-500" : "",
+            className,
+          )}
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            if (onValueChange) onValueChange(e.target.value);
+          }}
+          placeholder={placeholder}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          id={id}
+        />
+        {error && (
+          <div className="text-red-500 text-xs sm:text-sm mt-2">{error}</div>
         )}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        required={required}
-      />
+      </div>
     </div>
   );
 };

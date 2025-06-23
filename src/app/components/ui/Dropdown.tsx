@@ -66,7 +66,9 @@ export const Dropdown: React.FC<DropdownProps> = ({
           <Typography variant="body" color="primary">
             {selectedOption}
           </Typography>
-          <IoIosArrowDown className="absolute top-3 right-4 text-white text-xs" />
+          <IoIosArrowDown
+            className={`absolute top-4 right-4 text-white text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          />
         </div>
 
         {isOpen && (

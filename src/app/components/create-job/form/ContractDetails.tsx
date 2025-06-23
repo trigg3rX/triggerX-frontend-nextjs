@@ -5,19 +5,36 @@ import { Dropdown, DropdownOption } from "../../ui/Dropdown";
 import React from "react";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
+import { ErrorMessage } from "../../common/ErrorMessage";
 
 interface ContractDetailsProps {
   contractKey: string;
   label: string;
+  error?: string | null;
+  abiError?: string | null;
+  targetError?: string | null;
+  ipfsError?: string | null;
+  argsError?: string | null;
+  sourceUrlError?: string | null;
+  conditionTypeError?: string | null;
+  limitsError?: string | null;
 }
 
 export const ContractDetails = ({
   contractKey,
   label,
+  error = null,
+  abiError = null,
+  targetError = null,
+  ipfsError = null,
+  argsError = null,
+  sourceUrlError = null,
+  conditionTypeError = null,
+  limitsError = null,
 }: ContractDetailsProps) => {
-  const { jobType } = useJobFormContext();
-
   const {
+    jobType,
+    setContractErrors,
     contractInteractions,
     handleContractAddressChange,
     handleManualABIChange,
@@ -90,6 +107,12 @@ export const ContractDetails = ({
       : `Argument ${index + 1}`;
   };
 
+  // Ensure 'Static' is selected by default if argumentType is empty
+  const selectedArgumentType =
+    argumentTypeOptions.find(
+      (opt) => opt.id === (contract.argumentType || "static"),
+    )?.name || "Static";
+
   const conditionTypeOptions: DropdownOption[] = [
     { id: "Equals to", name: "Equals to" },
     { id: "Not Equals to", name: "Not Equals to" },
@@ -100,15 +123,25 @@ export const ContractDetails = ({
     { id: "Greater Than or Equals to", name: "Greater Than or Equals to" },
   ];
 
+  const handleChange = (value: string) => {
+    handleContractAddressChange(contractKey, value);
+    if (value.trim() !== "") {
+      setContractErrors((prev) => ({ ...prev, [contractKey]: null }));
+    }
+  };
+
+  const targetDropdownId = `${contractKey}-target-dropdown`;
+
   return (
     <div className="space-y-6">
       <TextInput
         label={label}
         value={contract.address}
-        onChange={(value) => handleContractAddressChange(contractKey, value)}
+        onChange={handleChange}
         placeholder="Contract address"
         type="text"
-        required
+        id={`contract-address-input-${contractKey}`}
+        error={error ?? null}
       />
 
       {contract.address && (
@@ -174,6 +207,7 @@ export const ContractDetails = ({
 ]`}
               className="text-xs xs:text-sm sm:text-base w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[230px]"
             />
+            <ErrorMessage error={abiError ?? null} className="mt-1" />
             <Typography
               variant="caption"
               align="left"
@@ -189,23 +223,45 @@ export const ContractDetails = ({
       {contract.address && contract.abi && (
         <div className="space-y-auto">
           {isEventContract ? (
-            <Dropdown
-              label="Target event"
-              options={eventOptions}
-              selectedOption={contract.targetEvent || "Select an event"}
-              onChange={(option) => handleEventChange(contractKey, option.name)}
-              className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
-            />
+            <div id={targetDropdownId}>
+              <Dropdown
+                label="Target event"
+                options={eventOptions}
+                selectedOption={contract.targetEvent || "Select an event"}
+                onChange={(option) => {
+                  handleEventChange(contractKey, option.name);
+                  setContractErrors((prev) => ({
+                    ...prev,
+                    [`${contractKey}Target`]: null,
+                  }));
+                }}
+                className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
+              />
+              <ErrorMessage
+                error={targetError ?? null}
+                className="mt-1 w-full md:w-[70%] ml-auto"
+              />
+            </div>
           ) : (
-            <Dropdown
-              label="Target function"
-              options={functionOptions}
-              selectedOption={contract.targetFunction || "Select a function"}
-              onChange={(option) =>
-                handleFunctionChange(contractKey, option.name)
-              }
-              className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
-            />
+            <div id={targetDropdownId}>
+              <Dropdown
+                label="Target function"
+                options={functionOptions}
+                selectedOption={contract.targetFunction || "Select a function"}
+                onChange={(option) => {
+                  handleFunctionChange(contractKey, option.name);
+                  setContractErrors((prev) => ({
+                    ...prev,
+                    [`${contractKey}Target`]: null,
+                  }));
+                }}
+                className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
+              />
+              <ErrorMessage
+                error={targetError ?? null}
+                className="mt-1 w-full md:w-[70%] ml-auto"
+              />
+            </div>
           )}
 
           {((isEventContract && contract.events.length === 0) ||
@@ -230,11 +286,7 @@ export const ContractDetails = ({
             <Dropdown
               label="Argument Type"
               options={argumentTypeOptions}
-              selectedOption={
-                argumentTypeOptions.find(
-                  (opt) => opt.id === contract.argumentType,
-                )?.name || "Select argument type"
-              }
+              selectedOption={selectedArgumentType}
               onChange={(option) =>
                 handleArgumentTypeChange(
                   contractKey,
@@ -257,7 +309,10 @@ export const ContractDetails = ({
 
           {/* Function Arguments Section */}
           {contract.targetFunction && functionInputs.length > 0 && (
-            <div className="space-y-4 mt-6">
+            <div
+              className="space-y-4 mt-6"
+              id={`contract-args-section-${contractKey}`}
+            >
               <div className="flex justify-between flex-col lg:flex-row md:flex-row">
                 <Typography
                   as="label"
@@ -273,17 +328,21 @@ export const ContractDetails = ({
                   </span>
                 )}
               </div>
+              <ErrorMessage error={argsError ?? null} className="mb-2" />
               {!isDisabled &&
                 functionInputs.map((input, index) => (
                   <div key={index}>
                     <TextInput
                       label={`${getInputName(input, index)} (${input.type})`}
                       value={contract.argumentValues?.[index] || ""}
-                      onChange={(value) =>
-                        handleArgumentValueChange(contractKey, index, value)
-                      }
+                      onChange={(value) => {
+                        handleArgumentValueChange(contractKey, index, value);
+                        setContractErrors((prev) => ({
+                          ...prev,
+                          [`${contractKey}Args`]: null,
+                        }));
+                      }}
                       placeholder={`Enter ${input.type}`}
-                      required
                       type="text"
                     />
                   </div>
@@ -299,13 +358,20 @@ export const ContractDetails = ({
           <TextInput
             label="IPFS Code URL"
             value={contract.ipfsCodeUrl || ""}
-            onChange={(value) => handleIpfsCodeUrlChange(contractKey, value)}
+            onChange={(value) => {
+              handleIpfsCodeUrlChange(contractKey, value);
+              setContractErrors((prev) => ({
+                ...prev,
+                [`${contractKey}Ipfs`]: null,
+              }));
+            }}
             placeholder="Enter IPFS URL or CID (e.g., ipfs://... or https://ipfs.io/ipfs/...)"
-            required
-            className={contract.ipfsCodeUrlError ? "border-red-500" : ""}
+            error={ipfsError ?? null}
             type="text"
+            id={`contract-ipfs-code-url-${contractKey}`}
           />
           <div className="w-full md:w-[70%] ml-auto mt-3 flex flex-wrap gap-2">
+            <ErrorMessage error={ipfsError ?? null} className="mb-1" />
             {contract.ipfsCodeUrlError && (
               <Typography variant="caption" color="error" align="left">
                 {contract.ipfsCodeUrlError}
@@ -341,11 +407,17 @@ export const ContractDetails = ({
               <TextInput
                 label="Source URL"
                 value={contract.sourceUrl || ""}
-                onChange={(value) => handleSourceUrlChange(contractKey, value)}
+                onChange={(value) => {
+                  handleSourceUrlChange(contractKey, value);
+                  setContractErrors((prev) => ({
+                    ...prev,
+                    [`${contractKey}SourceUrl`]: null,
+                  }));
+                }}
                 placeholder={`Enter ${contract.sourceType.toLowerCase()} URL`}
-                required
-                className={contract.sourceUrlError ? "border-red-500" : ""}
+                error={sourceUrlError ?? null}
                 type="text"
+                id={`contract-source-url-${contractKey}`}
               />
               {contract.sourceUrlError && (
                 <Typography
@@ -361,76 +433,105 @@ export const ContractDetails = ({
           )}
 
           {/* Condition Type Field */}
-          <Dropdown
-            label="Condition Type"
-            options={conditionTypeOptions}
-            selectedOption={contract.conditionType || "Select a condition type"}
-            onChange={(option) => {
-              handleConditionTypeChange(contractKey, option.name);
-              if (option.name !== "In Range") {
-                handleLowerLimitChange(contractKey, "0");
+          <div id={`contract-condition-type-${contractKey}`}>
+            <Dropdown
+              label="Condition Type"
+              options={conditionTypeOptions}
+              selectedOption={
+                contract.conditionType || "Select a condition type"
               }
-            }}
-            className="mt-8"
-          />
+              onChange={(option) => {
+                handleConditionTypeChange(contractKey, option.name);
+                if (option.name !== "In Range") {
+                  handleLowerLimitChange(contractKey, "0");
+                }
+                setContractErrors((prev) => ({
+                  ...prev,
+                  [`${contractKey}ConditionType`]: null,
+                }));
+              }}
+            />
+            <ErrorMessage error={conditionTypeError ?? null} className="mb-1" />
+          </div>
 
           {/* Limits/Value Fields */}
           {contract.conditionType && (
             <>
               {contract.conditionType === "In Range" ? (
-                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mt-8">
-                  <label className="block text-sm sm:text-base font-medium text-gray-300 text-nowrap">
-                    Limits
-                  </label>
-                  <div className="flex gap-4 w-full md:w-[70%]">
-                    <div className="flex-1 flex-col">
-                      <label
-                        htmlFor="upperLimit"
-                        className="block text-xs text-gray-400 mb-1"
-                      >
-                        Upper Limit
-                      </label>
-                      <TextInput
-                        type="number"
-                        value={contract.upperLimit || ""}
-                        onChange={(value) =>
-                          handleUpperLimitChange(contractKey, value)
-                        }
-                        placeholder="Enter upper limit"
-                        required
-                      />
-                    </div>
-                    <div className="flex-1 flex-col">
-                      <label
-                        htmlFor="lowerLimit"
-                        className="block text-xs text-gray-400 mb-1"
-                      >
-                        Lower Limit
-                      </label>
-                      <TextInput
-                        type="number"
-                        value={contract.lowerLimit || ""}
-                        onChange={(value) =>
-                          handleLowerLimitChange(contractKey, value)
-                        }
-                        placeholder="Enter lower limit"
-                        required
-                      />
+                <div className="space-y-auto">
+                  <div
+                    className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mt-8"
+                    id={`contract-limits-section-${contractKey}`}
+                  >
+                    <label className="block text-sm sm:text-base font-medium text-gray-300 text-nowrap">
+                      Limits
+                    </label>
+                    <div className="flex gap-4 w-full md:w-[70%]">
+                      <div className="flex-1 flex-col">
+                        <label
+                          htmlFor="upperLimit"
+                          className="block text-xs text-gray-400 mb-1"
+                        >
+                          Upper Limit
+                        </label>
+                        <TextInput
+                          type="number"
+                          value={contract.upperLimit || ""}
+                          onChange={(value) => {
+                            handleUpperLimitChange(contractKey, value);
+                            setContractErrors((prev) => ({
+                              ...prev,
+                              [`${contractKey}Limits`]: null,
+                            }));
+                          }}
+                          placeholder="Enter upper limit"
+                        />
+                      </div>
+                      <div className="flex-1 flex-col">
+                        <label
+                          htmlFor="lowerLimit"
+                          className="block text-xs text-gray-400 mb-1"
+                        >
+                          Lower Limit
+                        </label>
+                        <TextInput
+                          type="number"
+                          value={contract.lowerLimit || ""}
+                          onChange={(value) => {
+                            handleLowerLimitChange(contractKey, value);
+                            setContractErrors((prev) => ({
+                              ...prev,
+                              [`${contractKey}Limits`]: null,
+                            }));
+                          }}
+                          placeholder="Enter lower limit"
+                        />
+                      </div>
                     </div>
                   </div>
+                  <ErrorMessage
+                    error={limitsError ?? null}
+                    className="w-full md:w-[70%] ml-auto mt-2"
+                  />
                 </div>
               ) : (
-                <TextInput
-                  label="Value"
-                  type="number"
-                  value={contract.upperLimit || ""}
-                  onChange={(value) =>
-                    handleUpperLimitChange(contractKey, value)
-                  }
-                  placeholder="Enter value"
-                  required
-                  className="w-full md:w-[70%] xl:w-[80%]"
-                />
+                <div id={`contract-limits-section-${contractKey}`}>
+                  <div id={`contract-limits-section-${contractKey}`}></div>
+                  <TextInput
+                    label="Value"
+                    type="number"
+                    value={contract.upperLimit || ""}
+                    onChange={(value) => {
+                      handleUpperLimitChange(contractKey, value);
+                      setContractErrors((prev) => ({
+                        ...prev,
+                        [`${contractKey}Limits`]: null,
+                      }));
+                    }}
+                    placeholder="Enter value"
+                    error={limitsError ?? null}
+                  />
+                </div>
               )}
             </>
           )}

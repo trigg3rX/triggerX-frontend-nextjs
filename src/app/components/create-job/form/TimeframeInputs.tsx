@@ -6,6 +6,7 @@ interface TimeframeInputsProps {
   timeframe: Timeframe;
   onTimeframeChange: (field: keyof Timeframe, value: string) => void;
   error: string | null;
+  onClearError?: () => void;
 }
 
 const timeFields = [
@@ -26,7 +27,7 @@ const timeFields = [
 ];
 
 export const TimeframeInputs = forwardRef<HTMLDivElement, TimeframeInputsProps>(
-  ({ timeframe, onTimeframeChange, error }, ref) => {
+  ({ timeframe, onTimeframeChange, error, onClearError }, ref) => {
     return (
       <TimeInputs<keyof Timeframe>
         title="Timeframe"
@@ -35,6 +36,7 @@ export const TimeframeInputs = forwardRef<HTMLDivElement, TimeframeInputsProps>(
         onChange={onTimeframeChange}
         error={error}
         ref={ref}
+        onClearError={onClearError}
       />
     );
   },

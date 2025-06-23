@@ -6,6 +6,7 @@ interface TimeIntervalInputsProps {
   timeInterval: TimeInterval;
   onTimeIntervalChange: (field: keyof TimeInterval, value: string) => void;
   error: string | null;
+  onClearError?: () => void;
 }
 
 const timeIntervalFields = [
@@ -29,7 +30,7 @@ const timeIntervalFields = [
 export const TimeIntervalInputs = forwardRef<
   HTMLDivElement,
   TimeIntervalInputsProps
->(({ timeInterval, onTimeIntervalChange, error }, ref) => {
+>(({ timeInterval, onTimeIntervalChange, error, onClearError }, ref) => {
   return (
     <TimeInputs<keyof TimeInterval>
       title="Time Interval"
@@ -38,6 +39,7 @@ export const TimeIntervalInputs = forwardRef<
       onChange={onTimeIntervalChange}
       error={error}
       ref={ref}
+      onClearError={onClearError}
     />
   );
 });

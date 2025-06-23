@@ -17,32 +17,39 @@ interface TimeInputsProps<T extends string> {
   onChange: (field: T, value: string) => void;
   error: string | null;
   className?: string;
+  onClearError?: () => void;
 }
 
 export function TimeInputs<T extends string>(
   props: TimeInputsProps<T> & { ref?: React.Ref<HTMLDivElement> },
 ) {
-  const { title, fields, values, onChange, error, className = "", ref } = props;
+  const { title, fields, values, onChange, error, ref, onClearError } = props;
   const [focusedField, setFocusedField] = useState<T | null>(null);
   const [hoveredField, setHoveredField] = useState<T | null>(null);
+
+  // Clear error on any input change
+  const onAnyInputChange = (field: T, value: string) => {
+    if (onClearError) onClearError();
+    onChange(field, value);
+  };
 
   const handleIncrement = (field: T, max?: number) => {
     const currentValue = values[field];
     const newValue = currentValue + 1;
     if (max === undefined || newValue <= max) {
-      onChange(field, newValue.toString());
+      onAnyInputChange(field, newValue.toString());
     }
   };
 
   const handleDecrement = (field: T) => {
     const currentValue = values[field];
     if (currentValue > 0) {
-      onChange(field, (currentValue - 1).toString());
+      onAnyInputChange(field, (currentValue - 1).toString());
     }
   };
 
   return (
-    <div className={className}>
+    <div className={`className space-y-0`}>
       <Typography
         variant="h3"
         color="secondary"
@@ -68,7 +75,7 @@ export function TimeInputs<T extends string>(
             <TextInput
               type="number"
               value={values[fieldConfig.field].toString()}
-              onChange={(value) => onChange(fieldConfig.field, value)}
+              onChange={(value) => onAnyInputChange(fieldConfig.field, value)}
               placeholder="0"
               onFocus={() => setFocusedField(fieldConfig.field)}
               onBlur={() => setFocusedField(null)}

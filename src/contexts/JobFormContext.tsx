@@ -4,7 +4,9 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import { Timeframe, TimeInterval, ContractInteraction } from "@/types/job";
 import networksData from "@/utils/networks.json";
 import { ethers } from "ethers";
-import axios from "axios";
+import { fetchContractABI } from "@/utils/fetchContractABI";
+import { useTGBalance } from "./TGBalanceContext";
+import toast from "react-hot-toast";
 
 interface ABIItem {
   type: string;
@@ -14,6 +16,139 @@ interface ABIItem {
   stateMutability?: string;
   payable?: boolean;
   constant?: boolean;
+}
+
+// Utility types and functions moved from JobForm.tsx
+export type JobDetails = {
+  user_address: string;
+  ether_balance: number;
+  token_balance: number;
+  job_title: string;
+  task_definition_id: number;
+  time_frame: number;
+  recurring: boolean;
+  timezone: string;
+  time_interval: number;
+  trigger_chain_id: string;
+  trigger_contract_address: string;
+  trigger_event: string;
+  target_chain_id: string;
+  target_contract_address: string;
+  target_function: string;
+  abi: string | null;
+  arg_type?: number;
+  arguments?: string[];
+  dynamic_arguments_script_url?: string;
+  source_type?: string;
+  source_url?: string;
+  condition_type?: string;
+  upper_limit?: string;
+  lower_limit?: string;
+};
+
+function extractJobDetails(
+  contractKey: string,
+  contractInteractions: ContractInteraction,
+  jobTitle: string,
+  timeframeInSeconds: number,
+  intervalInSeconds: number,
+  recurring: boolean,
+  userAddress: string | undefined,
+  networkId: number | undefined,
+  jobType: number,
+): JobDetails {
+  let triggerContractAddress = "0x0000000000000000000000000000000000000000";
+  let triggerEvent = "NULL";
+  if (jobType === 3 && contractInteractions.eventContract) {
+    triggerContractAddress =
+      contractInteractions.eventContract.address || triggerContractAddress;
+    triggerEvent =
+      contractInteractions.eventContract.targetEvent || triggerEvent;
+  } else {
+    const c = contractInteractions[contractKey];
+    if (c && c.address) {
+      triggerContractAddress = c.address;
+    }
+  }
+
+  const c = contractInteractions[contractKey];
+  const contractAddress =
+    c.address || "0x0000000000000000000000000000000000000000";
+  const contractABI = c.abi;
+  const argType = getArgType(c.argumentType || "static");
+  const argsArray = c.argumentValues || [];
+  const ipfsCodeUrl = c.ipfsCodeUrl || "";
+  const targetFunction = c.targetFunction ? c.targetFunction.split("(")[0] : "";
+  const taskDefinitionId = getTaskDefinitionId(
+    c.argumentType || "static",
+    jobType,
+  );
+  const triggerChainId = networkId ? networkId.toString() : "";
+
+  return {
+    user_address: userAddress || "",
+    ether_balance: 0,
+    token_balance: 0,
+    job_title: jobTitle,
+    task_definition_id: taskDefinitionId,
+    time_frame: timeframeInSeconds,
+    recurring,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    time_interval: intervalInSeconds,
+    trigger_chain_id: triggerChainId,
+    trigger_contract_address: triggerContractAddress,
+    trigger_event: triggerEvent,
+    target_chain_id: triggerChainId,
+    target_contract_address: contractAddress,
+    target_function: targetFunction,
+    abi: contractABI,
+    arg_type: argType,
+    arguments: argsArray,
+    dynamic_arguments_script_url: ipfsCodeUrl,
+    // source_type: c.sourceType,
+    // source_url: c.sourceUrl,
+    // condition_type: c.conditionType,
+    // upper_limit: c.upperLimit,
+    // lower_limit: c.lowerLimit,
+  };
+}
+
+function getTimeframeInSeconds(timeframe: Timeframe): number {
+  return (
+    (Number(timeframe.days) || 0) * 86400 +
+    (Number(timeframe.hours) || 0) * 3600 +
+    (Number(timeframe.minutes) || 0) * 60
+  );
+}
+
+function getIntervalInSeconds(timeInterval: TimeInterval): number {
+  return (
+    (Number(timeInterval.hours) || 0) * 3600 +
+    (Number(timeInterval.minutes) || 0) * 60 +
+    (Number(timeInterval.seconds) || 0)
+  );
+}
+
+function getNetworkIdByName(name: string): number | undefined {
+  return networksData.supportedNetworks.find((n) => n.name === name)?.id;
+}
+
+function getTaskDefinitionId(argumentType: string, jobType: number): number {
+  return argumentType === "static"
+    ? jobType === 1
+      ? 1
+      : jobType === 2
+        ? 5
+        : 3
+    : jobType === 1
+      ? 2
+      : jobType === 2
+        ? 6
+        : 4;
+}
+
+function getArgType(argumentType: string): number {
+  return argumentType === "static" ? 1 : 2;
 }
 
 export interface JobFormContextType {
@@ -58,6 +193,49 @@ export interface JobFormContextType {
   linkedJobs: { [key: number]: number[] };
   handleLinkJob: (jobType: number) => void;
   handleDeleteLinkedJob: (jobType: number, jobId: number) => void;
+  validateTimeframe: (tf?: Timeframe) => string | null;
+  validateTimeInterval: (ti?: TimeInterval, jt?: number) => string | null;
+  validateJobTitle: (title?: string) => string | null;
+  validateABI: (contractKey: string) => string | null;
+  jobTitleError: string | null;
+  setJobTitleError: React.Dispatch<React.SetStateAction<string | null>>;
+  jobTitleErrorRef: React.RefObject<HTMLDivElement | null>;
+  errorFrame: string | null;
+  setErrorFrame: React.Dispatch<React.SetStateAction<string | null>>;
+  errorFrameRef: React.RefObject<HTMLDivElement | null>;
+  errorInterval: string | null;
+  setErrorInterval: React.Dispatch<React.SetStateAction<string | null>>;
+  errorIntervalRef: React.RefObject<HTMLDivElement | null>;
+  contractErrors: Record<string, string | null>;
+  setContractErrors: React.Dispatch<
+    React.SetStateAction<Record<string, string | null>>
+  >;
+  extractJobDetails: typeof extractJobDetails;
+  getTimeframeInSeconds: typeof getTimeframeInSeconds;
+  getIntervalInSeconds: typeof getIntervalInSeconds;
+  getNetworkIdByName: typeof getNetworkIdByName;
+  getTaskDefinitionId: typeof getTaskDefinitionId;
+  getArgType: typeof getArgType;
+  estimatedFee: number;
+  setEstimatedFee: React.Dispatch<React.SetStateAction<number>>;
+  estimatedFeeInGwei: bigint | null;
+  setEstimatedFeeInGwei: React.Dispatch<React.SetStateAction<bigint | null>>;
+  isModalOpen: boolean;
+  setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  estimateFee: (
+    jobType: number,
+    timeframeInSeconds: number,
+    intervalInSeconds: number,
+    codeUrls: string,
+    recurring: boolean,
+    argType: number,
+  ) => Promise<void>;
+  isSubmitting: boolean;
+  setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
+  isJobCreated: boolean;
+  setIsJobCreated: React.Dispatch<React.SetStateAction<boolean>>;
+  handleStakeTG: () => Promise<void>;
+  handleCreateJob: () => Promise<void>;
 }
 
 export const JobFormContext = createContext<JobFormContextType | undefined>(
@@ -94,7 +272,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         targetEvent: "",
         functions: [],
         targetFunction: "",
-        argumentType: "",
+        argumentType: "static",
         argumentValues: [],
         ipfsCodeUrl: "",
         ipfsCodeUrlError: "",
@@ -127,6 +305,29 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       },
     });
   const [linkedJobs, setLinkedJobs] = useState<{ [key: number]: number[] }>({});
+  const [estimatedFee, setEstimatedFee] = useState<number>(0);
+  const [estimatedFeeInGwei, setEstimatedFeeInGwei] = useState<bigint | null>(
+    null,
+  );
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isJobCreated, setIsJobCreated] = useState<boolean>(false);
+
+  // Error refs (must be stable, not recreated on every render)
+  const jobTitleErrorRef = React.useRef<HTMLDivElement | null>(null);
+  const errorFrameRef = React.useRef<HTMLDivElement | null>(null);
+  const errorIntervalRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Error states
+  const [jobTitleError, setJobTitleError] = useState<string | null>(null);
+  const [errorFrame, setErrorFrame] = useState<string | null>(null);
+  const [errorInterval, setErrorInterval] = useState<string | null>(null);
+  const [contractErrors, setContractErrors] = useState<
+    Record<string, string | null>
+  >({});
+
+  // Get TG balance context
+  const { fetchTGBalance } = useTGBalance();
 
   const handleJobTypeChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, type: number) => {
@@ -222,101 +423,40 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }));
 
       if (ethers.isAddress(value)) {
-        let abiFetched = false;
-
-        // Try Blockscout first
-        const blockscoutUrl = `https://optimism-sepolia.blockscout.com/api?module=contract&action=getabi&address=${value}`;
+        // Use the shared ABI fetch utility
         try {
-          const response = await axios.get(blockscoutUrl);
-          const data = response.data;
-          if (
-            data.status === "1" &&
-            data.result &&
-            typeof data.result === "string" &&
-            data.result.startsWith("[")
-          ) {
-            try {
-              JSON.parse(data.result); // Just validate JSON
-              const functions = extractFunctions(data.result).filter(
-                (func) =>
-                  func.stateMutability === "nonpayable" ||
-                  func.stateMutability === "payable",
-              );
-              const events = extractEvents(data.result);
-
-              setContractInteractions((prev) => ({
-                ...prev,
-                [contractKey]: {
-                  ...prev[contractKey],
-                  abi: data.result,
-                  events,
-                  functions,
-                  isCheckingABI: false,
-                },
-              }));
-              abiFetched = true;
-            } catch (jsonError) {
-              console.error("Invalid ABI format from Blockscout:", jsonError);
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching from Blockscout:", error);
-        }
-
-        // If Blockscout failed, try Etherscan
-        if (!abiFetched) {
-          const ETHERSCAN_API_KEY =
-            process.env.NEXT_PUBLIC_ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY;
-          if (ETHERSCAN_API_KEY) {
-            const etherscanUrl = `https://api-sepolia-optimism.etherscan.io/api?module=contract&action=getabi&address=${value}&apikey=${ETHERSCAN_API_KEY}`;
-            try {
-              const response = await axios.get(etherscanUrl);
-              const data = response.data;
-              if (
-                data.status === "1" &&
-                data.result &&
-                typeof data.result === "string" &&
-                data.result.startsWith("[")
-              ) {
-                try {
-                  JSON.parse(data.result); // Just validate JSON
-                  const functions = extractFunctions(data.result).filter(
-                    (func) =>
-                      func.stateMutability === "nonpayable" ||
-                      func.stateMutability === "payable",
-                  );
-                  const events = extractEvents(data.result);
-
-                  setContractInteractions((prev) => ({
-                    ...prev,
-                    [contractKey]: {
-                      ...prev[contractKey],
-                      abi: data.result,
-                      events,
-                      functions,
-                      isCheckingABI: false,
-                    },
-                  }));
-                  abiFetched = true;
-                } catch (jsonError) {
-                  console.error(
-                    "Invalid ABI format from Etherscan:",
-                    jsonError,
-                  );
-                }
-              }
-            } catch (error) {
-              console.error("Error fetching from Etherscan:", error);
-            }
-          } else {
-            console.warn(
-              "Etherscan API key not found. Skipping Etherscan fallback.",
+          const abiString = await fetchContractABI(value);
+          if (abiString) {
+            JSON.parse(abiString); // Validate JSON
+            const functions = extractFunctions(abiString).filter(
+              (func) =>
+                func.stateMutability === "nonpayable" ||
+                func.stateMutability === "payable",
             );
+            const events = extractEvents(abiString);
+            setContractInteractions((prev) => ({
+              ...prev,
+              [contractKey]: {
+                ...prev[contractKey],
+                abi: abiString,
+                events,
+                functions,
+                isCheckingABI: false,
+              },
+            }));
+          } else {
+            setContractInteractions((prev) => ({
+              ...prev,
+              [contractKey]: {
+                ...prev[contractKey],
+                abi: null,
+                events: [],
+                functions: [],
+                isCheckingABI: false,
+              },
+            }));
           }
-        }
-
-        // If both attempts failed
-        if (!abiFetched) {
+        } catch {
           setContractInteractions((prev) => ({
             ...prev,
             [contractKey]: {
@@ -644,6 +784,243 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
+  // Validation helpers
+  const validateTimeframe = (tf: Timeframe = timeframe) => {
+    if (tf.days === 0 && tf.hours === 0 && tf.minutes === 0) {
+      return "Please set a valid timeframe before submitting.";
+    }
+    return null;
+  };
+
+  const validateTimeInterval = (
+    ti: TimeInterval = timeInterval,
+    jt: number = jobType,
+  ) => {
+    if (jt === 1) {
+      if (
+        (ti.hours === 0 && ti.minutes === 0 && ti.seconds === 0) ||
+        ti.hours * 3600 + ti.minutes * 60 + ti.seconds < 30
+      ) {
+        return "Please set a valid time interval of at least 30 seconds before submitting.";
+      }
+    }
+    return null;
+  };
+
+  const validateJobTitle = (title: string = jobTitle) => {
+    if (!title || title.trim() === "") {
+      return "Job title is required.";
+    }
+    return null;
+  };
+
+  const validateABI = (contractKey: string): string | null => {
+    const contract = contractInteractions[contractKey];
+    if (!contract) return "Contract not found.";
+    if (!contract.abi || contract.abi === null || contract.abi === "") {
+      return "Contract ABI must be verified or provided manually.";
+    }
+    return null;
+  };
+
+  const estimateFee = async (
+    jobType: number,
+    timeframeInSeconds: number,
+    intervalInSeconds: number,
+    codeUrls: string,
+    recurring: boolean,
+    argType: number,
+  ) => {
+    try {
+      let executionCount;
+      if (jobType === 1) {
+        executionCount = Math.ceil(timeframeInSeconds / intervalInSeconds);
+      } else {
+        executionCount = recurring ? 10 : 1;
+      }
+      // Only keep this essential log if needed for debugging
+      // console.log("execution count", executionCount);
+      // console.log("argType", argType);
+
+      let totalFeeTG = 0;
+      if (argType === 2) {
+        if (codeUrls) {
+          try {
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+            if (!API_BASE_URL) {
+              throw new Error(
+                "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
+              );
+            }
+            const response = await fetch(
+              `${API_BASE_URL}/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
+              { method: "GET" },
+            );
+            if (!response.ok) throw new Error("Failed to get fees");
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            totalFeeTG = Number(data.total_fee) * executionCount;
+            const stakeAmountEth = totalFeeTG * 0.001;
+            console.log("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
+
+            const stakeAmountGwei = BigInt(Math.floor(stakeAmountEth * 1e9));
+            setEstimatedFeeInGwei(stakeAmountGwei);
+          } catch (error) {
+            console.error("Error getting task fees:", error);
+          }
+        }
+      } else {
+        totalFeeTG = 0.1 * executionCount;
+        console.log("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
+      }
+      setEstimatedFee(totalFeeTG);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error estimating fee:", error);
+    }
+  };
+
+  const handleStakeTG = async () => {
+    setIsSubmitting(true);
+
+    try {
+      if (typeof window.ethereum === "undefined") {
+        throw new Error("Please install MetaMask to use this feature");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const requiredEth = (0.001 * estimatedFee).toFixed(18);
+      const stakeRegistryAddress =
+        process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS;
+
+      if (!stakeRegistryAddress) {
+        throw new Error("Stake registry address not configured");
+      }
+
+      const contract = new ethers.Contract(
+        stakeRegistryAddress,
+        [
+          "function purchaseTG(uint256 amount) external payable returns (uint256)",
+        ],
+        signer,
+      );
+
+      console.log("Staking ETH amount:", requiredEth);
+
+      const tx = await contract.purchaseTG(
+        ethers.parseEther(requiredEth.toString()),
+        { value: ethers.parseEther(requiredEth.toString()) },
+      );
+
+      await tx.wait();
+      console.log("Stake transaction confirmed: ", tx.hash);
+      toast.success("TG Top Up Successfully!");
+
+      // Fetch updated TG balance after staking
+      await fetchTGBalance();
+
+      // After successful staking, proceed to create job
+      await handleCreateJob();
+    } catch (error) {
+      console.error("Error staking TG:", error);
+      toast.error("Error topping up TG: " + (error as Error).message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCreateJob = async () => {
+    try {
+      if (typeof window.ethereum === "undefined") {
+        throw new Error("Please install MetaMask to use this feature");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      // Get network ID
+      const networkId = getNetworkIdByName(selectedNetwork);
+      if (!networkId) {
+        throw new Error("Invalid network selected");
+      }
+
+      // Extract all job details from contract interactions
+      const allJobDetails: JobDetails[] = [];
+
+      // Extract job details for each contract interaction
+      Object.keys(contractInteractions).forEach((contractKey) => {
+        const contract = contractInteractions[contractKey];
+
+        // Skip contracts that don't have required data
+        if (!contract.targetFunction || !contract.abi) {
+          console.log(`Skipping ${contractKey} - missing required data:`, {
+            targetFunction: contract.targetFunction,
+            abi: contract.abi ? "present" : "missing",
+          });
+          return;
+        }
+
+        const jobDetails = extractJobDetails(
+          contractKey,
+          contractInteractions,
+          jobTitle,
+          getTimeframeInSeconds(timeframe),
+          getIntervalInSeconds(timeInterval),
+          recurring,
+          userAddress,
+          networkId,
+          jobType,
+        );
+
+        console.log(`Job details for ${contractKey}:`, {
+          target_function: jobDetails.target_function,
+          abi: jobDetails.abi ? "ABI present" : "ABI missing",
+          contract_address: jobDetails.target_contract_address,
+        });
+
+        allJobDetails.push(jobDetails);
+      });
+
+      // Add job cost prediction to all job details
+      const updatedJobDetails = allJobDetails.map((jobDetail) => ({
+        ...jobDetail,
+        job_cost_prediction: estimatedFee,
+      }));
+
+      console.log("Submitting job details:", updatedJobDetails);
+
+      // Create job via API
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!API_BASE_URL) {
+        throw new Error("API base URL not configured in ENV");
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/jobs`, {
+        method: "POST",
+        mode: "cors",
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
+        body: JSON.stringify(updatedJobDetails),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
+        throw new Error(errorText || "Failed to create job");
+      }
+
+      setIsJobCreated(true);
+      toast.success("Job created successfully!");
+    } catch (error) {
+      console.error("Error creating job:", error);
+      toast.error("Error creating job: " + (error as Error).message);
+    }
+  };
+
   return (
     <JobFormContext.Provider
       value={{
@@ -678,6 +1055,40 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         linkedJobs,
         handleLinkJob,
         handleDeleteLinkedJob,
+        validateTimeframe,
+        validateTimeInterval,
+        validateJobTitle,
+        validateABI,
+        jobTitleError,
+        setJobTitleError,
+        jobTitleErrorRef,
+        errorFrame,
+        setErrorFrame,
+        errorFrameRef,
+        errorInterval,
+        setErrorInterval,
+        errorIntervalRef,
+        contractErrors,
+        setContractErrors,
+        extractJobDetails,
+        getTimeframeInSeconds,
+        getIntervalInSeconds,
+        getNetworkIdByName,
+        getTaskDefinitionId,
+        getArgType,
+        estimatedFee,
+        setEstimatedFee,
+        estimatedFeeInGwei,
+        setEstimatedFeeInGwei,
+        isModalOpen,
+        setIsModalOpen,
+        estimateFee,
+        isSubmitting,
+        setIsSubmitting,
+        isJobCreated,
+        setIsJobCreated,
+        handleStakeTG,
+        handleCreateJob,
       }}
     >
       {children}
@@ -692,3 +1103,7 @@ export const useJobForm = () => {
   }
   return context;
 };
+
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
