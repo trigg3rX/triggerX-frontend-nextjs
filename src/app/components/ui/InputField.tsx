@@ -14,6 +14,7 @@ interface TextInputProps {
   error?: string | null;
   onValueChange?: (value: string) => void;
   id?: string;
+  readOnly?: boolean;
 }
 
 export const InputField: React.FC<TextInputProps> = ({
@@ -28,6 +29,7 @@ export const InputField: React.FC<TextInputProps> = ({
   error = null,
   onValueChange,
   id,
+  readOnly,
 }) => {
   const inputWidthClass = label ? "w-full md:w-[70%]" : "w-full";
 
@@ -56,6 +58,7 @@ export const InputField: React.FC<TextInputProps> = ({
           onFocus={onFocus}
           onBlur={onBlur}
           id={id}
+          readOnly={readOnly}
         />
         {error && (
           <div className="text-red-500 text-xs sm:text-sm mt-2">{error}</div>

@@ -4,6 +4,7 @@ import { apiData } from "@/data/apiData"; // Import our data
 import ApiMethod from "../api/ApiMethod";
 import ApiDetailView from "./ApiDetailView";
 import styles from "@/app/styles/scrollbar.module.css";
+import { Typography } from "../ui/Typography";
 
 const ApiDocsPage: React.FC = () => {
   // Set the first API as the default active one
@@ -17,7 +18,9 @@ const ApiDocsPage: React.FC = () => {
     >
       {/* Column 1: API List (Navigation) */}
       <div className="w-full lg:w-[30%]  lg:sticky top-0 ">
-        <h3 className="text-xl font-bold mb-4">Present APIs</h3>
+        <Typography variant="h5" className="mb-4" align="left">
+          Present APIs
+        </Typography>
         <div className="space-y-1 lg:space-y-2">
           {apiData.map((api) => (
             <button
@@ -35,7 +38,9 @@ const ApiDocsPage: React.FC = () => {
             >
               <div className="flex items-center justify-start gap-2 lg:gap-5">
                 <ApiMethod method={api.method} />
-                <span className="text-xs lg:text-sm">{api.name}</span>
+                <Typography variant="body" as="span">
+                  {api.name}
+                </Typography>
               </div>
             </button>
           ))}

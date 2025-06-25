@@ -7,10 +7,13 @@ import { MainContainer } from "../ui/MainContainer";
 import { Button } from "../ui/Button";
 import { InputField } from "../ui/InputField";
 import { Typography } from "../ui/Typography";
+import { useApiKeys } from "@/hooks/useApiKeys";
 // import { CopyButton } from "../../ui/CopyButton";
 
 const GenerateApi: React.FC = () => {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const { apiKeys, generateNewApiKey } = useApiKeys(address);
+  const latestKey = apiKeys[0];
 
   // For copy feedback
 
@@ -32,14 +35,15 @@ const GenerateApi: React.FC = () => {
             <div className="w-full flex flex-col justify-between gap-5 my-3">
               <div>
                 <InputField
-                  type="number"
+                  type="text"
                   placeholder="No API key generated yet"
                   className="rounded-xl"
-                  value={""}
+                  value={latestKey.key}
                   onChange={() => {}}
+                  readOnly
                 />
               </div>
-              <Button> Generate New API Key</Button>
+              <Button onClick={generateNewApiKey}> Generate New API Key</Button>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mt-6">
                 <div>
                   <Typography
@@ -51,7 +55,7 @@ const GenerateApi: React.FC = () => {
                     Created
                   </Typography>
                   <Typography variant="body" color="white" align="left">
-                    65
+                    {latestKey.created}
                   </Typography>
                 </div>
                 <div>
@@ -64,7 +68,7 @@ const GenerateApi: React.FC = () => {
                     Rate Limit
                   </Typography>
                   <Typography variant="body" color="white" align="left">
-                    20 requests/min
+                    {latestKey.rateLimit}
                   </Typography>
                 </div>
                 <div>
@@ -76,8 +80,12 @@ const GenerateApi: React.FC = () => {
                   >
                     Status
                   </Typography>
-                  <Typography variant="badgeGreen" color="success" align="left">
-                    Inactive
+                  <Typography
+                    variant="badgeGreen"
+                    color={latestKey.status === "Active" ? "success" : "gray"}
+                    align="left"
+                  >
+                    {latestKey.status}
                   </Typography>
                 </div>
               </div>

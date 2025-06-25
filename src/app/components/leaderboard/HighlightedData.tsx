@@ -3,32 +3,7 @@ import { Typography } from "../ui/Typography";
 import { CopyButton } from "../ui/CopyButton";
 import { Card } from "../ui/Card";
 import { MainContainer } from "../ui/MainContainer";
-
-interface BaseHighlightedData {
-  name: string;
-  address: string;
-  points: number;
-}
-
-interface KeeperHighlightedData extends BaseHighlightedData {
-  performed: number;
-  attested: number;
-}
-
-interface DeveloperHighlightedData extends BaseHighlightedData {
-  totalJobs: number;
-  tasksExecuted: number;
-}
-
-interface ContributorHighlightedData extends BaseHighlightedData {
-  contributions?: number;
-  communityPoints?: number;
-}
-
-type HighlightedDataType =
-  | KeeperHighlightedData
-  | DeveloperHighlightedData
-  | ContributorHighlightedData;
+import { HighlightedDataType } from "@/types/leaderboard";
 
 interface HighlightedDataProps {
   data: HighlightedDataType;

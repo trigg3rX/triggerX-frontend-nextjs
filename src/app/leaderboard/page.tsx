@@ -6,6 +6,8 @@ import { useAccount } from "wagmi";
 import AnimatedTabs from "../components/leaderboard/AnimatedTabs";
 import WalletBanner from "../components/common/WalletBanner";
 import MainTable from "../components/leaderboard/MainTable";
+import useLeaderboardData from "@/hooks/useLeaderboardData";
+import { TabType, TableData } from "@/types/leaderboard";
 
 const tabs = [
   { id: "keeper", label: "Keeper" },
@@ -15,12 +17,25 @@ const tabs = [
 
 function Leaderboard() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<string>("keeper");
-  const { isConnected } = useAccount();
+  const [activeTab, setActiveTab] = useState<TabType>("keeper");
+  const { isConnected, address } = useAccount();
+
+  const { leaderboardData } = useLeaderboardData(
+    activeTab,
+    address,
+    isConnected,
+  );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
+
+  // Determine which data to pass to MainTable based on activeTab
+  let tableData: TableData[] = [];
+  if (activeTab === "keeper") tableData = leaderboardData.keepers;
+  else if (activeTab === "developer") tableData = leaderboardData.developers;
+  else if (activeTab === "contributor")
+    tableData = leaderboardData.contributors;
 
   return (
     <div>
@@ -69,13 +84,13 @@ function Leaderboard() {
       <AnimatedTabs
         tabs={tabs}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab: string) => setActiveTab(tab as TabType)}
       />
 
       {!isConnected && (
         <WalletBanner message="Please connect your wallet to see your performance metrics in the leaderboard" />
       )}
-      <MainTable activeTab={activeTab} />
+      <MainTable activeTab={activeTab} data={tableData} />
     </div>
   );
 }

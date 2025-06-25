@@ -2,6 +2,7 @@ import React from "react";
 import { CopyButton } from "../ui/CopyButton";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
+import { TabType, TableData } from "@/types/leaderboard";
 
 // Utility function to truncate Ethereum addresses
 const truncateAddress = (address: string): string => {
@@ -9,31 +10,6 @@ const truncateAddress = (address: string): string => {
   if (address.length < 10) return address;
   return `${address.slice(0, 5)}...${address.slice(-4)}`;
 };
-
-interface BaseEntity {
-  id: number;
-  name: string;
-  address: string;
-  points: number;
-}
-
-interface KeeperData extends BaseEntity {
-  jobPerformed: number;
-  jobAttested: number;
-}
-
-interface DeveloperData extends BaseEntity {
-  totalJobs: number;
-  taskPerformed: number;
-}
-
-interface ContributorData extends BaseEntity {
-  contributions: number;
-  communityPoints: number;
-}
-
-type TabType = "keeper" | "developer" | "contributor";
-type TableData = KeeperData | DeveloperData | ContributorData;
 
 interface MobileTableGridProps {
   data: TableData[];

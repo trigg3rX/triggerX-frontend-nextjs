@@ -19,33 +19,9 @@ import EmptyState from "../common/EmptyState";
 import HighlightedData from "./HighlightedData";
 import styles from "@/app/styles/scrollbar.module.css";
 import { MainContainer } from "../ui/MainContainer";
+import { TabType, TableData } from "@/types/leaderboard";
 
-// Data types for different tabs
-interface BaseEntity {
-  id: number;
-  name: string;
-  address: string;
-  points: number;
-}
-
-interface KeeperData extends BaseEntity {
-  jobPerformed: number;
-  jobAttested: number;
-}
-
-interface DeveloperData extends BaseEntity {
-  totalJobs: number;
-  taskPerformed: number;
-}
-
-interface ContributorData extends BaseEntity {
-  contributions: number;
-  communityPoints: number;
-}
-
-type TabType = "keeper" | "developer" | "contributor";
-type TableData = KeeperData | DeveloperData | ContributorData;
-
+// Re-add Column and MainTableProps interfaces, as they are not shared types
 interface Column {
   key: string;
   label: string;
