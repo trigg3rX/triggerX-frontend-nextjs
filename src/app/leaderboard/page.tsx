@@ -1,12 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Typography } from "../components/ui/Typography";
 import SearchBar from "../components/ui/SearchBar";
 import { useAccount } from "wagmi";
 import AnimatedTabs from "../components/leaderboard/AnimatedTabs";
 import WalletBanner from "../components/common/WalletBanner";
 import MainTable from "../components/leaderboard/MainTable";
-import useLeaderboardData from "@/hooks/useLeaderboardData";
 import { TabType, TableData } from "@/types/leaderboard";
 
 const tabs = [
@@ -18,24 +17,85 @@ const tabs = [
 function Leaderboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>("keeper");
-  const { isConnected, address } = useAccount();
+  const { isConnected } = useAccount();
+  const [tableData, setTableData] = useState<TableData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { leaderboardData } = useLeaderboardData(
-    activeTab,
-    address,
-    isConnected,
-  );
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        let apiUrl = "";
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (!API_BASE_URL) throw new Error("API base URL is not set");
+
+        console.log("API_BASE_URL:", API_BASE_URL);
+
+        if (activeTab === "keeper") {
+          apiUrl = `${API_BASE_URL}/api/leaderboard/keepers`;
+        } else if (activeTab === "developer" || activeTab === "contributor") {
+          apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
+        }
+
+        console.log("Fetching from:", apiUrl);
+        const response = await fetch(apiUrl);
+        console.log("Response status:", response.status);
+        if (!response.ok) throw new Error("Failed to fetch leaderboard data");
+        const data = await response.json();
+
+        // Transform data based on tab
+        let transformed: TableData[] = [];
+        if (activeTab === "keeper") {
+          transformed = Array.isArray(data)
+            ? data.map((keeper) => ({
+                id: keeper.id || keeper.keeper_address,
+                name: keeper.keeper_name,
+                address: keeper.keeper_address,
+                jobPerformed: keeper.no_executed_tasks,
+                jobAttested: keeper.no_attested_tasks,
+                points: keeper.keeper_points,
+              }))
+            : [];
+        } else if (activeTab === "developer") {
+          transformed = Array.isArray(data)
+            ? data.map((user) => ({
+                id: user.id || user.user_address,
+                name: user.user_name || user.user_address,
+                address: user.user_address,
+                totalJobs: user.total_jobs,
+                taskPerformed: user.total_tasks,
+                points: user.user_points,
+              }))
+            : [];
+        } else if (activeTab === "contributor") {
+          transformed = Array.isArray(data)
+            ? data.map((user) => ({
+                id: user.id || user.user_address,
+                name: user.user_name || user.user_address,
+                address: user.user_address,
+                contributions: user.contributions || 0,
+                communityPoints: user.community_points || 0,
+                points: user.user_points,
+              }))
+            : [];
+        }
+        setTableData(transformed);
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [activeTab]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-
-  // Determine which data to pass to MainTable based on activeTab
-  let tableData: TableData[] = [];
-  if (activeTab === "keeper") tableData = leaderboardData.keepers;
-  else if (activeTab === "developer") tableData = leaderboardData.developers;
-  else if (activeTab === "contributor")
-    tableData = leaderboardData.contributors;
 
   return (
     <div>
@@ -90,6 +150,8 @@ function Leaderboard() {
       {!isConnected && (
         <WalletBanner message="Please connect your wallet to see your performance metrics in the leaderboard" />
       )}
+      {isLoading && <div>Loading...</div>}
+      {error && <div>Error: {error}</div>}
       <MainTable activeTab={activeTab} data={tableData} />
     </div>
   );

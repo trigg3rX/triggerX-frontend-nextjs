@@ -62,74 +62,9 @@ const TAB_COLUMNS: Record<TabType, Column[]> = {
   ],
 };
 
-// Sample data for each tab
-const sampleData: Record<TabType, TableData[]> = {
-  keeper: [
-    {
-      id: 1,
-      name: "ITRocket",
-      address: "0xfee8f29af67cb...5dc7",
-      jobPerformed: 0,
-      jobAttested: 0,
-      points: 1360.0,
-    },
-    {
-      id: 2,
-      name: "Genznodes",
-      address: "0x19abadfbb70e6...2667",
-      jobPerformed: 1,
-      jobAttested: 0,
-      points: 1360.0,
-    },
-    {
-      id: 3,
-      name: "EigenYields",
-      address: "0x5acce90436492...676d",
-      jobPerformed: 2,
-      jobAttested: 0,
-      points: 13658.0,
-    },
-    {
-      id: 4,
-      name: "Staking4All",
-      address: "0xc511461589b32...e113",
-      jobPerformed: 3,
-      jobAttested: 0,
-      points: 1360.0,
-    },
-    {
-      id: 5,
-      name: "nairetestnet",
-      address: "0x47f1dffd865cf...f1b3",
-      jobPerformed: 4,
-      jobAttested: 0,
-      points: 1320.0,
-    },
-    {
-      id: 6,
-      name: "Node.Monster",
-      address: "0x0905a5e6dab3e...41a7",
-      jobPerformed: 5,
-      jobAttested: 0,
-      points: 1240.0,
-    },
-  ],
-  developer: [
-    {
-      id: 1,
-      name: "DevMaster",
-      address: "0x1234...5678",
-      totalJobs: 10,
-      taskPerformed: 8,
-      points: 1500.0,
-    },
-  ],
-  contributor: [],
-};
-
 export default function MainTable({
   activeTab = "keeper",
-  data = sampleData[activeTab as TabType] || [],
+  data = [],
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("points");
