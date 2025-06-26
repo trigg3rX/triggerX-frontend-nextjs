@@ -4,6 +4,7 @@ import { CopyButton } from "../ui/CopyButton";
 import { Card } from "../ui/Card";
 import { MainContainer } from "../ui/MainContainer";
 import { HighlightedDataType } from "@/types/leaderboard";
+import useTruncateAddress from "@/hooks/useTruncateAddress";
 
 interface HighlightedDataProps {
   data: HighlightedDataType;
@@ -11,6 +12,7 @@ interface HighlightedDataProps {
 }
 
 const HighlightedData: React.FC<HighlightedDataProps> = ({ data, type }) => {
+  const truncateAddress = useTruncateAddress();
   if (!data) return null;
 
   const renderStats = () => {
@@ -49,8 +51,11 @@ const HighlightedData: React.FC<HighlightedDataProps> = ({ data, type }) => {
       <div className="flex lg:flex-row md:flex-col flex-col gap-4 items-center">
         <Card className="w-full flex items-center justify-between">
           {" "}
-          <Typography variant="body" className="text-white ">
+          <Typography variant="body" className="text-white hidden md:block">
             {data.address}
+          </Typography>
+          <Typography variant="body" className="text-white md:hidden block">
+            {truncateAddress(data.address)}
           </Typography>
           <CopyButton text={data.address} />
         </Card>

@@ -20,6 +20,7 @@ import HighlightedData from "./HighlightedData";
 import styles from "@/app/styles/scrollbar.module.css";
 import { MainContainer } from "../ui/MainContainer";
 import { TabType, TableData } from "@/types/leaderboard";
+import useTruncateAddress from "@/hooks/useTruncateAddress";
 
 // Re-add Column and MainTableProps interfaces, as they are not shared types
 interface Column {
@@ -32,6 +33,7 @@ interface MainTableProps {
   activeTab: string;
   data?: TableData[];
   onViewProfile?: (address: string) => void;
+  userAddress?: string | null;
 }
 
 // Column configurations for each tab
@@ -45,36 +47,39 @@ const TAB_COLUMNS: Record<TabType, Column[]> = {
     { key: "profile", label: "Profile", sortable: false },
   ],
   developer: [
-    { key: "name", label: "Developer", sortable: true },
     { key: "address", label: "Address", sortable: false },
     { key: "totalJobs", label: "Total Jobs", sortable: true },
     { key: "taskPerformed", label: "Task Performed", sortable: true },
     { key: "points", label: "Points", sortable: true },
-    { key: "profile", label: "Profile", sortable: false },
   ],
-  contributor: [
-    { key: "name", label: "Contributor", sortable: true },
-    { key: "address", label: "Address", sortable: false },
-    { key: "contributions", label: "Contributions", sortable: true },
-    { key: "communityPoints", label: "Community Points", sortable: true },
-    { key: "points", label: "Points", sortable: true },
-    { key: "profile", label: "Profile", sortable: false },
-  ],
+  contributor: [],
 };
 
 export default function MainTable({
   activeTab = "keeper",
   data = [],
+  onViewProfile,
+  userAddress,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("points");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [selectedItem, setSelectedItem] = useState<TableData | null>(
-    data.length > 0 ? data[0] : null,
-  );
+  // const [selectedItem, setSelectedItem] = useState<TableData | null>(
+  //   data.length > 0 ? data[0] : null
+  // );
   const itemsPerPage = 5;
 
   const columns = TAB_COLUMNS[activeTab as TabType] || [];
+
+  // Filter out the developer row for the current user if activeTab is 'developer'
+  const filteredData = useMemo(() => {
+    if (activeTab === "developer" && userAddress) {
+      return data.filter(
+        (item) => item.address.toLowerCase() !== userAddress.toLowerCase(),
+      );
+    }
+    return data;
+  }, [data, activeTab, userAddress]);
 
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -86,7 +91,7 @@ export default function MainTable({
   };
 
   const sortedAndPaginatedData = useMemo(() => {
-    const sorted = [...data].sort((a, b) => {
+    const sorted = [...filteredData].sort((a, b) => {
       const aValue = a[sortField as keyof typeof a];
       const bValue = b[sortField as keyof typeof b];
 
@@ -101,19 +106,28 @@ export default function MainTable({
 
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sorted.slice(startIndex, startIndex + itemsPerPage);
-  }, [data, sortField, sortDirection, currentPage]);
+  }, [filteredData, sortField, sortDirection, currentPage]);
 
-  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
-  const handleRowClick = (item: TableData) => {
-    setSelectedItem(item);
-  };
+  const truncateAddress = useTruncateAddress();
+
+  const highlightedData = useMemo(() => {
+    if (!userAddress) return null;
+    return data.find(
+      (item) => item.address.toLowerCase() === userAddress.toLowerCase(),
+    );
+  }, [data, userAddress]);
+
+  // const handleRowClick = (item: TableData) => {
+  //   setSelectedItem(item);
+  // };
 
   return (
     <>
-      {selectedItem && (
+      {highlightedData && (
         <div className="mb-6">
-          <HighlightedData data={selectedItem} type={activeTab as TabType} />
+          <HighlightedData data={highlightedData} type={activeTab as TabType} />
         </div>
       )}
 
@@ -121,7 +135,7 @@ export default function MainTable({
       <MainContainer
         className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
       >
-        {data.length === 0 ? (
+        {filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
         ) : (
           <Table>
@@ -155,14 +169,22 @@ export default function MainTable({
               {sortedAndPaginatedData.map((item) => (
                 <TableRow
                   key={item.id}
-                  className=""
-                  onClick={() => handleRowClick(item)}
+                  className={
+                    userAddress &&
+                    item.address.toLowerCase() === userAddress.toLowerCase()
+                      ? "!bg-yellow-100/20 !border-yellow-300"
+                      : ""
+                  }
+                  // onClick={() => handleRowClick(item)}
                 >
-                  <TableCell className="px-6 py-4">
-                    <Typography variant="body" color="primary" align="left">
-                      {item.name}
-                    </Typography>
-                  </TableCell>
+                  {/* Only show name for keeper tab */}
+                  {activeTab === "keeper" && (
+                    <TableCell className="px-6 py-4">
+                      <Typography variant="body" color="primary" align="left">
+                        {item.name}
+                      </Typography>
+                    </TableCell>
+                  )}
                   <TableCell className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Typography
@@ -171,41 +193,57 @@ export default function MainTable({
                         align="left"
                         className="font-mono"
                       >
-                        {item.address}
+                        {truncateAddress(item.address)}
                       </Typography>
                       <CopyButton text={item.address} />
                     </div>
                   </TableCell>
-                  {columns.slice(2, -1).map((column) => (
-                    <TableCell key={column.key} className="px-6 py-4">
+                  {columns
+                    .slice(
+                      activeTab === "keeper" ? 2 : 1,
+                      columns.length - (activeTab === "keeper" ? 1 : 0),
+                    )
+                    .map((column) => (
+                      <TableCell key={column.key} className="px-6 py-4">
+                        <Typography
+                          variant="body"
+                          color="primary"
+                          align="left"
+                          className={
+                            column.key === "points"
+                              ? "bg-[#F8FF7C] px-3 py-1 rounded-full text-black w-[90px] text-center "
+                              : ""
+                          }
+                        >
+                          {column.key === "points"
+                            ? Number(
+                                item[column.key as keyof typeof item],
+                              ).toFixed(2)
+                            : item[column.key as keyof typeof item]}
+                        </Typography>
+                      </TableCell>
+                    ))}
+                  {/* Only show profile for keeper tab */}
+                  {activeTab === "keeper" && (
+                    <TableCell className="px-6 py-4">
                       <Typography
                         variant="body"
                         color="primary"
                         align="left"
-                        className={
-                          column.key === "points"
-                            ? "bg-[#F8FF7C] px-3 py-1 rounded-full text-black w-[90px] text-center "
-                            : ""
-                        }
+                        className="underline underline-offset-2"
                       >
-                        {column.key === "points"
-                          ? Number(
-                              item[column.key as keyof typeof item],
-                            ).toFixed(2)
-                          : item[column.key as keyof typeof item]}
+                        <span
+                          className="cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onViewProfile) onViewProfile(item.address);
+                          }}
+                        >
+                          View
+                        </span>
                       </Typography>
                     </TableCell>
-                  ))}
-                  <TableCell className="px-6 py-4">
-                    <Typography
-                      variant="body"
-                      color="primary"
-                      align="left"
-                      className="underline underline-offset-2"
-                    >
-                      View
-                    </Typography>
-                  </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -217,7 +255,7 @@ export default function MainTable({
       <MainContainer
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
-        {data.length === 0 ? (
+        {filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
         ) : (
           <MobileTableGrid
@@ -226,7 +264,7 @@ export default function MainTable({
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
-            onItemClick={handleRowClick}
+            // onItemClick={handleRowClick}
           />
         )}
       </MainContainer>

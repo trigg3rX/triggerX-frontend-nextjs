@@ -22,7 +22,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         placeholder={placeholder}
         value={searchTerm}
         onChange={onSearchChange}
-        className="bg-[#181818] text-[#EDEDED] border border-[#A2A2A2] placeholder-[#A2A2A2] rounded-l-full px-4 sm:px-6 py-3 focus:outline-none text-sm sm:text-base xl:text-lg shadow-none w-full sm:w-auto"
+        className="bg-[#181818] text-[#EDEDED] border border-[#A2A2A2] placeholder-[#A2A2A2] rounded-l-full px-6 sm:px-6 py-3 focus:outline-none text-sm sm:text-base xl:text-lg shadow-none w-full sm:w-auto"
       />
       <button
         onClick={onClearSearch}
