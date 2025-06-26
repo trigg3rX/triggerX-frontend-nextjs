@@ -10,7 +10,7 @@ import { Typography } from "../ui/Typography";
 
 export const CreateJobLayout: React.FC = () => {
   return (
-    <JobProvider>
+    <JobProvider templates={templatesData.templates}>
       <>
         <div className="w-[90%] mx-auto text-wrap">
           <Typography variant="h1">Create Automation Job</Typography>

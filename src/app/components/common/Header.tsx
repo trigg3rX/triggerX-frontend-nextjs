@@ -9,6 +9,7 @@ import MobileMenu from "./header/MobileMenu";
 import { HoverHighlight } from "./HoverHighlight";
 import { LogoLink } from "./header/LogoLink";
 import { LandingImage } from "./header/LandingImage";
+import BalanceDisplay from "../ui/BalanceDisplay";
 
 const navItems = [
   { href: "/devhub", label: "Dev Hub" },
@@ -109,7 +110,7 @@ const Header: React.FC = () => {
               accountStatus="address"
               showBalance={false}
             />
-            {/* <BalanceDisplay /> */}
+            <BalanceDisplay />
           </div>
         </div>
       ) : (

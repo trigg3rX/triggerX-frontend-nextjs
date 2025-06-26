@@ -29,7 +29,7 @@ export const useFormKeyboardNavigation = () => {
 
     // Cache the selector for better performance
     const focusableSelector =
-      'input:not([type="submit"]), select, button:not([type="submit"]), [tabindex]:not([tabindex="-1"]), [role="button"]';
+      'input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]):not([readonly]):not([disabled])';
 
     // Use Set for O(1) lookup performance
     const focusableElements = new Set<FocusableElement>(

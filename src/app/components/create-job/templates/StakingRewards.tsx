@@ -1,178 +1,750 @@
-import React, { useState } from "react";
-import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
-
+import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import { useAccount, useBalance } from "wagmi";
+import { Typography } from "../../ui/Typography";
+import { Card } from "../../ui/Card";
+import { Button } from "../../ui/Button";
+import Banner from "../../ui/Banner";
+import { TextInput } from "../../ui/TextInput";
+import TransactionModal from "./components/TransactionModal";
 import TemplateInfoSection from "./components/TemplateInfoSection";
+import StakingRewardsABI from "@/artifacts/StakingReword.json";
+import ERC20ABI from "@/artifacts/ERC20.json";
+import { toast } from "react-hot-toast";
+import ClaimEth from "./components/ClaimEth";
+import { WalletConnectionCard } from "../../common/WalletConnectionCard";
+import {
+  FaBolt,
+  FaDatabase,
+  FaRegAddressCard,
+  FaCode,
+  FaLink,
+  FaRegDotCircle,
+} from "react-icons/fa";
+import ShortAddress from "@/app/components/ui/ShortAddress";
+import CopyButton from "@/app/components/ui/CopyButton";
+
+const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_STAKER_TOKEN_ADDRESS;
+const STAKE_REWARD_CONTRACT_ADDRESS =
+  process.env.NEXT_PUBLIC_STAKING_REWARD_CONTRACT_ADDRESS;
+const THRESHOLD = "10";
+const jobConfig = {
+  jobType: "Event Based (2)",
+  argType: "static",
+  targetContractAddress: "0xfF97e83B212fC5d536B0bB26d7d8a266C93FF861",
+  targetFunction: "distributeNFTRewards",
+  triggerContractAddress: "0xfF97e83B212fC5d536B0bB26d7d8a266C93FF861",
+  triggerEvent: "ThresholdReached(uint256,uint256)",
+  abi: {
+    inputs: [],
+    name: "distributeNFTRewards",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+};
+
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on: (event: string, handler: (...args: unknown[]) => void) => void;
+  removeAllListeners: (event: string) => void;
+}
 
 const StakingRewards = () => {
-  const { isConnected } = useWalletConnectionContext();
+  const { address, isConnected } = useAccount();
+  const { data: balanceData, refetch: refetchBalance } = useBalance(
+    address ? { address } : {},
+  );
+  const { data: tokenBalanceData, refetch: refetchTokenBalance } = useBalance(
+    address && TOKEN_ADDRESS
+      ? { address, token: TOKEN_ADDRESS as `0x${string}` }
+      : {},
+  );
+  const { triggerBalanceRefresh } = { triggerBalanceRefresh: () => {} }; // Replace with your wallet context if needed
+  const [showModal, setShowModal] = useState(false);
+  const [showTokenClaimModal, setShowTokenClaimModal] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [modalData, setModalData] = useState({
+    amount: "0.00",
+    networkFee: "$0.00",
+    speed: "0 sec",
+    token: "",
+    contractAddress: "",
+    contractMethod: "",
+  });
+  const [hasSufficientBalance, setHasSufficientBalance] = useState(false);
+  const [hasSufficientTokenBalance, setHasSufficientTokenBalance] =
+    useState(false);
+  const [tokenBalance, setTokenBalance] = useState("0");
+  const [stakedAmount, setStakedAmount] = useState("0");
+  const [totalStaked, setTotalStaked] = useState("0");
+  const [nextThreshold, setNextThreshold] = useState("0");
+  const [isClaimingToken, setIsClaimingToken] = useState(false);
+  const [isStaking, setIsStaking] = useState(false);
+  const [isUnstaking, setIsUnstaking] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [chainId, setChainId] = useState<bigint | null>(null);
+  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [stakeAmount, setStakeAmount] = useState("");
+  const [unstakeAmount, setUnstakeAmount] = useState("");
+  const [stakingContract, setStakingContract] =
+    useState<ethers.Contract | null>(null);
+  const [tokenContract, setTokenContract] = useState<ethers.Contract | null>(
+    null,
+  );
+  const [hasNFT, setHasNFT] = useState(false);
 
-  // Local state for balances, modal, and loading
-  const [hasSufficientBalance] = useState(true);
-  const [hasSufficientTokenBalance] = useState(false);
-  const [isClaimingToken] = useState(false);
+  const stakingInfoCards = [
+    {
+      title: "Your Staked Amount",
+      value: `${parseFloat(stakedAmount).toFixed(2)} Tokens`,
+      valueClass: "text-[#F8FF7C]",
+    },
+    {
+      title: "Total Staked",
+      value: `${parseFloat(totalStaked).toFixed(2)} Tokens`,
+      valueClass: "text-[#77E8A3]",
+    },
+    {
+      title: "NFT Reward",
+      value: hasNFT ? (
+        <span className="text-[#77E8A3]">Received ✓</span>
+      ) : (
+        <span className="text-[#A2A2A2]">Not Yet</span>
+      ),
+      valueClass: "",
+    },
+    {
+      title: "Threshold for NFT Reward",
+      value: `${THRESHOLD} STK`,
+      valueClass: "text-[#77E8A3]",
+    },
+    {
+      title: "Next Threshold for Reward Distribution",
+      value: `${parseFloat(nextThreshold).toFixed(2)} Tokens`,
+      valueClass: "text-[#77E8A3]",
+    },
+  ];
 
-  // Placeholder for network check
-  const isOptimismSepoliaNetwork = () => true;
+  const jobConfigCards = [
+    {
+      key: "jobType",
+      parameter: "Job Type",
+      value: jobConfig.jobType,
+      icon: <FaBolt className="text-[#F8FF7C] text-lg mr-2" />,
+    },
+    {
+      key: "argType",
+      parameter: "Arg Type",
+      value: jobConfig.argType,
+      icon: <FaDatabase className="text-[#77E8A3] text-lg mr-2" />,
+    },
+    {
+      key: "targetContractAddress",
+      parameter: "Target Contract Address",
+      value: jobConfig.targetContractAddress,
+      isAddress: true,
+      icon: <FaRegAddressCard className="text-[#F8FF7C] text-lg mr-2" />,
+    },
+    {
+      key: "targetFunction",
+      parameter: "Target Function",
+      value: jobConfig.targetFunction,
+      icon: <FaCode className="text-[#F8FF7C] text-lg mr-2" />,
+    },
+    {
+      key: "triggerContractAddress",
+      parameter: "Trigger Contract Address",
+      value: jobConfig.triggerContractAddress,
+      isAddress: true,
+      icon: <FaLink className="text-[#A259FF] text-lg mr-2" />,
+    },
+    {
+      key: "triggerEvent",
+      parameter: "Trigger Event",
+      value: jobConfig.triggerEvent,
+      icon: <FaRegDotCircle className="text-[#A259FF] text-lg mr-2" />,
+    },
+  ];
 
-  // Placeholder handlers
-  const showStakeTokenClaimModal = () => {};
+  const handleStake = async () => {
+    if (!signer || !address) {
+      toast.error("Wallet not connected");
+      setIsStaking(false);
+      return;
+    }
+    if (
+      !stakeAmount ||
+      isNaN(Number(stakeAmount)) ||
+      parseFloat(stakeAmount) <= 0
+    ) {
+      toast.error("Please enter a valid amount to stake");
+      setIsStaking(false);
+      return;
+    }
+    if (parseFloat(stakeAmount) > parseFloat(tokenBalance)) {
+      toast.error(`You can only stake up to ${tokenBalance} tokens`);
+      setIsStaking(false);
+      return;
+    }
+    if (chainId !== BigInt(11155420)) {
+      toast.error("Please switch to Optimism Sepolia network");
+      setIsStaking(false);
+      return;
+    }
+    setIsStaking(true);
+    try {
+      if (!STAKE_REWARD_CONTRACT_ADDRESS)
+        throw new Error("Staking contract address not set");
+      const stakingContract = new ethers.Contract(
+        STAKE_REWARD_CONTRACT_ADDRESS,
+        StakingRewardsABI.abi,
+        signer,
+      );
+      const approved = await approveTokens(stakeAmount);
+      if (!approved) {
+        setIsStaking(false);
+        return;
+      }
+      const amount = ethers.parseEther(stakeAmount);
+      const tx = await stakingContract.stake(amount);
+      await tx.wait();
+      setStakeAmount("");
+      await refetchTokenBalance();
+      await refreshStakingData();
+    } catch (err: unknown) {
+      let errorMessage = (err as { reason?: string }).reason || "Unknown error";
+      if (
+        typeof errorMessage === "string" &&
+        errorMessage.includes("rejected")
+      ) {
+        errorMessage = "Transaction rejected by user";
+      } else if ((err as { code?: string }).code === "INSUFFICIENT_FUNDS") {
+        errorMessage = "Insufficient gas funds";
+      }
+      toast.error(errorMessage);
+    } finally {
+      setIsStaking(false);
+    }
+  };
+
+  const handleUnstake = async () => {
+    if (!signer || !address) {
+      toast.error("Wallet not connected");
+      setIsUnstaking(false);
+      return;
+    }
+    if (
+      !unstakeAmount ||
+      isNaN(Number(unstakeAmount)) ||
+      parseFloat(unstakeAmount) <= 0
+    ) {
+      toast.error("Please enter a valid amount to unstake");
+      setIsUnstaking(false);
+      return;
+    }
+    if (parseFloat(unstakeAmount) > parseFloat(stakedAmount)) {
+      toast.error(`You can only unstake up to ${stakedAmount} tokens`);
+      setIsUnstaking(false);
+      return;
+    }
+    if (chainId !== BigInt(11155420)) {
+      toast.error("Please switch to Optimism Sepolia network");
+      setIsUnstaking(false);
+      return;
+    }
+    setIsUnstaking(true);
+    try {
+      if (!STAKE_REWARD_CONTRACT_ADDRESS)
+        throw new Error("Staking contract address not set");
+      const stakingContract = new ethers.Contract(
+        STAKE_REWARD_CONTRACT_ADDRESS,
+        StakingRewardsABI.abi,
+        signer,
+      );
+      const amount = ethers.parseEther(unstakeAmount);
+      const tx = await stakingContract.unstake(amount);
+      await tx.wait();
+      setUnstakeAmount("");
+      await refetchTokenBalance();
+      await refreshStakingData();
+    } catch (err: unknown) {
+      let errorMessage = (err as { reason?: string }).reason || "Unknown error";
+      if (
+        typeof errorMessage === "string" &&
+        errorMessage.includes("rejected")
+      ) {
+        errorMessage = "Transaction rejected by user";
+      } else if ((err as { code?: string }).code === "INSUFFICIENT_FUNDS") {
+        errorMessage = "Insufficient gas funds";
+      }
+      toast.error(errorMessage);
+    } finally {
+      setIsUnstaking(false);
+    }
+  };
+
+  const stakeUnstakeCards = [
+    {
+      title: "Stake Tokens",
+      inputValue: stakeAmount,
+      onInputChange: setStakeAmount,
+      inputPlaceholder: "Amount to stake",
+      inputType: "number" as const,
+      button: {
+        color: "yellow" as const,
+        onClick: handleStake,
+        disabled:
+          !isInitialized ||
+          isStaking ||
+          !stakeAmount ||
+          !hasSufficientTokenBalance ||
+          !hasSufficientBalance,
+        text: isApproving ? "Approving..." : isStaking ? "Staking..." : "Stake",
+      },
+      info: (
+        <>
+          Available: <span className="text-[#F8FF7C]">{tokenBalance} STK</span>
+        </>
+      ),
+    },
+    {
+      title: "Unstake Tokens",
+      inputValue: unstakeAmount,
+      onInputChange: setUnstakeAmount,
+      inputPlaceholder: "Amount to unstake",
+      inputType: "number" as const,
+      button: {
+        color: "white" as const,
+        onClick: handleUnstake,
+        disabled:
+          !isInitialized ||
+          isUnstaking ||
+          !hasSufficientBalance ||
+          !unstakeAmount ||
+          parseFloat(stakedAmount) <= 0 ||
+          parseFloat(unstakeAmount) > parseFloat(stakedAmount),
+        text: isUnstaking ? "Unstaking..." : "Unstake",
+      },
+      info: (
+        <>
+          Staked: <span className="text-[#F8FF7C]">{stakedAmount} STK</span>
+        </>
+      ),
+    },
+  ];
+
+  useEffect(() => {
+    const refetchBalances = async () => {
+      await Promise.all([refetchBalance(), refetchTokenBalance()]);
+    };
+    refetchBalances();
+  }, [triggerBalanceRefresh, refetchBalance, refetchTokenBalance, address]);
+
+  useEffect(() => {
+    if (balanceData && tokenBalanceData) {
+      const balance = balanceData.value;
+      const tokenBalance = tokenBalanceData.value;
+      const requiredBalance = ethers.parseEther("0.02");
+      const requiredTokenBalance = ethers.parseEther("1");
+      setTokenBalance(Number(ethers.formatEther(tokenBalance)).toFixed(2));
+      setHasSufficientBalance(balance >= requiredBalance);
+      setHasSufficientTokenBalance(tokenBalance >= requiredTokenBalance);
+    }
+  }, [balanceData, tokenBalanceData]);
+
+  useEffect(() => {
+    if (signer && address) {
+      try {
+        if (STAKE_REWARD_CONTRACT_ADDRESS && TOKEN_ADDRESS && signer) {
+          const stakingContract = new ethers.Contract(
+            STAKE_REWARD_CONTRACT_ADDRESS,
+            StakingRewardsABI.abi,
+            signer,
+          );
+          const tokenContract = new ethers.Contract(
+            TOKEN_ADDRESS,
+            ERC20ABI.abi,
+            signer,
+          );
+          setStakingContract(stakingContract);
+          setTokenContract(tokenContract);
+          fetchStakingData(stakingContract, address);
+        }
+      } catch (error) {
+        console.error("Error initializing contracts:", error);
+      }
+    }
+  }, [signer, address]);
+
+  useEffect(() => {
+    if (!stakingContract || !address) return;
+    const interval = setInterval(() => {
+      fetchStakingData(stakingContract, address);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [stakingContract, address]);
+
+  useEffect(() => {
+    const initProvider = async () => {
+      if (
+        typeof window !== "undefined" &&
+        (window as { ethereum?: EthereumProvider }).ethereum
+      ) {
+        try {
+          if (isConnected && address) {
+            const provider = new ethers.BrowserProvider(
+              (window as { ethereum: EthereumProvider }).ethereum,
+            );
+            const signer = await provider.getSigner();
+            let network;
+            try {
+              network = await provider.getNetwork();
+            } catch {
+              network = { chainId: 11155420 };
+            }
+            setSigner(signer);
+            setChainId(BigInt(network.chainId));
+            setIsInitialized(true);
+          } else {
+            setIsInitialized(true);
+          }
+          (window as { ethereum: EthereumProvider }).ethereum.on(
+            "chainChanged",
+            (chainIdHex: unknown) => {
+              try {
+                if (typeof chainIdHex === "string") {
+                  const newChainId = BigInt(parseInt(chainIdHex, 16));
+                  setChainId(newChainId);
+                }
+                setTimeout(() => {}, 1000);
+              } catch (err) {
+                console.error("Error handling chain change:", err);
+              }
+            },
+          );
+        } catch {
+          setSigner(null);
+          setChainId(null);
+          setIsInitialized(false);
+        }
+      } else {
+        setIsInitialized(false);
+      }
+    };
+    initProvider();
+    return () => {
+      if (
+        typeof window !== "undefined" &&
+        (window as { ethereum?: EthereumProvider }).ethereum
+      ) {
+        (window as { ethereum: EthereumProvider }).ethereum.removeAllListeners(
+          "chainChanged",
+        );
+      }
+    };
+  }, [isConnected, address]);
+
+  const fetchStakingData = async (
+    contract: ethers.Contract,
+    userAddress: string,
+  ) => {
+    if (!contract || !userAddress) return;
+    try {
+      const userStaked = await contract.getStakedAmount(userAddress);
+      setStakedAmount(ethers.formatEther(userStaked));
+      const total = await contract.getTotalStaked();
+      setTotalStaked(ethers.formatEther(total));
+      const hasReceivedNFT = await contract.hasReceivedNFT(userAddress);
+      setHasNFT(hasReceivedNFT);
+      const modulusThreshold =
+        Number(ethers.formatEther(total)) % Number(THRESHOLD);
+      const nextThreshold = Number(THRESHOLD) - modulusThreshold;
+      setNextThreshold(nextThreshold.toString());
+    } catch (err) {
+      console.error("Error fetching staking data:", err);
+    }
+  };
+
+  const refreshStakingData = async () => {
+    if (stakingContract && address) {
+      await fetchStakingData(stakingContract, address);
+    }
+  };
+
+  const showStakeTokenClaimModal = () => {
+    setModalType("claimToken");
+    setModalData({
+      amount: "1.0",
+      networkFee: "~0.005 $",
+      speed: "2 sec",
+      token: "STK",
+      contractAddress:
+        TOKEN_ADDRESS?.substring(0, 7) +
+        "..." +
+        TOKEN_ADDRESS?.substring(TOKEN_ADDRESS.length - 5),
+      contractMethod: "mint()",
+    });
+    setShowTokenClaimModal(true);
+  };
+
+  const handleConfirm = async () => {
+    setShowTokenClaimModal(false);
+    if (modalType === "claimToken") {
+      handleTokenClaim();
+    }
+  };
+
+  const handleTokenClaim = async () => {
+    if (!signer || !address || chainId !== BigInt(11155420)) {
+      toast.error("Please connect to Optimism Sepolia network");
+      return;
+    }
+    setIsClaimingToken(true);
+    try {
+      if (!tokenContract) throw new Error("Token contract not initialized");
+      const tx = await tokenContract.mint(address, ethers.parseEther("1.0"));
+      await tx.wait();
+      await refetchTokenBalance();
+
+      toast.success("Token claimed successfully!");
+    } catch (err: unknown) {
+      const message = (err as { message?: string }).message || "Unknown error";
+      if (typeof message === "string" && message.includes("rejected")) {
+        toast.error("Transaction was rejected");
+      } else {
+        toast.error(message);
+      }
+    } finally {
+      setShowTokenClaimModal(false);
+      setIsClaimingToken(false);
+    }
+  };
+
+  const approveTokens = async (amount: string) => {
+    if (!signer || !address || !TOKEN_ADDRESS) return false;
+    try {
+      setIsApproving(true);
+      const tokenContract = new ethers.Contract(
+        TOKEN_ADDRESS,
+        ERC20ABI.abi,
+        signer,
+      );
+      const approvalAmount = ethers.parseEther(amount);
+      const allowance = await tokenContract.allowance(
+        address,
+        STAKE_REWARD_CONTRACT_ADDRESS,
+      );
+      if (allowance < approvalAmount) {
+        const tx = await tokenContract.approve(
+          STAKE_REWARD_CONTRACT_ADDRESS,
+          ethers.parseEther("1000000"),
+        );
+        await tx.wait();
+        toast.success("Token approval successful!");
+        return true;
+      }
+      return true;
+    } catch (err: unknown) {
+      const message = (err as { message?: string }).message || "Unknown error";
+      if (typeof message === "string" && message.includes("rejected")) {
+        toast.error("Approval rejected by user");
+      } else {
+        toast.error("Failed to approve tokens: " + message);
+      }
+      return false;
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const isOptimismSepoliaNetwork = () => chainId === BigInt(11155420);
 
   return (
-    <div className=" ">
-      <div className="max-w-[1600px] mx-auto ">
-        {/* Static Content */}
-        <TemplateInfoSection
-          title="StakingReward Template"
-          description="Stake ERC20 tokens and earn rewards based on your participation. Once the staking threshold is reached, you'll automatically receive Reward NFTs and points. No manual setup required—the job will be auto-created for you."
-          steps={[
-            "Claim Tokens - Click to receive ERC20 tokens.",
-            "Choose Action - Select 'Stake' or 'Unstake.'",
-            "Stake - Enter amount to lock tokens.",
-            "Unstake - Only if you've staked before.",
-            "Job Auto-Created - TriggerX creates the job based on your stake status.",
-            "Earn Rewards - Receive NFTs + points once the threshold is met.",
-          ]}
-        />
+    <div className="space-y-8">
+      <TemplateInfoSection
+        title="StakingReward Template"
+        description="Stake ERC20 tokens and earn rewards based on your participation. Once the staking threshold is reached, you'll automatically receive Reward NFTs and points. No manual setup required—the job will be auto-created for you."
+        steps={[
+          "Claim Tokens - Click to receive ERC20 tokens.",
+          "Choose Action - Select 'Stake' or 'Unstake.'",
+          "Stake - Enter amount to lock tokens.",
+          "Unstake - Only if you've staked before.",
+          "Job Auto-Created - TriggerX creates the job based on your stake status.",
+          "Earn Rewards - Receive NFTs + points once the threshold is met.",
+        ]}
+      />
+      <WalletConnectionCard className="mt-4" />
 
-        {/* Network Warning */}
-        {isConnected && !isOptimismSepoliaNetwork() && (
-          <div className="bg-gradient-to-br from-black/40 to-white/5 border border-white/10 p-3 sm:p-5 rounded-xl mt-4 sm:mt-6">
-            <div className="flex items-center mb-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mr-2"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-              <p className="text-sm sm:text-base text-yellow-400">
-                Please switch to Optimism Sepolia network to claim tokens.
-              </p>
-            </div>
-            <p className="text-xs sm:text-sm text-[#A2A2A2] ml-6 sm:ml-7">
-              Make sure you&apos;re connected to the correct network in your
-              wallet.
-            </p>
-          </div>
-        )}
+      {isConnected && !isOptimismSepoliaNetwork() && (
+        <Banner>
+          Please switch to Optimism Sepolia network to claim tokens.
+        </Banner>
+      )}
 
-        {/* Conditional Content - Only show if not connected or on the correct network */}
-        {(!isConnected || isOptimismSepoliaNetwork()) && (
-          <>
-            <div className="rounded-xl ">
-              <div className="text-[#A2A2A2]">
-                {!isConnected ? (
-                  <div className="flex flex-col items-center justify-center h-[150px] sm:h-[200px] text-[#A2A2A2] my-3">
-                    <svg
-                      width="38"
-                      height="38"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="mb-3"
+      {isConnected && hasSufficientBalance ? (
+        !hasSufficientTokenBalance && (
+          <Button color="purple" onClick={showStakeTokenClaimModal}>
+            {isClaimingToken ? "Claiming..." : "Claim Token"}
+          </Button>
+        )
+      ) : (
+        <ClaimEth />
+      )}
+
+      {isConnected && hasSufficientBalance && !hasSufficientTokenBalance && (
+        <Banner>You need to claim tokens before staking them.</Banner>
+      )}
+      {isConnected && !hasSufficientBalance && (
+        <Banner>You need to claim ETH before Stake/Unstake Tokens.</Banner>
+      )}
+
+      {isConnected && (
+        <>
+          {stakingContract && (
+            <Card>
+              <Typography variant="h2" align="left" className="mb-6">
+                Staking Reward Information
+              </Typography>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                {stakingInfoCards.map((item) => (
+                  <Card variant="soft" key={item.title}>
+                    <Typography
+                      variant="h3"
+                      align="left"
+                      className="mb-3 text-wrap"
                     >
-                      <path
-                        d="M12 17C12.2833 17 12.521 16.904 12.713 16.712C12.905 16.52 13.0007 16.2827 13 16C12.9993 15.7173 12.9033 15.48 12.712 15.288C12.5207 15.096 12.2833 15 12 15C11.7167 15 11.4793 15.096 11.288 15.288C11.0967 15.48 11.0007 15.7173 11 16C10.9993 16.2827 11.0953 16.5203 11.288 16.713C11.4807 16.9057 11.718 17.0013 12 17ZM12 13C12.2833 13 12.521 12.904 12.713 12.712C12.905 12.52 13.0007 12.2827 13 12V8C13 7.71667 12.904 7.47933 12.712 7.288C12.52 7.09667 12.2827 7.00067 12 7C11.7173 6.99933 11.48 7.09533 11.288 7.288C11.096 7.48067 11 7.718 11 8V12C11 12.2833 11.096 12.521 11.288 12.713C11.48 12.905 11.7173 13.0007 12 13ZM12 22C10.6167 22 9.31667 21.7373 8.1 21.212C6.88334 20.6867 5.825 19.9743 4.925 19.075C4.025 18.1757 3.31267 17.1173 2.788 15.9C2.26333 14.6827 2.00067 13.3827 2 12C1.99933 10.6173 2.262 9.31733 2.788 8.1C3.314 6.88267 4.02633 5.82433 4.925 4.925C5.82367 4.02567 6.882 3.31333 8.1 2.788C9.318 2.26267 10.618 2 12 2C13.382 2 14.682 2.26267 15.9 2.788C17.118 3.31333 18.1763 4.02567 19.075 4.925C19.9737 5.82433 20.6863 6.88267 21.213 8.1C21.7397 9.31733 22.002 10.6173 22 12C21.998 13.3827 21.7353 14.6827 21.212 15.9C20.6887 17.1173 19.9763 18.1757 19.075 19.075C18.1737 19.9743 17.1153 20.687 15.9 21.213C14.6847 21.739 13.3847 22.0013 12 22Z"
-                        fill="#A2A2A2"
-                      />
-                    </svg>
-                    <p className="text-sm sm:text-lg mb-2">
-                      Wallet Not Connected
-                    </p>
-                    <p className="text-sm sm:text-base text-center text-[#666666] mb-4 tracking-wide">
-                      Please connect your wallet to interact with the contract
-                    </p>
-                  </div>
-                ) : (
-                  <div className="">
-                    <div className="flex flex-wrap gap-4">
-                      {hasSufficientBalance ? (
-                        !hasSufficientTokenBalance && (
-                          <button
-                            onClick={showStakeTokenClaimModal}
-                            className="bg-[#C07AF6] text-white lg:px-8 lg:py-3 px-4 py-2 my-5 rounded-full transition-all text-md lg:text-lg flex items-center hover:bg-[#B15AE6] hover:shadow-md hover:shadow-[#C07AF6]/20 hover:-translate-y-0.5"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-5 w-5 mr-2"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            {isClaimingToken ? "Claiming..." : "Claim Token"}
-                          </button>
-                        )
-                      ) : (
-                        <></>
-                      )}
-                    </div>
-                    {!hasSufficientBalance && (
-                      <span className="bg-[#141414] backdrop-blur-xl rounded-2xl p-5 border border-white/10  space-y-8 flex items-start justify-start gap-2 text-sm sm:text-base tracking-wide">
-                        <div className="mb-1">
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 16 16"
-                            fill=""
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M14 8C14 4.6875 11.3125 2 8 2C4.6875 2 2 4.6875 2 8C2 11.3125 4.6875 14 8 14C11.3125 14 14 11.3125 14 8Z"
-                              stroke="#A2A2A2"
-                              strokeMiterlimit="10"
-                            />
-                            <path
-                              d="M11.4124 9.78125C10.9021 9.17687 10.5418 8.92281 10.5418 7.25625C10.5418 5.72937 9.73618 5.18656 9.07305 4.92281C9.02733 4.90371 8.98609 4.87528 8.95197 4.83933C8.91786 4.80339 8.89162 4.76072 8.87493 4.71406C8.75899 4.33125 8.43368 4 7.99993 4C7.56618 4 7.24024 4.33125 7.12493 4.71438C7.10836 4.76105 7.0822 4.80374 7.04813 4.8397C7.01406 4.87565 6.97284 4.90407 6.92712 4.92312C6.26337 5.1875 5.45837 5.72938 5.45837 7.25656C5.45837 8.92313 5.09774 9.17719 4.58743 9.78156C4.37587 10.0316 4.56712 10.5003 4.93712 10.5003H11.0624C11.4302 10.5 11.6231 10.0312 11.4124 9.78125ZM6.88243 11C6.86485 10.9999 6.84745 11.0035 6.83136 11.0106C6.81527 11.0177 6.80085 11.0281 6.78906 11.0411C6.77726 11.0542 6.76835 11.0695 6.7629 11.0863C6.75745 11.103 6.75558 11.1206 6.75743 11.1381C6.82774 11.7231 7.34712 12 7.99993 12C8.64587 12 9.16055 11.7141 9.2393 11.14C9.24144 11.1224 9.23979 11.1045 9.23447 11.0875C9.22915 11.0706 9.22028 11.055 9.20845 11.0417C9.19662 11.0285 9.18211 11.0179 9.16588 11.0107C9.14964 11.0035 9.13206 10.9999 9.1143 11H6.88243Z"
-                              fill="#A2A2A2"
-                            />
-                          </svg>
-                        </div>
-                        You need to claim ETH before Stake/Unstake Tokens.
-                      </span>
-                    )}
-                    {hasSufficientBalance && !hasSufficientTokenBalance && (
-                      <span className="bg-[#141414] backdrop-blur-xl rounded-2xl p-5 border border-white/10  space-y-8 flex items-start justify-start gap-2 text-sm sm:text-base tracking-wide">
-                        <div className="mb-1">
-                          <svg
-                            width="22"
-                            height="22"
-                            viewBox="0 0 16 16"
-                            fill=""
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              d="M14 8C14 4.6875 11.3125 2 8 2C4.6875 2 2 4.6875 2 8C2 11.3125 4.6875 14 8 14C11.3125 14 14 11.3125 14 8Z"
-                              stroke="#A2A2A2"
-                              strokeMiterlimit="10"
-                            />
-                            <path
-                              d="M11.4124 9.78125C10.9021 9.17687 10.5418 8.92281 10.5418 7.25625C10.5418 5.72937 9.73618 5.18656 9.07305 4.92281C9.02733 4.90371 8.98609 4.87528 8.95197 4.83933C8.91786 4.80339 8.89162 4.76072 8.87493 4.71406C8.75899 4.33125 8.43368 4 7.99993 4C7.56618 4 7.24024 4.33125 7.12493 4.71438C7.10836 4.76105 7.0822 4.80374 7.04813 4.8397C7.01406 4.87565 6.97284 4.90407 6.92712 4.92312C6.26337 5.1875 5.45837 5.72938 5.45837 7.25656C5.45837 8.92313 5.09774 9.17719 4.58743 9.78156C4.37587 10.0316 4.56712 10.5003 4.93712 10.5003H11.0624C11.4302 10.5 11.6231 10.0312 11.4124 9.78125ZM6.88243 11C6.86485 10.9999 6.84745 11.0035 6.83136 11.0106C6.81527 11.0177 6.80085 11.0281 6.78906 11.0411C6.77726 11.0542 6.76835 11.0695 6.7629 11.0863C6.75745 11.103 6.75558 11.1206 6.75743 11.1381C6.82774 11.7231 7.34712 12 7.99993 12C8.64587 12 9.16055 11.7141 9.2393 11.14C9.24144 11.1224 9.23979 11.1045 9.23447 11.0875C9.22915 11.0706 9.22028 11.055 9.20845 11.0417C9.19662 11.0285 9.18211 11.0179 9.16588 11.0107C9.14964 11.0035 9.13206 10.9999 9.1143 11H6.88243Z"
-                              fill="#A2A2A2"
-                            />
-                          </svg>
-                        </div>
-                        You need to claim tokens before staking them.
-                      </span>
-                    )}
-                  </div>
-                )}
+                      {item.title}
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      align="left"
+                      className={`text-wrap ${item.valueClass}`.trim()}
+                    >
+                      {item.value}
+                    </Typography>
+                  </Card>
+                ))}
               </div>
-            </div>
-            {/* ...rest of the code for staking/unstaking, job config, ABI, etc. ... */}
-          </>
-        )}
-      </div>
+
+              <Card className="my-4" variant="soft">
+                <Typography variant="h2" align="left" className="mb-6">
+                  Stake/Unstake Tokens
+                </Typography>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                  {stakeUnstakeCards.map((item) => (
+                    <Card className="space-y-3 sm:space-y-4" key={item.title}>
+                      <Typography variant="h3" align="left">
+                        {item.title}
+                      </Typography>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                        <TextInput
+                          value={item.inputValue}
+                          onChange={item.onInputChange}
+                          placeholder={item.inputPlaceholder}
+                          type={item.inputType}
+                        />
+                        <Button
+                          color={item.button.color}
+                          onClick={item.button.onClick}
+                          disabled={item.button.disabled}
+                        >
+                          {item.button.text}
+                        </Button>
+                      </div>
+                      <Typography
+                        variant="body"
+                        color="secondary"
+                        align="left"
+                        className="flex items-center gap-2"
+                      >
+                        {item.info}
+                      </Typography>
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+              <Card variant="soft">
+                <Typography variant="h2" align="left" className="mb-6">
+                  Job Configuration
+                </Typography>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-5 text-base sm:text-lg ">
+                  {jobConfigCards.map((item) => (
+                    <Card key={item.key}>
+                      <div className="flex items-center mb-2 sm:mb-3">
+                        {item.icon}
+                        <Typography variant="h3" className="ml-2">
+                          {item.parameter}
+                        </Typography>
+                      </div>
+
+                      {item.isAddress ? (
+                        <div className="flex flex-col space-y-2">
+                          <Card
+                            variant="soft"
+                            className="flex items-center justify-between"
+                          >
+                            <Typography variant="h3">
+                              <ShortAddress
+                                address={item.value}
+                                className="text-[#A2A2A2]"
+                              />
+                            </Typography>
+                            <CopyButton value={item.value} />
+                          </Card>
+                        </div>
+                      ) : (
+                        <Card variant="soft">
+                          <Typography variant="h3" align="left">
+                            {item.value}
+                          </Typography>
+                        </Card>
+                      )}
+                    </Card>
+                  ))}
+
+                  <Card className="md:col-span-2">
+                    <Typography variant="h3" align="left">
+                      Contract ABI
+                    </Typography>
+
+                    <Typography variant="body" align="left" className="mb-3">
+                      The interface for the contract&apos;s distributeNFTRewards
+                      function
+                    </Typography>
+
+                    <Card
+                      variant="soft"
+                      className="flex items-start justify-between"
+                    >
+                      <pre className="text-[#A2A2A2] text-sm font-mono">
+                        {JSON.stringify(jobConfig.abi, null, 2)}
+                      </pre>
+                      <CopyButton
+                        value={JSON.stringify(jobConfig.abi, null, 2)}
+                        title="Copy ABI"
+                      />
+                    </Card>
+                  </Card>
+                </div>
+              </Card>
+            </Card>
+          )}
+        </>
+      )}
+
+      <TransactionModal
+        isOpen={showModal || showTokenClaimModal}
+        onClose={() => {
+          setShowModal(false);
+          setShowTokenClaimModal(false);
+        }}
+        onConfirm={handleConfirm}
+        modalType={modalType}
+        modalData={modalData}
+      />
     </div>
   );
 };

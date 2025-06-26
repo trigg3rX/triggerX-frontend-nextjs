@@ -1,7 +1,7 @@
 import React from "react";
 import { twMerge } from "tailwind-merge";
 
-type CardVariant = "default" | "gradient";
+type CardVariant = "default" | "gradient" | "soft";
 
 interface CardProps {
   children: React.ReactNode;
@@ -24,6 +24,7 @@ export const Card: React.FC<CardProps> = ({
     gradient: isActive
       ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white"
       : "bg-white/5 border border-white/10",
+    soft: "bg-white/5 border border-white/10 p-3 sm:p-5 rounded-lg",
   };
 
   const combinedClassName = twMerge(

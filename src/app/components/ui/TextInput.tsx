@@ -1,6 +1,7 @@
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { Typography } from "./Typography";
+import { IoIosArrowUp, IoIosArrowDown } from "react-icons/io";
 
 interface TextInputProps {
   label?: string;
@@ -14,6 +15,8 @@ interface TextInputProps {
   error?: string | null;
   onValueChange?: (value: string) => void;
   id?: string;
+  min?: number;
+  max?: number;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -28,8 +31,27 @@ export const TextInput: React.FC<TextInputProps> = ({
   error = null,
   onValueChange,
   id,
+  min,
+  max,
 }) => {
   const inputWidthClass = label ? "w-full md:w-[70%]" : "w-full";
+
+  // Internal increment/decrement for number type
+  const handleIncrement = () => {
+    if (type !== "number") return;
+    const current = Number(value) || 0;
+    const next = max !== undefined ? Math.min(current + 1, max) : current + 1;
+    onChange(next.toString());
+    if (onValueChange) onValueChange(next.toString());
+  };
+  const handleDecrement = () => {
+    if (type !== "number") return;
+    const current = Number(value) || 0;
+    const next =
+      min !== undefined ? Math.max(current - 1, min) : Math.max(current - 1, 0);
+    onChange(next.toString());
+    if (onValueChange) onValueChange(next.toString());
+  };
 
   return (
     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6 w-full">
@@ -38,7 +60,12 @@ export const TextInput: React.FC<TextInputProps> = ({
           {label}
         </Typography>
       )}
-      <div className={twMerge("flex flex-col items-start", inputWidthClass)}>
+      <div
+        className={twMerge(
+          "flex flex-col items-start relative",
+          inputWidthClass,
+        )}
+      >
         <input
           type={type}
           className={twMerge(
@@ -56,7 +83,34 @@ export const TextInput: React.FC<TextInputProps> = ({
           onFocus={onFocus}
           onBlur={onBlur}
           id={id}
+          min={min}
+          max={max}
+          onWheel={
+            type === "number"
+              ? (e) => (e.target as HTMLInputElement).blur()
+              : undefined
+          }
         />
+        {type === "number" && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col space-y-0.5 z-10">
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={handleIncrement}
+              className="p-0.5 hover:bg-white/10 rounded"
+            >
+              <IoIosArrowUp className="w-3 h-3 text-gray-400 hover:text-white text-base" />
+            </button>
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={handleDecrement}
+              className="p-0.5 hover:bg-white/10 rounded"
+            >
+              <IoIosArrowDown className="w-3 h-3 text-gray-400 hover:text-white text-base" />
+            </button>
+          </div>
+        )}
         {error && (
           <div className="text-red-500 text-xs sm:text-sm mt-2">{error}</div>
         )}

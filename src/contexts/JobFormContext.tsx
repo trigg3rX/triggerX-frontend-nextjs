@@ -234,8 +234,14 @@ export interface JobFormContextType {
   setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
   isJobCreated: boolean;
   setIsJobCreated: React.Dispatch<React.SetStateAction<boolean>>;
-  handleStakeTG: () => Promise<void>;
-  handleCreateJob: () => Promise<void>;
+  handleStakeTG: () => Promise<boolean>;
+  handleCreateJob: () => Promise<boolean>;
+  handleSetABI: (contractKey: string, value: string) => void;
+  handleSetContractDetails: (
+    contractKey: string,
+    address: string,
+    abiString: string,
+  ) => void;
 }
 
 export const JobFormContext = createContext<JobFormContextType | undefined>(
@@ -870,6 +876,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       } else {
+        console.log("inelse");
         totalFeeTG = 0.1 * executionCount;
         console.log("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
       }
@@ -880,7 +887,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const handleStakeTG = async () => {
+  const handleStakeTG = async (): Promise<boolean> => {
     setIsSubmitting(true);
 
     try {
@@ -922,16 +929,19 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       await fetchTGBalance();
 
       // After successful staking, proceed to create job
-      await handleCreateJob();
+      // await handleCreateJob();
+      return true;
     } catch (error) {
       console.error("Error staking TG:", error);
       toast.error("Error topping up TG: " + (error as Error).message);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCreateJob = async () => {
+  const handleCreateJob = async (): Promise<boolean> => {
+    setIsSubmitting(true);
     try {
       if (typeof window.ethereum === "undefined") {
         throw new Error("Please install MetaMask to use this feature");
@@ -1015,11 +1025,91 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setIsJobCreated(true);
       toast.success("Job created successfully!");
+      return true;
     } catch (error) {
       console.error("Error creating job:", error);
       toast.error("Error creating job: " + (error as Error).message);
+      setIsJobCreated(false);
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const handleSetABI = useCallback((contractKey: string, value: string) => {
+    try {
+      const parsedABI = JSON.parse(value);
+      if (Array.isArray(parsedABI)) {
+        const functions = extractFunctions(value).filter(
+          (func) =>
+            func.stateMutability === "nonpayable" ||
+            func.stateMutability === "payable",
+        );
+        const events = extractEvents(value);
+
+        setContractInteractions((prev) => ({
+          ...prev,
+          [contractKey]: {
+            ...prev[contractKey],
+            abi: value,
+            events,
+            functions,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error("Invalid ABI format:", error);
+      setContractInteractions((prev) => ({
+        ...prev,
+        [contractKey]: {
+          ...prev[contractKey],
+          abi: null,
+          events: [],
+          functions: [],
+        },
+      }));
+    }
+  }, []);
+
+  const handleSetContractDetails = useCallback(
+    (contractKey: string, address: string, abiString: string) => {
+      try {
+        const parsedABI = JSON.parse(abiString);
+        if (Array.isArray(parsedABI)) {
+          const functions = extractFunctions(abiString).filter(
+            (func) =>
+              func.stateMutability === "nonpayable" ||
+              func.stateMutability === "payable",
+          );
+          const events = extractEvents(abiString);
+
+          setContractInteractions((prev) => ({
+            ...prev,
+            [contractKey]: {
+              ...prev[contractKey],
+              address,
+              abi: abiString,
+              events,
+              functions,
+            },
+          }));
+        }
+      } catch (error) {
+        console.error("Invalid ABI format:", error);
+        setContractInteractions((prev) => ({
+          ...prev,
+          [contractKey]: {
+            ...prev[contractKey],
+            address,
+            abi: null,
+            events: [],
+            functions: [],
+          },
+        }));
+      }
+    },
+    [],
+  );
 
   return (
     <JobFormContext.Provider
@@ -1089,6 +1179,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsJobCreated,
         handleStakeTG,
         handleCreateJob,
+        handleSetABI,
+        handleSetContractDetails,
       }}
     >
       {children}

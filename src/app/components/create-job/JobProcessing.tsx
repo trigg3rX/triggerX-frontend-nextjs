@@ -1,20 +1,21 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useJobForm } from "@/contexts/JobFormContext";
 
 const steps = [
-  { id: 1, text: "Preparing data...", status: "pending" },
-  { id: 2, text: "Estimating fees...", status: "pending" },
-  { id: 3, text: "Submitting to blockchain...", status: "pending" },
-  { id: 4, text: "Finalizing...", status: "pending" },
+  { id: 1, text: "Updating Database", status: "pending" },
+  { id: 2, text: "Validating Job", status: "pending" },
+  { id: 3, text: "Calculating Fees", status: "pending" },
 ];
 
 const gridSize = 17;
 const tileSize = 24;
 
-// Public domain/free sound URLs
+// sound URLs
 // const eatSoundUrl = "https://cdn.pixabay.com/audio/2022/07/26/audio_124bfae7c7.mp3";
 // const gameOverSoundUrl = "https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b4bfa.mp3";
 
 const JobProcessing: React.FC = () => {
+  const { isSubmitting } = useJobForm();
   const [currentStep, setCurrentStep] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -28,6 +29,9 @@ const JobProcessing: React.FC = () => {
     y: number;
   }>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(
+    null,
+  );
 
   // Memoize character frames and eth image
   const characterFrames = useMemo(
@@ -49,15 +53,20 @@ const JobProcessing: React.FC = () => {
   //   const eatSound = useMemo(() => (typeof window !== "undefined" ? new window.Audio(eatSoundUrl) : null), []);
   //   const gameOverSound = useMemo(() => (typeof window !== "undefined" ? new window.Audio(gameOverSoundUrl) : null), []);
 
-  // Progress logic
+  // Step timing logic
   useEffect(() => {
-    if (
-      currentStep < steps.length &&
-      steps[currentStep].status === "completed"
-    ) {
-      setTimeout(() => setCurrentStep((prev) => prev + 1), 10000);
+    if (currentStep === 0) {
+      const timer = setTimeout(() => setCurrentStep(1), 100);
+      return () => clearTimeout(timer);
     }
-  }, [currentStep]);
+    if (currentStep === 1) {
+      const timer = setTimeout(() => setCurrentStep(2), 100);
+      return () => clearTimeout(timer);
+    }
+    if (currentStep === 2 && !isSubmitting) {
+      setCurrentStep(3);
+    }
+  }, [currentStep, isSubmitting]);
 
   // Keyboard controls
   useEffect(() => {
@@ -259,15 +268,33 @@ const JobProcessing: React.FC = () => {
     }
   };
 
-  const progressPercentage = ((currentStep + 1) / steps.length) * 100;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    setTouchStart({ x: touch.clientX, y: touch.clientY });
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStart.x;
+    const dy = touch.clientY - touchStart.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 30) setDirection("RIGHT");
+      else if (dx < -30) setDirection("LEFT");
+    } else {
+      if (dy > 30) setDirection("DOWN");
+      else if (dy < -30) setDirection("UP");
+    }
+    setTouchStart(null);
+  };
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
+      <div className="flex items-center justify-between mb-6 gap-2">
         <h3 className="text-white text-lg sm:text-xl text-center">
           Creating Job
         </h3>
-        <div className="w-full sm:w-auto">
+        <div className="w-auto">
           {currentStep < steps.length && (
             <div
               key={steps[currentStep].id}
@@ -289,7 +316,9 @@ const JobProcessing: React.FC = () => {
           <div className="h-1.5 bg-gray-500 opacity-50 rounded-full mt-2 overflow-hidden">
             <div
               className="h-full bg-[#F8FF7C] transition-all duration-500"
-              style={{ width: `${progressPercentage}%` }}
+              style={{
+                width: `${((currentStep + 1) / (steps.length + 1)) * 100}%`,
+              }}
             ></div>
           </div>
         </div>
@@ -304,32 +333,18 @@ const JobProcessing: React.FC = () => {
         />
       </div>
       {/* Mobile Controls */}
-      <div className="flex justify-center mt-2 gap-2 sm:hidden">
-        <button
-          onClick={() => setDirection("UP")}
-          className="p-1 bg-gray-300 rounded text-white text-lg"
-        >
-          ↑
-        </button>
-        <button
-          onClick={() => setDirection("LEFT")}
-          className="p-1 bg-gray-300 rounded text-white text-lg"
-        >
-          ←
-        </button>
-        <button
-          onClick={() => setDirection("DOWN")}
-          className="p-1 bg-gray-300 rounded text-white text-lg"
-        >
-          ↓
-        </button>
-        <button
-          onClick={() => setDirection("RIGHT")}
-          className="p-1 bg-gray-300 rounded text-white text-lg"
-        >
-          →
-        </button>
+      <div
+        className="flex flex-col items-center justify-center mt-4 md:hidden gap-2"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
+        {!gameStarted && (
+          <span className="text-xs text-gray-400 italic select-none">
+            Swipe to move
+          </span>
+        )}
       </div>
+
       <div className="text-white text-center py-2 text-sm sm:text-base">
         Score: {score}
       </div>

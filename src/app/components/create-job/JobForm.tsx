@@ -16,6 +16,7 @@ import networksData from "@/utils/networks.json";
 import { validateJobForm } from "./validateJobForm";
 import { useAccount } from "wagmi";
 import JobFeeModal from "./JobFeeModal";
+import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 
 const networkIcons = Object.fromEntries(
   Object.entries(networksData.networkIcons).map(([name, icon]) => [
@@ -104,9 +105,11 @@ export const JobForm: React.FC = () => {
     estimatedFee,
     isModalOpen,
     setIsModalOpen,
+    setEstimatedFee,
   } = useJobFormContext();
   const { address: userAddress } = useAccount();
   const networkId = getNetworkIdByName(selectedNetwork);
+  const { isConnected } = useWalletConnectionContext();
 
   const handleFormSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -189,9 +192,9 @@ export const JobForm: React.FC = () => {
     });
 
     // Save jobDetails for modal actions
+    setEstimatedFee(0);
     setIsModalOpen(true);
     // Start fee estimation
-
     await estimateFee(
       jobType,
       timeframeInSeconds,
@@ -212,7 +215,7 @@ export const JobForm: React.FC = () => {
       >
         <div className="space-y-8">
           <TriggerTypeSelector />
-          {jobType !== 0 && (
+          {isConnected && jobType !== 0 && (
             <>
               <Card className="space-y-8 relative z-50">
                 <JobTitleInput

@@ -1,13 +1,25 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import { Template, JobContextType } from "@/types/job";
 import { useJobNavigation } from "@/hooks/useJobNavigation";
 
+interface JobProviderProps {
+  children: React.ReactNode;
+  templates: Template[];
+}
+
 const JobContext = createContext<JobContextType | undefined>(undefined);
 
-export const JobProvider: React.FC<{ children: React.ReactNode }> = ({
+export const JobProvider: React.FC<JobProviderProps> = ({
   children,
+  templates,
 }) => {
   const [selectedJob, setSelectedJob] = useState<Template | null>(null);
   const { updateJobUrl, clearTemplateFromUrl, scrollToTemplate } =
@@ -26,6 +38,22 @@ export const JobProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedJob(null);
     clearTemplateFromUrl();
   }, [clearTemplateFromUrl]);
+
+  // On mount, check for ?template=... in the URL and select the template by id
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      const templateId = url.searchParams.get("template");
+      if (templateId && templates && templates.length > 0) {
+        const found = templates.find(
+          (t) => t.id.toLowerCase() === templateId.toLowerCase(),
+        );
+        if (found) {
+          setSelectedJob(found);
+        }
+      }
+    }
+  }, [templates]);
 
   return (
     <JobContext.Provider

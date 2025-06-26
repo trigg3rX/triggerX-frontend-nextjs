@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "../ui/Modal";
 import { FiInfo } from "react-icons/fi";
 import { Typography } from "../ui/Typography";
@@ -33,30 +33,52 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   const router = useRouter();
 
   const { address } = useAccount();
+  const prevAddress = useRef<string | undefined>(address);
+  const [topUpFailed, setTopUpFailed] = useState(false);
   const { data: ethBalance } = useBalance({
     address,
   });
+  const [jobCreateFailed, setJobCreateFailed] = useState(false);
+
+  useEffect(() => {
+    if (
+      isOpen &&
+      address &&
+      prevAddress.current &&
+      address !== prevAddress.current
+    ) {
+      setIsOpen(false);
+      setIsJobCreated(false);
+    }
+    prevAddress.current = address;
+  }, [address, isOpen, setIsJobCreated, setIsOpen]);
 
   const hasEnoughBalance = estimatedFee <= Number(userBalance);
   const requiredEth = (0.001 * estimatedFee).toFixed(4);
   const hasEnoughEthToStake =
     ethBalance && ethBalance.value >= parseEther(requiredEth);
-  const isDisabled = false; // Replace with actual logic
+  const isDisabled = false;
 
   const handleStake = async (e: React.MouseEvent) => {
     e.preventDefault();
-    try {
-      if (hasEnoughBalance) {
-        // User has enough balance, create job directly
-        await handleCreateJob();
-      } else {
-        // User needs to stake first
-        await handleStakeTG();
-      }
-    } catch (error) {
-      console.error("Error in handleStake:", error);
+    setJobCreateFailed(false);
+    if (hasEnoughBalance) {
+      const success = await handleCreateJob();
+      setJobCreateFailed(!success);
+      setTopUpFailed(false);
+    } else {
+      const success = await handleStakeTG();
+      setTopUpFailed(!success);
     }
   };
+
+  useEffect(() => {
+    if (!isOpen) setTopUpFailed(false);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) setJobCreateFailed(false);
+  }, [isOpen]);
 
   const handleClose = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
@@ -74,12 +96,10 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
-      {isSubmitting && !isJobCreated ? (
-        <JobProcessing />
-      ) : !isJobCreated ? (
-        <>
-          <JobProcessing />
+      <JobProcessing />
 
+      {isSubmitting || !estimatedFee ? null : !isJobCreated ? (
+        <>
           <Typography variant="h2" className="mb-6">
             Estimated Fee
           </Typography>
@@ -142,19 +162,27 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                 disabled={isDisabled}
                 className="flex-1"
               >
-                {isSubmitting ? "Processing..." : "Next"}
+                {isSubmitting
+                  ? "Processing..."
+                  : jobCreateFailed
+                    ? "Try Again"
+                    : "Next"}
               </Button>
             ) : (
               <Button
                 onClick={handleStake}
-                disabled={!hasEnoughEthToStake || isSubmitting}
+                disabled={
+                  isSubmitting || (!hasEnoughEthToStake && !topUpFailed)
+                }
                 className="flex-1"
               >
                 {isSubmitting
                   ? "Topping Up..."
-                  : hasEnoughEthToStake
-                    ? "Top Up TG"
-                    : "Insufficient ETH"}
+                  : topUpFailed
+                    ? "Try Again"
+                    : hasEnoughEthToStake
+                      ? "Top Up TG"
+                      : "Insufficient ETH"}
               </Button>
             )}
             <Button
@@ -164,6 +192,35 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Cancel
             </Button>
           </div>
+          {topUpFailed && (
+            <Typography
+              variant="caption"
+              color="secondary"
+              className="mt-6 opacity-50"
+            >
+              😕 Oops! Something went wrong while topping up your TG.
+              <br />
+              Please check your wallet and try again.
+            </Typography>
+          )}
+          {!hasEnoughEthToStake && !isSubmitting && !topUpFailed && (
+            <Typography
+              variant="caption"
+              color="secondary"
+              className="mt-6 opacity-50"
+            >
+              🚫 Uh oh! Looks like your wallet is empty.
+            </Typography>
+          )}
+          {jobCreateFailed && (
+            <Typography
+              variant="caption"
+              color="secondary"
+              className="mt-6 opacity-50"
+            >
+              😕 Looks like the job missed a step. Try again!
+            </Typography>
+          )}
         </>
       ) : (
         <div className="flex flex-col items-center gap-3 sm:gap-4 mt-4 sm:mt-5">
@@ -194,7 +251,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
           >
             Your job has been created and is now active.
           </Typography>
-          <Button onClick={handleDashboardClick} className="w-full sm:w-auto">
+          <Button onClick={handleDashboardClick} className="mb-5">
             Go to Dashboard
           </Button>
         </div>
