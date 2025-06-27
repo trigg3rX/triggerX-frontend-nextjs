@@ -5,7 +5,7 @@ const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
 
 if (!projectId || !dataset) {
   throw new Error(
-    "Sanity projectId or dataset is not defined. Check your environment variables."
+    "Sanity projectId or dataset is not defined. Check your environment variables.",
   );
 }
 

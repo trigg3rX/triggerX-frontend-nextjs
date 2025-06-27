@@ -8,6 +8,9 @@ interface CardProps {
   className?: string;
   variant?: CardVariant;
   isActive?: boolean;
+  label?: string;
+  value?: number | string;
+  expanded?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -15,8 +18,13 @@ export const Card: React.FC<CardProps> = ({
   className = "",
   variant = "default",
   isActive = false,
+  label,
+  value,
+  expanded = false,
 }) => {
   const baseStyles = "rounded-2xl p-5 sm:p-6 transition-all duration-300";
+  const expandedStyles =
+    "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border-2 border-white shadow-lg";
 
   const variantStyles = {
     default:
@@ -29,9 +37,25 @@ export const Card: React.FC<CardProps> = ({
 
   const combinedClassName = twMerge(
     baseStyles,
+    expanded ? expandedStyles : "",
     variantStyles[variant],
     className,
   );
 
-  return <div className={combinedClassName}>{children}</div>;
+  return (
+    <div className={combinedClassName}>
+      {children ? (
+        children
+      ) : (
+        <>
+          {label && <div className="text-gray-400 text-sm mb-1">{label}</div>}
+          {value !== undefined && (
+            <div className="text-white font-semibold">
+              {typeof value === "number" ? value.toFixed(2) : value}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 };

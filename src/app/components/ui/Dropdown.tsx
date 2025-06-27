@@ -55,7 +55,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         className={twMerge("relative w-full md:w-[70%]", className)}
       >
         <div
-          className="text-sm xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-3 px-4 rounded-lg cursor-pointer border border-white/10 flex items-center gap-5"
+          className="text-sm xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-3 px-4 rounded-xl cursor-pointer border border-white/10 flex items-center gap-5"
           onClick={() => setIsOpen((prev) => !prev)}
         >
           {icons[selectedOption] && (
@@ -72,7 +72,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         </div>
 
         {isOpen && (
-          <div className="absolute top-14 w-full bg-[#1a1a1a] border border-white/10 rounded-lg overflow-hidden shadow-lg z-10">
+          <div className="absolute top-14 w-full bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden shadow-lg z-10">
             {options.map((option) => (
               <div
                 key={option.id}

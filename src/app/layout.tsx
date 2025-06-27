@@ -5,6 +5,8 @@ import Header from "./components/common/Header";
 import Footer from "./components/common/Footer";
 import { Toaster } from "react-hot-toast";
 import { TGBalanceProvider } from "@/contexts/TGBalanceContext";
+import ScrollToTop from "./components/common/ScrollToTop";
+import { TooltipProvider } from "./components/common/Tooltip";
 
 export const metadata: Metadata = {
   title: "TriggerX",
@@ -21,19 +23,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`antialiated font-actay`}>
-        <Providers>
-          <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
-            <Header />
-            <main className="max-w-[1600px] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
-              {children}
-            </main>
-            <Footer />
-          </TGBalanceProvider>
-        </Providers>
-        <Toaster
-          position="bottom-center"
-          toastOptions={{ style: { zIndex: 2147483647 } }}
-        />
+        <TooltipProvider>
+          <Providers>
+            <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
+              <Header />
+              <ScrollToTop />
+
+              <main className="max-w-[1600px] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
+                {children}
+              </main>
+
+              <Footer />
+            </TGBalanceProvider>
+          </Providers>
+          <Toaster
+            position="bottom-center"
+            toastOptions={{ style: { zIndex: 2147483647 } }}
+          />
+        </TooltipProvider>
       </body>
     </html>
   );

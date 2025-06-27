@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { FiCopy, FiCheck } from "react-icons/fi";
 import toast from "react-hot-toast";
+import { CopyIcon, CheckIcon } from "lucide-react";
+import { ActionButton } from "./ActionButton";
 
+// --- VARIANT 1: Original CopyButton with toast and react-icons/fi ---
 interface CopyButtonProps {
   value?: string | null;
   className?: string;
@@ -44,3 +47,48 @@ const CopyButton: React.FC<CopyButtonProps> = ({
 };
 
 export default CopyButton;
+
+// --- VARIANT 2: LucideCopyButton with lucide-react icons and ActionButton ---
+interface LucideCopyButtonProps {
+  text: string;
+  className?: string;
+  onCopy?: () => void;
+}
+
+export function LucideCopyButton({
+  text,
+  className = "",
+  onCopy,
+}: LucideCopyButtonProps) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      onCopy?.();
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
+  return (
+    <ActionButton
+      onClick={handleCopy}
+      variant="ghost"
+      size="sm"
+      className={className}
+      icon={
+        copied ? (
+          <CheckIcon className="h-4 w-4 text-gray-500" />
+        ) : (
+          <CopyIcon className="h-4 w-4" />
+        )
+      }
+      text=""
+    />
+  );
+}

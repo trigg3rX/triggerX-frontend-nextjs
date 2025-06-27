@@ -10,12 +10,13 @@ interface HoverHighlightProps {
 export const HoverHighlight: React.FC<HoverHighlightProps> = ({
   children,
   className = "",
-  highlightClassName = "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A]",
+  highlightClassName = "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A] rounded-[10px]",
 }) => {
   const [highlightStyle, setHighlightStyle] = useState({
     width: "0px",
     left: "0px",
     opacity: 0,
+    height: "100%",
   });
   const navRef = useRef<HTMLElement>(null);
 
@@ -29,6 +30,7 @@ export const HoverHighlight: React.FC<HoverHighlightProps> = ({
         width: `${rect.width}px`,
         left: `${rect.left - navRect.left}px`,
         opacity: 1,
+        height: `${rect.height}px`,
       });
     }
   };
@@ -38,6 +40,7 @@ export const HoverHighlight: React.FC<HoverHighlightProps> = ({
       width: "0px",
       left: "0px",
       opacity: 0,
+      height: "100%",
     });
   };
 
@@ -48,11 +51,12 @@ export const HoverHighlight: React.FC<HoverHighlightProps> = ({
       onMouseLeave={handleMouseLeave}
     >
       <div
-        className={`absolute rounded-xl transition-all duration-300 ${highlightClassName}`}
+        className={`absolute transition-all duration-300 ${highlightClassName}`}
         style={{
           ...highlightStyle,
-          height: "100%",
-          transition: "all 0.3s ease-in-out",
+          position: "absolute",
+          transition: "all 0.3s cubic-bezier(.4,0,.2,1)",
+          pointerEvents: "none",
         }}
       />
       <div className="relative flex">

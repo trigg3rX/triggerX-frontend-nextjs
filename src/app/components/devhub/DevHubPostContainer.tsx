@@ -7,6 +7,10 @@ import { urlFor } from "@/lib/sanityImageUrl";
 import { PortableText } from "@portabletext/react";
 import portableTextComponents from "./portableTextComponents";
 import { FaGithub } from "react-icons/fa";
+import devhub1 from "@/app/assets/devhub/devhub1.svg";
+import devhub2 from "@/app/assets/devhub/devhub2.svg";
+import { Button } from "../ui/Button";
+import Link from "next/link";
 
 console.log("DevHubPostContainer mounted");
 
@@ -73,6 +77,7 @@ const DevHubPostContainer = () => {
           </div>
         </div>
       </div>
+
       <div className="flex flex-col md:flex-row gap-2 md:gap-8 w-[87%] mx-auto">
         {/* Table of Content */}
         <aside className="w-full md:w-1/4 min-w-[180px] lg:min-w-[230px] md:sticky top-24 h-full">
@@ -118,6 +123,7 @@ const DevHubPostContainer = () => {
               </ul>
             )}
           </div>
+
           <h2 className="hidden md:block font-actayWide text-sm lg:text-lg font-extrabold my-10">
             Table of Content
           </h2>
@@ -149,55 +155,62 @@ const DevHubPostContainer = () => {
           </ul>
         </aside>
         {/* Blog Content */}
-        <article className="w-full md:w-3/4 md:mt-10">
+        <article className="w-full md:w-3/4 md:mt-6">
           <PortableText value={blog.body} components={portableTextComponents} />
+
           <div className="bg-[#141414] rounded-2xl w-full relative h-[300px] flex flex-col gap-3 items-center justify-center p-[50px] overflow-hidden">
+            <div className="z-0 absolute left-0 bottom-0 w-[120px] lg:w-[140px] h-max">
+              <Image
+                src={devhub1}
+                alt="sideimg"
+                className="w-full h-auto"
+              ></Image>
+            </div>
+            <div className="z-0 absolute right-0 top-0 w-[140px] lg:w-[160px] h-max">
+              <Image
+                src={devhub2}
+                alt="sideimg"
+                className="w-full h-auto"
+              ></Image>
+            </div>
             <p className="relative z-30 max-w-[500px] lg:max-w-[600px] mx-auto text-wrap text-center text-xs sm:text-sm lg:text-base">
               View the complete code and our ready-to-use template
             </p>
-            <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-              {/* Github Button */}
-              <div className="relative bg-[#222222] text-[#000000] border border-[#222222] px-6 py-2 sm:px-8 sm:py-3 rounded-full group transition-transform w-full sm:w-max flex items-center justify-center">
-                <span className="absolute inset-0 bg-[#222222] border border-[#FFFFFF80]/50 rounded-full scale-100 translate-y-0 transition-all duration-300 ease-out group-hover:translate-y-2"></span>
-                <span className="absolute inset-0 bg-[#F8FF7C] rounded-full scale-100 translate-y-0 group-hover:translate-y-0"></span>
-                <a
-                  href={blog.githubUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-[130px] relative z-10 rounded-full transition-all duration-300 ease-out text-xs sm:text-base flex items-center justify-center"
-                >
-                  <FaGithub className="mr-2 flex-shrink-0" />
-                  <span className="text-center">Open Github</span>
-                </a>
-              </div>
-              {/* Try Now Button */}
-              <div className="relative bg-[#222222] text-[#000000] border border-[#222222] px-6 py-2 sm:px-8 sm:py-3 rounded-full group transition-transform w-full sm:w-max flex items-center justify-center">
-                <span className="absolute inset-0 bg-[#222222] border border-[#FFFFFF80]/50 rounded-full scale-100 translate-y-0 transition-all duration-300 ease-out group-hover:translate-y-2"></span>
-                <span className="absolute inset-0 bg-[#F8FF7C] rounded-full scale-100 translate-y-0 group-hover:translate-y-0"></span>
-                <div className="w-full sm:w-max relative z-10 rounded-full transition-all duration-300 ease-out text-xs sm:text-base flex items-center justify-center">
-                  <a
-                    href={blog.redirect || "#"}
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-[130px] relative z-10 rounded-full transition-all duration-300 ease-out text-xs sm:text-base flex items-center justify-center bg-[#F8FF7C] text-black"
-                  >
-                    ⚡ Try Now
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="relative bg-[#222222] text-[#000000] my-16 border border-[#222222] px-6 py-2 sm:px-8 sm:py-3 rounded-full group transition-transform w-max mx-auto flex items-center justify-center">
-            <span className="absolute inset-0 bg-[#222222] border border-[#FFFFFF80]/50 rounded-full scale-100 translate-y-0 transition-all duration-300 ease-out group-hover:translate-y-2"></span>
-            <span className="absolute inset-0 bg-white rounded-full scale-100 translate-y-0 group-hover:translate-y-0"></span>
-            <div className="w-max relative z-10 rounded-full transition-all duration-300 ease-out text-xs sm:text-base flex items-center">
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              {/* Open Github Button */}
+
               <a
-                href={"/devhub"}
-                className="w-max relative z-10 rounded-full transition-all duration-300 ease-out text-xs sm:text-base flex items-center text-black"
+                href={blog.githubUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-[200px]"
               >
-                Go Back to DevHub
+                <Button color="yellow" className="w-full">
+                  <FaGithub className="mr-2 inline-block" />
+                  <span>Open Github</span>
+                </Button>
+              </a>
+              {/* Try Now Button */}
+              <a
+                href={blog.redirect || "#"}
+                rel="noopener noreferrer"
+                className="w-full sm:w-[200px]"
+              >
+                <Button color="yellow" className="w-full">
+                  <span className="text-black">⚡ Try Now</span>
+                </Button>
               </a>
             </div>
           </div>
+
+          <Link
+            href="/devhub"
+            className="w-full flex items-center justify-center mt-6"
+          >
+            <Button color="white" className="mx-auto">
+              Go Back to DevHub
+            </Button>
+          </Link>
         </article>
       </div>
     </div>
