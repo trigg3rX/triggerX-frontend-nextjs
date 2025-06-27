@@ -28,11 +28,9 @@ export default function RootLayout({
             <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
               <Header />
               <ScrollToTop />
-
               <main className="max-w-[1600px] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
                 {children}
               </main>
-
               <Footer />
             </TGBalanceProvider>
           </Providers>
