@@ -6,7 +6,7 @@ import Footer from "./components/common/Footer";
 import { Toaster } from "react-hot-toast";
 import { TGBalanceProvider } from "@/contexts/TGBalanceContext";
 import ScrollToTop from "./components/common/ScrollToTop";
-import { TooltipProvider } from "./components/common/Tooltip";
+import { TooltipProvider } from "./components/common/TooltipWrap";
 
 export const metadata: Metadata = {
   title: "TriggerX",
