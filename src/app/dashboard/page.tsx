@@ -7,7 +7,7 @@ import ActiveJobs from "../components/dashboard/ActiveJobs";
 
 function Dashboard() {
   return (
-    <>
+    <div className="w-[90%] mx-auto">
       <Typography variant="h1" color="primary" className="mb-10">
         Dashboard
       </Typography>
@@ -21,7 +21,7 @@ function Dashboard() {
           <Statistics />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

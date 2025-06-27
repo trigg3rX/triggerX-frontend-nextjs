@@ -26,8 +26,8 @@ export const QuickActions = () => {
 
   return (
     <MainContainer>
-      <Typography variant="h3" align="left">
-        Your Balance
+      <Typography variant="h2" align="left">
+        Quick Actions
       </Typography>
 
       <div className="space-y-8">

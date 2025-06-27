@@ -71,7 +71,7 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <Card
       expanded={expanded}
-      className={`p-0 relative ${expandedDetails ? "h-auto" : "h-[330px]"} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+      className={`!p-0 relative ${expandedDetails ? "h-auto" : "h-[320px]"} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
     >
       <div>
         <div

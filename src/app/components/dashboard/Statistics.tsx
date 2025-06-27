@@ -6,15 +6,15 @@ import { Typography } from "../ui/Typography";
 const Statistics = () => {
   return (
     <MainContainer className="">
-      <Typography variant="h3" color="white" align="left" className="mb-5">
+      <Typography variant="h2" color="white" align="left" className="mb-5">
         Statistics
       </Typography>
-      <div className="space-y-4 text-gray-300">
+      <div className="space-y-4 ">
         <div className="flex justify-start items-center gap-7">
           <Typography
             variant="badgeYellow"
             color="black"
-            className="py-3 px-4 "
+            className="py-3 px-4 text-black"
           >
             10
           </Typography>
@@ -30,7 +30,7 @@ const Statistics = () => {
           <Typography
             variant="badgeWhite"
             color="black"
-            className="  py-3 px-4 "
+            className="py-3 px-4 text-black"
           >
             20
           </Typography>

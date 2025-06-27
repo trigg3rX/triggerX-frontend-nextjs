@@ -45,7 +45,7 @@ function Leaderboard() {
     : tableData;
 
   return (
-    <div>
+    <div className="w-[90%] mx-auto">
       <Typography variant="h1" color="primary" className="mb-10">
         Leaderboard
       </Typography>

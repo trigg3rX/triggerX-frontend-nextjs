@@ -29,7 +29,7 @@ const ActiveJobs = () => {
   return (
     <MainContainer>
       <div className="flex justify-between items-center mb-6 flex-col lg:flex-row gap-3 md:flex-row">
-        <Typography variant="h3" color="white" align="left">
+        <Typography variant="h2" color="white" align="left">
           Active Jobs
         </Typography>
         <div className="mb-5 w-56">
