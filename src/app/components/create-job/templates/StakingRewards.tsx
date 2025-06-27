@@ -577,21 +577,19 @@ const StakingRewards = () => {
       />
       <WalletConnectionCard className="mt-4" />
 
-      {isConnected && !isOptimismSepoliaNetwork() && (
+      {isConnected && chainId !== null && !isOptimismSepoliaNetwork() && (
         <Banner>
           Please switch to Optimism Sepolia network to claim tokens.
         </Banner>
       )}
 
-      {isConnected && hasSufficientBalance ? (
-        !hasSufficientTokenBalance && (
-          <Button color="purple" onClick={showStakeTokenClaimModal}>
-            {isClaimingToken ? "Claiming..." : "Claim Token"}
-          </Button>
-        )
-      ) : (
-        <ClaimEth />
-      )}
+      {isConnected && hasSufficientBalance
+        ? !hasSufficientTokenBalance && (
+            <Button color="purple" onClick={showStakeTokenClaimModal}>
+              {isClaimingToken ? "Claiming..." : "Claim Token"}
+            </Button>
+          )
+        : isConnected && <ClaimEth />}
 
       {isConnected && hasSufficientBalance && !hasSufficientTokenBalance && (
         <Banner>You need to claim tokens before staking them.</Banner>

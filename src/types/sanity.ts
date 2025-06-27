@@ -1,15 +1,12 @@
 export interface SanityImageAsset {
-  _id: string;
-  url: string;
+  _id?: string;
+  url?: string; // Only present if resolved, otherwise use _ref
+  _ref?: string;
+  _type?: string;
 }
 
 export interface SanityImage {
-  asset?:
-    | {
-        _ref: string;
-        _type: "reference";
-      }
-    | SanityImageAsset;
+  asset?: SanityImageAsset;
 }
 
 export interface SanitySlug {
@@ -36,36 +33,36 @@ export interface PortableTextBlock {
   children: PortableTextChild[];
   markDefs: PortableTextMarkDefinition[];
   style?: string; // e.g., 'h2', 'normal'
-  listItem?: 'bullet' | 'number'; // For list items
+  listItem?: "bullet" | "number"; // For list items
   level?: number; // For nested lists
 }
 
 export interface PortableTextImageBlock extends PortableTextBlock {
-  _type: 'image';
+  _type: "image";
   asset: SanityImageAsset;
   alt?: string;
 }
 
 export interface PortableTextCodeBlock extends PortableTextBlock {
-  _type: 'codeBlock' | 'code'; // 'code' is often used for inline, 'codeBlock' for multiline
+  _type: "codeBlock" | "code"; // 'code' is often used for inline, 'codeBlock' for multiline
   language?: string;
   code: string;
   filename?: string;
 }
 
 export interface PortableTextYouTubeBlock extends PortableTextBlock {
-  _type: 'youtube';
+  _type: "youtube";
   url: string;
 }
 
 export interface PortableTextButtonLinkBlock extends PortableTextBlock {
-  _type: 'buttonLink';
+  _type: "buttonLink";
   url: string;
   text: string;
 }
 
 export interface PortableTextDisclaimerBlock extends PortableTextBlock {
-  _type: 'disclaimer';
+  _type: "disclaimer";
   title?: string;
   text: string;
 }
@@ -77,7 +74,7 @@ export interface AccordionStep {
 }
 
 export interface PortableTextStepsAccordionBlock extends PortableTextBlock {
-  _type: 'stepsAccordion';
+  _type: "stepsAccordion";
   heading?: string;
   steps: AccordionStep[];
 }
@@ -105,10 +102,10 @@ export interface DevHubPost {
     asset: SanityImageAsset;
   };
   subtitle?: string;
-  chainlinkProducts?: string[];
-  productVersions?: string[];
-  readTime?: string;
-  requires?: string;
+  chainlinkProducts?: string[] | null;
+  productVersions?: string[] | null;
+  readTime?: string | null;
+  requires?: string | null;
   body: PortableTextEntry[];
   headingPairs?: HeadingPair[];
   githubUrl?: string;

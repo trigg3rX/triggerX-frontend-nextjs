@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import sanityClient from '../lib/sanityClient'; 
-import { DevHubPost } from '../types/sanity';  
+"use client";
+import { useState, useEffect, useCallback } from "react";
+import sanityClient from "../lib/sanityClient";
+import { DevHubPost } from "../types/sanity";
 
 interface UseSanityPostsReturn {
   posts: DevHubPost[];
@@ -27,7 +28,11 @@ const useSanityPosts = (query: string): UseSanityPostsReturn => {
       }
     } catch (err: unknown) {
       console.error("Error fetching posts from Sanity:", err);
-      setError(err instanceof Error ? err : new Error('An unknown error occurred while fetching posts.'));
+      setError(
+        err instanceof Error
+          ? err
+          : new Error("An unknown error occurred while fetching posts."),
+      );
     } finally {
       setIsLoading(false);
     }

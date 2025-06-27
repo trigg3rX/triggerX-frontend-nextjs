@@ -98,7 +98,7 @@ export const useDevHubPost = (slug: string): UseDevHubPostReturn => {
 
   useEffect(() => {
     fetchPost();
-  });
+  }, [slug]);
 
   return { post, isLoading, error, refetch: fetchPost };
 };
