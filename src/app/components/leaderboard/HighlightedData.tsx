@@ -19,43 +19,50 @@ const HighlightedData: React.FC<HighlightedDataProps> = ({ data, type }) => {
       case "keeper":
         return (
           <>
-            <Card>
-              <span>Performed</span>
-              <span>56</span>
+            <Card className="w-full flex items-start justify-between  flex-col">
+              {" "}
+              <Typography variant="body">Performed</Typography>
+              <Typography variant="body">56</Typography>
             </Card>
-            <Card>
-              <span>Attested</span>
-              <span>60</span>
+            <Card className="w-full flex items-start justify-between  flex-col">
+              {" "}
+              <Typography variant="body">Attested</Typography>
+              <Typography variant="body">60</Typography>
             </Card>
-            <Card>
-              <span>Points</span>
-              <span>{data.points}</span>
+            <Card className="w-full flex items-start justify-between  flex-col">
+              {" "}
+              <Typography variant="body">Points</Typography>
+              <Typography variant="body">{data.points}</Typography>
             </Card>
           </>
         );
       case "developer":
         return (
           <>
-            <Card>
-              <span>Total Jobs</span>
-              <span>50</span>
+            <Card className="w-full flex items-start justify-between  flex-col">
+              {" "}
+              <Typography variant="body">Total Jobs</Typography>
+              <Typography variant="body">50</Typography>
             </Card>
-            <Card>
-              <span>Tasks Executed</span>
-              <span>30</span>
+            <Card className="w-full flex items-start justify-between  flex-col">
+              {" "}
+              <Typography variant="body">Tasks Executed</Typography>
+              <Typography variant="body">30</Typography>
             </Card>
-            <Card>
-              <span>Points</span>
-              <span>{data.points}</span>
+            <Card className="w-full flex items-start justify-between  flex-col">
+              {" "}
+              <Typography variant="body">Points</Typography>
+              <Typography variant="body">{data.points}</Typography>
             </Card>
           </>
         );
       case "contributor":
         return (
           <div className="md:col-start-3 col-start-1">
-            <Card>
-              <span>Points</span>
-              <span>{data.points}</span>
+            <Card className="w-full flex items-start justify-between  flex-col">
+              {" "}
+              <Typography variant="body">Points</Typography>
+              <Typography variant="body">{data.points}</Typography>
             </Card>
           </div>
         );
@@ -67,7 +74,7 @@ const HighlightedData: React.FC<HighlightedDataProps> = ({ data, type }) => {
   return (
     <Card className="border-yellow-100">
       <div className="flex lg:flex-row md:flex-col flex-col gap-4 items-center">
-        <Card className="w-full flex items-center justify-between">
+        <Card className="w-full flex items-center justify-between ">
           {" "}
           <Typography variant="body" className="text-white hidden md:block">
             {data.address}

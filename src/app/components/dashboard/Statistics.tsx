@@ -22,7 +22,7 @@ const Statistics = () => {
 
   return (
     <Card className="">
-      <Typography variant="h3" color="white" align="left" className="mb-5">
+      <Typography variant="h2" color="white" align="left" className="mb-5">
         Statistics
       </Typography>
       <div className="space-y-4 text-gray-300">
@@ -34,7 +34,7 @@ const Statistics = () => {
           >
             {totalJobs}
           </Typography>
-          <Typography variant="body" color="gray">
+          <Typography variant="h4" color="gray">
             Main Jobs
           </Typography>
         </div>
@@ -42,7 +42,7 @@ const Statistics = () => {
           <Typography variant="badgeWhite" color="black" className="py-3 px-4 ">
             {totalLinkedJobs}
           </Typography>
-          <Typography variant="body" color="gray">
+          <Typography variant="h4" color="gray">
             Linked Jobs
           </Typography>
         </div>

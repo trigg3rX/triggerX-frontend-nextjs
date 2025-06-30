@@ -87,7 +87,11 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
               }
               className="w-full"
             >
-              Top Up TG
+              {isStaking
+                ? "Topping Up..."
+                : Number(stakeAmount) > Number(accountBalance?.formatted || 0)
+                  ? "Insufficient ETH"
+                  : "Top Up TG"}
             </Button>
           </DialogFooter>
         </form>

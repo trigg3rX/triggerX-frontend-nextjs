@@ -21,7 +21,7 @@ const TgBalance = () => {
           align="left"
           className="  truncate"
         >
-          {userBalance} TG
+          {userBalance ? Number(userBalance).toFixed(2) : "0.0000"}
         </Typography>
       </div>
     </Card>
