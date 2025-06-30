@@ -224,6 +224,7 @@ const PriceOracle = () => {
           setContractAddress(proxyAddress);
           setIsDeployed(true);
           toast.success("Contract deployed successfully!");
+          setShowModal(false);
         } else {
           throw new Error("Failed to parse deployment event");
         }
@@ -391,11 +392,6 @@ const CreateJobButton: React.FC<{ contractAddress: string }> = ({
           "contract",
           "https://teal-random-koala-993.mypinata.cloud/ipfs/bafkreiamtrzx3w2wa6s4vs4bbxbhbtwbzuoxoylijjrdy2ezglm6xrdcuu",
         );
-
-        // Debug: log the contract state
-        setTimeout(() => {
-          console.log("CONTRACT STATE", jobForm.contractInteractions.contract);
-        }, 200);
       }}
     >
       Create Job

@@ -2,7 +2,6 @@ import React from "react";
 import { Typography } from "../ui/Typography";
 import { LucideCopyButton } from "../ui/CopyButton";
 import { Card } from "../ui/Card";
-import { MainContainer } from "../ui/MainContainer";
 import { HighlightedDataType } from "@/types/leaderboard";
 import useTruncateAddress from "@/hooks/useTruncateAddress";
 
@@ -66,7 +65,7 @@ const HighlightedData: React.FC<HighlightedDataProps> = ({ data, type }) => {
   };
 
   return (
-    <MainContainer className="border-yellow-100">
+    <Card className="border-yellow-100">
       <div className="flex lg:flex-row md:flex-col flex-col gap-4 items-center">
         <Card className="w-full flex items-center justify-between">
           {" "}
@@ -84,7 +83,7 @@ const HighlightedData: React.FC<HighlightedDataProps> = ({ data, type }) => {
           </div>
         </div>
       </div>
-    </MainContainer>
+    </Card>
   );
 };
 

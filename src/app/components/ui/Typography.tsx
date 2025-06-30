@@ -74,6 +74,11 @@ const colorStyles: Record<string, string> = {
   warning: "text-yellow-600",
   info: "text-blue-600",
   success: "text-green-600",
+  blue: "text-[#C07AF6]",
+  gray: "text-[#A2A2A2]",
+  white: "text-white",
+  black: "text-black",
+  yellow: "text-[#F8FF7C]",
 };
 
 const alignStyles: Record<string, string> = {
@@ -81,11 +86,6 @@ const alignStyles: Record<string, string> = {
   center: "text-center",
   right: "text-right",
   justify: "text-justify",
-  blue: "text-[#C07AF6]",
-  gray: "text-[#A2A2A2]",
-  white: "text-white",
-  black: "text-black",
-  yellow: "text-[#F8FF7C]",
 };
 
 const maxWidthStyles: Record<string, string> = {

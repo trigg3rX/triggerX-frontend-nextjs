@@ -15,7 +15,7 @@ function Api() {
   const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
 
   return (
-    <>
+    <div className="w-[90%] mx-auto">
       <Typography variant="h1" color="primary" className="mb-10">
         API Documentation
       </Typography>
@@ -24,7 +24,7 @@ function Api() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
-      <div>
+      <>
         {activeTab === "api-creation" && (
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 w-full justify-between">
             <GenerateApi />
@@ -36,8 +36,8 @@ function Api() {
             <Documentation />
           </div>
         )}
-      </div>
-    </>
+      </>
+    </div>
   );
 }
 

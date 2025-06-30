@@ -2,36 +2,27 @@
 
 import React from "react";
 import { useAccount } from "wagmi";
-import WalletNotConnected from "../common/WalletNotConnected";
-import { MainContainer } from "../ui/MainContainer";
 import { Button } from "../ui/Button";
 import { InputField } from "../ui/InputField";
 import { Typography } from "../ui/Typography";
 import { useApiKeys } from "@/hooks/useApiKeys";
-// import { CopyButton } from "../../ui/CopyButton";
+import { WalletConnectionCard } from "../common/WalletConnectionCard";
+import { Card } from "../ui/Card";
 
 const GenerateApi: React.FC = () => {
   const { isConnected, address } = useAccount();
   const { apiKeys, generateNewApiKey } = useApiKeys(address);
   const latestKey = apiKeys[0];
 
-  // For copy feedback
-
   return (
-    <MainContainer className="w-full lg:w-[70%] h-[350px] p-0">
-      <div className=" md:p-8  p-6 sm:p-6 ">
-        <Typography
-          variant="h2"
-          color="yellow"
-          align="center"
-          className="font-bold"
-        >
-          Generate API Key
-        </Typography>
-        <div className="space-y-4 my-6">
-          {!isConnected ? (
-            <WalletNotConnected />
-          ) : (
+    <div className="w-full lg:w-[70%] min-h-[350px]">
+      <WalletConnectionCard />
+      {isConnected && (
+        <Card>
+          <Typography variant="h2" color="yellow">
+            Generate API Key
+          </Typography>
+          <div className="space-y-4 my-6">
             <div className="w-full flex flex-col justify-between gap-5 my-3">
               <div>
                 <InputField
@@ -84,16 +75,17 @@ const GenerateApi: React.FC = () => {
                     variant="badgeGreen"
                     color={latestKey.status === "Active" ? "success" : "gray"}
                     align="left"
+                    className="w-max"
                   >
                     {latestKey.status}
                   </Typography>
                 </div>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-    </MainContainer>
+          </div>
+        </Card>
+      )}
+    </div>
   );
 };
 

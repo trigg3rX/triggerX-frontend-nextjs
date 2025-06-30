@@ -1,4 +1,4 @@
-import { Tooltip, TooltipTrigger, TooltipContent } from "../common/TooltipWrap";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../common/TooltipWrap";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import React from "react";
@@ -29,13 +29,6 @@ type JobCardProps = {
   disableUpdate?: boolean;
   className?: string;
 };
-
-// type LinkedJobsProps = {
-//   linkedJobs: JobType[];
-//   expandedLinkedJobDetails: { [jobId: number]: boolean };
-//   onToggleDetails: (jobId: number) => void;
-//   onDelete: (jobId: number) => void;
-// };
 
 // Helper functions
 const mapJobType = (type: string) => {
@@ -71,11 +64,11 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 relative ${expandedDetails ? "h-auto" : "h-[320px]"} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+      className={`!p-0 relative ${expandedDetails ? "h-auto" : "h-[310px]"} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
     >
       <div>
         <div
-          className={`flex justify-between items-center mb-4 p-3  ${expanded ? "border-b border-white " : "border-[#2A2A2A] border-b hover:border-[#3A3A3A]"}`}
+          className={`flex justify-between items-center mb-4 p-3 ${expanded ? "border-b border-white " : "border-[#2A2A2A] border-b hover:border-[#3A3A3A]"}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>

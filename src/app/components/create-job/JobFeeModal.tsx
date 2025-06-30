@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Modal } from "../ui/Modal";
 import { FiInfo } from "react-icons/fi";
 import { Typography } from "../ui/Typography";
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
 import { parseEther } from "viem";
 import JobProcessing from "./JobProcessing";
+import { devLog } from "@/lib/devLog";
 
 interface JobFeeModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   setIsOpen,
   estimatedFee,
 }) => {
-  const { userBalance } = useTGBalance();
+  const { userBalance, fetchTGBalance } = useTGBalance();
   const {
     isSubmitting,
     isJobCreated,
@@ -53,11 +54,20 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     prevAddress.current = address;
   }, [address, isOpen, setIsJobCreated, setIsOpen]);
 
-  const hasEnoughBalance = estimatedFee <= Number(userBalance);
-  const requiredEth = (0.001 * estimatedFee).toFixed(4);
+  const hasEnoughBalance = useMemo(
+    () => estimatedFee <= Number(userBalance),
+    [estimatedFee, userBalance],
+  );
+  const requiredEth = useMemo(
+    () => (0.001 * estimatedFee).toFixed(4),
+    [estimatedFee],
+  );
   const hasEnoughEthToStake =
     ethBalance && ethBalance.value >= parseEther(requiredEth);
   const isDisabled = false;
+
+  devLog("JobFeeModal: userBalance", userBalance);
+  devLog("JobFeeModal: hasEnoughBalance", hasEnoughBalance);
 
   const handleStake = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -66,6 +76,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
       const success = await handleCreateJob();
       setJobCreateFailed(!success);
       setTopUpFailed(false);
+      fetchTGBalance();
     } else {
       const success = await handleStakeTG();
       setTopUpFailed(!success);
@@ -98,7 +109,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     <Modal isOpen={isOpen} onClose={handleClose}>
       <JobProcessing />
 
-      {isSubmitting || !estimatedFee ? null : !isJobCreated ? (
+      {!isJobCreated ? (
         <>
           <Typography variant="h2" className="mb-6">
             Estimated Fee
@@ -159,7 +170,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
             {hasEnoughBalance ? (
               <Button
                 onClick={handleStake}
-                disabled={isDisabled}
+                disabled={isDisabled || !estimatedFee}
                 className="flex-1"
               >
                 {isSubmitting
@@ -172,7 +183,9 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               <Button
                 onClick={handleStake}
                 disabled={
-                  isSubmitting || (!hasEnoughEthToStake && !topUpFailed)
+                  isSubmitting ||
+                  (!hasEnoughEthToStake && !topUpFailed) ||
+                  !estimatedFee
                 }
                 className="flex-1"
               >
@@ -180,7 +193,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                   ? "Topping Up..."
                   : topUpFailed
                     ? "Try Again"
-                    : hasEnoughEthToStake
+                    : hasEnoughEthToStake && !hasEnoughBalance
                       ? "Top Up TG"
                       : "Insufficient ETH"}
               </Button>
@@ -192,6 +205,16 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Cancel
             </Button>
           </div>
+          {!estimatedFee && (
+            <Typography
+              variant="caption"
+              color="secondary"
+              className="mt-6 opacity-50"
+            >
+              Unable to estimate the required TG fee. Please try again later or
+              check your network connection.
+            </Typography>
+          )}
           {topUpFailed && (
             <Typography
               variant="caption"

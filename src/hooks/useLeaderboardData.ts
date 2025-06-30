@@ -5,6 +5,7 @@ import {
   ContributorData,
   TabType,
 } from "@/types/leaderboard";
+import { devLog } from "@/lib/devLog";
 
 interface LeaderboardData {
   keepers: KeeperData[];
@@ -35,7 +36,7 @@ export default function useLeaderboardData(
       try {
         let apiUrl = "";
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-        console.log("[Leaderboard] API_BASE_URL:", API_BASE_URL);
+        devLog("[Leaderboard] API_BASE_URL:", API_BASE_URL);
         if (!API_BASE_URL) {
           throw new Error("API base URL is not set");
         }
@@ -44,15 +45,12 @@ export default function useLeaderboardData(
         } else if (activeTab === "developer" || activeTab === "contributor") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
         }
-        console.log(
-          `[Leaderboard] Fetching for tab: ${activeTab}, URL:`,
-          apiUrl,
-        );
+        devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);
         const response = await fetch(apiUrl);
-        console.log("[Leaderboard] Response status:", response.status);
+        devLog("[Leaderboard] Response status:", response.status);
         if (!response.ok) throw new Error("Failed to fetch leaderboard data");
         const data = await response.json();
-        console.log("[Leaderboard] Raw API response:", data);
+        devLog("[Leaderboard] Raw API response:", data);
         if (activeTab === "keeper") {
           const transformedKeeperData: KeeperData[] = Array.isArray(data)
             ? data.map((keeper) => ({
@@ -65,7 +63,7 @@ export default function useLeaderboardData(
               }))
             : [];
           transformedKeeperData.sort((a, b) => b.points - a.points);
-          console.log(
+          devLog(
             "[Leaderboard] Transformed Keeper Data:",
             transformedKeeperData,
           );
@@ -85,7 +83,7 @@ export default function useLeaderboardData(
               }))
             : [];
           transformedUserData.sort((a, b) => b.points - a.points);
-          console.log(
+          devLog(
             "[Leaderboard] Transformed Developer Data:",
             transformedUserData,
           );

@@ -1,3 +1,4 @@
+import { devLog } from "@/lib/devLog";
 import { useState } from "react";
 
 export interface ApiKey {
@@ -19,6 +20,7 @@ export function useApiKeys(address?: string) {
 
   const generateNewApiKey = async () => {
     try {
+      devLog("Generating Api key");
       const user = process.env.NEXT_PUBLIC_USER || process.env.REACT_APP_USER;
       if (!user) {
         console.error("Owner is not defined in environment variables");

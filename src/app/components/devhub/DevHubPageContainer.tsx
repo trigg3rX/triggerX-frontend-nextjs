@@ -63,7 +63,7 @@ const DevHubPageContainer: React.FC = () => {
           className="text-3xl sm:text-4xl lg:text-5xl mb-4 sm:mb-0 flex items-center gap-3"
         >
           Total
-          <span className="text-[#FBF197]">{` { ${posts.length} } `}</span>
+          <span className="text-[#F8FF7C]">{` { ${posts.length} } `}</span>
         </Typography>
         <Link href="/api" className="mt-4 sm:mt-0">
           <Button>API Services</Button>

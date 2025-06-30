@@ -17,7 +17,7 @@ const ParameterTable: React.FC<ParameterTableProps> = ({
       <Typography variant="h4" className="mb-2" align="left">
         {title}
       </Typography>
-      <Card className="border-none">
+      <Card variant="soft" className="border-none">
         <table className="w-full text-sm">
           <tbody>
             {parameters.map((param) => (

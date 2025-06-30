@@ -87,29 +87,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
               }
               className="w-full"
             >
-              <span
-                className={`font-actayRegular relative z-10 px-0 py-3 sm:px-3 md:px-6 lg:px-2 rounded-full translate-y-2 group-hover:translate-y-0 transition-all duration-300 ease-out text-xs sm:text-base ${
-                  isStaking ||
-                  !stakeAmount ||
-                  Number(stakeAmount) > Number(accountBalance?.formatted || 0)
-                    ? "opacity-50"
-                    : ""
-                }`}
-              >
-                <Typography
-                  variant="button"
-                  color="white"
-                  align="center"
-                  className="w-full"
-                >
-                  {isStaking
-                    ? "Topping Up..."
-                    : Number(stakeAmount) >
-                        Number(accountBalance?.formatted || 0)
-                      ? "Insufficient ETH"
-                      : "Top Up TG"}
-                </Typography>
-              </span>
+              Top Up TG
             </Button>
           </DialogFooter>
         </form>

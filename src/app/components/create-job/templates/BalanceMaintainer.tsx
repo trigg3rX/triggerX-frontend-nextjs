@@ -263,6 +263,7 @@ const BalanceMaintainer = () => {
           setContractAddress(proxyAddress);
           setIsDeployed(true);
           toast.success("Contract deployed successfully!");
+          setShowModal(false);
         } else {
           throw new Error("Failed to parse deployment event");
         }
@@ -309,7 +310,6 @@ const BalanceMaintainer = () => {
     if (!signer || !newAddress || !newBalance) return;
     setIsLoading(true);
     setError(null);
-    console.log("[AddAddress] Called with:", newAddress, newBalance);
     try {
       const contract = new ethers.Contract(
         contractAddress,
@@ -346,7 +346,6 @@ const BalanceMaintainer = () => {
         [newAddress],
         [ethers.parseEther(newBalance)],
       );
-      console.log("[AddAddress] Transaction sent:", tx.hash);
       await tx.wait();
       const provider = signer.provider as ethers.BrowserProvider;
       await fetchContractData(provider, contractAddress);
@@ -409,7 +408,6 @@ const BalanceMaintainer = () => {
       // Get tracked addresses and their minimum balances
       const [addrs, minBalances] =
         await contract.getAllTrackedAddressesWithBalances();
-      console.log("[fetchContractData] addresses:", addrs, minBalances);
       // Fetch actual balances for each address
       const balancesPromises = addrs.map((addr: string) =>
         provider.getBalance(addr),

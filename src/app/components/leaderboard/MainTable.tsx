@@ -18,9 +18,9 @@ import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
 import HighlightedData from "./HighlightedData";
 import styles from "@/app/styles/scrollbar.module.css";
-import { MainContainer } from "../ui/MainContainer";
 import { TabType, TableData } from "@/types/leaderboard";
 import useTruncateAddress from "@/hooks/useTruncateAddress";
+import { Card } from "../ui/Card";
 
 // Re-add Column and MainTableProps interfaces, as they are not shared types
 interface Column {
@@ -132,7 +132,7 @@ export default function MainTable({
       )}
 
       {/* Desktop View */}
-      <MainContainer
+      <Card
         className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
       >
         {filteredData.length === 0 ? (
@@ -249,10 +249,10 @@ export default function MainTable({
             </TableBody>
           </Table>
         )}
-      </MainContainer>
+      </Card>
 
       {/* Mobile View */}
-      <MainContainer
+      <Card
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
         {filteredData.length === 0 ? (
@@ -267,7 +267,7 @@ export default function MainTable({
             // onItemClick={handleRowClick}
           />
         )}
-      </MainContainer>
+      </Card>
 
       <TablePagination
         currentPage={currentPage}

@@ -8,6 +8,8 @@ import { WalletConnectionProvider } from "@/contexts/WalletConnectionContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { config } from "@/lib/wagmiConfig";
 import { useState } from "react";
+import { useStakeRegistry } from "@/hooks/useStakeRegistry";
+import { TGBalanceProvider } from "@/contexts/TGBalanceContext";
 
 const customTheme = darkTheme({
   accentColor: "#F8FF7C",
@@ -30,13 +32,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
+  const { stakeRegistryAddress } = useStakeRegistry();
+  if (!stakeRegistryAddress) return null; // or a loading spinner
+
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
         <RainbowKitProvider theme={customTheme}>
-          <WalletConnectionProvider>
-            <WalletProvider>{children}</WalletProvider>
-          </WalletConnectionProvider>
+          <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
+            <WalletConnectionProvider>
+              <WalletProvider>{children}</WalletProvider>
+            </WalletConnectionProvider>
+          </TGBalanceProvider>
         </RainbowKitProvider>
       </WagmiProvider>
     </QueryClientProvider>

@@ -76,8 +76,12 @@ export const TGBalanceProvider: React.FC<{
         setUserBalance("0");
       }
     };
+    const handleChainChanged = () => {
+      fetchTGBalance();
+    };
     if (window.ethereum && window.ethereum.on) {
       window.ethereum.on("accountsChanged", handleAccountsChanged);
+      window.ethereum.on("chainChanged", handleChainChanged);
     }
     return () => {
       if (window.ethereum && window.ethereum.removeListener) {
@@ -85,6 +89,7 @@ export const TGBalanceProvider: React.FC<{
           "accountsChanged",
           handleAccountsChanged,
         );
+        window.ethereum.removeListener("chainChanged", handleChainChanged);
       }
     };
   }, [stakeRegistryAddress, fetchTGBalance, address]);

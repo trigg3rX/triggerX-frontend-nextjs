@@ -1,9 +1,9 @@
 import React from "react";
-import { MainContainer } from "../ui/MainContainer";
 import { Typography } from "../ui/Typography";
+import { Card } from "../ui/Card";
 
 const QuickStartGuide = () => (
-  <MainContainer className="p-0 w-full lg:w-[30%]">
+  <Card className="!p-0 w-full lg:w-[30%]">
     <div className=" md:p-8  p-6 sm:p-6 ">
       <Typography variant="h2" align="left">
         Quick Start Guide
@@ -66,7 +66,7 @@ const QuickStartGuide = () => (
         <a className="underline">hello@triggerx.network</a>
       </Typography>
     </div>
-  </MainContainer>
+  </Card>
 );
 
 export default QuickStartGuide;

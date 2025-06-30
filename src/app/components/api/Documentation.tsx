@@ -1,13 +1,13 @@
 "use client";
 import React from "react";
-import { MainContainer } from "../ui/MainContainer";
 import { Typography } from "../ui/Typography";
 import ApiDocsPage from "./ApiDocsPage";
+import { Card } from "../ui/Card";
 
 function Documentation() {
   return (
     <>
-      <MainContainer className="p-8 ">
+      <Card className="p-8 ">
         <Typography variant="h3" color="yellow" align="left">
           API Documentation
         </Typography>
@@ -17,7 +17,7 @@ function Documentation() {
         </Typography>
 
         <ApiDocsPage />
-      </MainContainer>
+      </Card>
     </>
   );
 }

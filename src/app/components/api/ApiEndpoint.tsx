@@ -19,7 +19,7 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({
   const fullEndpoint = `${endpoint}${path || ""}`;
 
   return (
-    <Card className="border-none ">
+    <Card variant="soft" className="!p-3 border-none ">
       <Typography
         as="code"
         variant="body"

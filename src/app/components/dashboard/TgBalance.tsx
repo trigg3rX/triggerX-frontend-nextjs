@@ -1,11 +1,13 @@
 "use client";
 
-import { MainContainer } from "../ui/MainContainer";
+import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
+import { useTGBalance } from "@/contexts/TGBalanceContext";
 
 const TgBalance = () => {
+  const { userBalance } = useTGBalance();
   return (
-    <MainContainer>
+    <Card>
       <Typography variant="h2" color="white" align="left" className="mb-5">
         Your Balance
       </Typography>
@@ -19,10 +21,10 @@ const TgBalance = () => {
           align="left"
           className="  truncate"
         >
-          20.40 TG
+          {userBalance} TG
         </Typography>
       </div>
-    </MainContainer>
+    </Card>
   );
 };
 

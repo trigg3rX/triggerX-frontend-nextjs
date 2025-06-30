@@ -1,13 +1,10 @@
 "use client";
 
-import { MainContainer } from "../ui/MainContainer";
 import { Typography } from "../ui/Typography";
 import { Dropdown, DropdownOption } from "../ui/Dropdown";
 import { useState } from "react";
 import MainJobs from "./MainJobs";
-// import eventBasedSvg from "@/app/assets/common/event-based.svg";
-// import conditionBasedSvg from "@/app/assets/common/condition-based.svg";
-// import timeBasedSvg from "@/app/assets/common/time-based.svg";
+import { Card } from "../ui/Card";
 
 const dropdownOptions: DropdownOption[] = [
   { id: "all", name: "All Types" },
@@ -16,20 +13,13 @@ const dropdownOptions: DropdownOption[] = [
   { id: "condition", name: "Condition-based" },
 ];
 
-// const dropdownIcons = {
-//   "All Types": null,
-//   "Time-based": timeBasedSvg,
-//   "Event-based": eventBasedSvg,
-//   "Condition-based": conditionBasedSvg,
-// };
-
 const ActiveJobs = () => {
   const [selectedType, setSelectedType] = useState<string>("All Types");
 
   return (
-    <MainContainer>
+    <Card>
       <div className="flex justify-between items-center mb-6 flex-col lg:flex-row gap-3 md:flex-row">
-        <Typography variant="h2" color="white" align="left">
+        <Typography variant="h3" color="white" align="left">
           Active Jobs
         </Typography>
         <div className="mb-5 w-56">
@@ -38,15 +28,14 @@ const ActiveJobs = () => {
             options={dropdownOptions}
             selectedOption={selectedType}
             onChange={(option) => setSelectedType(option.name)}
-            className="gap-0"
-            // icons={dropdownIcons}
+            className="gap-0 w-full"
           />
         </div>
       </div>
       <div className="mb-10">
         <MainJobs selectedType={selectedType} />
       </div>
-    </MainContainer>
+    </Card>
   );
 };
 

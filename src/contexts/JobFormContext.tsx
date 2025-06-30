@@ -7,6 +7,8 @@ import { ethers } from "ethers";
 import { fetchContractABI } from "@/utils/fetchContractABI";
 import { useTGBalance } from "./TGBalanceContext";
 import toast from "react-hot-toast";
+import { useStakeRegistry } from "@/hooks/useStakeRegistry";
+import { devLog } from "@/lib/devLog";
 
 interface ABIItem {
   type: string;
@@ -334,6 +336,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Get TG balance context
   const { fetchTGBalance } = useTGBalance();
+  const { stakeRegistryAddress } = useStakeRegistry();
 
   const handleJobTypeChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, type: number) => {
@@ -844,9 +847,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         executionCount = recurring ? 10 : 1;
       }
-      // Only keep this essential log if needed for debugging
-      // console.log("execution count", executionCount);
-      // console.log("argType", argType);
 
       let totalFeeTG = 0;
       if (argType === 2) {
@@ -867,7 +867,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             if (data.error) throw new Error(data.error);
             totalFeeTG = Number(data.total_fee) * executionCount;
             const stakeAmountEth = totalFeeTG * 0.001;
-            console.log("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
+            devLog("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
 
             const stakeAmountGwei = BigInt(Math.floor(stakeAmountEth * 1e9));
             setEstimatedFeeInGwei(stakeAmountGwei);
@@ -876,9 +876,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       } else {
-        console.log("inelse");
         totalFeeTG = 0.1 * executionCount;
-        console.log("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
+        devLog("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
       }
       setEstimatedFee(totalFeeTG);
       setIsModalOpen(true);
@@ -899,8 +898,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       const signer = await provider.getSigner();
 
       const requiredEth = (0.001 * estimatedFee).toFixed(18);
-      const stakeRegistryAddress =
-        process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS;
 
       if (!stakeRegistryAddress) {
         throw new Error("Stake registry address not configured");
@@ -914,18 +911,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         signer,
       );
 
-      console.log("Staking ETH amount:", requiredEth);
+      devLog("Staking ETH amount:", requiredEth);
 
       const tx = await contract.purchaseTG(
         ethers.parseEther(requiredEth.toString()),
         { value: ethers.parseEther(requiredEth.toString()) },
       );
-
       await tx.wait();
-      console.log("Stake transaction confirmed: ", tx.hash);
-      toast.success("TG Top Up Successfully!");
+      devLog("Stake transaction confirmed: ", tx.hash);
 
-      // Fetch updated TG balance after staking
       await fetchTGBalance();
 
       // After successful staking, proceed to create job
@@ -966,7 +960,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Skip contracts that don't have required data
         if (!contract.targetFunction || !contract.abi) {
-          console.log(`Skipping ${contractKey} - missing required data:`, {
+          devLog(`Skipping ${contractKey} - missing required data:`, {
             targetFunction: contract.targetFunction,
             abi: contract.abi ? "present" : "missing",
           });
@@ -985,11 +979,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           jobType,
         );
 
-        console.log(`Job details for ${contractKey}:`, {
-          target_function: jobDetails.target_function,
-          abi: jobDetails.abi ? "ABI present" : "ABI missing",
-          contract_address: jobDetails.target_contract_address,
-        });
+        // devLog(`Job details for ${contractKey}:`, {
+        //   target_function: jobDetails.target_function,
+        //   abi: jobDetails.abi ? "ABI present" : "ABI missing",
+        //   contract_address: jobDetails.target_contract_address,
+        // });
 
         allJobDetails.push(jobDetails);
       });
@@ -1000,7 +994,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         job_cost_prediction: estimatedFee,
       }));
 
-      console.log("Submitting job details:", updatedJobDetails);
+      devLog("Submitting job details:", updatedJobDetails);
 
       // Create job via API
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;

@@ -24,7 +24,7 @@ const ApiResponseCodeBlock: React.FC<ApiResponseCodeBlockProps> = ({
 }) => {
   return (
     <Card>
-      <div className="flex items-center justify-between p-4 border-b border-[#333333]">
+      <div className="flex items-center justify-between p-4">
         <Typography variant="h5" className="text-xl font-bold">
           {title}
         </Typography>
@@ -35,7 +35,7 @@ const ApiResponseCodeBlock: React.FC<ApiResponseCodeBlockProps> = ({
           <button
             key={status.code}
             onClick={() => setActiveStatus(status.code)}
-            className={`px-4 py-2 text-sm font-medium flex items-center gap-2 ${
+            className={`px-4 py-2 text-sm font-medium flex items-center gap-2 rounded-t-lg ${
               activeStatus === status.code
                 ? "bg-[#242424] text-white"
                 : "text-gray-400 hover:text-white hover:bg-[#242424]/50"
@@ -46,7 +46,7 @@ const ApiResponseCodeBlock: React.FC<ApiResponseCodeBlockProps> = ({
           </button>
         ))}
       </div>
-      <div className="p-4 bg-[#242424]">
+      <div className="p-4 bg-[#242424] rounded-b-lg">
         <pre className="text-sm overflow-x-auto whitespace-pre-wrap text-[#E6E6E6] mt-4">
           {responseContent[activeStatus]}
         </pre>

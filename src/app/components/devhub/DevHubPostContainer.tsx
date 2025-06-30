@@ -12,8 +12,6 @@ import devhub2 from "@/app/assets/devhub/devhub2.svg";
 import { Button } from "../ui/Button";
 import Link from "next/link";
 
-console.log("DevHubPostContainer mounted");
-
 const DevHubPostContainer = () => {
   const params = useParams();
   const slug = typeof params.slug === "string" ? params.slug : params.slug?.[0];
