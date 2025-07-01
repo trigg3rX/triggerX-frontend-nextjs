@@ -73,7 +73,7 @@ export function useJobs() {
   const fetchJobs = useCallback(async () => {
     if (!address) {
       setJobs([]);
-      console.log("[useJobs] No address, jobs cleared.");
+      // console.log("[useJobs] No address, jobs cleared.");
       return;
     }
     setLoading(true);
@@ -84,17 +84,17 @@ export function useJobs() {
         process.env.REACT_APP_API_BASE_URL;
       if (!API_BASE_URL) throw new Error("API base URL not set");
       const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
-      console.log("[useJobs] Fetching jobs from:", apiUrl);
+      // console.log("[useJobs] Fetching jobs from:", apiUrl);
       const response = await fetch(apiUrl);
       const jobsData: JobsApiResponse = await response.json();
-      console.log("[useJobs] Raw jobsData:", jobsData);
+      // console.log("[useJobs] Raw jobsData:", jobsData);
 
       // Build job map for linked jobs
       const jobMap: Record<number, RawJobData> = {};
       jobsData.jobs.forEach((job: RawJobData) => {
         jobMap[job.job_data.job_id] = job;
       });
-      console.log("[useJobs] jobMap:", jobMap);
+      // console.log("[useJobs] jobMap:", jobMap);
       // Build linked jobs map
       const linkedJobsMap: Record<number, JobType[]> = {};
       jobsData.jobs.forEach((job: RawJobData) => {
@@ -149,7 +149,7 @@ export function useJobs() {
           linkedJobsMap[mainJobId] = linkedJobs;
         }
       });
-      console.log("[useJobs] linkedJobsMap:", linkedJobsMap);
+      // console.log("[useJobs] linkedJobsMap:", linkedJobsMap);
       // Build main jobs array
       const tempJobs: JobType[] = jobsData.jobs
         .filter(
@@ -193,7 +193,7 @@ export function useJobs() {
             type: mapJobType(jobDetail.job_data.task_definition_id),
           };
         });
-      console.log("[useJobs] tempJobs:", tempJobs);
+      // console.log("[useJobs] tempJobs:", tempJobs);
       setJobs(tempJobs);
       if (tempJobs.length === 0 && isConnected && !loading) {
         toast("No jobs found. Create a new job to get started!", {
@@ -204,7 +204,7 @@ export function useJobs() {
       console.error("[useJobs] Error:", err);
     } finally {
       setLoading(false);
-      console.log("[useJobs] Loading finished.");
+      // console.log("[useJobs] Loading finished.");
     }
   }, [address, isConnected, loading]);
 

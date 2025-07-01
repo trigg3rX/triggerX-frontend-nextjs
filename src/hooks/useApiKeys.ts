@@ -17,26 +17,36 @@ export function useApiKeys(address?: string) {
       status: "Inactive",
     },
   ]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generateNewApiKey = async () => {
+    setError(null);
+    setIsLoading(true);
     try {
       devLog("Generating Api key");
-      const user = process.env.NEXT_PUBLIC_USER || process.env.REACT_APP_USER;
+      const user = process.env.NEXT_PUBLIC_USER;
       if (!user) {
-        console.error("Owner is not defined in environment variables");
+        setError("Owner is not defined in environment variables");
+        setIsLoading(false);
         return;
       }
       if (!address) {
-        console.error("Wallet address is not available");
+        setError("Wallet address is not available");
+        setIsLoading(false);
         return;
       }
+      devLog(
+        "API URL:",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`,
+      );
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || process.env.REACT_APP_API_BASE_URL}/api/${user}/api-keys`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          // headers: {
+          //   "Content-Type": "application/json",
+          // },
           body: JSON.stringify({
             owner: address,
             rateLimit: 20,
@@ -44,7 +54,9 @@ export function useApiKeys(address?: string) {
         },
       );
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        setError(`HTTP error! status: ${response.status}`);
+        setIsLoading(false);
+        return;
       }
       const data = await response.json();
       const newApiKey: ApiKey = {
@@ -54,10 +66,14 @@ export function useApiKeys(address?: string) {
         status: "Active",
       };
       setApiKeys([newApiKey]);
-    } catch (error) {
-      console.error("Error generating API key:", error);
+      setIsLoading(false);
+    } catch {
+      setError(
+        "Whoops! We hit a snag while generating your API key. Please check your connection and give it another shot. 🚀",
+      );
+      setIsLoading(false);
     }
   };
 
-  return { apiKeys, generateNewApiKey };
+  return { apiKeys, generateNewApiKey, isLoading, error };
 }

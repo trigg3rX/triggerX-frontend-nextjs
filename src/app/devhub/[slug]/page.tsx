@@ -1,5 +1,5 @@
 "use client";
-import DevHubPostContainer from "../../components/devhub/DevHubPostContainer";
+import DevHubPostContainer from "@/components/devhub/DevHubPostContainer";
 
 const DevHubPostPage = () => <DevHubPostContainer />;
 

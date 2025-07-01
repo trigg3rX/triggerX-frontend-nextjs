@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
-import Header from "./components/common/Header";
-import Footer from "./components/common/Footer";
 import { Toaster } from "react-hot-toast";
 import { TGBalanceProvider } from "@/contexts/TGBalanceContext";
-import ScrollToTop from "./components/common/ScrollToTop";
-import { TooltipProvider } from "./components/common/TooltipWrap";
+import { TooltipProvider } from "@/components/common/TooltipWrap";
+import Header from "@/components/common/Header";
+import ScrollToTop from "@/components/common/ScrollToTop";
+import Footer from "@/components/common/Footer";
 
 export const metadata: Metadata = {
   title: "TriggerX",
@@ -28,7 +28,7 @@ export default function RootLayout({
             <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
               <Header />
               <ScrollToTop />
-              <main className="max-w-[1600px] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
+              <main className="max-w-[1600px] w-[90%] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
                 {children}
               </main>
               <Footer />

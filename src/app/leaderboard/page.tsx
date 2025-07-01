@@ -1,6 +1,6 @@
 import React, { Suspense } from "react";
-import LeaderboardSkeleton from "../components/skeleton/LeaderboardSkeleton";
-import MainLeaderboard from "../components/leaderboard/MainLeaderboard";
+import LeaderboardSkeleton from "@/components/skeleton/LeaderboardSkeleton";
+import MainLeaderboard from "@/components/leaderboard/MainLeaderboard";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     siteName: "TriggerX",
     images: [
       {
-        url: "https://triggerx-app-nextjs.vercel.app/OGImages/ContactUs.png",
+        url: "https://triggerx-app-nextjs.vercel.app/OGImages/leaderboard.png",
         width: 1200,
         height: 630,
         alt: "Lederboard | TriggerX",

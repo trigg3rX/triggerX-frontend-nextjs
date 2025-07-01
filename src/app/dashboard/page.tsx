@@ -1,9 +1,9 @@
 import React from "react";
-import { Typography } from "../components/ui/Typography";
-import TgBalance from "../components/dashboard/TgBalance";
-import { QuickActions } from "../components/dashboard/QuickActions";
-import Statistics from "../components/dashboard/Statistics";
-import ActiveJobs from "../components/dashboard/ActiveJobs";
+import { Typography } from "@/components/ui/Typography";
+import TgBalance from "@/components/dashboard/TgBalance";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import Statistics from "@/components/dashboard/Statistics";
+import ActiveJobs from "@/components/dashboard/ActiveJobs";
 
 function Dashboard() {
   return (
