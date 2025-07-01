@@ -21,19 +21,21 @@ import styles from "@/app/styles/scrollbar.module.css";
 import { TabType, TableData } from "@/types/leaderboard";
 import useTruncateAddress from "@/hooks/useTruncateAddress";
 import { Card } from "../ui/Card";
+import { ErrorMessage } from "../common/ErrorMessage";
+import useCountUp from "@/hooks/useCountUp";
 
-// Re-add Column and MainTableProps interfaces, as they are not shared types
 interface Column {
   key: string;
   label: string;
   sortable?: boolean;
 }
-
 interface MainTableProps {
   activeTab: string;
   data?: TableData[];
   onViewProfile?: (address: string) => void;
   userAddress?: string | null;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 // Column configurations for each tab
@@ -55,31 +57,31 @@ const TAB_COLUMNS: Record<TabType, Column[]> = {
   contributor: [],
 };
 
+// PointsCounter component for animating points
+function PointsCounter({ points }: { points: number }) {
+  const animatedPoints = useCountUp(points, 1000);
+  return <>{animatedPoints.toFixed(2)}</>;
+}
+
 export default function MainTable({
   activeTab = "keeper",
   data = [],
   onViewProfile,
   userAddress,
+  error,
+  onRetry,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("points");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  // const [selectedItem, setSelectedItem] = useState<TableData | null>(
-  //   data.length > 0 ? data[0] : null
-  // );
-  const itemsPerPage = 5;
 
+  const itemsPerPage = 5;
   const columns = TAB_COLUMNS[activeTab as TabType] || [];
 
   // Filter out the developer row for the current user if activeTab is 'developer'
   const filteredData = useMemo(() => {
-    if (activeTab === "developer" && userAddress) {
-      return data.filter(
-        (item) => item.address.toLowerCase() !== userAddress.toLowerCase(),
-      );
-    }
     return data;
-  }, [data, activeTab, userAddress]);
+  }, [data]);
 
   const handleSort = (field: string) => {
     if (field === sortField) {
@@ -119,23 +121,25 @@ export default function MainTable({
     );
   }, [data, userAddress]);
 
-  // const handleRowClick = (item: TableData) => {
-  //   setSelectedItem(item);
-  // };
-
   return (
     <>
       {highlightedData && (
-        <div className="mb-6">
-          <HighlightedData data={highlightedData} type={activeTab as TabType} />
-        </div>
+        <HighlightedData data={highlightedData} type={activeTab as TabType} />
       )}
 
       {/* Desktop View */}
       <Card
         className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
       >
-        {filteredData.length === 0 ? (
+        {error ? (
+          <ErrorMessage
+            error={"Something went wrong"}
+            className="mt-4"
+            emoji="😒"
+            retryText="Try Again"
+            onRetry={onRetry}
+          />
+        ) : filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
         ) : (
           <Table>
@@ -187,12 +191,7 @@ export default function MainTable({
                   )}
                   <TableCell className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <Typography
-                        variant="body"
-                        color="gray"
-                        align="left"
-                        className="font-mono"
-                      >
+                      <Typography variant="body" color="gray" align="left">
                         {truncateAddress(item.address)}
                       </Typography>
                       <LucideCopyButton text={item.address} />
@@ -211,15 +210,19 @@ export default function MainTable({
                           align="left"
                           className={
                             column.key === "points"
-                              ? "bg-[#F8FF7C] px-3 py-1 rounded-full text-black w-[90px] text-center "
+                              ? "bg-[#F8FF7C] p-2 rounded-full text-black w-[90px] text-center "
                               : ""
                           }
                         >
-                          {column.key === "points"
-                            ? Number(
+                          {column.key === "points" ? (
+                            <PointsCounter
+                              points={Number(
                                 item[column.key as keyof typeof item],
-                              ).toFixed(2)
-                            : item[column.key as keyof typeof item]}
+                              )}
+                            />
+                          ) : (
+                            item[column.key as keyof typeof item]
+                          )}
                         </Typography>
                       </TableCell>
                     ))}
@@ -230,7 +233,7 @@ export default function MainTable({
                         variant="body"
                         color="primary"
                         align="left"
-                        className="underline underline-offset-2"
+                        className="underline underline-offset-2 hover:text-[#F8ff7c]/80 "
                       >
                         <span
                           className="cursor-pointer"
@@ -255,7 +258,15 @@ export default function MainTable({
       <Card
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
-        {filteredData.length === 0 ? (
+        {error ? (
+          <ErrorMessage
+            error={"Something went wrong"}
+            className="mt-4"
+            emoji="😒"
+            retryText="Try Again"
+            onRetry={onRetry}
+          />
+        ) : filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
         ) : (
           <MobileTableGrid

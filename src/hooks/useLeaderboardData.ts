@@ -23,6 +23,7 @@ export default function useLeaderboardData(
   activeTab: TabType,
   connectedAddress?: string,
   isConnected?: boolean,
+  refreshKey?: number,
 ) {
   const [leaderboardData, setLeaderboardData] =
     useState<LeaderboardData>(initialData);
@@ -104,7 +105,7 @@ export default function useLeaderboardData(
       }
     };
     fetchData();
-  }, [activeTab, connectedAddress, isConnected]);
+  }, [activeTab, connectedAddress, isConnected, refreshKey]);
 
   return { leaderboardData, isLoading, error };
 }

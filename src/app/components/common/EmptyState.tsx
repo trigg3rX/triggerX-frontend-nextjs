@@ -45,9 +45,9 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type, jobType }) => {
         <Typography variant="body" color="gray" className="text-center">
           <Link
             href="/"
-            className="underline transition-all underline-offset-4 hover:text-[#F8ff7c]/60 mt-4"
+            className="underline transition-all underline-offset-4 hover:text-[#F8ff7c]/80 mt-4"
           >
-            Try creating a new job to get started!
+            Try creating a new job to get started !
           </Link>
         </Typography>
       </div>
@@ -83,7 +83,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type, jobType }) => {
             Contributor Leaderboard Coming Soon
           </Typography>
           <Typography variant="body" color="gray" className="text-center">
-            Stay tuned for exciting updates!
+            ✨ Stay tuned for exciting updates !
           </Typography>
         </>
       ) : (
@@ -105,7 +105,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type, jobType }) => {
             <path d="M9 21V9" />
           </svg>
           <Typography variant="h4" color="gray" className="text-center">
-            No {type} data available
+            ❌ No {type} data available
           </Typography>
         </>
       )}

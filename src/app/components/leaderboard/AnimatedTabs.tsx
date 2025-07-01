@@ -6,7 +6,6 @@ interface Tab {
   id: string;
   label: string;
 }
-
 interface AnimatedTabsProps {
   tabs: Tab[];
   activeTab: string;
@@ -23,7 +22,7 @@ const AnimatedTabs: React.FC<AnimatedTabsProps> = ({
       {tabs.map((tabInfo) => (
         <button
           key={tabInfo.id}
-          className={`w-full  text-[#FFFFFF] text-[10px] xs:text-xs md:text-lg lg:text-xl p-2 xs:p-3 sm:p-4 rounded-[10px] relative z-[1] ${
+          className={`w-full  p-2 xs:p-3 sm:p-4 rounded-xl relative z-[1] ${
             activeTab === tabInfo.id
               ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A]"
               : "bg-transparent"

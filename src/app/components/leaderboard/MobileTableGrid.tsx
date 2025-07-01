@@ -65,7 +65,7 @@ export function MobileTableGrid({
                     <Typography variant="body" color="gray" noWrap>
                       {truncateAddress(item.address)}
                     </Typography>
-                    <LucideCopyButton text={item.address} />
+                    <LucideCopyButton text={item.address} className="!p-0" />
                   </div>
                 </div>
                 <div className="flex justify-between items-center">
