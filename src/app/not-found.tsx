@@ -1,10 +1,10 @@
 import React from "react";
-import error from "@/app/assets/common/error.gif";
-import ghost from "@/app/assets/common/ghost.svg";
+import error from "@/assets/common/error.gif";
+import ghost from "@/assets/common/ghost.svg";
 import Image from "next/image";
-import { Typography } from "./components/ui/Typography";
-import { Button } from "./components/ui/Button";
 import Link from "next/link";
+import { Typography } from "@/components/ui/Typography";
+import { Button } from "@/components/ui/Button";
 
 const NotFound = () => {
   return (

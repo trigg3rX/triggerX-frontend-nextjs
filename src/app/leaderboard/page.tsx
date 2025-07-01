@@ -1,11 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import { Typography } from "../components/ui/Typography";
-import SearchBar from "../components/ui/SearchBar";
+import { Typography } from "@/components/ui/Typography";
+import SearchBar from "@/components/ui/SearchBar";
 import { useAccount } from "wagmi";
-import AnimatedTabs from "../components/leaderboard/AnimatedTabs";
-import WalletBanner from "../components/common/WalletBanner";
-import MainTable from "../components/leaderboard/MainTable";
+import AnimatedTabs from "@/components/leaderboard/AnimatedTabs";
+import WalletBanner from "@/components/common/WalletBanner";
+import MainTable from "@/components/leaderboard/MainTable";
 import useLeaderboardData from "@/hooks/useLeaderboardData";
 import { TabType, TableData } from "@/types/leaderboard";
 
