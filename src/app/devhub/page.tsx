@@ -1,8 +1,12 @@
-// app/devhub/page.tsx
 "use client";
-import React from "react";
+import React, { Suspense } from "react";
 import DevHubPageContainer from "@/components/devhub/DevHubPageContainer";
+import DevHubPostCardSkeleton from "@/components/skeleton/DevHubPostCardSkeleton";
 
-const DevHubPage = () => <DevHubPageContainer />;
+const DevHubPage = () => (
+  <Suspense fallback={<DevHubPostCardSkeleton />}>
+    <DevHubPageContainer />
+  </Suspense>
+);
 
 export default DevHubPage;

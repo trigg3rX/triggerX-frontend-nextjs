@@ -31,11 +31,7 @@ function ApiClientPage() {
             <QuickStartGuide />
           </div>
         )}
-        {activeTab === "documentation" && (
-          <div>
-            <Documentation />
-          </div>
-        )}
+        {activeTab === "documentation" && <Documentation />}
       </>
     </>
   );

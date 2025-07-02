@@ -27,14 +27,14 @@ const DevHubPostCard: React.FC<DevHubPostCardProps> = ({ post }) => {
       role="link"
       tabIndex={0}
     >
-      <Card className="overflow-hidden flex flex-col justify-between cursor-pointer gap-3 md:gap-4 lg:gap-6 min-h-[400px] h-full">
-        <div className="w-full h-[200px] rounded-lg border border-[#5F5F5F] relative overflow-hidden bg-[#1A1A1A]">
+      <Card className="overflow-hidden flex flex-col justify-between cursor-pointer gap-3 md:gap-4 min-h-[300px] h-full">
+        <div className="w-full h-max rounded-lg border border-[#5F5F5F] relative overflow-hidden bg-[#1A1A1A]">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={post.title || "Dev Hub Post Image"}
               fill
-              className="transition-transform duration-300 group-hover:scale-[1.01] object-cover"
+              className="!relative !aspect-video w-full transition-transform duration-300 group-hover:scale-[1.01]"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-500">

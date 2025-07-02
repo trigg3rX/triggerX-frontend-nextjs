@@ -18,7 +18,7 @@ const ApiMethod: React.FC<ApiMethodPillProps> = ({ method }) => {
   return (
     <span
       className={clsx(
-        "px-2 py-1 rounded-full text-[10px] lg:text-xs text-center min-w-[50px] lg:min-w-[60px]",
+        "text-[10px] sm:text-xs px-2 py-1.5 sm:px-4 sm:py-2 rounded-full w-30px sm:w-[60px]",
         methodColors[method],
       )}
     >

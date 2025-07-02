@@ -5,7 +5,6 @@ import ParameterTable from "../api/ParameterTable";
 import { Typography } from "../ui/Typography";
 import ApiRequestCodeBlock from "./ApiRequestCodeBlock";
 import ApiResponseCodeBlock from "./ApiResponseCodeBlock";
-// Assume you have a Dropdown component or use a native select
 
 interface ApiDetailViewProps {
   api: ApiEndpoint;
@@ -50,23 +49,26 @@ const ApiDetailView: React.FC<ApiDetailViewProps> = ({ api }) => {
   });
 
   return (
-    <div className="w-full lg:w-[70%] space-y-6 mx-1 ">
-      <div>
-        <Typography variant="h5" className="pb-4" align="left">
+    <div className="space-y-4">
+      <>
+        <Typography variant="h2" align="left">
           {api.name}
         </Typography>
-        <Typography variant="body" color="gray" align="left">
+        <Typography variant="body" color="secondary" align="left">
           {api.description}
         </Typography>
-      </div>
+      </>
+
       {/* Endpoint */}
       <ApiEndpointDisplay
         method={api.method}
         endpoint={api.endpoint}
         path={api.endpointPath}
       />
+
       {/* Headers */}
       <ParameterTable title="Headers" parameters={api.headers} />
+
       {/* Query Parameters */}
       {api.queryParams && api.queryParams.length > 0 && (
         <ParameterTable title="Query Parameters" parameters={api.queryParams} />

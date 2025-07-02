@@ -11,6 +11,9 @@ import devhub1 from "@/assets/devhub/devhub1.svg";
 import devhub2 from "@/assets/devhub/devhub2.svg";
 import { Button } from "../ui/Button";
 import Link from "next/link";
+import DevHubPostContainerSkeleton from "../skeleton/DevHubPostContainerSkeleton";
+import { Card } from "../ui/Card";
+import { Typography } from "../ui/Typography";
 
 const DevHubPostContainer = () => {
   const params = useParams();
@@ -47,11 +50,22 @@ const DevHubPostContainer = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [error, isLoading, blog]);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error || !blog) return <div>Error loading post.</div>;
+  if (isLoading) return <DevHubPostContainerSkeleton />;
+  if (error || !blog) {
+    return (
+      <Card className="max-w-md w-full flex flex-col items-center text-center gap-4 py-10 mx-auto mt-[100px]">
+        <Typography variant="h2" color="primary" className="mb-2">
+          Oops! Something went wrong.
+        </Typography>
+        <Typography variant="body" color="secondary" className="mb-2">
+          We couldn&apos;t fetch the content at this time.
+        </Typography>
+      </Card>
+    );
+  }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 min-h-screen md:mt-[17rem] mt-[10rem]">
+    <div className="min-h-screen">
       <div className="bg-[#131313] rounded-3xl border border-gray-700 p-6 w-[90%] mx-auto">
         <div className="mb-4 sm:mb-8">
           {imageUrl ? (
@@ -61,7 +75,7 @@ const DevHubPostContainer = () => {
                 alt={blog.title || "Header image"}
                 width={1200}
                 height={500}
-                className="!relative w-full h-auto"
+                className="!relative !aspect-video w-full"
               />
             </div>
           ) : (

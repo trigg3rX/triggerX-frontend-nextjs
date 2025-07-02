@@ -19,24 +19,22 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({
   const fullEndpoint = `${endpoint}${path || ""}`;
 
   return (
-    <Card variant="soft" className="!p-3 border-none ">
+    <Card variant="soft" className="!p-3 border-none">
       <Typography
         as="code"
         variant="body"
-        className="flex-1 rounded-lg text-sm overflow-auto flex items-center bg-transparen justify-between "
+        className="flex-1 flex items-center justify-between "
         color="primary"
       >
-        <div>
-          <span className="mr-3">
+        <>
+          <span className="mr-3 hidden sm:block">
             <ApiMethod method={method} />
           </span>
-          {endpoint}
+          <span className="truncate">{endpoint}</span>
           {path && <span>{path}</span>}
-        </div>
+        </>
 
-        <div>
-          <LucideCopyButton text={fullEndpoint} aria-label="Copy endpoint" />
-        </div>
+        <LucideCopyButton text={fullEndpoint} aria-label="Copy endpoint" />
       </Typography>
     </Card>
   );

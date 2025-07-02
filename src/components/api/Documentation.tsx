@@ -7,11 +7,16 @@ import { Card } from "../ui/Card";
 function Documentation() {
   return (
     <>
-      <Card className="p-8 ">
-        <Typography variant="h3" color="yellow" align="left">
+      <Card>
+        <Typography variant="h2" color="yellow" align="left">
           API Documentation
         </Typography>
-        <Typography variant="body" color="gray" align="left" className="py-4">
+        <Typography
+          variant="h4"
+          color="secondary"
+          align="left"
+          className="py-4"
+        >
           Explore and integrate with our Concentration Power Index (CPI)
           calculation APIs.
         </Typography>

@@ -57,15 +57,12 @@ const DevHubPageContainer: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="w-full flex flex-col sm:flex-row items-center justify-between mb-10 md:mb-12">
-        <Typography
-          align="left"
-          className="text-3xl sm:text-4xl lg:text-5xl mb-4 sm:mb-0 flex items-center gap-3"
-        >
+      <div className="w-full flex items-center justify-between mb-10 md:mb-12">
+        <Typography align="left" className="flex items-center gap-3 !text-2xl">
           Total
           <span className="text-[#F8FF7C]">{` { ${posts.length} } `}</span>
         </Typography>
-        <Link href="/api" className="mt-4 sm:mt-0">
+        <Link href="/api">
           <Button>API Services</Button>
         </Link>
       </div>

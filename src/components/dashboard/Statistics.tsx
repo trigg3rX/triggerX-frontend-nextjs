@@ -28,7 +28,8 @@ const Statistics = () => {
       <div className="space-y-4 text-gray-300">
         <div className="flex justify-start items-center gap-7">
           <Typography
-            variant="badgeYellow"
+            variant="badge"
+            bgColor="#F8FF7C"
             color="black"
             className="py-3 px-4 "
           >
@@ -39,7 +40,12 @@ const Statistics = () => {
           </Typography>
         </div>
         <div className="flex justify-start items-center gap-7">
-          <Typography variant="badgeWhite" color="black" className="py-3 px-4 ">
+          <Typography
+            variant="badge"
+            bgColor="white"
+            color="black"
+            className="py-3 px-4 "
+          >
             {totalLinkedJobs}
           </Typography>
           <Typography variant="body" color="gray">

@@ -17,19 +17,19 @@ const ApiRequestCodeBlock: React.FC<ApiRequestCodeBlock> = ({
   );
 
   return (
-    <Card>
-      <div className="flex items-center justify-between p-4">
-        <Typography variant="h5">API Request</Typography>
+    <>
+      <div className="flex items-center justify-between">
+        <Typography variant="h4">API Request</Typography>
       </div>
 
-      <Card variant="soft" className="p-4 bg-[#242424] overflow-auto">
+      <Card variant="soft" className="p-4 bg-[#242424] !border-0">
         {activeSample && (
-          <pre className="text-sm overflow-x-auto whitespace-pre-wrap text-[#E6E6E6] mt-4">
+          <pre className="text-[10px] xs:text-xs sm:text-sm overflow-x-auto whitespace-pre-wrap text-[#E6E6E6] mt-4">
             {activeSample.code}
           </pre>
         )}
       </Card>
-    </Card>
+    </>
   );
 };
 

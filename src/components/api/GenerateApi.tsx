@@ -60,7 +60,7 @@ const GenerateApi: React.FC = () => {
               ].map((detail) => (
                 <div
                   key={detail.label}
-                  className="flex flex-col gap-2 items-start"
+                  className="flex sm:flex-col gap-2 items-start"
                 >
                   <Typography
                     variant="body"
@@ -68,7 +68,7 @@ const GenerateApi: React.FC = () => {
                     className="mb-2"
                     align="left"
                   >
-                    {detail.label}
+                    {detail.label} :
                   </Typography>
                   <Typography variant="body" color="white" align="left">
                     {detail.value}
@@ -77,7 +77,7 @@ const GenerateApi: React.FC = () => {
               ))}
               <div className="flex gap-3 items-center">
                 <Typography variant="body" color="secondary" align="left">
-                  Status
+                  Status :
                 </Typography>
                 <Typography
                   variant="badge"
