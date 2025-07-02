@@ -133,10 +133,10 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
           expandedJobs[job.id] ? (
             <div key={job.id}>
               <Typography
-                variant="h3"
+                variant="h2"
                 color="white"
                 align="left"
-                className=" font-semibold my-7"
+                className=" my-7"
               >
                 Linked Jobs
               </Typography>

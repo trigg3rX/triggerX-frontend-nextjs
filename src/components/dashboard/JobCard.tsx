@@ -64,11 +64,11 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 relative ${expandedDetails ? "h-auto" : "h-[310px]"} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+      className={`!p-0 relative ${expandedDetails ? "h-auto border border-white " : "h-[310px] "} ${expanded ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324]  border border-white hover:border-b hover:border-white  " : "border-[#2A2A2A] hover:border-[#3A3A3A] "} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
     >
       <div>
         <div
-          className={`flex justify-between items-center mb-4 p-3 ${expanded ? "border-b border-white " : "border-[#2A2A2A] border-b hover:border-[#3A3A3A]"}`}
+          className={`flex justify-between items-center mb-4 p-3  ${expanded ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>

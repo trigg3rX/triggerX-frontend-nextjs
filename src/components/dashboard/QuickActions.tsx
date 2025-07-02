@@ -72,7 +72,7 @@ export const QuickActions = () => {
 
   return (
     <Card>
-      <Typography variant="h3" color="white" align="left">
+      <Typography variant="h2" color="white" align="left">
         Quick Actions
       </Typography>
 

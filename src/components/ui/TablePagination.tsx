@@ -2,6 +2,7 @@ import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ActionButton } from "./ActionButton";
+import { useEffect, useState } from "react";
 
 // Base Pagination Components
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
@@ -112,15 +113,64 @@ interface TablePaginationProps {
   className?: string;
 }
 
+function useIsMobile(breakpoint = 640) {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < breakpoint);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export function TablePagination({
   currentPage,
   totalPages,
   onPageChange,
   className,
 }: TablePaginationProps) {
-  // Don't render pagination if there's no data or only one page
+  const isMobile = useIsMobile();
+
   if (totalPages <= 1) {
     return null;
+  }
+
+  if (isMobile) {
+    // Mobile: Only show prev/next and current page
+    return (
+      <div className={`flex justify-center py-4 ${className}`}>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                className={
+                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                }
+              />
+            </PaginationItem>
+            <PaginationItem>
+              <span className="px-2 text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext
+                onClick={() =>
+                  onPageChange(Math.min(totalPages, currentPage + 1))
+                }
+                className={
+                  currentPage === totalPages
+                    ? "pointer-events-none opacity-50"
+                    : ""
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+    );
   }
 
   const renderPageNumbers = () => {

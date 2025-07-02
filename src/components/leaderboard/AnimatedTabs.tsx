@@ -23,14 +23,14 @@ const AnimatedTabs: React.FC<AnimatedTabsProps> = ({
       {tabs.map((tabInfo) => (
         <button
           key={tabInfo.id}
-          className={`w-full  text-[#FFFFFF] p-2 xs:p-3 sm:p-4 rounded-[10px] relative z-[1] ${
+          className={`w-full  text-[#FFFFFF] text-[10px] xs:text-xs md:text-lg lg:text-xl p-2 xs:p-3 sm:p-4 rounded-[10px] relative z-[1] ${
             activeTab === tabInfo.id
               ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A]"
               : "bg-transparent"
           }`}
           onClick={() => setActiveTab(tabInfo.id)}
         >
-          <Typography variant="h3" noWrap={false}>
+          <Typography variant="h5" noWrap={false}>
             {tabInfo.label}
           </Typography>
         </button>
