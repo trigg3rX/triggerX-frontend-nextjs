@@ -10,6 +10,7 @@ import { ErrorMessage } from "../common/ErrorMessage";
 import JobCardSkeleton from "../skeleton/JobCardSkeleton";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
+import { useDeleteJob } from "@/hooks/useDeleteJob";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -29,6 +30,11 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
 
   const { jobs, loading, error, refetch } = useJobs();
   const { isConnected } = useWalletConnectionContext();
+  const {
+    deleteJob,
+    loading: deleteLoading,
+    error: deleteError,
+  } = useDeleteJob();
 
   useEffect(() => {
     refetch();
@@ -63,9 +69,9 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    // TODO: Replace with actual delete logic
-    console.log("Confirmed delete job:", jobIdToDelete);
+  const handleDelete = async () => {
+    if (jobIdToDelete == null) return;
+    await deleteJob(jobIdToDelete, refetch);
     setDeleteDialogOpen(false);
     setJobIdToDelete(null);
   };
@@ -104,9 +110,12 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
         description="Are you sure you want to delete this job? This action cannot be undone."
         onCancel={handleCancelDelete}
         onConfirm={handleDelete}
-        confirmText="Delete"
+        confirmText={deleteLoading ? "Deleting..." : "Delete"}
         cancelText="Cancel"
       />
+      {deleteError && (
+        <ErrorMessage error={deleteError} onRetry={handleDelete} />
+      )}
 
       {loading ? (
         <div className="text-white text-center py-10">
