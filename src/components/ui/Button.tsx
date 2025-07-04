@@ -23,7 +23,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`relative bg-[#222222] border border-[#222222] px-4 py-1.5 xs:px-6 xs:py-2 sm:px-8 sm:py-3 text-nowrap rounded-full group transition-transform
+      className={`relative bg-[#222222] border border-[#222222] px-4 py-1.5 xs:px-6 xs:py-2 sm:py-3 text-nowrap rounded-full group transition-transform
         ${disabled ? "opacity-50 cursor-not-allowed" : ""}
         ${className}`}
       disabled={disabled}

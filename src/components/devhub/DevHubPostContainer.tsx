@@ -14,12 +14,12 @@ import Link from "next/link";
 import DevHubPostContainerSkeleton from "../skeleton/DevHubPostContainerSkeleton";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
+import { Dropdown } from "../ui/Dropdown";
 
 const DevHubPostContainer = () => {
   const params = useParams();
   const slug = typeof params.slug === "string" ? params.slug : params.slug?.[0];
   const { post: blog, isLoading, error } = useDevHubPost(slug || "");
-  const [isOpen, setIsOpen] = useState(false);
   const [activeHeading, setActiveHeading] = useState("");
 
   const imageUrl = useMemo(() => {
@@ -49,6 +49,34 @@ const DevHubPostContainer = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [error, isLoading, blog]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const tocOptions =
+    blog?.headingPairs?.map((pair, index) => ({
+      id: pair.h2Heading,
+      name: `[ ${index + 1} ] ${pair.displayHeading}`,
+    })) || [];
+  const [selectedTOC, setSelectedTOC] = useState<string>(
+    tocOptions[0]?.name || "",
+  );
+
+  // Ensure the first option is selected when tocOptions changes
+  useEffect(() => {
+    if (tocOptions.length > 0) {
+      setSelectedTOC(tocOptions[0].name);
+    }
+  }, [tocOptions]);
+
+  const handleTOCChange = (option: { id: string | number; name: string }) => {
+    setSelectedTOC(option.name);
+    const targetElement = document.getElementById(String(option.id));
+    if (targetElement) {
+      const yOffset = -160;
+      const y =
+        targetElement.getBoundingClientRect().top + window.scrollY + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  };
 
   if (isLoading) return <DevHubPostContainerSkeleton />;
   if (error || !blog) {
@@ -83,10 +111,6 @@ const DevHubPostContainer = () => {
               No Image Available
             </div>
           )}
-          <div className="text-[8px] xs:text-xs sm:text-base flex items-center justify-center mt-3">
-            <span className="text-gray-400 mr-2">Requires:</span>
-            <span className="text-white">{blog.requires || "N/A"}</span>
-          </div>
         </div>
       </div>
 
@@ -95,44 +119,14 @@ const DevHubPostContainer = () => {
         <aside className="w-full md:w-1/4 min-w-[180px] lg:min-w-[230px] md:sticky top-24 h-full">
           {/* Mobile Dropdown */}
           <div className="md:hidden relative my-4">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="w-full flex justify-between items-center px-4 py-2 bg-[#141313] text-white rounded-lg border border-[#5F5F5F] text-xs font-actayWide"
-            >
-              Table Of Content
-              <span
-                className={`transform transition ${isOpen ? "rotate-180" : ""}`}
-              >
-                ▼
-              </span>
-            </button>
-            {isOpen && (
-              <ul className="absolute w-full bg-[#141313] text-white rounded-lg border border-[#5F5F5F] mt-2 shadow-lg z-10 text-xs font-actay">
-                {blog.headingPairs?.map((pair, index) => (
-                  <li key={index} className="py-2 px-2">
-                    <a
-                      href={`#${pair.h2Heading}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        const targetElement = document.getElementById(
-                          pair.h2Heading,
-                        );
-                        if (targetElement) {
-                          const yOffset = -160;
-                          const y =
-                            targetElement.getBoundingClientRect().top +
-                            window.scrollY +
-                            yOffset;
-                          window.scrollTo({ top: y, behavior: "smooth" });
-                        }
-                      }}
-                      className={`text-xs hover:underline ${activeHeading === pair.h2Heading ? "text-green-400 font-bold" : "text-gray-300"}`}
-                    >
-                      [ {index + 1} ] {pair.displayHeading}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            {blog && (
+              <Dropdown
+                label="Table Of Content"
+                options={tocOptions}
+                selectedOption={selectedTOC}
+                onChange={handleTOCChange}
+                className="w-full"
+              />
             )}
           </div>
 
