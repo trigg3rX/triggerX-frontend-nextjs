@@ -7,12 +7,14 @@ import { useTGBalance } from "@/contexts/TGBalanceContext";
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
 import { Card } from "../ui/Card";
+import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 
 export const QuickActions = () => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [stakeAmount, setStakeAmount] = React.useState("");
   const [isStaking, setIsStaking] = React.useState(false);
   const { fetchTGBalance } = useTGBalance();
+  const { isConnected } = useWalletConnectionContext();
 
   const accountBalance = { formatted: "10" };
 
@@ -78,7 +80,11 @@ export const QuickActions = () => {
 
       <div className="space-y-8">
         <div>
-          <Button className="w-full my-5" onClick={() => setIsDialogOpen(true)}>
+          <Button
+            className="w-full my-5"
+            onClick={() => setIsDialogOpen(true)}
+            disabled={!isConnected}
+          >
             Top Up TG
           </Button>
           <Button className="w-full">Create New Job</Button>

@@ -44,7 +44,7 @@ const ApiResponseCodeBlock: React.FC<ApiResponseCodeBlockProps> = ({
         ))}
       </div>
       <div className="p-4 bg-[#242424] rounded-b-lg text-[10px] xs:text-xs sm:text-sm ">
-        <pre className="overflow-x-auto whitespace-pre-wrap text-[#E6E6E6] mt-4">
+        <pre className="overflow-x-auto whitespace-pre-wrap text-[#E6E6E6] my-4">
           {responseContent[activeStatus]}
         </pre>
       </div>

@@ -27,9 +27,9 @@ const Statistics = () => {
         <div className="flex justify-start items-center gap-7">
           <Typography
             variant="badge"
-            bgColor="#F8FF7C"
+            bgColor="bg-[#F8FF7C]"
             color="black"
-            className="py-3 px-4 "
+            className="rounded-full flex items-center justify-center w-10 h-10"
           >
             {totalJobs}
           </Typography>
@@ -40,9 +40,9 @@ const Statistics = () => {
         <div className="flex justify-start items-center gap-7">
           <Typography
             variant="badge"
-            bgColor="white"
+            bgColor="bg-[#FFFFFF]"
             color="black"
-            className="py-3 px-4 "
+            className="w-10 h-10 rounded-full flex items-center justify-center"
           >
             {totalLinkedJobs}
           </Typography>

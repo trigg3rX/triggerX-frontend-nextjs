@@ -79,13 +79,20 @@ export function useJobs() {
     setLoading(true);
     setError(null);
     try {
-      const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        process.env.REACT_APP_API_BASE_URL;
-      if (!API_BASE_URL) throw new Error("API base URL not set");
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!API_BASE_URL) {
+        setError("API base URL not set. Please contact support.");
+        setLoading(false);
+        return;
+      }
       const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
       // console.log("[useJobs] Fetching jobs from:", apiUrl);
       const response = await fetch(apiUrl);
+      if (!response.ok) {
+        setError(`Failed to fetch jobs. (${response.status})`);
+        setLoading(false);
+        return;
+      }
       const jobsData: JobsApiResponse = await response.json();
       // console.log("[useJobs] Raw jobsData:", jobsData);
 
@@ -202,6 +209,9 @@ export function useJobs() {
       }
     } catch (err: unknown) {
       console.error("[useJobs] Error:", err);
+      setError(
+        "An unexpected error occurred while fetching jobs. Please try again.",
+      );
     } finally {
       setLoading(false);
       // console.log("[useJobs] Loading finished.");

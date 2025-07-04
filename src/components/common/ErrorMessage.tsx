@@ -39,7 +39,7 @@ export const ErrorMessage = forwardRef<HTMLDivElement, ErrorMessageProps>(
         <div className="flex items-center gap-2 mb-2">
           {emoji && <span className="text-lg">{emoji}</span>}
           <Typography variant="h4" color="gray" className="!mb-0">
-            {error}
+            😒 {error}
           </Typography>
         </div>
         <Typography variant="body" color="gray" className="text-center">

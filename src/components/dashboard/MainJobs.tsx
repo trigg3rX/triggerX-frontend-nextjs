@@ -6,6 +6,10 @@ import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
 import DeleteDialog from "../common/DeleteDialog";
 import { useJobs } from "@/hooks/useJobs";
+import { ErrorMessage } from "../common/ErrorMessage";
+import JobCardSkeleton from "../skeleton/JobCardSkeleton";
+import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
+import { WalletConnectionCard } from "../common/WalletConnectionCard";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -24,6 +28,7 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
 
   const { jobs, loading, error, refetch } = useJobs();
+  const { isConnected } = useWalletConnectionContext();
 
   useEffect(() => {
     refetch();
@@ -102,10 +107,15 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
         confirmText="Delete"
         cancelText="Cancel"
       />
+
       {loading ? (
-        <div className="text-white text-center py-10">Loading jobs...</div>
+        <div className="text-white text-center py-10">
+          <JobCardSkeleton />
+        </div>
+      ) : !isConnected ? (
+        <WalletConnectionCard className="border-0" />
       ) : error ? (
-        <div className="text-red-500 text-center py-10">{error}</div>
+        <ErrorMessage error={error} onRetry={refetch} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
           {getFilteredJobs().length === 0 ? (
