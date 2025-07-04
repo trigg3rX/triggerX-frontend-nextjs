@@ -2,7 +2,7 @@ import React from "react";
 import { Typography } from "../ui/Typography";
 import Link from "next/link";
 
-type TabType = "keeper" | "developer" | "contributor";
+type TabType = "keeper" | "developer" | "contributor" | "All Types";
 type JobTypeTab =
   | "All Types"
   | "Time-based"
