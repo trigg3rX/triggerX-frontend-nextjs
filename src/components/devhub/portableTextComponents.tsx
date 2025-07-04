@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { PortableText } from "@portabletext/react";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { FaCheck, FaCopy, FaExclamationTriangle } from "react-icons/fa";
+import { FaExclamationTriangle } from "react-icons/fa";
 import { urlFor } from "@/lib/sanityImageUrl";
 import {
   PortableTextCodeBlock,
@@ -16,76 +14,12 @@ import {
   PortableTextEntry,
   PortableTextMarkDefinition,
 } from "@/types/sanity";
+import CodeBlockWithCopy from "../common/CodeBlockWithCopy";
 
 function CodeBlock({ value }: { value: PortableTextCodeBlock }) {
-  const [isCopied, setIsCopied] = useState(false);
   if (!value?.code) return null;
-  const language = value.language || "text";
   const codeString = String(value.code).trim();
-  const filename = value.filename;
-  const handleCopy = () => {
-    if (!codeString) return;
-    navigator.clipboard.writeText(codeString).then(() => {
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    });
-  };
-  return (
-    <div className="relative group my-6 rounded-lg overflow-hidden bg-[#141414] shadow-md border border-gray-700/50">
-      {filename && (
-        <div className="bg-[#141414] px-4 py-1.5 text-xs text-gray-300 font-mono border-b border-gray-600/80 flex justify-between items-center">
-          <span>{filename}</span>
-          <button
-            onClick={handleCopy}
-            className="p-1 bg-white hover:bg-gray-200 rounded text-[#141414] text-[6px] transition-all duration-150 opacity-70 group-hover:opacity-100"
-            aria-label="Copy code to clipboard"
-            title={isCopied ? "Copied!" : "Copy code"}
-          >
-            {isCopied ? (
-              <FaCheck className="w-3 h-3 text-green-600" />
-            ) : (
-              <FaCopy className="w-3 h-3" />
-            )}
-          </button>
-        </div>
-      )}
-      {!filename && (
-        <button
-          onClick={handleCopy}
-          className="absolute top-2 right-2 p-1 bg-white hover:bg-gray-200 rounded text-[#141414] text-[6px] transition-all duration-150 opacity-0 group-hover:opacity-100 focus:opacity-100"
-          aria-label="Copy code to clipboard"
-          title={isCopied ? "Copied!" : "Copy code"}
-        >
-          {isCopied ? (
-            <FaCheck className="w-3 h-3 text-green-600" />
-          ) : (
-            <FaCopy className="w-3 h-3" />
-          )}
-        </button>
-      )}
-      <SyntaxHighlighter
-        language={language}
-        style={atomDark}
-        customStyle={{
-          padding: "1.25rem",
-          paddingTop: filename ? "0.75rem" : "1.50rem",
-          margin: 0,
-          borderRadius: filename ? "0" : "0 0 0.5rem 0.5rem",
-          fontSize: "0.875rem",
-        }}
-        wrapLines={true}
-        codeTagProps={{
-          style: {
-            fontFamily: '"Fira Code", "Source Code Pro", monospace',
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
-          },
-        }}
-      >
-        {codeString}
-      </SyntaxHighlighter>
-    </div>
-  );
+  return <CodeBlockWithCopy code={codeString} />;
 }
 
 const ButtonLink = ({ value }: { value: PortableTextButtonLinkBlock }) => {

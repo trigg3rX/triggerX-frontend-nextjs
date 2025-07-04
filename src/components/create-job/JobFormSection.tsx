@@ -24,8 +24,6 @@ export const JobFormSection: React.FC = () => {
   };
 
   return (
-    <div className="w-full xl:w-2/3">
-      {renderSelectedTemplate() || <JobForm />}
-    </div>
+    <div className="w-full">{renderSelectedTemplate() || <JobForm />}</div>
   );
 };

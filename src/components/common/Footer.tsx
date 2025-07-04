@@ -24,6 +24,7 @@ import medium from "@/assets/footer_svgs/medium.svg";
 import mediumdark from "@/assets/footer_svgs/mediumdark.svg";
 import youtube from "@/assets/footer_svgs/youtube.svg";
 import youtubedark from "@/assets/footer_svgs/youtubedark.svg";
+import { Typography } from "../ui/Typography";
 
 interface SocialLinkItem {
   id: string;
@@ -124,6 +125,15 @@ const footerSocialLinks: SocialLinkItem[] = [
 
 const footerNavLinksTop: FooterNavItem[] = [
   {
+    id: "status",
+    label: "Status",
+    href: "https://status.triggerx.network/",
+    isLink: true,
+    target: "_blank",
+    rel: "noopener noreferrer",
+    className: "hover:text-gray-400 transition-colors",
+  },
+  {
     id: "build",
     label: "Build",
     href: "/",
@@ -181,9 +191,9 @@ const Footer: React.FC = () => {
   return (
     <footer className="relative z-10 flex flex-col items-center justify-center gap-[5px] md:gap-[40px] lg:gap-[80px] 2xl:gap-[120px] mt-[80px] lg:mt-0">
       {/* Main Content Area */}
-      <div className="z-40 flex mt-10 md:mt-20 flex-col-reverse md:flex-row items-start md:items-end justify-between gap-10 w-[88%] md:w-[80%] xl:w-[70%] mx-auto">
+      <div className="z-40 flex mt-10 md:mt-20 flex-col-reverse sm:flex-row items-start sm:items-end justify-between gap-10 w-[88%] sm:w-[95%] md:w-[85%] xl:w-[70%] mx-auto">
         {/* Left Section: Social Links & Copyright */}
-        <div className="flex flex-col gap-4 w-full md:w-auto mx-auto md:mx-0">
+        <div className="flex flex-col gap-4 w-full sm:w-auto mx-auto md:mx-0">
           <div className="flex space-x-2 xs:space-x-3 lg:space-x-4 items-center mr-auto">
             {footerSocialLinks.map((link) => (
               <Tooltip
@@ -221,14 +231,14 @@ const Footer: React.FC = () => {
         </div>
 
         {/* Right Section: Navigation Links */}
-        <div className="text-white w-full md:w-auto mx-auto md:mx-0 flex flex-col justify-center gap-4 md:gap-6 items-start md:items-end">
+        <div className="text-white w-full xs:w-[88%] sm:w-auto mx-auto md:mx-0 flex flex-col justify-center gap-4 md:gap-6 items-start md:items-end">
           <FooterNavSection
             navItems={footerNavLinksTop}
-            className="w-full md:w-auto flex justify-between md:justify-end gap-x-6 gap-y-2 md:gap-x-7 lg:gap-x-12 text-[10px] xs:text-[12px] lg:text-[14px] 2xl:text-[15px] text-gray-300 whitespace-nowrap tracking-wide flex-wrap"
+            className="w-full md:w-auto flex justify-between sm:justify-end gap-x-6 gap-y-2 md:gap-x-7 lg:gap-x-12 text-[10px] xs:text-[12px] lg:text-[14px] 2xl:text-[15px] text-gray-300 whitespace-nowrap tracking-wide flex-wrap"
           />
           <FooterNavSection
             navItems={footerNavLinksBottom}
-            className="w-full md:w-auto flex justify-between md:justify-end gap-x-3 gap-y-2 md:gap-x-5 lg:gap-x-8 text-[10px] xs:text-[12px] lg:text-[14px] 2xl:text-[15px] text-gray-300 whitespace-nowrap tracking-wide flex-wrap"
+            className="w-full md:w-auto flex justify-between sm:justify-end gap-x-3 gap-y-2 md:gap-x-5 lg:gap-x-8 text-[10px] xs:text-[12px] lg:text-[14px] 2xl:text-[15px] text-gray-300 whitespace-nowrap tracking-wide flex-wrap"
           />
         </div>
       </div>
@@ -241,6 +251,17 @@ const Footer: React.FC = () => {
           className="w-full h-auto"
           priority={false}
         />
+
+        <Typography variant="body">
+          Build with ❤️ by{" "}
+          <a
+            href="https://lampros.tech/?utm_source=triggerx&utm_medium=footer"
+            target="_blank"
+            className="hover:underline"
+          >
+            Lampros Tech
+          </a>
+        </Typography>
       </div>
 
       {/* Decorative Background Images */}

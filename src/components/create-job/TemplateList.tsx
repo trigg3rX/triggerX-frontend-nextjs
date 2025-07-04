@@ -7,9 +7,13 @@ import { useJob } from "@/contexts/JobContext";
 
 interface TemplateListProps {
   templates: Template[];
+  onTemplateSelect?: () => void;
 }
 
-export const TemplateList: React.FC<TemplateListProps> = ({ templates }) => {
+export const TemplateList: React.FC<TemplateListProps> = ({
+  templates,
+  onTemplateSelect,
+}) => {
   const { selectedJob, handleJobSelect, handleCreateCustomJob } = useJob();
 
   return (
@@ -18,7 +22,12 @@ export const TemplateList: React.FC<TemplateListProps> = ({ templates }) => {
         <Typography variant="h2" align="left" className="text-nowrap w-full">
           Template
         </Typography>
-        <Button onClick={handleCreateCustomJob} disabled={!selectedJob}>
+        <Button
+          onClick={() => {
+            handleCreateCustomJob();
+          }}
+          disabled={!selectedJob}
+        >
           Create Custom Job
         </Button>
       </div>
@@ -27,7 +36,10 @@ export const TemplateList: React.FC<TemplateListProps> = ({ templates }) => {
           <div
             key={template.id}
             className="cursor-pointer"
-            onClick={() => handleJobSelect(template)}
+            onClick={() => {
+              handleJobSelect(template);
+              if (onTemplateSelect) onTemplateSelect();
+            }}
           >
             <Card
               variant={selectedJob?.id === template.id ? "gradient" : "default"}
