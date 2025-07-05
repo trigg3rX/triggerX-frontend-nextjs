@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,15 +11,17 @@ import {
 import { InputField } from "../ui/InputField";
 import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
+import { useStakeRegistry } from "@/hooks/useStakeRegistry";
+import { ethers } from "ethers";
+import toast from "react-hot-toast";
 
 interface TopUpTgDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stakeAmount: string;
   setStakeAmount: (value: string) => void;
-  isStaking: boolean;
   accountBalance?: { formatted?: string };
-  handleStake: (e: React.FormEvent<HTMLFormElement>) => void;
+  fetchTGBalance: () => Promise<void>;
 }
 
 const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
@@ -27,10 +29,47 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
   onOpenChange,
   stakeAmount,
   setStakeAmount,
-  isStaking,
   accountBalance,
-  handleStake,
+  fetchTGBalance,
 }) => {
+  const { stakeRegistryAddress } = useStakeRegistry();
+  const [isStaking, setIsStaking] = useState(false);
+  const handleStake = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.getNetwork();
+      setIsStaking(true);
+      const signer = await provider.getSigner();
+      const stakingContract = new ethers.Contract(
+        stakeRegistryAddress,
+        [
+          "function purchaseTG(uint256 amount) external payable returns (uint256)",
+        ],
+        signer,
+      );
+
+      const stakeAmountInWei = ethers.parseEther(stakeAmount.toString());
+      if (stakeAmountInWei === BigInt(0)) {
+        throw new Error("Stake amount must be greater than zero.");
+      }
+      const tx = await stakingContract.purchaseTG(
+        ethers.parseEther(stakeAmount.toString()),
+        { value: ethers.parseEther(stakeAmount.toString()) },
+      );
+      await tx.wait();
+      await fetchTGBalance();
+      toast.success("Staking successful!");
+      onOpenChange(false);
+      setStakeAmount("");
+    } catch (error: unknown) {
+      console.error("Error staking:", error);
+    } finally {
+      setIsStaking(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -77,6 +116,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
               </div>
             )}
           </div>
+
           <DialogFooter>
             <Button
               type="submit"

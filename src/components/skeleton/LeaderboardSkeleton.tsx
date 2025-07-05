@@ -5,11 +5,8 @@ const LeaderboardSkeleton: React.FC = () => {
   return (
     <div className="w-[90%] mx-auto">
       {/* Title Skeleton */}
-      <Skeleton
-        height={60}
-        borderRadius={12}
-        className="mx-auto w-full lg:w-[40%]"
-      />
+      <Skeleton width="40%" height={60} borderRadius={12} className="mx-auto" />
+
       <div className="flex justify-between my-6 lg:flex-row flex-col gap-4">
         <div>
           <Skeleton height={28} width={220} className="mb-2" />

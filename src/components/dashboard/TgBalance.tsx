@@ -3,9 +3,12 @@
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import { useTGBalance } from "@/contexts/TGBalanceContext";
+import useCountUp from "@/hooks/useCountUp";
 
 const TgBalance = () => {
   const { userBalance } = useTGBalance();
+  const balance = userBalance ? Number(userBalance) : 0;
+  const animatedBalance = useCountUp(balance, 1000);
   return (
     <Card>
       <Typography variant="h2" color="white" align="left" className="mb-5">
@@ -21,7 +24,7 @@ const TgBalance = () => {
           align="left"
           className="  truncate"
         >
-          {userBalance ? Number(userBalance).toFixed(2) : "0.0000"}
+          {balance ? animatedBalance.toFixed(2) : "0.00"}
         </Typography>
       </div>
     </Card>

@@ -2,7 +2,7 @@ import React from "react";
 import { Typography } from "../ui/Typography";
 import Link from "next/link";
 
-type TabType = "keeper" | "developer" | "contributor";
+type TabType = "keeper" | "developer" | "contributor" | "All Types";
 type JobTypeTab =
   | "All Types"
   | "Time-based"
@@ -39,8 +39,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({ type, jobType }) => {
           <path d="M3 9h18" />
           <path d="M9 21V9" />
         </svg>
-        <Typography variant="h4" color="gray" className="text-center">
-          {message}
+        <Typography variant="h4" color="gray" className="text-center mb-2">
+          ❌ {message}
         </Typography>
         <Typography variant="body" color="gray" className="text-center">
           <Link

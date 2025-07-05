@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { useAccount } from "wagmi";
-import toast from "react-hot-toast";
 
 export type JobType = {
   id: number;
@@ -77,15 +76,22 @@ export function useJobs() {
       return;
     }
     setLoading(true);
-    setError(null);
+
     try {
-      const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        process.env.REACT_APP_API_BASE_URL;
-      if (!API_BASE_URL) throw new Error("API base URL not set");
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!API_BASE_URL) {
+        setError("API base URL not set. Please contact support.");
+        setLoading(false);
+        return;
+      }
       const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
       // console.log("[useJobs] Fetching jobs from:", apiUrl);
       const response = await fetch(apiUrl);
+      if (!response.ok) {
+        setError(`Failed to fetch jobs. (${response.status})`);
+        setLoading(false);
+        return;
+      }
       const jobsData: JobsApiResponse = await response.json();
       // console.log("[useJobs] Raw jobsData:", jobsData);
 
@@ -94,7 +100,6 @@ export function useJobs() {
       jobsData.jobs.forEach((job: RawJobData) => {
         jobMap[job.job_data.job_id] = job;
       });
-      // console.log("[useJobs] jobMap:", jobMap);
       // Build linked jobs map
       const linkedJobsMap: Record<number, JobType[]> = {};
       jobsData.jobs.forEach((job: RawJobData) => {
@@ -195,13 +200,11 @@ export function useJobs() {
         });
       // console.log("[useJobs] tempJobs:", tempJobs);
       setJobs(tempJobs);
-      if (tempJobs.length === 0 && isConnected && !loading) {
-        toast("No jobs found. Create a new job to get started!", {
-          icon: "ℹ️",
-        });
-      }
     } catch (err: unknown) {
       console.error("[useJobs] Error:", err);
+      setError(
+        "An unexpected error occurred while fetching jobs. Please try again.",
+      );
     } finally {
       setLoading(false);
       // console.log("[useJobs] Loading finished.");

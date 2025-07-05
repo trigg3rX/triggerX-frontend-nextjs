@@ -23,7 +23,7 @@ const ApiEndpoint: React.FC<ApiEndpointProps> = ({
       <Typography
         as="code"
         variant="body"
-        className="flex-1 flex items-center justify-between "
+        className="flex-1 flex items-center justify-start "
         color="primary"
       >
         <>

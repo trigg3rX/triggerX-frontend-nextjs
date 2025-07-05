@@ -2,6 +2,8 @@ import { useState } from "react";
 import JobCard, { JobType } from "./JobCard";
 
 import DeleteDialog from "../common/DeleteDialog";
+import { useDeleteJob } from "@/hooks/useDeleteJob";
+import { useJobs } from "@/hooks/useJobs";
 
 // Mock data for linked jobs
 export const mockLinkedJobs: JobType[] = [
@@ -38,6 +40,8 @@ export const mockLinkedJobs: JobType[] = [
 ];
 
 const LinkedJobs = () => {
+  const { deleteJob } = useDeleteJob();
+  const { refetch } = useJobs();
   const [expandedJobs, setExpandedJobs] = useState<{ [key: number]: boolean }>(
     {},
   );
@@ -66,9 +70,9 @@ const LinkedJobs = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    // TODO: Replace with actual delete logic
-    console.log("Confirmed delete linked job:", jobIdToDelete);
+  const handleDelete = async () => {
+    if (jobIdToDelete == null) return;
+    await deleteJob(jobIdToDelete, refetch);
     setDeleteDialogOpen(false);
     setJobIdToDelete(null);
   };

@@ -51,6 +51,10 @@ export const TGBalanceProvider: React.FC<{
         const [, tgBalance] =
           await stakeRegistryContract.getBalance(userAddress);
         setUserBalance(ethers.formatEther(tgBalance));
+        console.log(
+          "[TGBalance] TG Balance after chain change:",
+          ethers.formatEther(tgBalance),
+        );
       }
     } catch (error) {
       console.error("Error fetching TG balance:", error);

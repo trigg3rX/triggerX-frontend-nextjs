@@ -6,6 +6,12 @@ import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
 import DeleteDialog from "../common/DeleteDialog";
 import { useJobs } from "@/hooks/useJobs";
+import JobCardSkeleton from "../skeleton/JobCardSkeleton";
+import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
+import { WalletConnectionCard } from "../common/WalletConnectionCard";
+import { useDeleteJob } from "@/hooks/useDeleteJob";
+import { useAccount } from "wagmi";
+import { useChains } from "wagmi";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -23,12 +29,16 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
 
-  const { jobs, loading, error, refetch } = useJobs();
+  const { jobs, loading, refetch } = useJobs();
+  const { isConnected } = useWalletConnectionContext();
+  const { address } = useAccount();
+  const chains = useChains();
+  const { deleteJob, loading: deleteLoading } = useDeleteJob();
 
   useEffect(() => {
     refetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [address, chains, isConnected]);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => ({
@@ -58,9 +68,9 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
-    // TODO: Replace with actual delete logic
-    console.log("Confirmed delete job:", jobIdToDelete);
+  const handleDelete = async () => {
+    if (jobIdToDelete == null) return;
+    await deleteJob(jobIdToDelete, refetch);
     setDeleteDialogOpen(false);
     setJobIdToDelete(null);
   };
@@ -99,31 +109,32 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
         description="Are you sure you want to delete this job? This action cannot be undone."
         onCancel={handleCancelDelete}
         onConfirm={handleDelete}
-        confirmText="Delete"
+        confirmText={deleteLoading ? "Deleting..." : "Delete"}
         cancelText="Cancel"
       />
+
       {loading ? (
-        <div className="text-white text-center py-10">Loading jobs...</div>
-      ) : error ? (
-        <div className="text-red-500 text-center py-10">{error}</div>
+        <div className="text-white text-center py-10">
+          <JobCardSkeleton />
+        </div>
+      ) : !isConnected ? (
+        <WalletConnectionCard className="border-0" />
+      ) : getFilteredJobs().length === 0 ? (
+        <EmptyState jobType={mapToJobTypeTab(selectedType)} type="All Types" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
-          {getFilteredJobs().length === 0 ? (
-            <EmptyState type="keeper" jobType={mapToJobTypeTab(selectedType)} />
-          ) : (
-            getFilteredJobs().map((job) => (
-              <div key={job.id} className="col-span-1">
-                <JobCard
-                  job={job}
-                  expanded={!!expandedJobs[job.id]}
-                  expandedDetails={!!expandedJobDetails[job.id]}
-                  onToggleExpand={toggleJobExpand}
-                  onToggleDetails={toggleJobDetails}
-                  onDelete={showDeleteConfirmation}
-                />
-              </div>
-            ))
-          )}
+          {getFilteredJobs().map((job) => (
+            <div key={job.id} className="col-span-1">
+              <JobCard
+                job={job}
+                expanded={!!expandedJobs[job.id]}
+                expandedDetails={!!expandedJobDetails[job.id]}
+                onToggleExpand={toggleJobExpand}
+                onToggleDetails={toggleJobDetails}
+                onDelete={showDeleteConfirmation}
+              />
+            </div>
+          ))}
         </div>
       )}
       <div>
