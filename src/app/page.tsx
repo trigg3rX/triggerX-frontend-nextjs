@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { CreateJobLayout } from "@/components/create-job/CreateJobLayout";
 import { JobFormProvider } from "@/contexts/JobFormContext";
 import CreateJobSkeleton from "@/components/skeleton/CreateJobSkeleton";
-import { getFullUrl } from "@/lib/metaUrl";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,11 +10,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Create a Job  | TriggerX ",
     description: "TriggerX - Web3 Automation Platform.",
-    url: getFullUrl("/"),
+    url: `https://triggerx-app-nextjs.vercel.app/`,
     siteName: "TriggerX",
     images: [
       {
-        url: getFullUrl("/OGImages/build.png"),
+        url: `https://triggerx-app-nextjs.vercel.app/OGImages/build.png`,
         width: 1200,
         height: 630,
         alt: "Create a Job | TriggerX",
@@ -25,7 +24,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: getFullUrl("/"),
+    canonical: `https://triggerx-app-nextjs.vercel.app/`,
   },
 };
 

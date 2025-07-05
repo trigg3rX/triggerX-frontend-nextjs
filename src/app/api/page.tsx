@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import ApiPageSkeleton from "@/components/skeleton/ApiPageSkeleton";
 import ApiClientPage from "@/components/api/ApiClientPage";
-import { getFullUrl } from "@/lib/metaUrl";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -10,11 +9,12 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Generate API  | TriggerX ",
     description: "TriggerX - Web3 Automation Platform.",
-    url: getFullUrl("/api"),
+    url: `https://triggerx-app-nextjs.vercel.app/api`,
     siteName: "TriggerX",
     images: [
       {
-        url: getFullUrl("/OGImages/build.png"),
+        url: `https://triggerx-app-nextjs.vercel.app/OGImages/api.png`,
+
         width: 1200,
         height: 630,
         alt: "Generate API | TriggerX",
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: getFullUrl("/api"),
+    canonical: `https://triggerx-app-nextjs.vercel.app/api`,
   },
 };
 

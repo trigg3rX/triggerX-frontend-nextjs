@@ -2,7 +2,6 @@ import React, { Suspense } from "react";
 import DevHubPageContainer from "@/components/devhub/DevHubPageContainer";
 import DevHubPostCardSkeleton from "@/components/skeleton/DevHubPostCardSkeleton";
 import { Metadata } from "next";
-import { getFullUrl } from "@/lib/metaUrl";
 
 export const metadata: Metadata = {
   title: "Devhub | TriggerX",
@@ -10,11 +9,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Devhub | TriggerX ",
     description: "TriggerX - Web3 Automation Platform.",
-    url: getFullUrl("/devhub"),
+    url: `https://triggerx-app-nextjs.vercel.app/devhub`,
     siteName: "TriggerX",
     images: [
       {
-        url: getFullUrl("/OGImages/devhub.png"),
+        url: `https://triggerx-app-nextjs.vercel.app/OGImages/devhub.png`,
         width: 1200,
         height: 630,
         alt: "Devhub | TriggerX",
@@ -24,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: getFullUrl("/devhub"),
+    canonical: `https://triggerx-app-nextjs.vercel.app/devhub`,
   },
 };
 
