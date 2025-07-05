@@ -87,7 +87,14 @@ export function useJobs() {
       const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
       // console.log("[useJobs] Fetching jobs from:", apiUrl);
       const response = await fetch(apiUrl);
+      console.log(response);
       if (!response.ok) {
+        if (response.status === 404) {
+          setJobs([]);
+          setError(null); // treat as empty, not error
+          setLoading(false);
+          return;
+        }
         setError(`Failed to fetch jobs. (${response.status})`);
         setLoading(false);
         return;
@@ -200,6 +207,7 @@ export function useJobs() {
         });
       // console.log("[useJobs] tempJobs:", tempJobs);
       setJobs(tempJobs);
+      setError(null);
     } catch (err: unknown) {
       console.error("[useJobs] Error:", err);
       setError(

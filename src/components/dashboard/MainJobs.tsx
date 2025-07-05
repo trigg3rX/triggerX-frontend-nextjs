@@ -12,6 +12,7 @@ import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { useDeleteJob } from "@/hooks/useDeleteJob";
 import { useAccount } from "wagmi";
 import { useChains } from "wagmi";
+import { ErrorMessage } from "../common/ErrorMessage";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -29,7 +30,7 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
 
-  const { jobs, loading, refetch } = useJobs();
+  const { jobs, loading, refetch, error } = useJobs();
   const { isConnected } = useWalletConnectionContext();
   const { address } = useAccount();
   const chains = useChains();
@@ -119,23 +120,34 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
         </div>
       ) : !isConnected ? (
         <WalletConnectionCard className="border-0" />
-      ) : getFilteredJobs().length === 0 ? (
-        <EmptyState jobType={mapToJobTypeTab(selectedType)} type="All Types" />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
-          {getFilteredJobs().map((job) => (
-            <div key={job.id} className="col-span-1">
-              <JobCard
-                job={job}
-                expanded={!!expandedJobs[job.id]}
-                expandedDetails={!!expandedJobDetails[job.id]}
-                onToggleExpand={toggleJobExpand}
-                onToggleDetails={toggleJobDetails}
-                onDelete={showDeleteConfirmation}
-              />
+        <>
+          {getFilteredJobs().length === 0 && !error && (
+            <EmptyState
+              jobType={mapToJobTypeTab(selectedType)}
+              type="All Types"
+            />
+          )}
+
+          {error && <ErrorMessage error={error} />}
+
+          {!error && getFilteredJobs().length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
+              {getFilteredJobs().map((job) => (
+                <div key={job.id} className="col-span-1">
+                  <JobCard
+                    job={job}
+                    expanded={!!expandedJobs[job.id]}
+                    expandedDetails={!!expandedJobDetails[job.id]}
+                    onToggleExpand={toggleJobExpand}
+                    onToggleDetails={toggleJobDetails}
+                    onDelete={showDeleteConfirmation}
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
       <div>
         {getFilteredJobs().map((job) =>

@@ -23,6 +23,7 @@ import {
 } from "react-icons/fa";
 import ShortAddress from "@/components/ui/ShortAddress";
 import CopyButton from "@/components/ui/CopyButton";
+import { CodeBlockWithCopy } from "@/components/common/CodeBlockWithCopy";
 
 const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_STAKER_TOKEN_ADDRESS;
 const STAKE_REWARD_CONTRACT_ADDRESS =
@@ -631,19 +632,21 @@ const StakingRewards = () => {
                 <Typography variant="h2" align="left" className="mb-6">
                   Stake/Unstake Tokens
                 </Typography>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-6">
                   {stakeUnstakeCards.map((item) => (
                     <Card className="space-y-3 sm:space-y-4" key={item.title}>
                       <Typography variant="h3" align="left">
                         {item.title}
                       </Typography>
                       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                        <TextInput
-                          value={item.inputValue}
-                          onChange={item.onInputChange}
-                          placeholder={item.inputPlaceholder}
-                          type={item.inputType}
-                        />
+                        <div className="w-full sm:w-[80%] text-wrap break-all">
+                          <TextInput
+                            value={item.inputValue}
+                            onChange={item.onInputChange}
+                            placeholder={item.inputPlaceholder}
+                            type={item.inputType}
+                          />
+                        </div>
                         <Button
                           color={item.button.color}
                           onClick={item.button.onClick}
@@ -684,7 +687,7 @@ const StakingRewards = () => {
                             variant="soft"
                             className="flex items-center justify-between"
                           >
-                            <Typography variant="h3">
+                            <Typography variant="h3" noWrap={true}>
                               <ShortAddress
                                 address={item.value}
                                 className="text-[#A2A2A2]"
@@ -695,7 +698,12 @@ const StakingRewards = () => {
                         </div>
                       ) : (
                         <Card variant="soft">
-                          <Typography variant="h3" align="left">
+                          <Typography
+                            variant="h3"
+                            align="left"
+                            noWrap={true}
+                            className="!break-all"
+                          >
                             {item.value}
                           </Typography>
                         </Card>
@@ -713,18 +721,10 @@ const StakingRewards = () => {
                       function
                     </Typography>
 
-                    <Card
-                      variant="soft"
-                      className="flex items-start justify-between"
-                    >
-                      <pre className="text-[#A2A2A2] text-sm font-mono">
-                        {JSON.stringify(jobConfig.abi, null, 2)}
-                      </pre>
-                      <CopyButton
-                        value={JSON.stringify(jobConfig.abi, null, 2)}
-                        title="Copy ABI"
-                      />
-                    </Card>
+                    <CodeBlockWithCopy
+                      code={JSON.stringify(jobConfig.abi, null, 2)}
+                      className="font-mono"
+                    />
                   </Card>
                 </div>
               </Card>

@@ -22,7 +22,11 @@ const CreateJobLayoutContent: React.FC = () => {
   const { selectedJob } = useJob();
 
   const handleScrollToForm = () => {
-    if (jobFormRef.current) {
+    if (
+      typeof window !== "undefined" &&
+      window.innerWidth < 1026 &&
+      jobFormRef.current
+    ) {
       const y =
         jobFormRef.current.getBoundingClientRect().top + window.scrollY - 200;
       window.scrollTo({ top: y, behavior: "smooth" });
@@ -32,6 +36,13 @@ const CreateJobLayoutContent: React.FC = () => {
   React.useEffect(() => {
     if (selectedJob === null) {
       handleScrollToForm();
+    } else if (typeof window !== "undefined" && window.innerWidth >= 1026) {
+      // On desktop, scroll to JobFormSection when a template is selected
+      if (jobFormRef.current) {
+        const y =
+          jobFormRef.current.getBoundingClientRect().top + window.scrollY - 200;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
     }
   }, [selectedJob]);
 
@@ -44,12 +55,14 @@ const CreateJobLayoutContent: React.FC = () => {
       </Typography>
 
       <div className="flex flex-col xl:flex-row gap-6 sm:gap-8 p-4 sm:p-6">
-        <div className="w-full xl:w-1/3 space-y-6 sm:space-y-8">
-          <PointsSystem />
-          <TemplateList
-            templates={templatesData.templates}
-            onTemplateSelect={handleScrollToForm}
-          />
+        <div className="w-full xl:w-1/3">
+          <div className="xl:sticky xl:top-[200px] xl:max-h-[calc(100vh-200px)] xl:overflow-auto space-y-6 sm:space-y-8">
+            <PointsSystem />
+            <TemplateList
+              templates={templatesData.templates}
+              onTemplateSelect={handleScrollToForm}
+            />
+          </div>
         </div>
         <div ref={jobFormRef} className="w-full xl:w-2/3">
           <JobFormSection />
