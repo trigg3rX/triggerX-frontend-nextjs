@@ -1,7 +1,6 @@
 import React, { Suspense } from "react";
 import LeaderboardSkeleton from "@/components/skeleton/LeaderboardSkeleton";
 import MainLeaderboard from "@/components/leaderboard/MainLeaderboard";
-import { getFullUrl } from "@/lib/metaUrl";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -10,11 +9,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Lederboard | TriggerX ",
     description: "TriggerX - Web3 Automation Platform.",
-    url: getFullUrl("/leaderboard"),
+    url: `https://triggerx-app-nextjs.vercel.app/leaderboard`,
     siteName: "TriggerX",
     images: [
       {
-        url: getFullUrl("/OGImages/leaderboard.png"),
+        url: `https://triggerx-app-nextjs.vercel.app/OGImages/leaderboard.png`,
         width: 1200,
         height: 630,
         alt: "Lederboard | TriggerX",
@@ -24,7 +23,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: getFullUrl("/leaderboard"),
+    canonical: `https://triggerx-app-nextjs.vercel.app/leaderboard`,
   },
 };
 

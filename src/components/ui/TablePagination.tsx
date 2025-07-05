@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/metaUrl";
+import { cn } from "@/lib/utils";
 import { ActionButton } from "./ActionButton";
 import { useEffect, useState } from "react";
 
