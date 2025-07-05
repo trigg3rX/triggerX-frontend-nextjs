@@ -36,6 +36,7 @@ interface RawJobData {
     custom?: string;
     task_ids?: string[];
     fee_used?: string;
+    status: string;
   };
   time_job_data?: Record<string, unknown>;
   event_job_data?: Record<string, unknown>;
@@ -97,7 +98,7 @@ export function useJobs() {
         return;
       }
       const jobsData: JobsApiResponse = await response.json();
-      // console.log("[useJobs] Raw jobsData:", jobsData);
+      console.log("[useJobs] Raw jobsData:", jobsData);
 
       // Build job map for linked jobs
       const jobMap: Record<number, RawJobData> = {};
@@ -162,7 +163,9 @@ export function useJobs() {
       // Build main jobs array
       const tempJobs: JobType[] = jobsData.jobs
         .filter(
-          (jobDetail: RawJobData) => jobDetail.job_data.chain_status === 0,
+          (jobDetail: RawJobData) =>
+            jobDetail.job_data.chain_status === 0 &&
+            jobDetail.job_data.status !== "deleted",
         )
         .map((jobDetail: RawJobData) => {
           const typeSpecificData =
@@ -202,7 +205,7 @@ export function useJobs() {
             type: mapJobType(jobDetail.job_data.task_definition_id),
           };
         });
-      // console.log("[useJobs] tempJobs:", tempJobs);
+      console.log("[useJobs] tempJobs:", tempJobs);
       setJobs(tempJobs);
       setError(null);
     } catch (err: unknown) {
