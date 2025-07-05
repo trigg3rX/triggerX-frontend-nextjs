@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import { ethers } from "ethers";
 import { useAccount } from "wagmi";
+import { devLog } from "@/lib/devLog";
 
 interface TGBalanceContextType {
   userBalance: string;
@@ -51,6 +52,10 @@ export const TGBalanceProvider: React.FC<{
         const [, tgBalance] =
           await stakeRegistryContract.getBalance(userAddress);
         setUserBalance(ethers.formatEther(tgBalance));
+        devLog(
+          "[TGBalance] TG Balance after chain change:",
+          ethers.formatEther(tgBalance),
+        );
       }
     } catch (error) {
       console.error("Error fetching TG balance:", error);
