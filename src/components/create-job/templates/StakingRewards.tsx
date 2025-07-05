@@ -602,7 +602,7 @@ const StakingRewards = () => {
       {isConnected && (
         <>
           {stakingContract && (
-            <Card>
+            <Card className="!p-3 !sm:p-6">
               <Typography variant="h2" align="left" className="mb-6">
                 Staking Reward Information
               </Typography>
@@ -628,13 +628,16 @@ const StakingRewards = () => {
                 ))}
               </div>
 
-              <Card className="my-4" variant="soft">
+              <Card className="my-4 !p-3 !sm:p-6" variant="soft">
                 <Typography variant="h2" align="left" className="mb-6">
                   Stake/Unstake Tokens
                 </Typography>
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-4 sm:gap-6">
                   {stakeUnstakeCards.map((item) => (
-                    <Card className="space-y-3 sm:space-y-4" key={item.title}>
+                    <Card
+                      className="space-y-3 sm:space-y-4 !p-3 !sm:p-6"
+                      key={item.title}
+                    >
                       <Typography variant="h3" align="left">
                         {item.title}
                       </Typography>
@@ -667,16 +670,16 @@ const StakingRewards = () => {
                   ))}
                 </div>
               </Card>
-              <Card variant="soft">
+              <Card variant="soft" className="!p-3 !sm:p-6">
                 <Typography variant="h2" align="left" className="mb-6">
                   Job Configuration
                 </Typography>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-5 text-base sm:text-lg ">
                   {jobConfigCards.map((item) => (
-                    <Card key={item.key}>
+                    <Card key={item.key} className="!p-3 !sm:p-6">
                       <div className="flex items-center mb-2 sm:mb-3">
                         {item.icon}
-                        <Typography variant="h3" className="ml-2">
+                        <Typography variant="h4" align="left" className="ml-2">
                           {item.parameter}
                         </Typography>
                       </div>
@@ -685,9 +688,9 @@ const StakingRewards = () => {
                         <div className="flex flex-col space-y-2">
                           <Card
                             variant="soft"
-                            className="flex items-center justify-between"
+                            className="flex items-center justify-between !p-3 !sm:p-6"
                           >
-                            <Typography variant="h3" noWrap={true}>
+                            <Typography variant="body" noWrap={true}>
                               <ShortAddress
                                 address={item.value}
                                 className="text-[#A2A2A2]"
@@ -697,12 +700,12 @@ const StakingRewards = () => {
                           </Card>
                         </div>
                       ) : (
-                        <Card variant="soft">
+                        <Card variant="soft" className="!p-3 !sm:p-6">
                           <Typography
-                            variant="h3"
+                            variant="body"
                             align="left"
                             noWrap={true}
-                            className="!break-all"
+                            className="!break-all !text-wrap"
                           >
                             {item.value}
                           </Typography>
@@ -711,7 +714,7 @@ const StakingRewards = () => {
                     </Card>
                   ))}
 
-                  <Card className="md:col-span-2">
+                  <Card className="md:col-span-2 !p-3 !sm:p-6">
                     <Typography variant="h3" align="left">
                       Contract ABI
                     </Typography>
