@@ -244,7 +244,7 @@ const Footer: React.FC = () => {
       </div>
 
       {/* Footer Logo Banner */}
-      <div className="z-20 w-[95%] mx-auto h-max p-5 mt-0 sm:mt-8 md:mt-12">
+      <div className="z-20 w-[95%] mx-auto h-max pt-5 pb-3 mt-0 sm:mt-8 md:mt-12">
         <Image
           src={logo}
           alt="TriggerX Footer Banner"
@@ -252,7 +252,7 @@ const Footer: React.FC = () => {
           priority={false}
         />
 
-        <Typography variant="body">
+        <Typography className=" text-[10px] xs:text-[12px] lg:text-[14px] 2xl:text-[15px] mt-2">
           Build with ❤️ by{" "}
           <a
             href="https://lampros.tech/?utm_source=triggerx&utm_medium=footer"
