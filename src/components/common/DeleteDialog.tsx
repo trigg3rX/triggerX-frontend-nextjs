@@ -36,10 +36,15 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button onClick={onCancel} type="button">
+          <Button onClick={onCancel} type="button" className="w-full">
             Cancel
           </Button>
-          <Button onClick={onConfirm} type="button">
+          <Button
+            color="purple"
+            onClick={onConfirm}
+            type="button"
+            className="w-full"
+          >
             Delete
           </Button>
         </DialogFooter>
