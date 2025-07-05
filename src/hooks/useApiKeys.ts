@@ -36,10 +36,6 @@ export function useApiKeys(address?: string) {
         setIsLoading(false);
         return;
       }
-      devLog(
-        "API URL:",
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`,
-      );
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`,
         {

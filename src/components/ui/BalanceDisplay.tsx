@@ -21,7 +21,6 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ className }) => {
 
   useEffect(() => {
     if (address) {
-      // console.log("BalanceDisplay: Balance refresh triggered by address or context's refreshBalance");
       refetch();
     }
   }, [address, refreshBalance, refetch]);

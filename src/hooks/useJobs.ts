@@ -73,7 +73,6 @@ export function useJobs() {
   const fetchJobs = useCallback(async () => {
     if (!address) {
       setJobs([]);
-      // console.log("[useJobs] No address, jobs cleared.");
       return;
     }
     setLoading(true);
