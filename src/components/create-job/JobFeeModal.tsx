@@ -10,7 +10,6 @@ import { useRouter } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
 import { parseEther } from "viem";
 import JobProcessing from "./JobProcessing";
-import { devLog } from "@/lib/devLog";
 
 interface JobFeeModalProps {
   isOpen: boolean;
@@ -65,9 +64,6 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   const hasEnoughEthToStake =
     ethBalance && ethBalance.value >= parseEther(requiredEth);
   const isDisabled = false;
-
-  devLog("JobFeeModal: userBalance", userBalance);
-  devLog("JobFeeModal: hasEnoughBalance", hasEnoughBalance);
 
   const handleStake = async (e: React.MouseEvent) => {
     e.preventDefault();

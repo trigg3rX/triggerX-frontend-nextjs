@@ -72,7 +72,6 @@ export function useJobs() {
   const fetchJobs = useCallback(async () => {
     if (!address) {
       setJobs([]);
-      // console.log("[useJobs] No address, jobs cleared.");
       return;
     }
     setLoading(true);
@@ -85,9 +84,7 @@ export function useJobs() {
         return;
       }
       const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
-      // console.log("[useJobs] Fetching jobs from:", apiUrl);
       const response = await fetch(apiUrl);
-      console.log(response);
       if (!response.ok) {
         if (response.status === 404) {
           setJobs([]);

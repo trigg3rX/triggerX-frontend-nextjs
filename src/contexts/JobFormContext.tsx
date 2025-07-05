@@ -867,7 +867,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             if (data.error) throw new Error(data.error);
             totalFeeTG = Number(data.total_fee) * executionCount;
             const stakeAmountEth = totalFeeTG * 0.001;
-            devLog("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
+            devLog(
+              "Total TG fee required for Dynamic:",
+              totalFeeTG.toFixed(18),
+              "TG",
+            );
 
             const stakeAmountGwei = BigInt(Math.floor(stakeAmountEth * 1e9));
             setEstimatedFeeInGwei(stakeAmountGwei);
@@ -877,7 +881,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       } else {
         totalFeeTG = 0.1 * executionCount;
-        devLog("Total TG fee required:", totalFeeTG.toFixed(18), "TG");
+        devLog(
+          "Total TG fee required for static:",
+          totalFeeTG.toFixed(18),
+          "TG",
+        );
       }
       setEstimatedFee(totalFeeTG);
       setIsModalOpen(true);
@@ -960,10 +968,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Skip contracts that don't have required data
         if (!contract.targetFunction || !contract.abi) {
-          devLog(`Skipping ${contractKey} - missing required data:`, {
-            targetFunction: contract.targetFunction,
-            abi: contract.abi ? "present" : "missing",
-          });
           return;
         }
 
@@ -978,13 +982,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           networkId,
           jobType,
         );
-
-        // devLog(`Job details for ${contractKey}:`, {
-        //   target_function: jobDetails.target_function,
-        //   abi: jobDetails.abi ? "ABI present" : "ABI missing",
-        //   contract_address: jobDetails.target_contract_address,
-        // });
-
         allJobDetails.push(jobDetails);
       });
 
@@ -992,6 +989,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       const updatedJobDetails = allJobDetails.map((jobDetail) => ({
         ...jobDetail,
         job_cost_prediction: estimatedFee,
+        is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
       }));
 
       devLog("Submitting job details:", updatedJobDetails);

@@ -37,7 +37,6 @@ export default function useLeaderboardData(
       try {
         let apiUrl = "";
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-        devLog("[Leaderboard] API_BASE_URL:", API_BASE_URL);
         if (!API_BASE_URL) {
           throw new Error("API base URL is not set");
         }
