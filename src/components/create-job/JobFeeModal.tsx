@@ -165,6 +165,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
           <div className="flex flex-row gap-3 sm:gap-4">
             {hasEnoughBalance ? (
               <Button
+                color="purple"
                 onClick={handleStake}
                 disabled={isDisabled || !estimatedFee}
                 className="flex-1"

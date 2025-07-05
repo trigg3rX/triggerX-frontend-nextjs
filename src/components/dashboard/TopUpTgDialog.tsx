@@ -118,21 +118,33 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
           </div>
 
           <DialogFooter>
-            <Button
-              type="submit"
-              disabled={
-                isStaking ||
-                !stakeAmount ||
-                Number(stakeAmount) > Number(accountBalance?.formatted || 0)
-              }
-              className="w-full"
-            >
-              {isStaking
-                ? "Topping Up..."
-                : Number(stakeAmount) > Number(accountBalance?.formatted || 0)
-                  ? "Insufficient ETH"
-                  : "Top Up TG"}
-            </Button>
+            <div className="flex w-full gap-3">
+              <Button
+                type="button"
+                color="white"
+                className="w-full"
+                onClick={() => onOpenChange(false)}
+                disabled={isStaking || !!stakeAmount}
+              >
+                Cancel
+              </Button>
+              <Button
+                color="purple"
+                type="submit"
+                disabled={
+                  isStaking ||
+                  !stakeAmount ||
+                  Number(stakeAmount) > Number(accountBalance?.formatted || 0)
+                }
+                className="w-full"
+              >
+                {isStaking
+                  ? "Topping Up..."
+                  : Number(stakeAmount) > Number(accountBalance?.formatted || 0)
+                    ? "Insufficient ETH"
+                    : "Top Up TG"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

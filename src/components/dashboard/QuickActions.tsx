@@ -7,6 +7,7 @@ import { useTGBalance } from "@/contexts/TGBalanceContext";
 import { Card } from "../ui/Card";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { useBalance, useAccount } from "wagmi";
+import Link from "next/link";
 
 export const QuickActions = () => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -33,7 +34,9 @@ export const QuickActions = () => {
           >
             Top Up TG
           </Button>
-          <Button className="w-full">Create New Job</Button>
+          <Link href="/" className="w-full">
+            <Button className="w-full">Create New Job</Button>
+          </Link>
         </div>
       </div>
 
