@@ -37,6 +37,7 @@ export const QuickActions = () => {
           <Link href="/" className="w-full">
             <Button className="w-full">Create New Job</Button>
           </Link>
+          <Button className="w-full">Withdraw Unused TG</Button>
         </div>
       </div>
 
