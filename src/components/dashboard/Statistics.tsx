@@ -1,16 +1,11 @@
 "use client";
 
 import { Typography } from "../ui/Typography";
-import { useEffect } from "react";
 import { Card } from "../ui/Card";
 import { useJobs } from "@/hooks/useJobs";
 
 const Statistics = () => {
-  const { jobs, refetch } = useJobs();
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  const { jobs } = useJobs();
 
   const totalJobs = jobs.length;
   const totalLinkedJobs = jobs.reduce(

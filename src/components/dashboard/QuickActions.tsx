@@ -35,9 +35,9 @@ export const QuickActions = () => {
             Top Up TG
           </Button>
           <Link href="/" className="w-full">
-            <Button className="w-full">Create New Job</Button>
+            <Button className="w-full ">Create New Job</Button>
           </Link>
-          <Button className="w-full">Withdraw Unused TG</Button>
+          <Button className="w-full my-5">Withdraw Unused TG</Button>
         </div>
       </div>
 
