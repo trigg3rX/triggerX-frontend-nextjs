@@ -6,6 +6,7 @@ import Statistics from "@/components/dashboard/Statistics";
 import ActiveJobs from "@/components/dashboard/ActiveJobs";
 import DashboardSkeleton from "@/components/skeleton/DashboardSkeleton";
 import { Metadata } from "next";
+import { getFullUrl } from "@/lib/metaUrl";
 
 export const metadata: Metadata = {
   title: "Dashboard | TriggerX",
@@ -13,11 +14,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Dashboard | TriggerX ",
     description: "TriggerX - Web3 Automation Platform.",
-    url: "https://triggerx-app-nextjs.vercel.app/dashboard",
+    url: getFullUrl("/dashboard"),
     siteName: "TriggerX",
     images: [
       {
-        url: "https://triggerx-app-nextjs.vercel.app/OGImages/dashboard.png",
+        url: getFullUrl("/OGImages/dashboard.png"),
         width: 1200,
         height: 630,
         alt: "Dashboard | TriggerX",
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: "https://triggerx-app-nextjs.vercel.app/dashboard",
+    canonical: getFullUrl("/dashboard"),
   },
 };
 
