@@ -131,17 +131,18 @@ export default function MainTable({
       <Card
         className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
       >
-        {error ? (
+        {error && (
           <ErrorMessage
-            error={"Something went wrong"}
+            error={error}
             className="mt-4"
-            emoji="😒"
             retryText="Try Again"
             onRetry={onRetry}
           />
-        ) : filteredData.length === 0 ? (
+        )}
+        {!error && filteredData.length === 0 && (
           <EmptyState type={activeTab as TabType} />
-        ) : (
+        )}
+        {!error && filteredData.length > 0 && (
           <Table>
             <TableHeader>
               <TableRow className="border-gray-800 ">
@@ -258,7 +259,7 @@ export default function MainTable({
       <Card
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
-        {error ? (
+        {error && (
           <ErrorMessage
             error={"Something went wrong"}
             className="mt-4"
@@ -266,9 +267,11 @@ export default function MainTable({
             retryText="Try Again"
             onRetry={onRetry}
           />
-        ) : filteredData.length === 0 ? (
+        )}
+        {!error && filteredData.length === 0 && (
           <EmptyState type={activeTab as TabType} />
-        ) : (
+        )}
+        {!error && filteredData.length > 0 && (
           <MobileTableGrid
             data={sortedAndPaginatedData}
             activeTab={activeTab as TabType}

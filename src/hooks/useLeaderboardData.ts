@@ -96,9 +96,7 @@ export default function useLeaderboardData(
       } catch (err) {
         console.error("[Leaderboard] Error fetching leaderboard data:", err);
         if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Unknown error");
+          setError("Something went wrong.");
         }
       } finally {
         setIsLoading(false);

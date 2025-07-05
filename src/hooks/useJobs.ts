@@ -1,3 +1,4 @@
+import { devLog } from "@/lib/devLog";
 import { useState, useCallback } from "react";
 import { useAccount } from "wagmi";
 
@@ -85,9 +86,9 @@ export function useJobs() {
         return;
       }
       const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
-      // console.log("[useJobs] Fetching jobs from:", apiUrl);
+      devLog("[useJobs] Fetching jobs from:", apiUrl);
       const response = await fetch(apiUrl);
-      console.log(response);
+      // console.log(response);
       if (!response.ok) {
         if (response.status === 404) {
           setJobs([]);
@@ -100,7 +101,7 @@ export function useJobs() {
         return;
       }
       const jobsData: JobsApiResponse = await response.json();
-      // console.log("[useJobs] Raw jobsData:", jobsData);
+      devLog("[useJobs] Raw jobsData:", jobsData);
 
       // Build job map for linked jobs
       const jobMap: Record<number, RawJobData> = {};
@@ -161,7 +162,7 @@ export function useJobs() {
           linkedJobsMap[mainJobId] = linkedJobs;
         }
       });
-      // console.log("[useJobs] linkedJobsMap:", linkedJobsMap);
+      devLog("[useJobs] linkedJobsMap:", linkedJobsMap);
       // Build main jobs array
       const tempJobs: JobType[] = jobsData.jobs
         .filter(
@@ -205,14 +206,12 @@ export function useJobs() {
             type: mapJobType(jobDetail.job_data.task_definition_id),
           };
         });
-      // console.log("[useJobs] tempJobs:", tempJobs);
+      devLog("[useJobs] tempJobs:", tempJobs);
       setJobs(tempJobs);
       setError(null);
     } catch (err: unknown) {
       console.error("[useJobs] Error:", err);
-      setError(
-        "An unexpected error occurred while fetching jobs. Please try again.",
-      );
+      setError("Something went wrong.");
     } finally {
       setLoading(false);
       // console.log("[useJobs] Loading finished.");
