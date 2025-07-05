@@ -37,6 +37,7 @@ interface RawJobData {
     custom?: string;
     task_ids?: string[];
     fee_used?: string;
+    status: string;
   };
   time_job_data?: Record<string, unknown>;
   event_job_data?: Record<string, unknown>;
@@ -165,7 +166,9 @@ export function useJobs() {
       // Build main jobs array
       const tempJobs: JobType[] = jobsData.jobs
         .filter(
-          (jobDetail: RawJobData) => jobDetail.job_data.chain_status === 0,
+          (jobDetail: RawJobData) =>
+            jobDetail.job_data.chain_status === 0 &&
+            jobDetail.job_data.status !== "deleted",
         )
         .map((jobDetail: RawJobData) => {
           const typeSpecificData =
