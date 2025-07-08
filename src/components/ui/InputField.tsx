@@ -8,7 +8,7 @@ interface TextInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
-  type?: "text" | "number" | "password";
+  type?: "text" | "number" | "password" | "email";
   onFocus?: () => void;
   onBlur?: () => void;
   error?: string | null;

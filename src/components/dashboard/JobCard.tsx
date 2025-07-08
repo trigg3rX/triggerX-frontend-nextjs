@@ -177,7 +177,7 @@ const JobCard: React.FC<JobCardProps> = ({
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
             <Typography variant="body" color="white" align="left">
-              Timeframe :
+              TimeFrame :
             </Typography>
             <Typography variant="body" color="gray" align="right">
               {formatTimeframe(job.timeFrame)}
@@ -196,7 +196,7 @@ const JobCard: React.FC<JobCardProps> = ({
               </div>
               <div className="flex items-center justify-between gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
-                  Interval :
+                  TimeInterval :
                 </Typography>
                 <Typography variant="body" color="gray" align="right">
                   {formatInterval(job.timeInterval)}
