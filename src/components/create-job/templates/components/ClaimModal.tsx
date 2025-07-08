@@ -218,7 +218,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
             <Button
               onClick={confirmClaim}
               disabled={isLoading}
-              color="yellow"
+              color="purple"
               className="w-full sm:flex-1"
             >
               {isLoading ? (

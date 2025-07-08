@@ -12,6 +12,7 @@ export type JobType = {
   argType: string;
   timeInterval: string;
   targetContractAddress: string;
+  createdAt: string;
   targetFunction: string;
   targetChainId: string;
   linkedJobs?: JobType[];
@@ -28,6 +29,7 @@ interface RawJobData {
     time_frame?: string;
     chain_status: number;
     link_job_id: number;
+    created_at: string;
     last_executed_at?: string;
     user_id?: string;
     priority?: string;
@@ -145,6 +147,7 @@ export function useJobs() {
                   typeof typeSpecificData.target_contract_address === "string"
                     ? typeSpecificData.target_contract_address
                     : String(typeSpecificData.target_contract_address ?? ""),
+                createdAt: nextJob.job_data.created_at,
                 targetFunction:
                   typeof typeSpecificData.target_function === "string"
                     ? typeSpecificData.target_function
@@ -198,6 +201,7 @@ export function useJobs() {
                 typeof typeSpecificData.target_contract_address === "string"
                   ? typeSpecificData.target_contract_address
                   : String(typeSpecificData.target_contract_address ?? ""),
+              createdAt: jobDetail.job_data.created_at,
               targetFunction:
                 typeof typeSpecificData.target_function === "string"
                   ? typeSpecificData.target_function
