@@ -8,12 +8,11 @@ export type JobType = {
   jobTitle: string;
   taskDefinitionId: string;
   status: string;
-  cost_prediction: string;
+  job_cost_actual: string;
   timeFrame: string;
   argType: string;
   timeInterval: string;
   targetContractAddress: string;
-  createdAt: string;
   targetFunction: string;
   targetChainId: string;
   linkedJobs?: JobType[];
@@ -41,10 +40,6 @@ const mapJobType = (type: string) => {
 
 const sliceAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
-};
-
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleString();
 };
 
 const truncateText = (text: string) => {
@@ -124,12 +119,7 @@ const JobCard: React.FC<JobCardProps> = ({
         </div>
         <div className={` space-y-2  px-3 `}>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
+            <Typography variant="body" color="white" align="left">
               Job Type :
             </Typography>
             <Typography variant="body" color="gray" align="right">
@@ -137,12 +127,7 @@ const JobCard: React.FC<JobCardProps> = ({
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
+            <Typography variant="body" color="white" align="left">
               Job Status :
             </Typography>
             <Typography variant="body" color="gray" align="right">
@@ -150,25 +135,15 @@ const JobCard: React.FC<JobCardProps> = ({
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
+            <Typography variant="body" color="white" align="left">
               TG Used :
             </Typography>
             <Typography variant="body" color="gray" align="right">
-              {parseFloat(job.cost_prediction).toFixed(2)}
+              {parseFloat(job.job_cost_actual).toFixed(2)}
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
+            <Typography variant="body" color="white" align="left">
               Timeframe :
             </Typography>
             <Typography variant="body" color="gray" align="right">
@@ -180,7 +155,7 @@ const JobCard: React.FC<JobCardProps> = ({
             <div className=" space-y-2 text-[#A2A2A2] text-sm">
               <div className="flex items-center justify-between gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
-                  Avg Type :
+                  Arg Type :
                 </Typography>
                 <Typography variant="body" color="gray" align="right">
                   {job.argType}
@@ -212,19 +187,7 @@ const JobCard: React.FC<JobCardProps> = ({
                   <TooltipContent>{job.targetContractAddress}</TooltipContent>
                 </Tooltip>
               </div>
-              <div className="flex items-start justify-between flex-col md:flex-row md:items-center gap-2 py-1">
-                <Typography variant="body" color="white" align="left">
-                  Created At:
-                </Typography>
-                <Typography
-                  variant="body"
-                  color="gray"
-                  align="right"
-                  className="max-w-[160px] truncate block"
-                >
-                  {formatDate(job.createdAt)}
-                </Typography>
-              </div>
+
               <div className="flex items-start justify-between flex-col md:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Target Function :

@@ -7,12 +7,11 @@ export type JobType = {
   jobTitle: string;
   taskDefinitionId: string;
   status: string;
-  cost_prediction: string;
+  job_cost_actual: string;
   timeFrame: string;
   argType: string;
   timeInterval: string;
   targetContractAddress: string;
-  createdAt: string;
   targetFunction: string;
   targetChainId: string;
   linkedJobs?: JobType[];
@@ -25,11 +24,10 @@ interface RawJobData {
     job_id: number;
     job_title: string;
     task_definition_id: string;
-    job_cost_prediction: string;
+    job_cost_actual: string;
     time_frame?: string;
     chain_status: number;
     link_job_id: number;
-    created_at: string;
     last_executed_at?: string;
     user_id?: string;
     priority?: string;
@@ -89,7 +87,7 @@ export function useJobs() {
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
         devLog("[useJobs] Fetching jobs from:", apiUrl);
         const response = await fetch(apiUrl);
-        // console.log(response);
+
         if (!response.ok) {
           if (response.status === 404) {
             setJobs([]);
@@ -133,7 +131,7 @@ export function useJobs() {
                 ),
 
                 status: "Active",
-                cost_prediction: nextJob.job_data.job_cost_prediction,
+                job_cost_actual: nextJob.job_data.job_cost_actual,
                 timeFrame: nextJob.job_data.time_frame || "",
                 argType:
                   typeof typeSpecificData.arg_type === "string"
@@ -147,7 +145,6 @@ export function useJobs() {
                   typeof typeSpecificData.target_contract_address === "string"
                     ? typeSpecificData.target_contract_address
                     : String(typeSpecificData.target_contract_address ?? ""),
-                createdAt: nextJob.job_data.created_at,
                 targetFunction:
                   typeof typeSpecificData.target_function === "string"
                     ? typeSpecificData.target_function
@@ -187,7 +184,7 @@ export function useJobs() {
               ),
               status: "Active",
               linkedJobs: linkedJobsMap[jobDetail.job_data.job_id] || [],
-              cost_prediction: jobDetail.job_data.job_cost_prediction,
+              job_cost_actual: jobDetail.job_data.job_cost_actual,
               timeFrame: jobDetail.job_data.time_frame || "",
               argType:
                 typeof typeSpecificData.arg_type === "string"
@@ -201,7 +198,6 @@ export function useJobs() {
                 typeof typeSpecificData.target_contract_address === "string"
                   ? typeSpecificData.target_contract_address
                   : String(typeSpecificData.target_contract_address ?? ""),
-              createdAt: jobDetail.job_data.created_at,
               targetFunction:
                 typeof typeSpecificData.target_function === "string"
                   ? typeSpecificData.target_function

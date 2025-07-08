@@ -52,7 +52,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
 
       const stakeAmountInWei = ethers.parseEther(stakeAmount.toString());
       if (stakeAmountInWei === BigInt(0)) {
-        throw new Error("Stake amount must be greater than zero.");
+        throw new Error("TG amount must be greater than zero.");
       }
       const tx = await stakingContract.purchaseTG(
         ethers.parseEther(stakeAmount.toString()),
@@ -60,11 +60,11 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
       );
       await tx.wait();
       await fetchTGBalance();
-      toast.success("Staking successful!");
+      toast.success("Top Up TG successful!");
       onOpenChange(false);
       setStakeAmount("");
     } catch (error: unknown) {
-      console.error("Error staking:", error);
+      toast.error((error as Error).message || "Error Top Up TG");
     } finally {
       setIsStaking(false);
     }
@@ -90,7 +90,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
           <div>
             <label className="block mb-2">
               <Typography variant="body" color="gray" align="left">
-                Amount (ETH)
+                Amount (TG)
               </Typography>
             </label>
             <InputField
