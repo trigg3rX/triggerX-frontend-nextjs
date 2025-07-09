@@ -102,7 +102,7 @@ export default function useLeaderboardData(
       }
     };
     fetchData();
-  }, [activeTab, connectedAddress, isConnected, refreshKey]);
+  }, [activeTab, refreshKey]);
 
   return { leaderboardData, isLoading, error };
 }

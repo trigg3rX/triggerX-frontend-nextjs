@@ -84,7 +84,7 @@ const CodeBlock = ({
   return (
     <div className="relative group my-6 rounded-lg overflow-hidden bg-[#141414] shadow-md border border-gray-700/50">
       {filename && (
-        <div className="bg-[#141414] px-4 py-1.5 text-xs text-gray-300 font-mono border-b border-gray-600/80 flex justify-between items-center">
+        <div className="bg-[#141414] px-4 py-1.5 text-xs text-gray-300 border-b border-gray-600/80 flex justify-between items-center">
           <span>{filename}</span>
           <button
             onClick={handleCopy}
@@ -129,7 +129,6 @@ const CodeBlock = ({
         wrapLines={true}
         codeTagProps={{
           style: {
-            fontFamily: '"Fira Code", "Source Code Pro", monospace',
             whiteSpace: "pre-wrap",
             wordBreak: "break-all",
           },
@@ -264,7 +263,7 @@ export const portableTextComponents: PortableTextComponents = {
     strong: ({ children }) => <strong className="font-bold">{children}</strong>,
     em: ({ children }) => <em className="italic">{children}</em>,
     code: ({ children }) => (
-      <code className="bg-gray-700/50 text-red-300 px-1.5 py-0.5 rounded text-sm font-mono">
+      <code className="bg-gray-700/50 text-red-300 px-1.5 py-0.5 rounded text-sm ">
         {children}
       </code>
     ),

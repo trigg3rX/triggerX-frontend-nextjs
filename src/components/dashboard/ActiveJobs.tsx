@@ -5,6 +5,7 @@ import { Dropdown, DropdownOption } from "../ui/Dropdown";
 import { useState } from "react";
 import MainJobs from "./MainJobs";
 import { Card } from "../ui/Card";
+import { useJobs } from "@/hooks/useJobs";
 
 const dropdownOptions: DropdownOption[] = [
   { id: "all", name: "All Types" },
@@ -15,13 +16,45 @@ const dropdownOptions: DropdownOption[] = [
 
 const ActiveJobs = () => {
   const [selectedType, setSelectedType] = useState<string>("All Types");
+  const { jobs } = useJobs();
+
+  const totalJobs = jobs.length;
+  const totalLinkedJobs = jobs.reduce(
+    (total, job) => total + (job.linkedJobs?.length || 0),
+    0,
+  );
 
   return (
     <Card>
       <div className="flex justify-between items-center mb-6 flex-col lg:flex-row gap-3 md:flex-row">
-        <Typography variant="h2" color="white" align="left">
-          Active Jobs
-        </Typography>
+        <div className="flex justify-between items-center gap-6 flex-col lg:flex-row  md:flex-row">
+          <div className="flex justify-start items-center gap-2">
+            <Typography
+              variant="badge"
+              bgColor="bg-[#F8FF7C]"
+              color="black"
+              className="rounded-full flex items-center justify-center w-8 h-8"
+            >
+              {totalJobs}
+            </Typography>
+            <Typography variant="h4" color="gray">
+              Main Jobs
+            </Typography>
+          </div>
+          <div className="flex justify-start items-center gap-2">
+            <Typography
+              variant="badge"
+              bgColor="bg-[#FFFFFF]"
+              color="black"
+              className="rounded-full flex items-center justify-center w-8 h-8"
+            >
+              {totalLinkedJobs}
+            </Typography>
+            <Typography variant="h4" color="gray">
+              Linked Jobs
+            </Typography>
+          </div>
+        </div>
         <div className=" w-56">
           <Dropdown
             label=""

@@ -726,7 +726,6 @@ const StakingRewards = () => {
 
                     <CodeBlockWithCopy
                       code={JSON.stringify(jobConfig.abi, null, 2)}
-                      className="font-mono"
                     />
                   </Card>
                 </div>

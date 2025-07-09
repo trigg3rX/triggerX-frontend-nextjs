@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { Typography } from "@/components/ui/Typography";
 import TgBalance from "@/components/dashboard/TgBalance";
 import { QuickActions } from "@/components/dashboard/QuickActions";
-import Statistics from "@/components/dashboard/Statistics";
+import AlertEmail from "@/components/dashboard/AlertEmail";
 import ActiveJobs from "@/components/dashboard/ActiveJobs";
 import DashboardSkeleton from "@/components/skeleton/DashboardSkeleton";
 import { Metadata } from "next";
@@ -45,7 +45,7 @@ function Dashboard() {
           <div className="space-y-6 sm:space-y-8 h-full xl:w-[25%] lg:w-[30%] w-full">
             <TgBalance />
             <QuickActions />
-            <Statistics />
+            <AlertEmail />
           </div>
         </div>
       </div>

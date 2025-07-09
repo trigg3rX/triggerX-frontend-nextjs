@@ -3,7 +3,7 @@ import { Typography } from "./Typography";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   disabled?: boolean;
-  color?: "yellow" | "white" | "purple";
+  color?: "yellow" | "white" | "purple" | "red";
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -16,7 +16,10 @@ export const Button: React.FC<ButtonProps> = ({
   let bgColor = "bg-[#FFFFFF]";
   let textColor = "text-black";
   if (color === "yellow") bgColor = "bg-[#F8FF7C]";
-  else if (color === "purple") {
+  else if (color === "red") {
+    bgColor = "bg-red-500";
+    textColor = "text-white";
+  } else if (color === "purple") {
     bgColor = "bg-[#C07AF6]";
     textColor = "text-white";
   }

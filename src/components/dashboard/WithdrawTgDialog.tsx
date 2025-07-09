@@ -123,7 +123,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                   align="left"
                   className="mt-1 font-bold tracking-wider"
                 >
-                  {(Number(withdrawAmount) / 1000).toFixed(6)} ETH
+                  {(Number(withdrawAmount) * 1000).toFixed(2)} TG
                 </Typography>
               </div>
             )}
@@ -131,6 +131,16 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
 
           <DialogFooter>
             <Button
+              type="button"
+              color="white"
+              className="w-full"
+              onClick={() => onOpenChange(false)}
+              disabled={isWithdrawing || !!withdrawAmount}
+            >
+              Cancel
+            </Button>
+            <Button
+              color="purple"
               type="submit"
               disabled={
                 isWithdrawing ||

@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "./Dailog";
-import { ActionButton } from "../ui/ActionButton";
+import { Button } from "../ui/Button";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -27,8 +27,6 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
   description = "Are you sure you want to delete this item? This action cannot be undone.",
   onCancel,
   onConfirm,
-  confirmText = "Delete",
-  cancelText = "Cancel",
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -38,18 +36,17 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <ActionButton
-            onClick={onCancel}
-            type="button"
-            text={cancelText}
-            variant="cancel"
-          />
-          <ActionButton
+          <Button onClick={onCancel} type="button" className="w-full">
+            Cancel
+          </Button>
+          <Button
+            color="red"
             onClick={onConfirm}
             type="button"
-            text={confirmText}
-            variant="delete"
-          />
+            className="w-full "
+          >
+            Delete
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

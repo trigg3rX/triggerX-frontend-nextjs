@@ -8,7 +8,7 @@ export type JobType = {
   jobTitle: string;
   taskDefinitionId: string;
   status: string;
-  cost_prediction: string;
+  job_cost_actual: string;
   timeFrame: string;
   argType: string;
   timeInterval: string;
@@ -49,6 +49,34 @@ const formatDate = (date: string) => {
 
 const truncateText = (text: string) => {
   return text.length > 20 ? `${text.slice(0, 20)}...` : text;
+};
+
+// Converts seconds to the largest non-zero unit (e.g., "2 days", "4 hours", "30 min")
+const formatTimeframe = (secondsString: string) => {
+  const seconds = parseInt(secondsString, 10);
+  if (isNaN(seconds)) return secondsString;
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+
+  if (days > 0) return `${days} day${days > 1 ? "s" : ""}`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
+  if (mins > 0) return `${mins} min${mins > 1 ? "s" : ""}`;
+  return "0 min";
+};
+
+// Converts seconds to the largest non-zero unit (e.g., "2 days", "4 hours", "30 sec")
+const formatInterval = (secondsString: string) => {
+  const seconds = parseInt(secondsString, 10);
+  if (isNaN(seconds)) return secondsString;
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const secs = seconds % 60;
+
+  if (days > 0) return `${days} day${days > 1 ? "s" : ""}`;
+  if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
+  if (secs > 0) return `${seconds} sec${seconds > 1 ? "s" : ""}`;
+  return "0 sec";
 };
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -124,12 +152,7 @@ const JobCard: React.FC<JobCardProps> = ({
         </div>
         <div className={` space-y-2  px-3 `}>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
+            <Typography variant="body" color="white" align="left">
               Job Type :
             </Typography>
             <Typography variant="body" color="gray" align="right">
@@ -137,12 +160,7 @@ const JobCard: React.FC<JobCardProps> = ({
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
+            <Typography variant="body" color="white" align="left">
               Job Status :
             </Typography>
             <Typography variant="body" color="gray" align="right">
@@ -150,29 +168,19 @@ const JobCard: React.FC<JobCardProps> = ({
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
+            <Typography variant="body" color="white" align="left">
               TG Used :
             </Typography>
             <Typography variant="body" color="gray" align="right">
-              {parseFloat(job.cost_prediction).toFixed(2)}
+              {parseFloat(job.job_cost_actual).toFixed(2)}
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
-            <Typography
-              variant="body"
-              color="white"
-              align="left"
-              className="font-bold"
-            >
-              Timeframe :
+            <Typography variant="body" color="white" align="left">
+              TimeFrame :
             </Typography>
             <Typography variant="body" color="gray" align="right">
-              {job.timeFrame}
+              {formatTimeframe(job.timeFrame)}
             </Typography>
           </div>
 
@@ -188,10 +196,10 @@ const JobCard: React.FC<JobCardProps> = ({
               </div>
               <div className="flex items-center justify-between gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
-                  Interval :
+                  TimeInterval :
                 </Typography>
                 <Typography variant="body" color="gray" align="right">
-                  {job.timeInterval}
+                  {formatInterval(job.timeInterval)}
                 </Typography>
               </div>
               <div className="flex items-start justify-between flex-col md:flex-row md:items-center gap-2 py-1">
@@ -322,7 +330,9 @@ const JobCard: React.FC<JobCardProps> = ({
                 </svg>
               </button>
             </TooltipTrigger>
-            <TooltipContent>View Details</TooltipContent>
+            <TooltipContent>
+              {expandedDetails ? "Hide Details" : "Show Details"}
+            </TooltipContent>
           </Tooltip>
         </div>
       </div>

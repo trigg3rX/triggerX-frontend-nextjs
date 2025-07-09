@@ -24,8 +24,7 @@ const SANITY_POSTS_QUERY = `*[_type == "post"] | order(_createdAt desc) {
 }`;
 
 const DevHubPageContainer: React.FC = () => {
-  const { posts, isLoading, error, refetch } =
-    useSanityPosts(SANITY_POSTS_QUERY);
+  const { posts, isLoading, error } = useSanityPosts(SANITY_POSTS_QUERY);
 
   if (isLoading) {
     return <DevHubPostCardSkeleton />;
@@ -40,11 +39,6 @@ const DevHubPageContainer: React.FC = () => {
         <Typography variant="body" color="secondary" className="mb-2">
           We couldn&apos;t fetch the Dev Hub posts at this time.
         </Typography>
-        {refetch && (
-          <Button color="yellow" onClick={refetch}>
-            Try Again
-          </Button>
-        )}
       </Card>
     );
   }

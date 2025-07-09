@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import JobCard from "./JobCard";
 import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
@@ -10,8 +10,6 @@ import JobCardSkeleton from "../skeleton/JobCardSkeleton";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { useDeleteJob } from "@/hooks/useDeleteJob";
-import { useAccount } from "wagmi";
-import { useChains } from "wagmi";
 import { ErrorMessage } from "../common/ErrorMessage";
 
 type MainJobsProps = {
@@ -30,16 +28,9 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
 
-  const { jobs, loading, refetch, error } = useJobs();
+  const { jobs, loading, error } = useJobs();
   const { isConnected } = useWalletConnectionContext();
-  const { address } = useAccount();
-  const chains = useChains();
   const { deleteJob, loading: deleteLoading } = useDeleteJob();
-
-  useEffect(() => {
-    refetch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, chains, isConnected]);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => ({
@@ -71,7 +62,7 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
 
   const handleDelete = async () => {
     if (jobIdToDelete == null) return;
-    await deleteJob(jobIdToDelete, refetch);
+    await deleteJob(jobIdToDelete);
     setDeleteDialogOpen(false);
     setJobIdToDelete(null);
   };

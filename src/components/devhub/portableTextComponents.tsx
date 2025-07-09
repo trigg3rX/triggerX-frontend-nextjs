@@ -174,7 +174,7 @@ const portableTextComponents = {
       <em className="italic">{children}</em>
     ),
     code: ({ children }: { children: React.ReactNode }) => (
-      <code className="bg-gray-700/50 text-red-300 px-1.5 py-0.5 rounded text-sm font-mono">
+      <code className="bg-gray-700/50 text-red-300 px-1.5 py-0.5 rounded text-sm ">
         {children}
       </code>
     ),
