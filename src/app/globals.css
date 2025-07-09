@@ -91,12 +91,25 @@ body {
 [data-rk] .ju367va3 {
   background: #f8ff7c !important;
 }
+
 [data-rk] .ju367vcl {
   border-color: transparent !important;
 }
 
 [data-rk] .ju367vfu {
   color: black !important;
+}
+
+[data-rk] .ju367v1h {
+  font-weight: 400 !important;
+}
+
+[data-rk] .ju367v16 {
+  font-family: "Actay" !important;
+}
+
+[data-rk] .ju367vcl {
+  border-color: transparent !important;
 }
 
 @media screen and (max-width: 620px) {
@@ -122,26 +135,7 @@ body {
   }
 }
 
-[data-rk] .ju367v1h {
-  font-weight: 400 !important;
-}
-
-[data-rk] .ju367v16 {
-  font-family: "Actay" !important;
-}
-
-[data-rk] .ju367va3 {
-  background: #f8ff7c !important;
-}
-[data-rk] .ju367vcl {
-  border-color: transparent !important;
-}
-
-[data-rk] .ju367vfu {
-  color: black !important;
-}
-
-@media screen and (max-width: 620px) {
+@media screen and (max-width: 1248px) {
   [data-rk] .iekbcc0 {
     font-size: 12px !important;
   }
@@ -151,10 +145,10 @@ body {
   }
 
   [data-rk] .ju367v7t {
-    padding-right: 10px !important;
+    padding-right: 8px !important;
   }
   [data-rk] .ju367v78 {
-    padding-left: 10px !important;
+    padding-left: 8px !important;
   }
   [data-rk] .ju367v8a {
     padding-top: 4px !important;

@@ -563,7 +563,7 @@ const StakingRewards = () => {
   const isOptimismSepoliaNetwork = () => chainId === BigInt(11155420);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <TemplateInfoSection
         title="StakingReward Template"
         description="Stake ERC20 tokens and earn rewards based on your participation. Once the staking threshold is reached, you'll automatically receive Reward NFTs and points. No manual setup required—the job will be auto-created for you."

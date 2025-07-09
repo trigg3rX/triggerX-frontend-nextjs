@@ -53,7 +53,15 @@ export const TemplateList: React.FC<TemplateListProps> = ({
                     selectedJob?.id === template.id ? "text-white" : ""
                   }`}
                 >
-                  {template.title}
+                  {template.title.split(/(TriggerX)/g).map((part, idx) =>
+                    part === "TriggerX" ? (
+                      <span key={idx} className="whitespace-nowrap">
+                        TriggerX
+                      </span>
+                    ) : (
+                      part
+                    ),
+                  )}
                 </Typography>
                 <Typography
                   variant="badge"

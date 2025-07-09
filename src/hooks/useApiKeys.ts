@@ -40,12 +40,13 @@ export function useApiKeys(address?: string) {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`,
         {
           method: "POST",
-          // headers: {
-          //   "Content-Type": "application/json",
-          // },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          },
           body: JSON.stringify({
             owner: address,
-            rateLimit: 20,
+            rate_limit: 20,
           }),
         },
       );
@@ -61,7 +62,9 @@ export function useApiKeys(address?: string) {
         rateLimit: "20 requests/min",
         status: "Active",
       };
+      devLog(newApiKey);
       setApiKeys([newApiKey]);
+      devLog("apikeys", apiKeys);
       setIsLoading(false);
     } catch {
       setError(
@@ -70,6 +73,84 @@ export function useApiKeys(address?: string) {
       setIsLoading(false);
     }
   };
+
+  // const fetchApiKey = async (addr?: string) => {
+  //   if (!addr) return;
+  //   setIsLoading(true);
+  //   setError(null);
+  //   try {
+  //     const user = process.env.NEXT_PUBLIC_USER;
+  //     if (!user) {
+  //       setError("Owner is not defined in environment variables");
+  //       setIsLoading(false);
+  //       return;
+  //     }
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys?owner=${addr}`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+  //         },
+  //       }
+  //     );
+  //     if (!response.ok) {
+  //       setApiKeys([
+  //         {
+  //           key: "No API key generated yet",
+  //           created: "-",
+  //           rateLimit: "20 requests/min",
+  //           status: "Inactive",
+  //         },
+  //       ]);
+  //       setIsLoading(false);
+  //       return;
+  //     }
+  //     const data = await response.json();
+  //     if (data && (data.key || data.apiKey)) {
+  //       setApiKeys([
+  //         {
+  //           key: data.key || data.apiKey || "",
+  //           created: data.created || new Date().toLocaleString(),
+  //           rateLimit: (data.rate_limit || data.rateLimit || 20) + " requests/min",
+  //           status: data.status || "Active",
+  //         },
+  //       ]);
+  //     } else {
+  //       setApiKeys([
+  //         {
+  //           key: "No API key generated yet",
+  //           created: "-",
+  //           rateLimit: "20 requests/min",
+  //           status: "Inactive",
+  //         },
+  //       ]);
+  //     }
+  //     setIsLoading(false);
+  //   } catch {
+  //     setError(
+  //       "Whoops! We hit a snag while fetching your API key. Please check your connection and try again."
+  //     );
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (address) {
+  //     fetchApiKey(address);
+  //   } else {
+  //     setApiKeys([
+  //       {
+  //         key: "No API key generated yet",
+  //         created: "-",
+  //         rateLimit: "20 requests/min",
+  //         status: "Inactive",
+  //       },
+  //     ]);
+  //   }
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [address]);
 
   return { apiKeys, generateNewApiKey, isLoading, error };
 }

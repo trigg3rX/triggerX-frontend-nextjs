@@ -213,11 +213,11 @@ export const JobForm: React.FC = () => {
         onKeyDown={handleKeyDown}
         className="w-full"
       >
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           <TriggerTypeSelector />
           {isConnected && jobType !== 0 && (
             <>
-              <Card className="space-y-8 relative z-50">
+              <Card className="space-y-6 sm:space-y-8 relative z-50">
                 <JobTitleInput
                   error={jobTitleError || null}
                   ref={jobTitleErrorRef}
@@ -266,9 +266,12 @@ export const JobForm: React.FC = () => {
               </Card>
 
               {linkedJobs[jobType]?.length > 0 && (
-                <div className="space-y-8 relative z-30">
+                <div className="space-y-6 sm:space-y-8 relative z-30">
                   {linkedJobs[jobType].map((jobId) => (
-                    <Card key={jobId} className="relative space-y-8 !pt-[50px]">
+                    <Card
+                      key={jobId}
+                      className="relative space-y-6 sm:space-y-8 !pt-[50px]"
+                    >
                       <div className="absolute top-0 left-0 bg-[#303030] border-b border-white/10 flex justify-center items-center gap-3 mt-0 w-[100%] rounded-2xl rounded-br-none rounded-bl-none">
                         <p className="py-4 text-sm md:text-base">
                           Linked Job {jobId}

@@ -443,7 +443,7 @@ const BalanceMaintainer = () => {
   }, [signer, contractAddress, isDeployed]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <TemplateInfoSection
         title="BalanceMaintainer Template"
         description="This template automatically monitors and refills ETH selected addresses when their balance drops below a set threshold."

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 interface NavItem {
   href: string;
@@ -46,6 +47,13 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             {item.label}
           </button>
         ))}
+        <div className="px-4 py-3 ">
+          <ConnectButton
+            chainStatus="none"
+            accountStatus="address"
+            showBalance={false}
+          />
+        </div>
       </div>
     </div>
   );

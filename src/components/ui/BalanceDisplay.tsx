@@ -31,9 +31,9 @@ const BalanceDisplay: React.FC<BalanceDisplayProps> = ({ className }) => {
 
   return (
     <div
-      className={`bg-[#f8ff7c] px-4 py-[5px] rounded-full border border-[#f8ff7c] text-nowrap ${className}`}
+      className={`bg-[#f8ff7c] text-black px-3 xl:px-4 py-[9px] xl:py-[8px] rounded-full border border-[#f8ff7c] text-nowrap text-sm xl:text-base ${className}`}
     >
-      <span className="text-black text-sm font-bold h-[24px]">
+      <span className=" h-[24px]">
         {Number(data.formatted).toFixed(2)} {data.symbol}
       </span>
     </div>

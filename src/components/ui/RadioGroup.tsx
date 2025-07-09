@@ -27,7 +27,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   orientation = "horizontal",
 }) => {
   return (
-    <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+    <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
       {label && (
         <Typography variant="h3" color="secondary" align="left">
           {label}
@@ -36,7 +36,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
       <div
         className={`flex ${
           orientation === "horizontal" ? "space-x-6" : "flex-col space-y-4"
-        } w-full md:w-[70%] ${className}`}
+        } w-full md:w-[70%] h-[38px] sm:h-[50px] ${className}`}
       >
         {options.map((option) => (
           <label

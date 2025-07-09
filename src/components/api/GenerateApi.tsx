@@ -3,11 +3,11 @@
 import React from "react";
 import { useAccount } from "wagmi";
 import { Button } from "../ui/Button";
-// import { InputField } from "../ui/InputField";
 import { Typography } from "../ui/Typography";
 import { useApiKeys } from "@/hooks/useApiKeys";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { Card } from "../ui/Card";
+import { InputField } from "../ui/InputField";
 import Banner from "../ui/Banner";
 
 const GenerateApi: React.FC = () => {
@@ -28,26 +28,31 @@ const GenerateApi: React.FC = () => {
             Generate API Key
           </Typography>
           <div className="w-full flex flex-col gap-5 mt-5">
-            <Banner>No API key generated yet</Banner>
-            {/* <InputField
-              type="text"
-              placeholder="No API key generated yet"
-              className="rounded-xl"
-              value={latestKey.key}
-              onChange={() => {}}
-              readOnly
-            /> */}
-            <Button
-              onClick={handleGenerateApiKey}
-              className="w-max mx-auto min-w-[200px]"
-              disabled={isLoading}
-            >
-              {isLoading
-                ? "Generating..."
-                : error
-                  ? "Try Again"
-                  : "Generate New API Key"}
-            </Button>
+            {latestKey.key !== "No API key generated yet" ? (
+              <InputField
+                type="text"
+                placeholder="No API key generated yet"
+                className="rounded-xl"
+                value={latestKey.key}
+                onChange={() => {}}
+                readOnly
+              />
+            ) : (
+              <Banner>No API key generated yet</Banner>
+            )}
+            {latestKey.key === "No API key generated yet" && (
+              <Button
+                onClick={handleGenerateApiKey}
+                className="w-max mx-auto min-w-[200px]"
+                disabled={isLoading}
+              >
+                {isLoading
+                  ? "Generating..."
+                  : error
+                    ? "Try Again"
+                    : "Generate New API Key"}
+              </Button>
+            )}
             {error && (
               <Typography variant="caption" color="secondary">
                 {error}

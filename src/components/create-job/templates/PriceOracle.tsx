@@ -251,7 +251,7 @@ const PriceOracle = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <TemplateInfoSection
         title="DynamicPriceOracle Template"
         description="Fetches real-time ETH/USD prices and updates the contract automatically."

@@ -42,7 +42,7 @@ function Dashboard() {
           <div className="xl:w-[73%] lg:w-[70%] w-full">
             <ActiveJobs />
           </div>
-          <div className="space-y-8 h-full xl:w-[25%] lg:w-[30%] w-full">
+          <div className="space-y-6 sm:space-y-8 h-full xl:w-[25%] lg:w-[30%] w-full">
             <TgBalance />
             <QuickActions />
             <Statistics />

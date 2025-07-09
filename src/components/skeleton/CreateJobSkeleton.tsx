@@ -2,7 +2,7 @@ import React from "react";
 import Skeleton from "@/components/ui/Skeleton";
 
 const CreateJobSkeleton: React.FC = () => (
-  <div className="space-y-8">
+  <div className="space-y-6 sm:space-y-8">
     {/* Title */}
     <Skeleton width="40%" height={60} borderRadius={12} className="mx-auto" />
 

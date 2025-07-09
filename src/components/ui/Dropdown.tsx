@@ -44,7 +44,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   }, []);
 
   return (
-    <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+    <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
       {label && (
         <Typography variant="h3" color="secondary" align="left">
           {label}
@@ -55,11 +55,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
         className={twMerge("relative w-full md:w-[70%]", className)}
       >
         <div
-          className="text-sm xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-3 px-4 rounded-xl cursor-pointer border border-white/10 flex items-center gap-5"
+          className="text-xs xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-2.5 sm:py-3 px-4 rounded-md sm:rounded-lg cursor-pointer border border-white/10 flex items-center gap-5"
           onClick={() => setIsOpen((prev) => !prev)}
         >
           {icons[selectedOption] && (
-            <span className="w-6 h-6 font-actayRegular text-xs xs:text-sm sm:text-base">
+            <span className="w-4 h-4 sm:w-6 sm:h-6">
               {icons[selectedOption]}
             </span>
           )}
@@ -67,23 +67,25 @@ export const Dropdown: React.FC<DropdownProps> = ({
             {selectedOption}
           </Typography>
           <IoIosArrowDown
-            className={`absolute top-4 right-4 text-white text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+            className={`absolute top-3.5 sm:top-4 right-4 w-3 h-3 sm:w-4 sm:h-4 text-white text-base transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           />
         </div>
 
         {isOpen && (
-          <div className="absolute top-14 w-full bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden shadow-lg z-10">
+          <div className="absolute top-12 sm:top-14 w-full bg-[#1a1a1a] border border-white/10 rounded-md sm:rounded-xl overflow-hidden shadow-lg z-10">
             {options.map((option) => (
               <div
                 key={option.id}
-                className="py-3 px-4 hover:bg-[#333] cursor-pointer rounded-lg flex items-center gap-5 text-sm xs:text-sm sm:text-base"
+                className="py-2.5 sm:py-3 px-4 hover:bg-[#333] cursor-pointer rounded-md sm:rounded-lg flex items-center gap-5"
                 onClick={() => {
                   onChange(option);
                   setIsOpen(false);
                 }}
               >
                 {icons[option.name] && (
-                  <span className="w-6 h-6">{icons[option.name]}</span>
+                  <span className="w-4 h-4 sm:w-6 sm:h-6">
+                    {icons[option.name]}
+                  </span>
                 )}
                 <Typography variant="body" color="primary">
                   {option.name}

@@ -5,7 +5,7 @@ import { Dropdown, DropdownOption } from "../../ui/Dropdown";
 import React from "react";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
-import { ErrorMessage } from "../../common/ErrorMessage";
+import { FormErrorMessage } from "@/components/common/FormErrorMessage";
 
 interface ContractDetailsProps {
   contractKey: string;
@@ -145,11 +145,11 @@ export const ContractDetails = ({
       />
 
       {contract.address && (
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
           <Typography variant="h4" color="secondary" className="text-nowrap">
             Contract ABI
           </Typography>
-          <div className="w-[70%] text-start ml-3">
+          <div className="w-[70%] h-[38px] sm:h-[50px] text-start ml-3 flex items-center">
             {contract.isCheckingABI ? (
               <div className="flex items-center ml-3">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
@@ -186,8 +186,12 @@ export const ContractDetails = ({
       )}
 
       {contract.address && !contract.abi && !contract.isCheckingABI && (
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <Typography variant="h4" color="secondary" className="text-nowrap">
+        <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
+          <Typography
+            variant="h4"
+            color="secondary"
+            className="text-nowrap h-[50px] flex items-center"
+          >
             Manual ABI Input
           </Typography>
           <div className="w-full md:w-[70%]">
@@ -207,14 +211,15 @@ export const ContractDetails = ({
 ]`}
               className="text-xs xs:text-sm sm:text-base w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[230px]"
             />
-            <ErrorMessage error={abiError ?? null} className="mt-1" />
+            <FormErrorMessage error={abiError ?? null} className="mt-1" />
             <Typography
               variant="caption"
               align="left"
               color="secondary"
               className="mt-1"
             >
-              Enter the contract ABI in JSON format if automatic fetch fails
+              Automatic fetch failed. To continue, please enter the contract ABI
+              in JSON format.
             </Typography>
           </div>
         </div>
@@ -237,7 +242,7 @@ export const ContractDetails = ({
                 }}
                 className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
               />
-              <ErrorMessage
+              <FormErrorMessage
                 error={targetError ?? null}
                 className="mt-1 w-full md:w-[70%] ml-auto"
               />
@@ -257,7 +262,7 @@ export const ContractDetails = ({
                 }}
                 className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
               />
-              <ErrorMessage
+              <FormErrorMessage
                 error={targetError ?? null}
                 className="mt-1 w-full md:w-[70%] ml-auto"
               />
@@ -282,7 +287,7 @@ export const ContractDetails = ({
 
       {!isEventContract && contract.targetFunction && hasArguments && (
         <>
-          <>
+          <div className="space-y-auto">
             <Dropdown
               label="Argument Type"
               options={argumentTypeOptions}
@@ -299,56 +304,53 @@ export const ContractDetails = ({
               variant="caption"
               align="left"
               color="secondary"
-              className="w-full md:w-[70%] ml-auto mt-2"
+              className="w-full md:w-[70%] ml-auto mt-2 pl-3"
             >
               {hasArguments
                 ? "Select how function arguments should be handled during execution"
                 : "No arguments required for this function"}
             </Typography>
-          </>
+          </div>
 
           {/* Function Arguments Section */}
-          {contract.targetFunction && functionInputs.length > 0 && (
-            <div
-              className="space-y-4 mt-6"
-              id={`contract-args-section-${contractKey}`}
-            >
-              <div className="flex justify-between flex-col lg:flex-row md:flex-row">
-                <Typography
-                  as="label"
-                  variant="h3"
-                  color="primary"
-                  className="text-nowrap text-left"
-                >
-                  Function Arguments
-                </Typography>
-                {isDisabled && (
-                  <span className="text-sm text-yellow-400 lg:mb-6 m-3">
-                    Arguments disabled for dynamic type
-                  </span>
-                )}
+          {contract.targetFunction &&
+            functionInputs.length > 0 &&
+            !isDisabled && (
+              <div
+                className="space-y-6 sm:space-y-8 mt-6"
+                id={`contract-args-section-${contractKey}`}
+              >
+                <div className="flex justify-between flex-col lg:flex-row md:flex-row">
+                  <Typography
+                    as="label"
+                    variant="h3"
+                    color="primary"
+                    className="text-nowrap text-center"
+                  >
+                    Function Arguments
+                  </Typography>
+                </div>
+                <FormErrorMessage error={argsError ?? null} className="mb-2" />
+                {!isDisabled &&
+                  functionInputs.map((input, index) => (
+                    <div key={index}>
+                      <TextInput
+                        label={`${getInputName(input, index)} (${input.type})`}
+                        value={contract.argumentValues?.[index] || ""}
+                        onChange={(value) => {
+                          handleArgumentValueChange(contractKey, index, value);
+                          setContractErrors((prev) => ({
+                            ...prev,
+                            [`${contractKey}Args`]: null,
+                          }));
+                        }}
+                        placeholder={`Enter ${input.type}`}
+                        type="text"
+                      />
+                    </div>
+                  ))}
               </div>
-              <ErrorMessage error={argsError ?? null} className="mb-2" />
-              {!isDisabled &&
-                functionInputs.map((input, index) => (
-                  <div key={index}>
-                    <TextInput
-                      label={`${getInputName(input, index)} (${input.type})`}
-                      value={contract.argumentValues?.[index] || ""}
-                      onChange={(value) => {
-                        handleArgumentValueChange(contractKey, index, value);
-                        setContractErrors((prev) => ({
-                          ...prev,
-                          [`${contractKey}Args`]: null,
-                        }));
-                      }}
-                      placeholder={`Enter ${input.type}`}
-                      type="text"
-                    />
-                  </div>
-                ))}
-            </div>
-          )}
+            )}
         </>
       )}
 
@@ -370,8 +372,8 @@ export const ContractDetails = ({
             type="text"
             id={`contract-ipfs-code-url-${contractKey}`}
           />
-          <div className="w-full md:w-[70%] ml-auto mt-3 flex flex-wrap gap-2">
-            <ErrorMessage error={ipfsError ?? null} className="mb-1" />
+          <div className="w-full md:w-[70%] ml-auto pl-3 mt-3 flex flex-wrap gap-2">
+            <FormErrorMessage error={ipfsError ?? null} className="mb-1" />
             {contract.ipfsCodeUrlError && (
               <Typography variant="caption" color="error" align="left">
                 {contract.ipfsCodeUrlError}
@@ -451,7 +453,10 @@ export const ContractDetails = ({
                 }));
               }}
             />
-            <ErrorMessage error={conditionTypeError ?? null} className="mb-1" />
+            <FormErrorMessage
+              error={conditionTypeError ?? null}
+              className="mb-1"
+            />
           </div>
 
           {/* Limits/Value Fields */}
@@ -460,7 +465,7 @@ export const ContractDetails = ({
               {contract.conditionType === "In Range" ? (
                 <div className="space-y-auto">
                   <div
-                    className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mt-8"
+                    className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6"
                     id={`contract-limits-section-${contractKey}`}
                   >
                     <label className="block text-sm sm:text-base font-medium text-gray-300 text-nowrap">
@@ -509,7 +514,7 @@ export const ContractDetails = ({
                       </div>
                     </div>
                   </div>
-                  <ErrorMessage
+                  <FormErrorMessage
                     error={limitsError ?? null}
                     className="w-full md:w-[70%] ml-auto mt-2"
                   />

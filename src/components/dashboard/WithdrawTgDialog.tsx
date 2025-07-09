@@ -33,6 +33,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
 }) => {
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [isInputActive, setIsInputActive] = useState(false);
 
   const handleWithdraw = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -95,18 +96,22 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
               onChange={setWithdrawAmount}
               placeholder="Enter TG amount"
               className="rounded-xl"
+              onFocus={() => setIsInputActive(true)}
+              onBlur={() => setIsInputActive(false)}
             />
-            <Typography
-              variant="body"
-              color="gray"
-              align="left"
-              className="mt-3"
-            >
-              Your TG Balance:{" "}
-              <span className="text-white">
-                {tgBalance ? Number(tgBalance).toFixed(2) : "0.00"} TG
-              </span>
-            </Typography>
+            {(isInputActive || !!withdrawAmount) && (
+              <Typography
+                variant="body"
+                color="gray"
+                align="left"
+                className="mt-3"
+              >
+                Your TG Balance:{" "}
+                <span className="text-white">
+                  {tgBalance ? Number(tgBalance).toFixed(2) : "0.00"} TG
+                </span>
+              </Typography>
+            )}
             {withdrawAmount && Number(withdrawAmount) > 0 && (
               <div className="mt-3 p-3 bg-[#242323] rounded-xl flex flex-col">
                 <Typography variant="body" color="gray" align="left">

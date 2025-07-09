@@ -66,7 +66,7 @@ const Header: React.FC = () => {
             <LogoLink
               width={180}
               height={40}
-              className="w-[170px] h-auto"
+              className="w-[140px] xl:w-[170px] h-auto"
               priority={true}
             />
           </div>
@@ -96,7 +96,7 @@ const Header: React.FC = () => {
                     href={item.href}
                     label={item.label}
                     isActive={pathname === item.href}
-                    className="text-center xl:w-[150px] lg:w-[120px] lg:text-[13px] xl:text-base text-gray-200 hover:text-white"
+                    className="text-center xl:w-[150px] lg:w-[110px] lg:text-[12px] xl:text-base text-gray-200 hover:text-white"
                     onClick={() => setMenuOpen(false)}
                   />
                 ))}
@@ -135,11 +135,6 @@ const Header: React.FC = () => {
           </div>
 
           <div className="relative flex items-center gap-2 md:gap-4 z-10">
-            <ConnectButton
-              chainStatus="none"
-              accountStatus="address"
-              showBalance={false}
-            />
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"

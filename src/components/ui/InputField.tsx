@@ -34,7 +34,7 @@ export const InputField: React.FC<TextInputProps> = ({
   const inputWidthClass = label ? "w-full md:w-[70%]" : "w-full";
 
   return (
-    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6 w-full">
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6 w-full">
       {label && (
         <Typography variant="h3" color="secondary" align="left">
           {label}

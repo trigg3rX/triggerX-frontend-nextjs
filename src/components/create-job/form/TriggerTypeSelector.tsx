@@ -51,7 +51,7 @@ export const TriggerTypeSelector = () => {
 
   return (
     <>
-      <Card className="p-6">
+      <Card>
         <Typography
           variant="h3"
           align="left"
