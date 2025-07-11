@@ -90,15 +90,37 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 Amount (TG)
               </Typography>
             </label>
-            <InputField
-              type="number"
-              value={withdrawAmount}
-              onChange={setWithdrawAmount}
-              placeholder="Enter TG amount"
-              className="rounded-xl"
-              onFocus={() => setIsInputActive(true)}
-              onBlur={() => setIsInputActive(false)}
-            />
+            <div className="relative w-full">
+              <InputField
+                type="number"
+                value={withdrawAmount}
+                onChange={setWithdrawAmount}
+                placeholder="Enter TG amount"
+                className="rounded-xl w-full pr-16"
+                onFocus={() => setIsInputActive(true)}
+                onBlur={() => setIsInputActive(false)}
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray text-white border border-gray-500 text-xs font-semibold px-3 py-1 rounded-lg opacity-50 focus:opacity-100"
+                style={{ minWidth: 40 }}
+                onClick={() => setWithdrawAmount(tgBalance || "0")}
+                disabled={isWithdrawing || !tgBalance || tgBalance === "0"}
+              >
+                Max
+              </button>
+            </div>
+            <div className="mt-2 text-xs bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 p-2 rounded">
+              <Typography
+                variant="body"
+                color="inherit"
+                align="left"
+                className="!m-0"
+              >
+                <strong>Note:</strong> If TG is insufficient, the job will not
+                be executed.
+              </Typography>
+            </div>
             {(isInputActive || !!withdrawAmount) && (
               <Typography
                 variant="body"

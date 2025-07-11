@@ -97,7 +97,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
               type="number"
               value={stakeAmount}
               onChange={setStakeAmount}
-              placeholder="Enter ETH amount"
+              placeholder="Enter TG amount"
               className="rounded-xl"
             />
             {stakeAmount && Number(stakeAmount) > 0 && (
