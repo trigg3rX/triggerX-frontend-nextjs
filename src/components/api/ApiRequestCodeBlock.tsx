@@ -22,9 +22,9 @@ const ApiRequestCodeBlock: React.FC<ApiRequestCodeBlock> = ({
         <Typography variant="h4">API Request</Typography>
       </div>
 
-      <Card variant="soft" className="p-4 bg-[#242424] !border-0">
+      <Card variant="soft" className="bg-[#242424] !border-0">
         {activeSample && (
-          <pre className="text-[10px] sm:text-xs overflow-x-auto whitespace-pre-wrap text-[#E6E6E6] my-4">
+          <pre className="text-[10px] sm:text-sm overflow-x-auto whitespace-pre-wrap text-[#E6E6E6] my-4">
             {activeSample.code}
           </pre>
         )}

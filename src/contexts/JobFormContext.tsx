@@ -858,9 +858,13 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
               );
             }
+            const headers = {
+              "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+            };
             const response = await fetch(
               `${API_BASE_URL}/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
-              { method: "GET" },
+              { method: "GET", headers },
             );
             if (!response.ok) throw new Error("Failed to get fees");
             const data = await response.json();
@@ -990,6 +994,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         ...jobDetail,
         job_cost_prediction: estimatedFee,
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
+        job_id:
+          Math.floor(Math.random() * 9_000_000_000_000_000_000) +
+          1_000_000_000_000_000_000, // int64 range
       }));
 
       devLog("Submitting job details:", updatedJobDetails);
@@ -1000,12 +1007,14 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("API base URL not configured in ENV");
       }
 
+      const headers = {
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+      };
       const response = await fetch(`${API_BASE_URL}/api/jobs`, {
         method: "POST",
         mode: "cors",
-        // headers: {
-        //   "Content-Type": "application/json",
-        // },
+        headers,
         body: JSON.stringify(updatedJobDetails),
       });
 
