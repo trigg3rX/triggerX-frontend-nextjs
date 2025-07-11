@@ -34,6 +34,15 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
 }) => {
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isStaking, setIsStaking] = useState(false);
+
+  // Wrapper to clear stakeAmount when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setStakeAmount("");
+    }
+    onOpenChange(open);
+  };
+
   const handleStake = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -71,7 +80,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -123,7 +132,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
                 type="button"
                 color="white"
                 className="w-full"
-                onClick={() => onOpenChange(false)}
+                onClick={() => handleOpenChange(false)}
                 disabled={isStaking || !!stakeAmount}
               >
                 Cancel

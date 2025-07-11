@@ -94,6 +94,10 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
             wallet_address: address,
             network: networkName,
           }),
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+          },
         },
       );
       if (!response.ok) {

@@ -30,6 +30,10 @@ const AlertEmail = ({ userAddress }: AlertEmailProps) => {
         {
           method: "POST",
           body: JSON.stringify({ userAddress, userEmail: email }),
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+          },
         },
       );
       if (res.ok) {

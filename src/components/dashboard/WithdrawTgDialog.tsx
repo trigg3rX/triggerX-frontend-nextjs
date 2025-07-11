@@ -35,6 +35,13 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [isInputActive, setIsInputActive] = useState(false);
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setWithdrawAmount("");
+    }
+    onOpenChange(open);
+  };
+
   const handleWithdraw = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -69,7 +76,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
