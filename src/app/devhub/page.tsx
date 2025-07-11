@@ -4,11 +4,13 @@ import DevHubPostCardSkeleton from "@/components/skeleton/DevHubPostCardSkeleton
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Devhub | TriggerX",
-  description: "TriggerX - Web3 Automation Platform.",
+  title: "TriggerX Dev Hub | Build on Automation",
+  description:
+    "Explore developer documentation, guides, and resources for building with TriggerX. Start automating smart contracts the right way.",
   openGraph: {
-    title: "Devhub | TriggerX ",
-    description: "TriggerX - Web3 Automation Platform.",
+    title: "TriggerX Dev Hub | Developer Docs & Tools",
+    description:
+      "Explore developer documentation, guides, and resources for building with TriggerX. Start automating smart contracts the right way.",
     url: `https://triggerx-app-nextjs.vercel.app/devhub`,
     siteName: "TriggerX",
     images: [
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
         url: `https://triggerx-app-nextjs.vercel.app/OGImages/devhub.png`,
         width: 1200,
         height: 630,
-        alt: "Devhub | TriggerX",
+        alt: "TriggerX developer portal preview",
         type: "image/png",
       },
     ],

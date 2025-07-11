@@ -188,7 +188,7 @@ const JobCard: React.FC<JobCardProps> = ({
             <div className=" space-y-2 text-[#A2A2A2] text-sm">
               <div className="flex items-center justify-between gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
-                  Avg Type :
+                  Arg Type :
                 </Typography>
                 <Typography variant="body" color="gray" align="right">
                   {job.argType}

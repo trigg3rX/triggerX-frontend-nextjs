@@ -1,50 +1,55 @@
 "use client";
-// import { FiInfo } from "react-icons/fi";
+
+import { useState } from "react";
 import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
-import { useState } from "react";
 import { Button } from "../ui/Button";
 import { InputField } from "../ui/InputField";
-// import Tooltip from "../ui/Tooltip";
 
-const AlertEmail = () => {
+interface AlertEmailProps {
+  userAddress: string;
+}
+
+const AlertEmail = ({ userAddress }: AlertEmailProps) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const validateEmail = (email: string) => {
-    // Simple email validation
-    return /.+@.+\..+/.test(email);
-  };
+  const validateEmail = (email: string) => /.+@.+\..+/.test(email);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSuccess("");
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
       return;
     }
-    // You can replace this with your actual submit logic
-    alert(`Subscribed with: ${email}`);
-    setEmail("");
-    setError("");
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/email`,
+        {
+          method: "POST",
+          body: JSON.stringify({ userAddress, userEmail: email }),
+        },
+      );
+      if (res.ok) {
+        setSuccess("Email saved! You'll be notified.");
+        setEmail("");
+        setError("");
+      } else {
+        setError("Failed to save email. Try again.");
+      }
+    } catch {
+      setError("Network error. Try again.");
+    }
   };
 
   return (
-    <Card className="">
+    <Card>
       <div className="flex items-center">
         <Typography variant="h2" color="white" align="left">
           Alert
         </Typography>
-        {/* <Tooltip
-          title={
-            "TriggerGas (TG) is the standard unit for calculating computational and resource costs on the TriggerX platform."
-          }
-          placement="right"
-        >
-          <FiInfo
-            className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
-            size={15}
-          />
-        </Tooltip> */}
       </div>
       <form onSubmit={handleSubmit} className="w-full my-4">
         <InputField
@@ -67,10 +72,20 @@ const AlertEmail = () => {
             {error}
           </Typography>
         )}
+        {success && (
+          <Typography
+            variant="body"
+            color="success"
+            align="left"
+            className="mt-1"
+          >
+            {success}
+          </Typography>
+        )}
+        <Button type="submit" className="w-full my-4">
+          Submit
+        </Button>
       </form>
-      <Button type="submit" className="w-full">
-        Submit
-      </Button>
     </Card>
   );
 };

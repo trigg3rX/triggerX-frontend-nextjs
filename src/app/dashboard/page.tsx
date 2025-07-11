@@ -8,11 +8,13 @@ import DashboardSkeleton from "@/components/skeleton/DashboardSkeleton";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dashboard | TriggerX",
-  description: "TriggerX - Web3 Automation Platform.",
+  title: "TriggerX Dashboard | Manage Your Automation Tasks",
+  description:
+    "Access your job history, manage main and linked jobs, check TG balance, and create new automation tasks—all from one intuitive dashboard.",
   openGraph: {
-    title: "Dashboard | TriggerX ",
-    description: "TriggerX - Web3 Automation Platform.",
+    title: "TriggerX Dashboard | Job Management & Token Balances",
+    description:
+      "Access your job history, manage main and linked jobs, check TG balance, and create new automation tasks—all from one intuitive dashboard.",
     url: `https://triggerx-app-nextjs.vercel.app/dashboard`,
     siteName: "TriggerX",
     images: [
@@ -20,7 +22,7 @@ export const metadata: Metadata = {
         url: `https://triggerx-app-nextjs.vercel.app/OGImages/dashboard.png`,
         width: 1200,
         height: 630,
-        alt: "Dashboard | TriggerX",
+        alt: "TriggerX dashboard showing main jobs, linked jobs, balance, and quick actions panel",
         type: "image/png",
       },
     ],
@@ -45,7 +47,7 @@ function Dashboard() {
           <div className="space-y-6 sm:space-y-8 h-full xl:w-[25%] lg:w-[30%] w-full">
             <TgBalance />
             <QuickActions />
-            <AlertEmail />
+            <AlertEmail userAddress={""} />
           </div>
         </div>
       </div>

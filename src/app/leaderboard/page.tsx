@@ -4,11 +4,13 @@ import MainLeaderboard from "@/components/leaderboard/MainLeaderboard";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Lederboard | TriggerX",
-  description: "TriggerX - Web3 Automation Platform.",
+  title: "TriggerX Leaderboard | Keeper, Developer & Contributor Rankings",
+  description:
+    "See your rank and points as a Keeper, Developer, or Contributor in the TriggerX network. Transparent rewards. Real participation.",
   openGraph: {
-    title: "Lederboard | TriggerX ",
-    description: "TriggerX - Web3 Automation Platform.",
+    title: "TriggerX Leaderboard | Track Points & Contributions",
+    description:
+      "See your rank and points as a Keeper, Developer, or Contributor in the TriggerX network. Transparent rewards. Real participation.",
     url: `https://triggerx-app-nextjs.vercel.app/leaderboard`,
     siteName: "TriggerX",
     images: [
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
         url: `https://triggerx-app-nextjs.vercel.app/OGImages/leaderboard.png`,
         width: 1200,
         height: 630,
-        alt: "Lederboard | TriggerX",
+        alt: "TriggerX Leaderboard display with ranks",
         type: "image/png",
       },
     ],
