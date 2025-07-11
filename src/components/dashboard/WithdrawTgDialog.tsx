@@ -102,7 +102,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray text-white border border-gray-500 text-xs font-semibold px-3 py-1 rounded-lg opacity-50 focus:opacity-100"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray text-white border border-gray-500 text-xs font-semibold px-3 py-1 rounded-lg hover:scale-105 transition-all duration-200"
                 style={{ minWidth: 40 }}
                 onClick={() => setWithdrawAmount(tgBalance || "0")}
                 disabled={isWithdrawing || !tgBalance || tgBalance === "0"}
@@ -145,7 +145,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                   align="left"
                   className="mt-1 font-bold tracking-wider"
                 >
-                  {(Number(withdrawAmount) * 1000).toFixed(2)} TG
+                  {(Number(withdrawAmount) / 1000).toFixed(6)}
                 </Typography>
               </div>
             )}

@@ -103,7 +103,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
             {stakeAmount && Number(stakeAmount) > 0 && (
               <div className="mt-3 p-3 bg-[#242323] rounded-xl flex flex-col">
                 <Typography variant="body" color="gray" align="left">
-                  Estimated TG
+                  Estimated ETH
                 </Typography>
                 <Typography
                   variant="h3"
@@ -111,7 +111,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
                   align="left"
                   className="mt-1 font-bold tracking-wider"
                 >
-                  {(Number(stakeAmount) * 1000).toFixed(2)} TG
+                  {(Number(stakeAmount) / 1000).toFixed(6)}
                 </Typography>
               </div>
             )}
