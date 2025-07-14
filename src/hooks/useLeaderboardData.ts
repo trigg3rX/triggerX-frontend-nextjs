@@ -40,17 +40,14 @@ export default function useLeaderboardData(
         if (!API_BASE_URL) {
           throw new Error("API base URL is not set");
         }
-        const headers = {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
-        };
+
         if (activeTab === "keeper") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/keepers`;
         } else if (activeTab === "developer" || activeTab === "contributor") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
         }
         devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);
-        const response = await fetch(apiUrl, { headers });
+        const response = await fetch(apiUrl);
         devLog("[Leaderboard] Response status:", response.status);
         if (!response.ok) throw new Error("Failed to fetch leaderboard data");
         const data = await response.json();

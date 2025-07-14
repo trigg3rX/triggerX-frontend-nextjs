@@ -5,46 +5,60 @@ import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { InputField } from "../ui/InputField";
+import { devLog } from "@/lib/devLog";
 
 interface AlertEmailProps {
-  userAddress: string;
+  user_address: string;
 }
 
-const AlertEmail = ({ userAddress }: AlertEmailProps) => {
+const AlertEmail = ({ user_address }: AlertEmailProps) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const validateEmail = (email: string) => /.+@.+\..+/.test(email);
+  const validateEmail = (email: string) => {
+    const isValid = /.+@.+\..+/.test(email);
+    devLog("Validating email:", email, "Result:", isValid);
+    return isValid;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    devLog("Form submitted with email:", email);
     setSuccess("");
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
+      devLog("Invalid email entered:", email);
       return;
     }
     try {
+      devLog(
+        "Sending POST request to:",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/email`,
+        {
+          user_address,
+          email_id: email,
+        },
+      );
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/email`,
         {
           method: "POST",
-          body: JSON.stringify({ userAddress, userEmail: email }),
-          headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
-          },
+          body: JSON.stringify({ user_address, email_id: email }),
         },
       );
+      devLog("API response status:", res.status);
+      const data = await res.json().catch(() => null);
+      devLog("API response body:", data);
       if (res.ok) {
         setSuccess("Email saved! You'll be notified.");
         setEmail("");
         setError("");
-      } else {
-        setError("Failed to save email. Try again.");
+        devLog("Email saved successfully for:", email);
       }
-    } catch {
-      setError("Network error. Try again.");
+    } catch (err) {
+      setError("Failed to sent email. Try again.");
+      devLog("Failed to sent email. Try again.", err);
     }
   };
 
@@ -62,7 +76,6 @@ const AlertEmail = ({ userAddress }: AlertEmailProps) => {
           value={email}
           onChange={(value) => {
             setEmail(value);
-            if (error) setError("");
           }}
           className="w-full"
         />

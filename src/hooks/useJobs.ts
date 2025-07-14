@@ -86,13 +86,10 @@ export function useJobs() {
           setLoading(false);
           return;
         }
-        const headers = {
-          "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
-        };
+
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
         devLog("[useJobs] Fetching jobs from:", apiUrl);
-        const response = await fetch(apiUrl, { headers });
+        const response = await fetch(apiUrl);
 
         if (!response.ok) {
           if (response.status === 404) {

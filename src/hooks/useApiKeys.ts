@@ -40,10 +40,6 @@ export function useApiKeys(address?: string) {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          },
           body: JSON.stringify({
             owner: address,
             rate_limit: 20,
