@@ -33,7 +33,6 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
 }) => {
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [isInputActive, setIsInputActive] = useState(false);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -104,8 +103,6 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 onChange={setWithdrawAmount}
                 placeholder="Enter TG amount"
                 className="rounded-xl w-full pr-16"
-                onFocus={() => setIsInputActive(true)}
-                onBlur={() => setIsInputActive(false)}
               />
               <button
                 type="button"
@@ -117,7 +114,20 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 Max
               </button>
             </div>
-            <div className="mt-2 text-xs bg-yellow-100 border-l-4 border-yellow-400 text-yellow-800 p-2 rounded">
+
+            <Typography
+              variant="body"
+              color="gray"
+              align="left"
+              className="mt-3"
+            >
+              Your TG Balance:{" "}
+              <span className="text-white">
+                {tgBalance ? Number(tgBalance).toFixed(2) : "0.00"} TG
+              </span>
+            </Typography>
+
+            <div className="mt-2 text-xs bg-yellow-100  text-yellow-800 p-2 rounded">
               <Typography
                 variant="body"
                 color="inherit"
@@ -128,19 +138,6 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 be executed.
               </Typography>
             </div>
-            {(isInputActive || !!withdrawAmount) && (
-              <Typography
-                variant="body"
-                color="gray"
-                align="left"
-                className="mt-3"
-              >
-                Your TG Balance:{" "}
-                <span className="text-white">
-                  {tgBalance ? Number(tgBalance).toFixed(2) : "0.00"} TG
-                </span>
-              </Typography>
-            )}
             {withdrawAmount && Number(withdrawAmount) > 0 && (
               <div className="mt-3 p-3 bg-[#242323] rounded-xl flex flex-col">
                 <Typography variant="body" color="gray" align="left">

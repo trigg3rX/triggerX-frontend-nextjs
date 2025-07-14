@@ -11,6 +11,8 @@ import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { useDeleteJob } from "@/hooks/useDeleteJob";
 import { ErrorMessage } from "../common/ErrorMessage";
+import JobLogsTable from "./JobLogsTable";
+import { useJobLogs } from "@/hooks/useJobLogs";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -27,10 +29,16 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   }>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
+  const [jobLogsOpenId, setJobLogsOpenId] = useState<number | null>(null);
 
   const { jobs, loading, error } = useJobs();
   const { isConnected } = useWalletConnectionContext();
   const { deleteJob, loading: deleteLoading } = useDeleteJob();
+  const {
+    logs: jobLogs,
+    loading: logsLoading,
+    error: logsError,
+  } = useJobLogs(jobLogsOpenId ?? undefined);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => ({
@@ -70,6 +78,10 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const handleCancelDelete = () => {
     setDeleteDialogOpen(false);
     setJobIdToDelete(null);
+  };
+
+  const handleJobCardClick = (jobId: number) => {
+    setJobLogsOpenId((prev) => (prev === jobId ? null : jobId));
   };
 
   const getFilteredJobs = () => {
@@ -125,7 +137,12 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
           {!error && getFilteredJobs().length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
               {getFilteredJobs().map((job) => (
-                <div key={job.id} className="col-span-1">
+                <div
+                  key={job.id}
+                  className="col-span-1"
+                  onClick={() => handleJobCardClick(job.id)}
+                  style={{ cursor: "pointer" }}
+                >
                   <JobCard
                     job={job}
                     expanded={!!expandedJobs[job.id]}
@@ -139,6 +156,18 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
             </div>
           )}
         </>
+      )}
+      {/* JobLogsTable outside the grid, full width */}
+      {jobLogsOpenId !== null && (
+        <div className="my-6">
+          {logsLoading ? (
+            <div className="text-white text-center py-4">Loading logs...</div>
+          ) : logsError ? (
+            <JobLogsTable logs={[]} error={logsError} />
+          ) : (
+            <JobLogsTable logs={jobLogs} />
+          )}
+        </div>
       )}
       <div>
         {getFilteredJobs().map((job) =>

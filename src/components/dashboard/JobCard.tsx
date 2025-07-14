@@ -2,6 +2,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../common/TooltipWrap";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export type JobType = {
   id: number;
@@ -28,6 +29,7 @@ type JobCardProps = {
   onDelete: (jobId: number) => void;
   disableUpdate?: boolean;
   className?: string;
+  onClick?: () => void; // <-- Add this
 };
 
 // Helper functions
@@ -86,13 +88,16 @@ const JobCard: React.FC<JobCardProps> = ({
   onToggleExpand,
   onToggleDetails,
   onDelete,
-  disableUpdate = true,
   className = "",
+  onClick, // <-- Add this
 }) => {
+  const router = useRouter();
   return (
     <Card
       expanded={expanded}
       className={`!p-0 relative ${expandedDetails ? "h-auto border border-white " : "h-[310px] "} ${expanded ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324]  border border-white hover:border-b hover:border-white  " : "border-[#2A2A2A] hover:border-[#3A3A3A] "} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+      onClick={onClick} // <-- Add this
+      style={{ cursor: onClick ? "pointer" : undefined }}
     >
       <div>
         <div
@@ -123,7 +128,10 @@ const JobCard: React.FC<JobCardProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => onToggleExpand(job.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpand(job.id);
+                    }}
                     className="p-2  rounded-full text-white hover:bg-[#3A3A3A] transition-colors bg-[#2a2a2a] border-[#FFFFFF] border"
                   >
                     <svg
@@ -268,7 +276,11 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                className={`p-2 bg-[#C07AF6] rounded-full text-white ${disableUpdate ? "cursor-not-allowed" : "cursor-pointer"} hover:bg-[#a46be0] transition-colors`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/create-job?jobId=${job.id}`);
+                }}
+                className={`p-2 bg-[#C07AF6] rounded-full text-white hover:bg-[#a46be0] transition-colors`}
               >
                 <svg
                   width="20"
@@ -289,7 +301,10 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => onDelete(job.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(job.id);
+                }}
                 className="p-2 bg-[#FF5757] rounded-full text-white hover:bg-[#ff4444] transition-colors"
               >
                 <svg
@@ -311,7 +326,10 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => onToggleDetails(job.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleDetails(job.id);
+                }}
                 className="p-2 bg-[#2A2A2A] rounded-full text-white hover:bg-[#3A3A3A] transition-colors"
               >
                 <svg

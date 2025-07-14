@@ -11,6 +11,8 @@ interface CardProps {
   label?: string;
   value?: number | string;
   expanded?: boolean;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  style?: React.CSSProperties;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -21,6 +23,8 @@ export const Card: React.FC<CardProps> = ({
   label,
   value,
   expanded = false,
+  onClick,
+  style,
 }) => {
   const baseStyles = "rounded-2xl p-5 sm:p-6 transition-all duration-300";
   const expandedStyles =
@@ -43,7 +47,7 @@ export const Card: React.FC<CardProps> = ({
   );
 
   return (
-    <div className={combinedClassName}>
+    <div className={combinedClassName} onClick={onClick} style={style}>
       {children ? (
         children
       ) : (
