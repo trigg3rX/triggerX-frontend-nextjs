@@ -17,6 +17,8 @@ interface TextInputProps {
   id?: string;
   min?: number;
   max?: number;
+  disabled?: boolean;
+  readOnly?: boolean;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -33,6 +35,8 @@ export const TextInput: React.FC<TextInputProps> = ({
   id,
   min,
   max,
+  disabled = false,
+  readOnly = false,
 }) => {
   const inputWidthClass = label ? "w-full md:w-[70%]" : "w-full";
   const [isFocused, setIsFocused] = useState(false);
@@ -73,6 +77,7 @@ export const TextInput: React.FC<TextInputProps> = ({
             "w-full text-xs xs:text-sm sm:text-base bg-white/5 text-white py-2 sm:py-3 px-4 rounded-md sm:rounded-lg border border-white/10 placeholder-gray-400 outline-none focus:border-white/50",
             "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]",
             error ? "border-red-500" : "",
+            disabled || readOnly ? "opacity-50 cursor-not-allowed" : "",
             className,
           )}
           value={value}
@@ -97,6 +102,8 @@ export const TextInput: React.FC<TextInputProps> = ({
               ? (e) => (e.target as HTMLInputElement).blur()
               : undefined
           }
+          disabled={disabled}
+          readOnly={readOnly}
         />
         {type === "number" && isFocused && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col space-y-0 sm:space-y-0.5 z-10">

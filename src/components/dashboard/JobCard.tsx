@@ -89,11 +89,13 @@ const JobCard: React.FC<JobCardProps> = ({
   onToggleExpand,
   onToggleDetails,
   onDelete,
+  disableUpdate = false,
   className = "",
   onClick,
   isLogOpen = false,
 }) => {
   const router = useRouter();
+
   return (
     <Card
       expanded={expanded}
@@ -288,11 +290,13 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(`/create-job?jobId=${job.id}`);
+                // disabled={disableUpdate}
+                onClick={() => {
+                  if (!disableUpdate) {
+                    router.push(`/?jobId=${job.id}`);
+                  }
                 }}
-                className={`p-2 bg-[#C07AF6] rounded-full text-white hover:bg-[#a46be0] transition-colors`}
+                className={`p-2 bg-[#C07AF6] rounded-full text-white ${disableUpdate ? "cursor-not-allowed" : "cursor-pointer"} hover:bg-[#a46be0] transition-colors`}
               >
                 <svg
                   width="20"

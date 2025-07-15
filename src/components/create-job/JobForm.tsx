@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useFormKeyboardNavigation } from "@/hooks/useFormKeyboardNavigation";
 import { Card } from "../ui/Card";
 import { TriggerTypeSelector } from "./form/TriggerTypeSelector";
@@ -17,6 +17,10 @@ import { validateJobForm } from "./validateJobForm";
 import { useAccount } from "wagmi";
 import JobFeeModal from "./JobFeeModal";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
+import { LucideCopyButton } from "../ui/CopyButton";
+import { useSearchParams } from "next/navigation";
+import { useJobs } from "@/hooks/useJobs";
+import { fetchContractABI } from "@/utils/fetchContractABI";
 
 const networkIcons = Object.fromEntries(
   Object.entries(networksData.networkIcons).map(([name, icon]) => [
@@ -111,12 +115,82 @@ export const JobForm: React.FC = () => {
   const networkId = getNetworkIdByName(selectedNetwork);
   const { isConnected } = useWalletConnectionContext();
 
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("jobId");
+  const { jobs } = useJobs();
+  const jobForm = useJobFormContext();
+  const isUpdateMode = Boolean(jobId);
+
+  React.useEffect(() => {
+    if (jobId && jobs.length > 0) {
+      const job = jobs.find((j) => String(j.id) === String(jobId));
+      if (job) {
+        (async () => {
+          // Map string taskDefinitionId to numeric trigger type
+          const triggerTypeMap: Record<string, number> = {
+            "Time-based": 1,
+            "Condition-based": 2,
+            "Event-based": 3,
+          };
+          const triggerType = triggerTypeMap[job.taskDefinitionId] || 1;
+          jobForm.setJobType(triggerType);
+          jobForm.setJobTitle(job.jobTitle);
+          // Convert job.timeFrame (seconds) to {days, hours, minutes}
+          const tf = Number(job.timeFrame);
+          const days = Math.floor(tf / 86400);
+          const hours = Math.floor((tf % 86400) / 3600);
+          const minutes = Math.floor((tf % 3600) / 60);
+          jobForm.setTimeframe({ days, hours, minutes });
+          // Convert job.timeInterval (seconds) to {hours, minutes, seconds}
+          const ti = Number(job.timeInterval);
+          const tiHours = Math.floor(ti / 3600);
+          const tiMinutes = Math.floor((ti % 3600) / 60);
+          const tiSeconds = ti % 60;
+          jobForm.setTimeInterval({
+            hours: tiHours,
+            minutes: tiMinutes,
+            seconds: tiSeconds,
+          });
+          // Fetch ABI using contract address
+          const abiString = await fetchContractABI(job.targetContractAddress);
+          jobForm.handleSetContractDetails(
+            "contract",
+            job.targetContractAddress,
+            abiString || "[]",
+          );
+          // Wait for state to update, then set function and arg type
+          setTimeout(() => {
+            jobForm.handleFunctionChange("contract", job.targetFunction || "");
+            jobForm.handleArgumentTypeChange(
+              "contract",
+              job.argType === "2" ? "dynamic" : "static",
+            );
+          }, 100);
+        })();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId, jobs]);
+
+  // Add state for the permission checkbox and error
+  const [hasConfirmedPermission, setHasConfirmedPermission] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+
   const handleFormSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setErrorFrame(null);
     setErrorInterval(null);
     setJobTitleError(null);
     setContractErrors({});
+    setPermissionError(null);
+
+    // Check if the permission checkbox is checked
+    if (!hasConfirmedPermission) {
+      setPermissionError(
+        "Please confirm that the address 0xd2B4F73FE4c747716F20839c37C451f241226b03 has the required role/permission.",
+      );
+      return;
+    }
 
     const validationResult = validateJobForm({
       jobType,
@@ -214,15 +288,16 @@ export const JobForm: React.FC = () => {
         className="w-full"
       >
         <div className="space-y-6 sm:space-y-8">
-          <TriggerTypeSelector />
+          <TriggerTypeSelector disabled={isUpdateMode} />
           {isConnected && jobType !== 0 && (
             <>
               <Card className="space-y-6 sm:space-y-8 relative z-50">
                 <JobTitleInput
                   error={jobTitleError || null}
                   ref={jobTitleErrorRef}
+                  readOnly={isUpdateMode}
                 />
-                <NetworkSelector />
+                <NetworkSelector disabled={isUpdateMode} />
                 <TimeframeInputs
                   timeframe={timeframe}
                   onTimeframeChange={handleTimeframeChange}
@@ -239,7 +314,7 @@ export const JobForm: React.FC = () => {
                     onClearError={() => setErrorInterval(null)}
                   />
                 ) : (
-                  <RecurringInput />
+                  <RecurringInput readOnly={!isUpdateMode ? false : false} />
                 )}
                 {jobType === 3 && (
                   <ContractDetails
@@ -248,6 +323,7 @@ export const JobForm: React.FC = () => {
                     error={contractErrors["eventContractAddress"]}
                     abiError={contractErrors["eventContractABI"]}
                     targetError={contractErrors["eventContractTarget"]}
+                    readOnly={isUpdateMode}
                   />
                 )}
                 {/* Contract Address Error Display and Scroll Anchor */}
@@ -262,6 +338,7 @@ export const JobForm: React.FC = () => {
                   sourceUrlError={contractErrors["contractSourceUrl"]}
                   conditionTypeError={contractErrors["contractConditionType"]}
                   limitsError={contractErrors["contractLimits"]}
+                  readOnly={isUpdateMode}
                 />
               </Card>
 
@@ -315,6 +392,42 @@ export const JobForm: React.FC = () => {
                 </div>
               )}
 
+              {/* Permission Checkbox */}
+              <Card className="flex flex-col items-start gap-2">
+                <div className="flex items-start gap-2">
+                  <input
+                    id="permission-checkbox"
+                    type="checkbox"
+                    checked={hasConfirmedPermission}
+                    onChange={(e) =>
+                      setHasConfirmedPermission(e.target.checked)
+                    }
+                    className="w-4 h-4"
+                  />
+                  <label
+                    htmlFor="permission-checkbox"
+                    className="text-sm select-none text-gray-400"
+                  >
+                    If your target function contains a modifier or requires
+                    certain address for calling the function, then make sure
+                    that this
+                    <span className="ml-2 text-white">
+                      0xd2B4F73FE4c747716F20839c37C451f241226b03
+                    </span>
+                    <LucideCopyButton
+                      text="0xd2B4F73FE4c747716F20839c37C451f241226b03"
+                      className="align-middle inline-block !px-2"
+                    />
+                    address have role/permission to call that function.
+                  </label>
+                </div>
+                {permissionError && (
+                  <div className="text-red-500 text-xs mt-1 ml-1">
+                    {permissionError}
+                  </div>
+                )}
+              </Card>
+
               <div className="flex gap-4 justify-center items-center relative z-10 mt-8">
                 <Button
                   type="submit"
@@ -322,7 +435,11 @@ export const JobForm: React.FC = () => {
                   className="min-w-[120px] md:min-w-[170px]"
                   disabled={isModalOpen}
                 >
-                  {isModalOpen ? "Estimating fees..." : "Create Job"}
+                  {isModalOpen
+                    ? "Estimating fees..."
+                    : isUpdateMode
+                      ? "Update Job"
+                      : "Create Job"}
                 </Button>
                 {(linkedJobs[jobType]?.length ?? 0) < 3 && (
                   <Button

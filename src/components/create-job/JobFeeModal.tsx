@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
 import { parseEther } from "viem";
 import JobProcessing from "./JobProcessing";
+import { useSearchParams } from "next/navigation";
 
 interface JobFeeModalProps {
   isOpen: boolean;
@@ -32,13 +33,15 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   } = useJobForm();
   const router = useRouter();
 
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
   const prevAddress = useRef<string | undefined>(address);
   const [topUpFailed, setTopUpFailed] = useState(false);
   const { data: ethBalance } = useBalance({
     address,
   });
   const [jobCreateFailed, setJobCreateFailed] = useState(false);
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("jobId");
 
   useEffect(() => {
     if (
@@ -52,6 +55,16 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     }
     prevAddress.current = address;
   }, [address, isOpen, setIsJobCreated, setIsOpen]);
+
+  // Refetch balances and reset modal state on address or network change
+  useEffect(() => {
+    if (isOpen && (address || chain)) {
+      fetchTGBalance(); // Refetch TG balance
+      setIsJobCreated(false);
+      setTopUpFailed(false);
+      setJobCreateFailed(false);
+    }
+  }, [address, chain, isOpen, fetchTGBalance, setIsJobCreated]);
 
   const hasEnoughBalance = useMemo(
     () => estimatedFee <= Number(userBalance),
@@ -69,7 +82,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     e.preventDefault();
     setJobCreateFailed(false);
     if (hasEnoughBalance) {
-      const success = await handleCreateJob();
+      const success = await handleCreateJob(jobId || undefined);
       setJobCreateFailed(!success);
       setTopUpFailed(false);
       fetchTGBalance();
@@ -223,15 +236,18 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Please check your wallet and try again.
             </Typography>
           )}
-          {!hasEnoughEthToStake && !isSubmitting && !topUpFailed && (
-            <Typography
-              variant="caption"
-              color="secondary"
-              className="mt-6 opacity-50"
-            >
-              🚫 Uh oh! Looks like your wallet is empty.
-            </Typography>
-          )}
+          {!hasEnoughEthToStake &&
+            !hasEnoughBalance &&
+            !isSubmitting &&
+            !topUpFailed && (
+              <Typography
+                variant="caption"
+                color="secondary"
+                className="mt-6 opacity-50"
+              >
+                🚫 Uh oh! Looks like your wallet is empty.
+              </Typography>
+            )}
           {jobCreateFailed && (
             <Typography
               variant="caption"
