@@ -115,23 +115,12 @@ const GenerateApi: React.FC = () => {
             >
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>
-                    <Typography variant="h2">Your New API Key</Typography>
-                  </DialogTitle>
+                  <DialogTitle>Your New API Key</DialogTitle>
                 </DialogHeader>
                 <CodeBlockWithCopy code={showFullKey} />
-                <DialogDescription>
-                  <div className="mt-2 text-xs bg-yellow-100 text-yellow-800 p-2 rounded">
-                    <Typography
-                      variant="body"
-                      color="inherit"
-                      align="left"
-                      className="!m-0"
-                    >
-                      <strong>Note:</strong> Copy and save this key now. You
-                      will not be able to see it again !
-                    </Typography>
-                  </div>
+                <DialogDescription className="mt-2 text-xs bg-yellow-100 text-yellow-800 p-2 rounded">
+                  <strong>Note:</strong> Copy and save this key now. You will
+                  not be able to see it again !
                 </DialogDescription>
                 <DialogFooter>
                   <Button
@@ -242,9 +231,9 @@ const GenerateApi: React.FC = () => {
             )}
           </div>
 
-          {!fetchError && apiKeys[0].key === "No API key generated yet" && (
-            <Banner>No API key generated yet</Banner>
-          )}
+          {!fetchError &&
+            apiKeys[0].key === "No API key generated yet" &&
+            !isFetching && <Banner>No API key generated yet</Banner>}
 
           {generateError && (
             <Card variant="soft" className="mt-4">

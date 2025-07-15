@@ -243,7 +243,8 @@ const PriceOracle = () => {
       ) {
         toast.error("Transaction rejected by user");
       } else {
-        toast.error("Deployment failed: " + (error.message || "Unknown error"));
+        // toast.error("Deployment failed: " + (error.message || "Unknown error"));
+        toast.error("Deployment failed");
       }
     } finally {
       setIsLoading(false);

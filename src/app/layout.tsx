@@ -34,6 +34,7 @@ export default function RootLayout({
               <Footer />
             </TGBalanceProvider>
           </Providers>
+          <div id="modal-root"></div>
           <Toaster
             position="bottom-center"
             toastOptions={{ style: { zIndex: 2147483647 } }}

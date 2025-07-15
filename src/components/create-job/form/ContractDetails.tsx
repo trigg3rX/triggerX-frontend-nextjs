@@ -317,7 +317,7 @@ export const ContractDetails = ({
             functionInputs.length > 0 &&
             !isDisabled && (
               <div
-                className="space-y-6 sm:space-y-8 mt-6"
+                className="space-y-6 sm:space-y-6"
                 id={`contract-args-section-${contractKey}`}
               >
                 <div className="flex justify-between flex-col lg:flex-row md:flex-row">
