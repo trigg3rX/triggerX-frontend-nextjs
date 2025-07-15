@@ -197,7 +197,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
                   <Typography variant="h3">
                     <ShortAddress address={address} />
                   </Typography>
-                  <LucideCopyButton text={address} />
+                  <LucideCopyButton text={address ?? ""} />
                 </div>
               </div>
               <div className="flex items-center gap-2">
