@@ -86,6 +86,7 @@ export function useJobs() {
           setLoading(false);
           return;
         }
+
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
         devLog("[useJobs] Fetching jobs from:", apiUrl);
         const headers = {
@@ -131,11 +132,9 @@ export function useJobs() {
               const processedLinkedJob: JobType = {
                 id: nextJob.job_data.job_id,
                 jobTitle: nextJob.job_data.job_title,
-
                 taskDefinitionId: mapJobType(
                   nextJob.job_data.task_definition_id,
                 ),
-
                 status: "Active",
                 job_cost_actual: nextJob.job_data.job_cost_actual,
                 timeFrame: nextJob.job_data.time_frame || "",
@@ -143,8 +142,11 @@ export function useJobs() {
                   typeof typeSpecificData.arg_type === "string"
                     ? typeSpecificData.arg_type
                     : String(typeSpecificData.arg_type ?? ""),
-                timeInterval:
-                  typeof typeSpecificData.time_interval === "string"
+                timeInterval: ["Condition-based", "Event-based"].includes(
+                  mapJobType(nextJob.job_data.task_definition_id),
+                )
+                  ? "0"
+                  : typeof typeSpecificData.time_interval === "string"
                     ? typeSpecificData.time_interval
                     : String(typeSpecificData.time_interval ?? ""),
                 targetContractAddress:
@@ -197,8 +199,11 @@ export function useJobs() {
                 typeof typeSpecificData.arg_type === "string"
                   ? typeSpecificData.arg_type
                   : String(typeSpecificData.arg_type ?? ""),
-              timeInterval:
-                typeof typeSpecificData.time_interval === "string"
+              timeInterval: ["Condition-based", "Event-based"].includes(
+                mapJobType(jobDetail.job_data.task_definition_id),
+              )
+                ? "0"
+                : typeof typeSpecificData.time_interval === "string"
                   ? typeSpecificData.time_interval
                   : String(typeSpecificData.time_interval ?? ""),
               targetContractAddress:

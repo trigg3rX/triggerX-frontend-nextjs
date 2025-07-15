@@ -4,11 +4,13 @@ import ApiClientPage from "@/components/api/ApiClientPage";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Generate API  | TriggerX",
-  description: "TriggerX - Web3 Automation Platform.",
+  title: "TriggerX API Access | Generate & Manage API Keys",
+  description:
+    "Generate your API key, access TriggerX endpoints, and start building automation workflows. Full documentation and support available in the API Console.",
   openGraph: {
-    title: "Generate API  | TriggerX ",
-    description: "TriggerX - Web3 Automation Platform.",
+    title: "TriggerX API | Secure Your Access & Start Building",
+    description:
+      "Generate your API key, access TriggerX endpoints, and start building automation workflows. Full documentation and support available in the API Console.",
     url: `https://triggerx-app-nextjs.vercel.app/api`,
     siteName: "TriggerX",
     images: [
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
 
         width: 1200,
         height: 630,
-        alt: "Generate API | TriggerX",
+        alt: "TriggerX API key generation interface",
         type: "image/png",
       },
     ],

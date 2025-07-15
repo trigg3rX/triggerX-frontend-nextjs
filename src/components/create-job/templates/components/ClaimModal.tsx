@@ -86,19 +86,18 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
       if (chainIdHex === "0x14a34") {
         networkName = "base_sepolia";
       }
-      const headers = {
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
-      };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/claim-fund`,
         {
           method: "POST",
-          headers,
           body: JSON.stringify({
             wallet_address: address,
             network: networkName,
           }),
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true",
+          },
         },
       );
       if (!response.ok) {

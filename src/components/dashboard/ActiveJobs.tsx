@@ -26,9 +26,9 @@ const ActiveJobs = () => {
 
   return (
     <Card>
-      <div className="flex justify-between items-center mb-6 flex-col lg:flex-row gap-3 md:flex-row">
-        <div className="flex justify-between items-center gap-6 flex-col lg:flex-row  md:flex-row">
-          <div className="flex justify-start items-center gap-2">
+      <div className="flex justify-between items-center mb-6 flex-col lg:flex-row gap-6 md:flex-row">
+        <div className="flex justify-between items-start gap-6 flex-row lg:flex-row  w-full md:w-[300px]   md:flex-row">
+          <div className="flex justify-start items-center gap-2 ">
             <Typography
               variant="badge"
               bgColor="bg-[#F8FF7C]"

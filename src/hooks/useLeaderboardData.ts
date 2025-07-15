@@ -40,6 +40,7 @@ export default function useLeaderboardData(
         if (!API_BASE_URL) {
           throw new Error("API base URL is not set");
         }
+
         if (activeTab === "keeper") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/keepers`;
           console.log("Calling URL:", apiUrl);

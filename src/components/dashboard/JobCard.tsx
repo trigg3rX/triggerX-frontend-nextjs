@@ -2,6 +2,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../common/TooltipWrap";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export type JobType = {
   id: number;
@@ -28,6 +29,8 @@ type JobCardProps = {
   onDelete: (jobId: number) => void;
   disableUpdate?: boolean;
   className?: string;
+  onClick?: () => void;
+  isLogOpen?: boolean;
 };
 
 // Helper functions
@@ -86,17 +89,29 @@ const JobCard: React.FC<JobCardProps> = ({
   onToggleExpand,
   onToggleDetails,
   onDelete,
-  disableUpdate = true,
   className = "",
+  onClick,
+  isLogOpen = false,
 }) => {
+  const router = useRouter();
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 relative ${expandedDetails ? "h-auto border border-white " : "h-[310px] "} ${expanded ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324]  border border-white hover:border-b hover:border-white  " : "border-[#2A2A2A] hover:border-[#3A3A3A] "} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+      className={`!p-0 relative ${
+        expandedDetails ? "h-auto border border-white " : "h-[310px] "
+      } ${
+        expanded
+          ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
+          : isLogOpen
+            ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
+            : "border-[#2A2A2A] hover:border-[#3A3A3A]"
+      } hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+      onClick={onClick}
+      style={{ cursor: onClick ? "pointer" : undefined }}
     >
       <div>
         <div
-          className={`flex justify-between items-center mb-4 p-3  ${expanded ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
+          className={`flex justify-between items-center mb-4 p-3  ${expanded || isLogOpen ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
@@ -123,7 +138,10 @@ const JobCard: React.FC<JobCardProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => onToggleExpand(job.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpand(job.id);
+                    }}
                     className="p-2  rounded-full text-white hover:bg-[#3A3A3A] transition-colors bg-[#2a2a2a] border-[#FFFFFF] border"
                   >
                     <svg
@@ -188,7 +206,7 @@ const JobCard: React.FC<JobCardProps> = ({
             <div className=" space-y-2 text-[#A2A2A2] text-sm">
               <div className="flex items-center justify-between gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
-                  Avg Type :
+                  Arg Type :
                 </Typography>
                 <Typography variant="body" color="gray" align="right">
                   {job.argType}
@@ -263,13 +281,16 @@ const JobCard: React.FC<JobCardProps> = ({
           )}
         </div>
         <div
-          className={`flex justify-end gap-2 mt-4  p-3  ${expanded ? "border-t border-white " : "border-[#2A2A2A] border-t hover:border-[#3A3A3A]"}`}
+          className={`flex justify-end gap-2 mt-4  p-3  ${expanded || isLogOpen ? "border-t border-white " : "border-[#2A2A2A] border-t hover:border-[#3A3A3A]"}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                disabled={disableUpdate}
-                className={`p-2 bg-[#C07AF6] rounded-full text-white ${disableUpdate ? "cursor-not-allowed" : "cursor-pointer"} hover:bg-[#a46be0] transition-colors`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/create-job?jobId=${job.id}`);
+                }}
+                className={`p-2 bg-[#C07AF6] rounded-full text-white hover:bg-[#a46be0] transition-colors`}
               >
                 <svg
                   width="20"
@@ -290,7 +311,10 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => onDelete(job.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(job.id);
+                }}
                 className="p-2 bg-[#FF5757] rounded-full text-white hover:bg-[#ff4444] transition-colors"
               >
                 <svg
@@ -312,7 +336,10 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => onToggleDetails(job.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleDetails(job.id);
+                }}
                 className="p-2 bg-[#2A2A2A] rounded-full text-white hover:bg-[#3A3A3A] transition-colors"
               >
                 <svg

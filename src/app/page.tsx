@@ -5,11 +5,13 @@ import CreateJobSkeleton from "@/components/skeleton/CreateJobSkeleton";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Create a Job | TriggerX",
-  description: "TriggerX - Web3 Automation Platform.",
+  title: "TriggerX App | Automate Everything Onchain",
+  description:
+    "Access the TriggerX App to create, manage, and run automated onchain tasks with shared security. Fast, reliable, and trust-minimized.",
   openGraph: {
-    title: "Create a Job  | TriggerX ",
-    description: "TriggerX - Web3 Automation Platform.",
+    title: "TriggerX App | Secure Onchain Automation",
+    description:
+      "Access the TriggerX App to create, manage, and run automated onchain tasks with shared security. Fast, reliable, and trust-minimized.",
     url: `https://triggerx-app-nextjs.vercel.app/`,
     siteName: "TriggerX",
     images: [
@@ -17,7 +19,7 @@ export const metadata: Metadata = {
         url: `https://triggerx-app-nextjs.vercel.app/OGImages/build.png`,
         width: 1200,
         height: 630,
-        alt: "Create a Job | TriggerX",
+        alt: "TriggerX App interface",
         type: "image/png",
       },
     ],

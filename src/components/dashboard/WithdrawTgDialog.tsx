@@ -33,7 +33,13 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
 }) => {
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [isInputActive, setIsInputActive] = useState(false);
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      setWithdrawAmount("");
+    }
+    onOpenChange(open);
+  };
 
   const handleWithdraw = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -69,7 +75,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
@@ -90,28 +96,48 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 Amount (TG)
               </Typography>
             </label>
-            <InputField
-              type="number"
-              value={withdrawAmount}
-              onChange={setWithdrawAmount}
-              placeholder="Enter TG amount"
-              className="rounded-xl"
-              onFocus={() => setIsInputActive(true)}
-              onBlur={() => setIsInputActive(false)}
-            />
-            {(isInputActive || !!withdrawAmount) && (
+            <div className="relative w-full">
+              <InputField
+                type="number"
+                value={withdrawAmount}
+                onChange={setWithdrawAmount}
+                placeholder="Enter TG amount"
+                className="rounded-xl w-full pr-16"
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray text-white border border-gray-500 text-xs font-semibold px-3 py-1 rounded-lg hover:scale-105 transition-all duration-200"
+                style={{ minWidth: 40 }}
+                onClick={() => setWithdrawAmount(tgBalance || "0")}
+                disabled={isWithdrawing || !tgBalance || tgBalance === "0"}
+              >
+                Max
+              </button>
+            </div>
+
+            <Typography
+              variant="body"
+              color="gray"
+              align="left"
+              className="mt-3"
+            >
+              Your TG Balance:{" "}
+              <span className="text-white">
+                {tgBalance ? Number(tgBalance).toFixed(2) : "0.00"} TG
+              </span>
+            </Typography>
+
+            <div className="mt-2 text-xs bg-yellow-100  text-yellow-800 p-2 rounded">
               <Typography
                 variant="body"
-                color="gray"
+                color="inherit"
                 align="left"
-                className="mt-3"
+                className="!m-0"
               >
-                Your TG Balance:{" "}
-                <span className="text-white">
-                  {tgBalance ? Number(tgBalance).toFixed(2) : "0.00"} TG
-                </span>
+                <strong>Note:</strong> If TG is insufficient, the job will not
+                be executed.
               </Typography>
-            )}
+            </div>
             {withdrawAmount && Number(withdrawAmount) > 0 && (
               <div className="mt-3 p-3 bg-[#242323] rounded-xl flex flex-col">
                 <Typography variant="body" color="gray" align="left">
@@ -123,7 +149,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                   align="left"
                   className="mt-1 font-bold tracking-wider"
                 >
-                  {(Number(withdrawAmount) * 1000).toFixed(2)} TG
+                  {(Number(withdrawAmount) / 1000).toFixed(6)}
                 </Typography>
               </div>
             )}
