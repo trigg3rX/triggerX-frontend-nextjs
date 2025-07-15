@@ -7,10 +7,17 @@ import { Typography } from "../ui/Typography";
 import { useApiKeys } from "@/hooks/useApiKeys";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { Card } from "../ui/Card";
-import { FiEdit, FiTrash } from "react-icons/fi";
+import { FiTrash } from "react-icons/fi";
 // Table components removed, now using Card layout
 import Banner from "../ui/Banner";
-import { Modal } from "../ui/Modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "../common/Dailog";
 import { CodeBlockWithCopy } from "../common/CodeBlockWithCopy";
 import Skeleton from "../ui/Skeleton";
 import DeleteDialog from "../common/DeleteDialog";
@@ -45,9 +52,9 @@ const GenerateApi: React.FC = () => {
     setNames((prev) => prev.map((n, i) => (i === idx ? value : n)));
   };
 
-  const handleEditClick = (idx: number) => {
-    setEditingIndex(idx);
-  };
+  // const handleEditClick = (idx: number) => {
+  //   setEditingIndex(idx);
+  // };
 
   const handleNameBlur = () => {
     setEditingIndex(null);
@@ -100,21 +107,43 @@ const GenerateApi: React.FC = () => {
           </div>
 
           {showFullKey && (
-            <Modal
-              isOpen={!!showFullKey}
-              onClose={() => setShowFullKey(null)}
-              className="flex flex-col gap-3"
+            <Dialog
+              open={!!showFullKey}
+              onOpenChange={(open) => {
+                if (!open) setShowFullKey(null);
+              }}
             >
-              <Typography variant="h2">Your New API Key</Typography>
-              <CodeBlockWithCopy code={showFullKey} />
-              <Typography variant="body" color="error" className="text-center">
-                Copy and save this key now. <br /> You will <b>not</b> be able
-                to see it again!
-              </Typography>
-              <Button onClick={() => setShowFullKey(null)} color="yellow">
-                I have saved my key
-              </Button>
-            </Modal>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    <Typography variant="h2">Your New API Key</Typography>
+                  </DialogTitle>
+                </DialogHeader>
+                <CodeBlockWithCopy code={showFullKey} />
+                <DialogDescription>
+                  <div className="mt-2 text-xs bg-yellow-100 text-yellow-800 p-2 rounded">
+                    <Typography
+                      variant="body"
+                      color="inherit"
+                      align="left"
+                      className="!m-0"
+                    >
+                      <strong>Note:</strong> Copy and save this key now. You
+                      will not be able to see it again !
+                    </Typography>
+                  </div>
+                </DialogDescription>
+                <DialogFooter>
+                  <Button
+                    onClick={() => setShowFullKey(null)}
+                    color="yellow"
+                    className="w-full"
+                  >
+                    I have saved my key
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           )}
 
           <div>
@@ -154,13 +183,13 @@ const GenerateApi: React.FC = () => {
                         )}
 
                         <div className="flex gap-2">
-                          <button
+                          {/* <button
                             className="text-white hover:text-gray-300"
                             title="Rename"
                             onClick={() => handleEditClick(idx)}
                           >
                             <FiEdit size={16} />
-                          </button>
+                          </button> */}
                           <button
                             className="text-red-500 hover:text-red-400"
                             title="Delete"

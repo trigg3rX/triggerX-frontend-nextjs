@@ -22,7 +22,7 @@ import {
   FaRegDotCircle,
 } from "react-icons/fa";
 import ShortAddress from "@/components/ui/ShortAddress";
-import CopyButton from "@/components/ui/CopyButton";
+import { LucideCopyButton } from "@/components/ui/CopyButton";
 import { CodeBlockWithCopy } from "@/components/common/CodeBlockWithCopy";
 
 const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_STAKER_TOKEN_ADDRESS;
@@ -696,7 +696,7 @@ const StakingRewards = () => {
                                 className="text-[#A2A2A2]"
                               />
                             </Typography>
-                            <CopyButton value={item.value} />
+                            <LucideCopyButton text={item.value} />
                           </Card>
                         </div>
                       ) : (

@@ -50,9 +50,6 @@ export function useApiKeys(address?: string) {
       console.log("[fetchApiKeys] GET", url);
       const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-        },
       });
       console.log("[fetchApiKeys] response.ok:", response.ok);
       console.log(

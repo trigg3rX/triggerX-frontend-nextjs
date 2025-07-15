@@ -1,5 +1,5 @@
 import React from "react";
-import CopyButton from "../ui/CopyButton";
+import { LucideCopyButton } from "../ui/CopyButton";
 import { Card } from "../ui/Card";
 
 export interface CodeBlockWithCopyProps {
@@ -12,12 +12,12 @@ const CodeBlockWithCopy: React.FC<CodeBlockWithCopyProps> = ({
   className = "",
 }) => (
   <Card
-    className={`flex items-start justify-between ${className} !p-3 !sm:p-6`}
+    className={`flex items-center justify-between ${className} !p-3 !sm:p-6`}
   >
     <pre className="text-[#A2A2A2] text-sm whitespace-pre-wrap break-all max-w-full overflow-x-auto">
       {code}
     </pre>
-    <CopyButton value={code} title="Copy" />
+    <LucideCopyButton text={code} />
   </Card>
 );
 
