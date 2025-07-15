@@ -16,6 +16,15 @@ import {
 } from "@/types/sanity";
 import CodeBlockWithCopy from "../common/CodeBlockWithCopy";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractText(children: any): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map(extractText).join("");
+  if (typeof children === "object" && children && "props" in children)
+    return extractText(children.props.children);
+  return "";
+}
+
 function CodeBlock({ value }: { value: PortableTextCodeBlock }) {
   if (!value?.code) return null;
   const codeString = String(value.code).trim();
@@ -208,10 +217,10 @@ const portableTextComponents = {
   ),
   block: {
     h2: ({ children }: { children?: React.ReactNode }) => {
-      let id: string | undefined = undefined;
-      if (Array.isArray(children) && typeof children[0] === "string") {
-        id = children[0];
-      }
+      const id = extractText(children)
+        .toLowerCase()
+        .replace(/[^\w]+/g, "-") // slugify: replace non-word chars with dash
+        .replace(/^-+|-+$/g, ""); // trim dashes
       return (
         <h2
           id={id}

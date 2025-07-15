@@ -16,6 +16,13 @@ import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import { Dropdown } from "../ui/Dropdown";
 
+function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^\w]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 const DevHubPostContainer = () => {
   const params = useParams();
   const slug = typeof params.slug === "string" ? params.slug : params.slug?.[0];
@@ -137,11 +144,11 @@ const DevHubPostContainer = () => {
             {blog.headingPairs?.map((pair, index) => (
               <li key={index}>
                 <a
-                  href={`#${pair.h2Heading}`}
+                  href={`#${slugify(pair.h2Heading)}`}
                   onClick={(e) => {
                     e.preventDefault();
                     const targetElement = document.getElementById(
-                      pair.h2Heading,
+                      slugify(pair.h2Heading),
                     );
                     if (targetElement) {
                       const yOffset = -160;
