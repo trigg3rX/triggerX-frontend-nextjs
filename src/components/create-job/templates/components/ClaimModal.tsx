@@ -88,7 +88,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
       }
       const headers = {
         "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+        // "ngrok-skip-browser-warning": "true",
       };
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/claim-fund`,

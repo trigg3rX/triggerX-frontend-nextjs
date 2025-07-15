@@ -46,6 +46,7 @@ export type JobDetails = {
   condition_type?: string;
   upper_limit?: string;
   lower_limit?: string;
+  job_id?: number; // <-- add this line
 };
 
 function extractJobDetails(
@@ -237,7 +238,7 @@ export interface JobFormContextType {
   isJobCreated: boolean;
   setIsJobCreated: React.Dispatch<React.SetStateAction<boolean>>;
   handleStakeTG: () => Promise<boolean>;
-  handleCreateJob: () => Promise<boolean>;
+  handleCreateJob: (jobId?: string) => Promise<boolean>;
   handleSetABI: (contractKey: string, value: string) => void;
   handleSetContractDetails: (
     contractKey: string,
@@ -860,7 +861,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             }
             const headers = {
               "Content-Type": "application/json",
-              "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+              // "ngrok-skip-browser-warning": "true",
             };
             const response = await fetch(
               `${API_BASE_URL}/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
@@ -946,7 +947,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const handleCreateJob = async (): Promise<boolean> => {
+  const handleCreateJob = async (jobId?: string): Promise<boolean> => {
     setIsSubmitting(true);
     try {
       if (typeof window.ethereum === "undefined") {
@@ -995,13 +996,19 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         job_cost_prediction: estimatedFee,
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
         job_id:
-          Math.floor(Math.random() * 9_000_000_000_000_000_000) +
-          1_000_000_000_000_000_000, // int64 range
+          jobDetail.job_id && String(jobDetail.job_id).length > 0
+            ? jobDetail.job_id
+            : Math.floor(10000 + Math.random() * 90000), // 5-digit random number
       }));
+
+      // For update, ensure job_id is set to jobId from URL
+      if (jobId && updatedJobDetails[0]) {
+        updatedJobDetails[0].job_id = Number(jobId);
+      }
 
       devLog("Submitting job details:", updatedJobDetails);
 
-      // Create job via API
+      // Create or update job via API
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
       if (!API_BASE_URL) {
         throw new Error("API base URL not configured in ENV");
@@ -1009,27 +1016,56 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const headers = {
         "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+        // "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
       };
-      const response = await fetch(`${API_BASE_URL}/api/jobs`, {
-        method: "POST",
-        mode: "cors",
-        headers,
-        body: JSON.stringify(updatedJobDetails),
-      });
+      let response;
+      if (jobId) {
+        // Update job
+        console.log(
+          `[JobForm] Calling UPDATE API: ${API_BASE_URL}/api/jobs/update/${jobId} (PUT)`,
+        );
+        response = await fetch(`${API_BASE_URL}/api/jobs/update/${jobId}`, {
+          method: "PUT",
+          mode: "cors",
+          headers,
+          body: JSON.stringify(updatedJobDetails[0]), // send single job object for update
+        });
+      } else {
+        // Create job
+        console.log(
+          `[JobForm] Calling CREATE API: ${API_BASE_URL}/api/jobs (POST)`,
+        );
+        response = await fetch(`${API_BASE_URL}/api/jobs`, {
+          method: "POST",
+          mode: "cors",
+          headers,
+          body: JSON.stringify(updatedJobDetails), // send array for create
+        });
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error Response:", errorText);
-        throw new Error(errorText || "Failed to create job");
+        throw new Error(
+          errorText ||
+            (jobId ? "Failed to update job" : "Failed to create job"),
+        );
       }
 
       setIsJobCreated(true);
-      toast.success("Job created successfully!");
+      toast.success(
+        jobId ? "Job updated successfully!" : "Job created successfully!",
+      );
       return true;
     } catch (error) {
-      console.error("Error creating job:", error);
-      toast.error("Error creating job: " + (error as Error).message);
+      console.error(
+        jobId ? "Error updating job:" : "Error creating job:",
+        error,
+      );
+      toast.error(
+        (jobId ? "Error updating job: " : "Error creating job: ") +
+          (error as Error).message,
+      );
       setIsJobCreated(false);
       return false;
     } finally {

@@ -18,6 +18,7 @@ interface ContractDetailsProps {
   sourceUrlError?: string | null;
   conditionTypeError?: string | null;
   limitsError?: string | null;
+  readOnly?: boolean;
 }
 
 export const ContractDetails = ({
@@ -31,6 +32,7 @@ export const ContractDetails = ({
   sourceUrlError = null,
   conditionTypeError = null,
   limitsError = null,
+  readOnly = false,
 }: ContractDetailsProps) => {
   const {
     jobType,
@@ -124,6 +126,7 @@ export const ContractDetails = ({
   ];
 
   const handleChange = (value: string) => {
+    if (readOnly) return;
     handleContractAddressChange(contractKey, value);
     if (value.trim() !== "") {
       setContractErrors((prev) => ({ ...prev, [contractKey]: null }));
@@ -142,6 +145,7 @@ export const ContractDetails = ({
         type="text"
         id={`contract-address-input-${contractKey}`}
         error={error ?? null}
+        readOnly={readOnly}
       />
 
       {contract.address && (
@@ -198,8 +202,10 @@ export const ContractDetails = ({
             <textarea
               id={`manualEventABI-${contractKey}`}
               value={contract.manualABI}
-              onChange={(e) =>
-                handleManualABIChange(contractKey, e.target.value)
+              onChange={
+                readOnly
+                  ? undefined
+                  : (e) => handleManualABIChange(contractKey, e.target.value)
               }
               placeholder={`[
 {
@@ -210,6 +216,8 @@ export const ContractDetails = ({
   }
 ]`}
               className="text-xs xs:text-sm sm:text-base w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[230px]"
+              readOnly={readOnly}
+              disabled={readOnly}
             />
             <FormErrorMessage error={abiError ?? null} className="mt-1" />
             <Typography
@@ -233,14 +241,19 @@ export const ContractDetails = ({
                 label="Target event"
                 options={eventOptions}
                 selectedOption={contract.targetEvent || "Select an event"}
-                onChange={(option) => {
-                  handleEventChange(contractKey, option.name);
-                  setContractErrors((prev) => ({
-                    ...prev,
-                    [`${contractKey}Target`]: null,
-                  }));
-                }}
+                onChange={
+                  readOnly
+                    ? () => {}
+                    : (option) => {
+                        handleEventChange(contractKey, option.name);
+                        setContractErrors((prev) => ({
+                          ...prev,
+                          [`${contractKey}Target`]: null,
+                        }));
+                      }
+                }
                 className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
+                disabled={readOnly}
               />
               <FormErrorMessage
                 error={targetError ?? null}
@@ -253,14 +266,19 @@ export const ContractDetails = ({
                 label="Target function"
                 options={functionOptions}
                 selectedOption={contract.targetFunction || "Select a function"}
-                onChange={(option) => {
-                  handleFunctionChange(contractKey, option.name);
-                  setContractErrors((prev) => ({
-                    ...prev,
-                    [`${contractKey}Target`]: null,
-                  }));
-                }}
+                onChange={
+                  readOnly
+                    ? () => {}
+                    : (option) => {
+                        handleFunctionChange(contractKey, option.name);
+                        setContractErrors((prev) => ({
+                          ...prev,
+                          [`${contractKey}Target`]: null,
+                        }));
+                      }
+                }
                 className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
+                disabled={readOnly}
               />
               <FormErrorMessage
                 error={targetError ?? null}
@@ -292,12 +310,16 @@ export const ContractDetails = ({
               label="Argument Type"
               options={argumentTypeOptions}
               selectedOption={selectedArgumentType}
-              onChange={(option) =>
-                handleArgumentTypeChange(
-                  contractKey,
-                  option.name.toLowerCase() as "static" | "dynamic",
-                )
+              onChange={
+                readOnly
+                  ? () => {}
+                  : (option) =>
+                      handleArgumentTypeChange(
+                        contractKey,
+                        option.name.toLowerCase() as "static" | "dynamic",
+                      )
               }
+              disabled={readOnly}
             />
 
             <Typography
@@ -337,15 +359,24 @@ export const ContractDetails = ({
                       <TextInput
                         label={`${getInputName(input, index)} (${input.type})`}
                         value={contract.argumentValues?.[index] || ""}
-                        onChange={(value) => {
-                          handleArgumentValueChange(contractKey, index, value);
-                          setContractErrors((prev) => ({
-                            ...prev,
-                            [`${contractKey}Args`]: null,
-                          }));
-                        }}
+                        onChange={
+                          readOnly
+                            ? () => {}
+                            : (value) => {
+                                handleArgumentValueChange(
+                                  contractKey,
+                                  index,
+                                  value,
+                                );
+                                setContractErrors((prev) => ({
+                                  ...prev,
+                                  [`${contractKey}Args`]: null,
+                                }));
+                              }
+                        }
                         placeholder={`Enter ${input.type}`}
                         type="text"
+                        disabled={readOnly}
                       />
                     </div>
                   ))}
@@ -360,17 +391,22 @@ export const ContractDetails = ({
           <TextInput
             label="IPFS Code URL"
             value={contract.ipfsCodeUrl || ""}
-            onChange={(value) => {
-              handleIpfsCodeUrlChange(contractKey, value);
-              setContractErrors((prev) => ({
-                ...prev,
-                [`${contractKey}Ipfs`]: null,
-              }));
-            }}
+            onChange={
+              readOnly
+                ? () => {}
+                : (value) => {
+                    handleIpfsCodeUrlChange(contractKey, value);
+                    setContractErrors((prev) => ({
+                      ...prev,
+                      [`${contractKey}Ipfs`]: null,
+                    }));
+                  }
+            }
             placeholder="Enter IPFS URL or CID (e.g., ipfs://... or https://ipfs.io/ipfs/...)"
             error={ipfsError ?? null}
             type="text"
             id={`contract-ipfs-code-url-${contractKey}`}
+            disabled={readOnly}
           />
           <div className="w-full md:w-[70%] ml-auto pl-3 mt-3 flex flex-wrap gap-2">
             <FormErrorMessage error={ipfsError ?? null} className="mb-1" />
@@ -397,10 +433,14 @@ export const ContractDetails = ({
               { label: "Oracle", value: "Oracle", disabled: true },
             ]}
             value={contract.sourceType || "API"}
-            onChange={(value) =>
-              handleSourceTypeChange(contractKey, value as string)
+            onChange={
+              readOnly
+                ? () => {}
+                : (value) =>
+                    handleSourceTypeChange(contractKey, value as string)
             }
             name={`sourceType-${contractKey}`}
+            disabled={readOnly}
           />
 
           {/* Source URL Field */}
@@ -409,17 +449,22 @@ export const ContractDetails = ({
               <TextInput
                 label="Source URL"
                 value={contract.sourceUrl || ""}
-                onChange={(value) => {
-                  handleSourceUrlChange(contractKey, value);
-                  setContractErrors((prev) => ({
-                    ...prev,
-                    [`${contractKey}SourceUrl`]: null,
-                  }));
-                }}
+                onChange={
+                  readOnly
+                    ? () => {}
+                    : (value) => {
+                        handleSourceUrlChange(contractKey, value);
+                        setContractErrors((prev) => ({
+                          ...prev,
+                          [`${contractKey}SourceUrl`]: null,
+                        }));
+                      }
+                }
                 placeholder={`Enter ${contract.sourceType.toLowerCase()} URL`}
                 error={sourceUrlError ?? null}
                 type="text"
                 id={`contract-source-url-${contractKey}`}
+                disabled={readOnly}
               />
               {contract.sourceUrlError && (
                 <Typography
@@ -442,16 +487,21 @@ export const ContractDetails = ({
               selectedOption={
                 contract.conditionType || "Select a condition type"
               }
-              onChange={(option) => {
-                handleConditionTypeChange(contractKey, option.name);
-                if (option.name !== "In Range") {
-                  handleLowerLimitChange(contractKey, "0");
-                }
-                setContractErrors((prev) => ({
-                  ...prev,
-                  [`${contractKey}ConditionType`]: null,
-                }));
-              }}
+              onChange={
+                readOnly
+                  ? () => {}
+                  : (option) => {
+                      handleConditionTypeChange(contractKey, option.name);
+                      if (option.name !== "In Range") {
+                        handleLowerLimitChange(contractKey, "0");
+                      }
+                      setContractErrors((prev) => ({
+                        ...prev,
+                        [`${contractKey}ConditionType`]: null,
+                      }));
+                    }
+              }
+              disabled={readOnly}
             />
             <FormErrorMessage
               error={conditionTypeError ?? null}
@@ -482,14 +532,19 @@ export const ContractDetails = ({
                         <TextInput
                           type="number"
                           value={contract.upperLimit || ""}
-                          onChange={(value) => {
-                            handleUpperLimitChange(contractKey, value);
-                            setContractErrors((prev) => ({
-                              ...prev,
-                              [`${contractKey}Limits`]: null,
-                            }));
-                          }}
+                          onChange={
+                            readOnly
+                              ? () => {}
+                              : (value) => {
+                                  handleUpperLimitChange(contractKey, value);
+                                  setContractErrors((prev) => ({
+                                    ...prev,
+                                    [`${contractKey}Limits`]: null,
+                                  }));
+                                }
+                          }
                           placeholder="Enter upper limit"
+                          disabled={readOnly}
                         />
                       </div>
                       <div className="flex-1 flex-col">
@@ -502,14 +557,19 @@ export const ContractDetails = ({
                         <TextInput
                           type="number"
                           value={contract.lowerLimit || ""}
-                          onChange={(value) => {
-                            handleLowerLimitChange(contractKey, value);
-                            setContractErrors((prev) => ({
-                              ...prev,
-                              [`${contractKey}Limits`]: null,
-                            }));
-                          }}
+                          onChange={
+                            readOnly
+                              ? () => {}
+                              : (value) => {
+                                  handleLowerLimitChange(contractKey, value);
+                                  setContractErrors((prev) => ({
+                                    ...prev,
+                                    [`${contractKey}Limits`]: null,
+                                  }));
+                                }
+                          }
                           placeholder="Enter lower limit"
+                          disabled={readOnly}
                         />
                       </div>
                     </div>
@@ -526,15 +586,20 @@ export const ContractDetails = ({
                     label="Value"
                     type="number"
                     value={contract.upperLimit || ""}
-                    onChange={(value) => {
-                      handleUpperLimitChange(contractKey, value);
-                      setContractErrors((prev) => ({
-                        ...prev,
-                        [`${contractKey}Limits`]: null,
-                      }));
-                    }}
+                    onChange={
+                      readOnly
+                        ? () => {}
+                        : (value) => {
+                            handleUpperLimitChange(contractKey, value);
+                            setContractErrors((prev) => ({
+                              ...prev,
+                              [`${contractKey}Limits`]: null,
+                            }));
+                          }
+                    }
                     placeholder="Enter value"
                     error={limitsError ?? null}
+                    disabled={readOnly}
                   />
                 </div>
               )}

@@ -49,7 +49,7 @@ export default function useLeaderboardData(
         devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);
         const headers = {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+          // "ngrok-skip-browser-warning": "true",
         };
         const response = await fetch(apiUrl, { headers });
         devLog("[Leaderboard] Response status:", response.status);

@@ -4,8 +4,8 @@ import { JobFormContext } from "@/contexts/JobFormContext";
 
 export const JobTitleInput = forwardRef<
   HTMLDivElement,
-  { error?: string | null }
->(({ error }, ref) => {
+  { error?: string | null; readOnly?: boolean }
+>(({ error, readOnly = false }, ref) => {
   const context = useContext(JobFormContext);
   if (context === undefined) {
     throw new Error("JobTitleInput must be used within a JobFormProvider");
@@ -13,6 +13,7 @@ export const JobTitleInput = forwardRef<
   const { jobTitle, setJobTitle, setJobTitleError } = context;
 
   const handleChange = (value: string) => {
+    if (readOnly) return;
     setJobTitle(value);
     if (value.trim() !== "") {
       setJobTitleError(null);
@@ -27,6 +28,7 @@ export const JobTitleInput = forwardRef<
         value={jobTitle}
         onChange={handleChange}
         error={error ?? null}
+        disabled={readOnly}
       />
     </div>
   );

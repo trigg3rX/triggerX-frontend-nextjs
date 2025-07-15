@@ -35,18 +35,21 @@ const options: TriggerOption[] = [
   },
 ];
 
-export const TriggerTypeSelector = () => {
+export const TriggerTypeSelector = ({
+  disabled = false,
+}: {
+  disabled?: boolean;
+}) => {
   const { isConnected } = useWalletConnectionContext();
-
   const { jobType, handleJobTypeChange } = useJobFormContext();
 
   const handleTriggerSelect = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, value: number) => {
-      if (isConnected) {
+      if (isConnected && !disabled) {
         handleJobTypeChange(e, value);
       }
     },
-    [isConnected, handleJobTypeChange],
+    [isConnected, handleJobTypeChange, disabled],
   );
 
   return (
@@ -67,6 +70,7 @@ export const TriggerTypeSelector = () => {
               option={option}
               isSelected={Number(option.value) === jobType}
               onSelect={handleTriggerSelect}
+              isDisabled={disabled}
             />
           ))}
         </div>

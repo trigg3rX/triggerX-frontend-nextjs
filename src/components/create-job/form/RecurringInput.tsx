@@ -1,7 +1,11 @@
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { RadioGroup } from "../../ui/RadioGroup";
 
-export const RecurringInput = () => {
+export const RecurringInput = ({
+  readOnly = false,
+}: {
+  readOnly?: boolean;
+}) => {
   const { recurring, setRecurring } = useJobFormContext();
 
   const options = [
@@ -14,8 +18,11 @@ export const RecurringInput = () => {
       label="Recurring"
       options={options}
       value={recurring}
-      onChange={(value) => setRecurring(value as boolean)}
+      onChange={(value) => {
+        if (!readOnly) setRecurring(value as boolean);
+      }}
       name="recurring"
+      disabled={readOnly}
     />
   );
 };

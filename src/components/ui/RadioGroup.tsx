@@ -15,6 +15,7 @@ interface RadioGroupProps {
   name: string;
   className?: string;
   orientation?: "horizontal" | "vertical";
+  disabled?: boolean;
 }
 
 export const RadioGroup: React.FC<RadioGroupProps> = ({
@@ -25,6 +26,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   name,
   className = "",
   orientation = "horizontal",
+  disabled = false,
 }) => {
   return (
     <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
@@ -41,7 +43,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
         {options.map((option) => (
           <label
             key={option.value.toString()}
-            className={`inline-flex items-center cursor-pointer ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`inline-flex items-center cursor-pointer ${disabled || option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <input
               type="radio"
@@ -49,8 +51,10 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
               value={option.value.toString()}
               className="form-radio h-4 w-4 text-blue-500 accent-[#F8FF7C] "
               checked={value === option.value}
-              onChange={() => !option.disabled && onChange(option.value)}
-              disabled={option.disabled}
+              onChange={() =>
+                !(disabled || option.disabled) && onChange(option.value)
+              }
+              disabled={disabled || option.disabled}
             />
             <span className="ml-2 text-white text-[10px] xs:text-xs sm:text-sm">
               {option.label}

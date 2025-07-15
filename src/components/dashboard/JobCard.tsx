@@ -2,6 +2,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../common/TooltipWrap";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import React from "react";
+import { useRouter } from "next/navigation";
 
 export type JobType = {
   id: number;
@@ -86,9 +87,10 @@ const JobCard: React.FC<JobCardProps> = ({
   onToggleExpand,
   onToggleDetails,
   onDelete,
-  disableUpdate = true,
+  disableUpdate = false,
   className = "",
 }) => {
+  const router = useRouter();
   return (
     <Card
       expanded={expanded}
@@ -268,7 +270,12 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                disabled={disableUpdate}
+                // disabled={disableUpdate}
+                onClick={() => {
+                  if (!disableUpdate) {
+                    router.push(`/?jobId=${job.id}`);
+                  }
+                }}
                 className={`p-2 bg-[#C07AF6] rounded-full text-white ${disableUpdate ? "cursor-not-allowed" : "cursor-pointer"} hover:bg-[#a46be0] transition-colors`}
               >
                 <svg
