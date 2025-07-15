@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import JobCard from "./JobCard";
 import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
@@ -31,6 +31,10 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
   const [jobLogsOpenId, setJobLogsOpenId] = useState<number | null>(null);
 
+  // Refs for Linked Jobs sections and Job Logs section
+  const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const logsRef = useRef<HTMLDivElement | null>(null);
+
   const { jobs, loading, error } = useJobs();
   const { isConnected } = useWalletConnectionContext();
   const { deleteJob, loading: deleteLoading } = useDeleteJob();
@@ -41,12 +45,30 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   } = useJobLogs(jobLogsOpenId ?? undefined);
 
   const toggleJobExpand = (jobId: number) => {
-    setExpandedJobs((prev) => ({
-      ...prev,
-      [jobId]: !prev[jobId],
-    }));
-    // Close all expanded job details when a linked job is expanded
-    setExpandedJobDetails({});
+    setExpandedJobs((prev) => {
+      const newState = { ...prev, [jobId]: !prev[jobId] };
+      // Only scroll when expanding (not collapsing)
+      if (!prev[jobId]) {
+        setTimeout(() => {
+          if (linkedJobsRefs.current[jobId]) {
+            const headerOffset = 200;
+            const elementPosition =
+              linkedJobsRefs.current[jobId]!.getBoundingClientRect().top;
+            const offsetPosition =
+              elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: "smooth",
+            });
+          }
+        }, 500);
+      }
+      // Close all expanded job details when a linked job is expanded
+      setExpandedJobDetails({});
+      // Close job logs if open
+      setJobLogsOpenId(null);
+      return newState;
+    });
   };
 
   const toggleJobDetails = (jobId: number) => {
@@ -81,7 +103,26 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   };
 
   const handleJobCardClick = (jobId: number) => {
-    setJobLogsOpenId((prev) => (prev === jobId ? null : jobId));
+    setExpandedJobs({}); // Close all linked jobs
+    setJobLogsOpenId((prev) => {
+      const newId = prev === jobId ? null : jobId;
+      // Only scroll when opening logs (not closing)
+      if (newId !== null) {
+        setTimeout(() => {
+          if (logsRef.current) {
+            const headerOffset = 100;
+            const elementPosition = logsRef.current.getBoundingClientRect().top;
+            const offsetPosition =
+              elementPosition + window.pageYOffset - headerOffset;
+            window.scrollTo({
+              top: offsetPosition,
+              behavior: "smooth",
+            });
+          }
+        }, 500);
+      }
+      return newId;
+    });
   };
 
   const getFilteredJobs = () => {
@@ -142,6 +183,9 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
                   className="col-span-1"
                   onClick={() => handleJobCardClick(job.id)}
                   style={{ cursor: "pointer" }}
+                  ref={(el) => {
+                    linkedJobsRefs.current[job.id] = el;
+                  }}
                 >
                   <JobCard
                     job={job}
@@ -150,6 +194,7 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
                     onToggleExpand={toggleJobExpand}
                     onToggleDetails={toggleJobDetails}
                     onDelete={showDeleteConfirmation}
+                    isLogOpen={jobLogsOpenId === job.id}
                   />
                 </div>
               ))}
@@ -159,13 +204,15 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
       )}
       {/* JobLogsTable outside the grid, full width */}
       {jobLogsOpenId !== null && (
-        <div className="my-6">
+        <div ref={logsRef}>
           {logsLoading ? (
             <div className="text-white text-center py-4">Loading logs...</div>
           ) : logsError ? (
             <JobLogsTable logs={[]} error={logsError} />
           ) : (
-            <JobLogsTable logs={jobLogs} />
+            <>
+              <JobLogsTable logs={jobLogs} />
+            </>
           )}
         </div>
       )}
@@ -174,7 +221,12 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
           job.linkedJobs &&
           job.linkedJobs.length > 0 &&
           expandedJobs[job.id] ? (
-            <div key={job.id}>
+            <div
+              key={job.id}
+              ref={(el) => {
+                linkedJobsRefs.current[job.id] = el;
+              }}
+            >
               <Typography
                 variant="h2"
                 color="white"

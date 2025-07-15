@@ -29,7 +29,8 @@ type JobCardProps = {
   onDelete: (jobId: number) => void;
   disableUpdate?: boolean;
   className?: string;
-  onClick?: () => void; // <-- Add this
+  onClick?: () => void;
+  isLogOpen?: boolean;
 };
 
 // Helper functions
@@ -89,19 +90,28 @@ const JobCard: React.FC<JobCardProps> = ({
   onToggleDetails,
   onDelete,
   className = "",
-  onClick, // <-- Add this
+  onClick,
+  isLogOpen = false,
 }) => {
   const router = useRouter();
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 relative ${expandedDetails ? "h-auto border border-white " : "h-[310px] "} ${expanded ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324]  border border-white hover:border-b hover:border-white  " : "border-[#2A2A2A] hover:border-[#3A3A3A] "} hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
-      onClick={onClick} // <-- Add this
+      className={`!p-0 relative ${
+        expandedDetails ? "h-auto border border-white " : "h-[310px] "
+      } ${
+        expanded
+          ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
+          : isLogOpen
+            ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
+            : "border-[#2A2A2A] hover:border-[#3A3A3A]"
+      } hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+      onClick={onClick}
       style={{ cursor: onClick ? "pointer" : undefined }}
     >
       <div>
         <div
-          className={`flex justify-between items-center mb-4 p-3  ${expanded ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
+          className={`flex justify-between items-center mb-4 p-3  ${expanded || isLogOpen ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
@@ -271,7 +281,7 @@ const JobCard: React.FC<JobCardProps> = ({
           )}
         </div>
         <div
-          className={`flex justify-end gap-2 mt-4  p-3  ${expanded ? "border-t border-white " : "border-[#2A2A2A] border-t hover:border-[#3A3A3A]"}`}
+          className={`flex justify-end gap-2 mt-4  p-3  ${expanded || isLogOpen ? "border-t border-white " : "border-[#2A2A2A] border-t hover:border-[#3A3A3A]"}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>

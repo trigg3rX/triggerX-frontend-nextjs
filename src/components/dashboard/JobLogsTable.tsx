@@ -8,6 +8,7 @@ import {
   TableCell,
 } from "../leaderboard/Table";
 import type { JobLog } from "@/hooks/useJobLogs";
+import { Typography } from "../ui/Typography";
 
 interface JobLogsTableProps {
   logs: JobLog[];
@@ -17,6 +18,14 @@ interface JobLogsTableProps {
 const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   return (
     <div className="w-full overflow-x-auto">
+      <Typography
+        variant="h2"
+        color="white"
+        align="left"
+        className=" mt-7 mb-4"
+      >
+        Job Logs
+      </Typography>
       <Table>
         <TableHeader>
           <TableRow>
