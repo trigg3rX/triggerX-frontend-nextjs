@@ -91,7 +91,7 @@ export function useJobs() {
         devLog("[useJobs] Fetching jobs from:", apiUrl);
         const headers = {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "true",
+          // "ngrok-skip-browser-warning": "true",
         };
         const response = await fetch(apiUrl, { headers });
 

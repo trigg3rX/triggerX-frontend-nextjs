@@ -15,7 +15,7 @@ const tileSize = 24;
 // const gameOverSoundUrl = "https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b4bfa.mp3";
 
 const JobProcessing: React.FC = () => {
-  const { isSubmitting } = useJobForm();
+  const { isSubmitting, estimatedFee } = useJobForm();
   const [currentStep, setCurrentStep] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -295,7 +295,7 @@ const JobProcessing: React.FC = () => {
           Creating Job
         </h3>
         <div className="w-auto">
-          {currentStep < steps.length && (
+          {currentStep < steps.length && estimatedFee === 0 && (
             <div
               key={steps[currentStep].id}
               className="transition-all duration-700 ease-in-out animate-pulse"
@@ -303,7 +303,7 @@ const JobProcessing: React.FC = () => {
               <h4 className="text-sm sm:text-md">{steps[currentStep].text}</h4>
             </div>
           )}
-          {currentStep >= steps.length && (
+          {/* {currentStep >= steps.length && (
             <div
               key={steps[steps.length - 1].id}
               className="transition-all duration-700 ease-in-out animate-pulse"
@@ -312,7 +312,7 @@ const JobProcessing: React.FC = () => {
                 {steps[steps.length - 1].text}
               </h4>
             </div>
-          )}
+          )} */}
           <div className="h-1.5 bg-gray-500 opacity-50 rounded-full mt-2 overflow-hidden">
             <div
               className="h-full bg-[#F8FF7C] transition-all duration-500"

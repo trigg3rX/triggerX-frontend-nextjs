@@ -860,7 +860,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             }
             const headers = {
               "Content-Type": "application/json",
-              "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+              // "ngrok-skip-browser-warning": "true",
             };
             const response = await fetch(
               `${API_BASE_URL}/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
@@ -1009,7 +1009,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const headers = {
         "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+        // "ngrok-skip-browser-warning": "true",
       };
       const response = await fetch(`${API_BASE_URL}/api/jobs`, {
         method: "POST",

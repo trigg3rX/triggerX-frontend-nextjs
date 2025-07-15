@@ -5,7 +5,8 @@ import { Dropdown, DropdownOption } from "../ui/Dropdown";
 import { useState } from "react";
 import MainJobs from "./MainJobs";
 import { Card } from "../ui/Card";
-import { useJobs } from "@/hooks/useJobs";
+import { useJobs, JobType } from "@/hooks/useJobs";
+import React from "react";
 
 const dropdownOptions: DropdownOption[] = [
   { id: "all", name: "All Types" },
@@ -16,7 +17,12 @@ const dropdownOptions: DropdownOption[] = [
 
 const ActiveJobs = () => {
   const [selectedType, setSelectedType] = useState<string>("All Types");
-  const { jobs } = useJobs();
+  const { jobs: fetchedJobs } = useJobs();
+  const [jobs, setJobs] = useState<JobType[]>([]);
+  // Sync local jobs state with fetched jobs
+  React.useEffect(() => {
+    setJobs(fetchedJobs);
+  }, [fetchedJobs]);
 
   const totalJobs = jobs.length;
   const totalLinkedJobs = jobs.reduce(
@@ -66,7 +72,7 @@ const ActiveJobs = () => {
         </div>
       </div>
       <div className="mb-10">
-        <MainJobs selectedType={selectedType} />
+        <MainJobs selectedType={selectedType} jobs={jobs} setJobs={setJobs} />
       </div>
     </Card>
   );

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import JobCard from "./JobCard";
 import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
 import DeleteDialog from "../common/DeleteDialog";
-import { useJobs } from "@/hooks/useJobs";
+import { JobType } from "@/hooks/useJobs";
 import JobCardSkeleton from "../skeleton/JobCardSkeleton";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
@@ -16,8 +16,14 @@ import { useJobLogs } from "@/hooks/useJobLogs";
 
 type MainJobsProps = {
   selectedType?: string;
+  jobs: JobType[];
+  setJobs: React.Dispatch<React.SetStateAction<JobType[]>>;
 };
-const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
+const MainJobs = ({
+  selectedType = "All Types",
+  jobs,
+  setJobs,
+}: MainJobsProps) => {
   const [expandedJobs, setExpandedJobs] = useState<{ [key: number]: boolean }>(
     {},
   );
@@ -35,7 +41,7 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const logsRef = useRef<HTMLDivElement | null>(null);
 
-  const { jobs, loading, error } = useJobs();
+  const { loading, error } = { loading: false, error: null };
   const { isConnected } = useWalletConnectionContext();
   const { deleteJob, loading: deleteLoading } = useDeleteJob();
   const {
@@ -43,6 +49,10 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
     loading: logsLoading,
     error: logsError,
   } = useJobLogs(jobLogsOpenId ?? undefined);
+
+  useEffect(() => {
+    // setJobs(fetchedJobs); // This line is removed as per the edit hint
+  }, [jobs]); // Changed dependency to 'jobs'
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => {
@@ -93,6 +103,7 @@ const MainJobs = ({ selectedType = "All Types" }: MainJobsProps) => {
   const handleDelete = async () => {
     if (jobIdToDelete == null) return;
     await deleteJob(jobIdToDelete);
+    setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobIdToDelete));
     setDeleteDialogOpen(false);
     setJobIdToDelete(null);
   };

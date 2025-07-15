@@ -96,7 +96,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
           }),
           headers: {
             "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true",
+            // "ngrok-skip-browser-warning": "true",
           },
         },
       );

@@ -53,7 +53,7 @@ export function useApiKeys(address?: string) {
         headers: {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+          // "ngrok-skip-browser-warning": "true",
         },
       });
       console.log("[fetchApiKeys] response.ok:", response.ok);
@@ -129,12 +129,12 @@ export function useApiKeys(address?: string) {
       if (!user) {
         setGenerateError("Owner is not defined in environment variables");
         setIsLoading(false); // <-- done generating
-        return;
+        return null;
       }
       if (!address) {
         setGenerateError("Wallet address is not available");
         setIsLoading(false); // <-- done generating
-        return;
+        return null;
       }
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`;
       console.log("[generateNewApiKey] POST", url);
@@ -143,7 +143,7 @@ export function useApiKeys(address?: string) {
         headers: {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          "ngrok-skip-browser-warning": "true",
+          // "ngrok-skip-browser-warning": "true",
         },
         body: JSON.stringify({
           owner: address,
@@ -154,17 +154,21 @@ export function useApiKeys(address?: string) {
       if (!response.ok) {
         setGenerateError(`HTTP error! status: ${response.status}`);
         setIsLoading(false); // <-- done generating
-        return;
+        return null;
       }
+      const data = await response.json();
       // After generating, refetch all API keys
       await fetchApiKeys(address);
       setIsLoading(false); // <-- done generating
+      // Return the full API key string if present
+      return data.key || data.apiKey || null;
     } catch (err) {
       setGenerateError(
         "Whoops! We hit a snag while generating your API key. Please check your connection and give it another shot. 🚀",
       );
       setIsLoading(false); // <-- done generating
       console.error("[generateNewApiKey] error:", err);
+      return null;
     }
   };
 
@@ -191,7 +195,7 @@ export function useApiKeys(address?: string) {
         headers: {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          "ngrok-skip-browser-warning": "true",
+          // "ngrok-skip-browser-warning": "true",
         },
       });
       console.log("[deleteApiKey] response.ok:", response.ok);

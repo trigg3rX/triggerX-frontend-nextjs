@@ -7,17 +7,14 @@ import { Typography } from "../ui/Typography";
 import { useApiKeys } from "@/hooks/useApiKeys";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { Card } from "../ui/Card";
-import CopyButton from "../ui/CopyButton";
 import { FiEdit, FiTrash } from "react-icons/fi";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "../leaderboard/Table";
+// Table components removed, now using Card layout
 import Banner from "../ui/Banner";
+import { Modal } from "../ui/Modal";
+import { CodeBlockWithCopy } from "../common/CodeBlockWithCopy";
+import Skeleton from "../ui/Skeleton";
+import DeleteDialog from "../common/DeleteDialog";
+import styles from "@/app/styles/scrollbar.module.css";
 
 const GenerateApi: React.FC = () => {
   const { isConnected, address } = useAccount();
@@ -37,6 +34,7 @@ const GenerateApi: React.FC = () => {
   const [deleteConfirmIndex, setDeleteConfirmIndex] = React.useState<
     number | null
   >(null);
+  const [showFullKey, setShowFullKey] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     // Initialize names array when apiKeys change
@@ -77,7 +75,10 @@ const GenerateApi: React.FC = () => {
   };
 
   const handleGenerateApiKey = async () => {
-    await generateNewApiKey();
+    const fullKey = await generateNewApiKey();
+    if (fullKey) {
+      setShowFullKey(fullKey);
+    }
   };
 
   return (
@@ -98,14 +99,128 @@ const GenerateApi: React.FC = () => {
             </Button>
           </div>
 
-          {apiKeys[0].key === "No API key generated yet" && (
+          {showFullKey && (
+            <Modal
+              isOpen={!!showFullKey}
+              onClose={() => setShowFullKey(null)}
+              className="flex flex-col gap-3"
+            >
+              <Typography variant="h2">Your New API Key</Typography>
+              <CodeBlockWithCopy code={showFullKey} />
+              <Typography variant="body" color="error" className="text-center">
+                Copy and save this key now. <br /> You will <b>not</b> be able
+                to see it again!
+              </Typography>
+              <Button onClick={() => setShowFullKey(null)} color="yellow">
+                I have saved my key
+              </Button>
+            </Modal>
+          )}
+
+          <div>
+            {isFetching ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+                <Skeleton height={140} borderRadius={16} className="w-full" />
+                <Skeleton height={140} borderRadius={16} className="w-full" />
+              </div>
+            ) : fetchError ? (
+              <Card variant="soft" className="mb-4">
+                <Typography variant="body" color="error">
+                  {fetchError}
+                </Typography>
+              </Card>
+            ) : (
+              apiKeys[0]?.key !== "No API key generated yet" && (
+                <div
+                  className={`grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] lg:max-h-auto overflow-y-auto ${styles.customScrollbar}`}
+                >
+                  {apiKeys.map((keyObj, idx) => (
+                    <Card key={idx} className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        {editingIndex === idx ? (
+                          <input
+                            className="bg-transparent border-b border-yellow-300 outline-none text-white w-20"
+                            value={names[idx] || `Key ${idx + 1}`}
+                            onChange={(e) =>
+                              handleNameChange(idx, e.target.value)
+                            }
+                            onBlur={handleNameBlur}
+                            autoFocus
+                          />
+                        ) : (
+                          <Typography variant="h3" color="secondary">
+                            {names[idx] || `Key ${idx + 1}`}
+                          </Typography>
+                        )}
+
+                        <div className="flex gap-2">
+                          <button
+                            className="text-white hover:text-gray-300"
+                            title="Rename"
+                            onClick={() => handleEditClick(idx)}
+                          >
+                            <FiEdit size={16} />
+                          </button>
+                          <button
+                            className="text-red-500 hover:text-red-400"
+                            title="Delete"
+                            onClick={() => handleDeleteClick(idx)}
+                            disabled={isDeleting}
+                          >
+                            <FiTrash size={16} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm select-all">
+                          {maskKey(keyObj.key)}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        <Typography variant="body" align="left">
+                          <span className="font-semibold text-white mr-2">
+                            Created:
+                          </span>{" "}
+                          {keyObj.created}
+                        </Typography>
+                        <Typography variant="body" align="left">
+                          <span className="font-semibold text-white">
+                            Last Used:
+                          </span>{" "}
+                          -
+                        </Typography>
+                      </div>
+                    </Card>
+                  ))}
+                  {/* DeleteDialog for confirming deletion */}
+                  <DeleteDialog
+                    open={deleteConfirmIndex !== null}
+                    onOpenChange={(open) => {
+                      if (!open) handleDeleteCancel();
+                    }}
+                    title="Delete API Key"
+                    description="Are you sure you want to delete this API key? This action cannot be undone."
+                    onCancel={handleDeleteCancel}
+                    onConfirm={() => {
+                      if (deleteConfirmIndex !== null)
+                        handleDeleteConfirm(deleteConfirmIndex);
+                    }}
+                    confirmText={isDeleting ? "Deleting..." : "Delete"}
+                    cancelText="Cancel"
+                  />
+                </div>
+              )
+            )}
+          </div>
+
+          {!fetchError && apiKeys[0].key === "No API key generated yet" && (
             <Banner>No API key generated yet</Banner>
           )}
 
           {generateError && (
-            <Card variant="soft">
+            <Card variant="soft" className="mt-4">
               <Typography variant="body" color="error">
-                Just missed it! Try generating your API key again.
+                Just missed it! Try generating your API key in a while.
               </Typography>
             </Card>
           )}
@@ -117,119 +232,6 @@ const GenerateApi: React.FC = () => {
               </Typography>
             </Card>
           )}
-          <div className="overflow-x-auto">
-            {isFetching ? (
-              <div className="text-center py-8 text-gray-400">
-                Loading API keys...
-              </div>
-            ) : fetchError ? (
-              <div className="text-center py-8 text-red-400">{fetchError}</div>
-            ) : (
-              apiKeys[0]?.key !== "No API key generated yet" && (
-                <Table>
-                  <TableHeader>
-                    <TableRow className="text-nowrap items-center">
-                      <TableHead>Name</TableHead>
-                      <TableHead>Secret Key</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Last Used</TableHead>
-                      <TableHead>Created By</TableHead>
-                      <TableHead>Permissions</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {apiKeys[0]?.key === "No API key generated yet" ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={7}
-                          className="text-center py-6 text-gray-400"
-                        >
-                          No API key generated yet
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      apiKeys.map((keyObj, idx) => (
-                        <TableRow key={idx} className="items-center">
-                          <TableCell className="text-nowrap">
-                            {editingIndex === idx ? (
-                              <input
-                                className="bg-transparent border-b border-yellow-400 outline-none text-white w-24"
-                                value={names[idx] || `Key ${idx + 1}`}
-                                onChange={(e) =>
-                                  handleNameChange(idx, e.target.value)
-                                }
-                                onBlur={handleNameBlur}
-                                autoFocus
-                              />
-                            ) : (
-                              <span className="flex items-center gap-2">
-                                {names[idx] || `Key ${idx + 1}`}
-                                <button
-                                  onClick={() => handleEditClick(idx)}
-                                  className="ml-1 text-yellow-400 hover:text-yellow-300"
-                                >
-                                  <FiEdit size={16} />
-                                </button>
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="flex items-center gap-2">
-                            <span className="font-mono text-sm select-all">
-                              {maskKey(keyObj.key)}
-                            </span>
-                            <CopyButton value={keyObj.key} />
-                          </TableCell>
-                          <TableCell>{keyObj.created}</TableCell>
-                          <TableCell>-</TableCell>
-                          <TableCell>{address || "-"}</TableCell>
-                          <TableCell>All</TableCell>
-                          <TableCell className="flex gap-2">
-                            <button
-                              className="text-yellow-400 hover:text-yellow-300"
-                              title="Rename"
-                              onClick={() => handleEditClick(idx)}
-                            >
-                              <FiEdit size={16} />
-                            </button>
-                            {deleteConfirmIndex === idx ? (
-                              <div className="flex gap-1">
-                                <button
-                                  className="text-red-500 hover:text-red-400 text-xs px-2 py-1 border border-red-500 rounded"
-                                  title="Confirm Delete"
-                                  onClick={() => handleDeleteConfirm(idx)}
-                                  disabled={isDeleting}
-                                >
-                                  {isDeleting ? "Deleting..." : "Yes"}
-                                </button>
-                                <button
-                                  className="text-gray-400 hover:text-gray-300 text-xs px-2 py-1 border border-gray-500 rounded"
-                                  title="Cancel Delete"
-                                  onClick={handleDeleteCancel}
-                                  disabled={isDeleting}
-                                >
-                                  No
-                                </button>
-                              </div>
-                            ) : (
-                              <button
-                                className="text-red-500 hover:text-red-400"
-                                title="Delete"
-                                onClick={() => handleDeleteClick(idx)}
-                                disabled={isDeleting}
-                              >
-                                <FiTrash size={16} />
-                              </button>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              )
-            )}
-          </div>
         </Card>
       )}
     </div>
