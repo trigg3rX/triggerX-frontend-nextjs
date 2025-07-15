@@ -19,7 +19,15 @@ import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { useJob } from "@/contexts/JobContext";
 import { TextInput } from "../../ui/TextInput";
 import BalanceMaintainerArtifact from "@/artifacts/BalanceMaintainer.json";
-import CopyButton from "../../ui/CopyButton";
+import { LucideCopyButton } from "../../ui/CopyButton";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/leaderboard/Table";
 
 // Implementation address for BalanceMaintainer
 const BALANCEMAINTAINER_IMPLEMENTATION =
@@ -541,46 +549,40 @@ const BalanceMaintainer = () => {
                 Configured Addresses
               </Typography>
               <div className="overflow-x-auto w-full">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="px-2 py-2 text-left text-white text-xs">
-                        Address
-                      </th>
-                      <th className="px-2 py-2 text-left text-white text-xs">
-                        Current Balance
-                      </th>
-                      <th className="px-2 py-2 text-left text-white text-xs">
-                        Min Balance (ETH)
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Address</TableHead>
+                      <TableHead>Current Balance</TableHead>
+                      <TableHead>Min Balance (ETH)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {addresses.map((item) => (
-                      <tr key={item.key} className="bg-[#1A1A1A]">
-                        <td className="px-2 py-2 text-[#A2A2A2] truncate text-xs">
+                      <TableRow key={item.key} className="bg-[#1A1A1A]">
+                        <TableCell className=" text-[#A2A2A2] truncate text-xs">
                           <div className="flex items-center gap-1">
                             <ShortAddress
                               address={item.address}
                               className="text-[#A2A2A2]"
                             />
-                            <CopyButton value={item.address} />
+                            <LucideCopyButton text={item.address} />
                           </div>
-                        </td>
-                        <td className="px-2 py-2">
-                          <span className="px-2 py-1 bg-[#4CAF50] text-white rounded text-xs">
+                        </TableCell>
+                        <TableCell>
+                          <span className="py-2 px-3 bg-[#4CAF50] text-white rounded-full text-xs">
                             {item.currentBalance} ETH
                           </span>
-                        </td>
-                        <td className="px-2 py-2">
-                          <span className="px-2 py-1 bg-[#C07AF6] text-white rounded text-xs">
+                        </TableCell>
+                        <TableCell>
+                          <span className="py-2 px-3 bg-[#C07AF6] text-white rounded-full text-xs">
                             {item.minimumBalance} ETH
                           </span>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             </Card>
           )}

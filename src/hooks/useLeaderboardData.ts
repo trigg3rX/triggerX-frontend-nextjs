@@ -48,11 +48,7 @@ export default function useLeaderboardData(
           apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
         }
         devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);
-        const headers = {
-          "Content-Type": "application/json",
-          // "ngrok-skip-browser-warning": "true",
-        };
-        const response = await fetch(apiUrl, { headers });
+        const response = await fetch(apiUrl);
         devLog("[Leaderboard] Response status:", response.status);
         if (!response.ok) throw new Error("Failed to fetch leaderboard data");
         const data = await response.json();
