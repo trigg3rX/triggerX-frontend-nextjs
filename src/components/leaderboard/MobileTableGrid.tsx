@@ -20,32 +20,11 @@ interface MobileTableGridProps {
   onItemClick?: (item: TableData) => void;
 }
 
-const TAB_COLUMNS: Record<
-  TabType,
-  { key: string; label: string; sortable?: boolean }[]
-> = {
-  keeper: [
-    { key: "name", label: "Operator", sortable: true },
-    { key: "jobPerformed", label: "Job Performed", sortable: true },
-    { key: "jobAttested", label: "Job Attested", sortable: true },
-    { key: "points", label: "Points", sortable: true },
-  ],
-  developer: [
-    { key: "address", label: "Address", sortable: false },
-    { key: "totalJobs", label: "Total Jobs", sortable: true },
-    { key: "jobPerformed", label: "Job Performed", sortable: true },
-    { key: "points", label: "Points", sortable: true },
-  ],
-  contributor: [],
-};
-
 export function MobileTableGrid({
   data,
   activeTab,
   onItemClick,
 }: MobileTableGridProps) {
-  const columns = TAB_COLUMNS[activeTab];
-
   return (
     <>
       <div className="grid grid-cols-1 gap-4 ">
@@ -57,38 +36,94 @@ export function MobileTableGrid({
           >
             <Card className="p-3">
               <div className="grid grid-cols-1 gap-3 pt-2">
+                {/* Address */}
                 <div className="flex justify-between items-center">
-                  <Typography variant="h4" color="primary">
+                  <Typography variant="body" color="primary">
                     Address
                   </Typography>
-                  <div className="flex justify-between items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <Typography variant="body" color="gray" noWrap>
                       {truncateAddress(item.address)}
                     </Typography>
                     <LucideCopyButton text={item.address} className="!p-0" />
                   </div>
                 </div>
+                {/* Points */}
                 <div className="flex justify-between items-center">
-                  <Typography variant="h4" color="primary">
+                  <Typography variant="body" color="primary">
                     Points
                   </Typography>
                   <Typography variant="body" color="gray">
-                    {item.points.toFixed(2)}
+                    {item.points?.toFixed(2) ?? 0}
                   </Typography>
                 </div>
-                {columns.slice(1, -1).map((column) => (
-                  <div
-                    key={column.key}
-                    className="flex flex-row space-y-1 justify-between"
-                  >
-                    <Typography variant="body" color="primary">
-                      {column.label}
-                    </Typography>
-                    <Typography variant="body" color="gray">
-                      {item[column.key as keyof typeof item]}
-                    </Typography>
-                  </div>
-                ))}
+                {/* Tab-specific fields */}
+                {activeTab === "keeper" &&
+                  "jobPerformed" in item &&
+                  "jobAttested" in item && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <Typography variant="body" color="primary">
+                          Job Performed
+                        </Typography>
+                        <Typography variant="body" color="gray">
+                          {item.jobPerformed ?? 0}
+                        </Typography>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Typography variant="body" color="primary">
+                          Job Attested
+                        </Typography>
+                        <Typography variant="body" color="gray">
+                          {item.jobAttested ?? 0}
+                        </Typography>
+                      </div>
+                    </>
+                  )}
+                {activeTab === "developer" &&
+                  "totalJobs" in item &&
+                  "taskPerformed" in item && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <Typography variant="body" color="primary">
+                          Total Jobs
+                        </Typography>
+                        <Typography variant="body" color="gray">
+                          {item.totalJobs ?? 0}
+                        </Typography>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Typography variant="body" color="primary">
+                          Task Performed
+                        </Typography>
+                        <Typography variant="body" color="gray">
+                          {item.taskPerformed ?? 0}
+                        </Typography>
+                      </div>
+                    </>
+                  )}
+                {activeTab === "contributor" &&
+                  "contributions" in item &&
+                  "communityPoints" in item && (
+                    <>
+                      <div className="flex justify-between items-center">
+                        <Typography variant="body" color="primary">
+                          Contributions
+                        </Typography>
+                        <Typography variant="body" color="gray">
+                          {item.contributions ?? 0}
+                        </Typography>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Typography variant="body" color="primary">
+                          Community Points
+                        </Typography>
+                        <Typography variant="body" color="gray">
+                          {item.communityPoints ?? 0}
+                        </Typography>
+                      </div>
+                    </>
+                  )}
               </div>
             </Card>
           </div>

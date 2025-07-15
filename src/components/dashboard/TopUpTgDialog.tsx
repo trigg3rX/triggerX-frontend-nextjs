@@ -162,14 +162,20 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
                 } catch {
                   stakeAmountInWei = BigInt(0);
                 }
+                // Only show insufficient ETH if user entered an amount and it exceeds balance
                 const hasInsufficientEth =
-                  !stakeAmount ||
+                  !!stakeAmount &&
                   stakeAmountInWei > (accountBalance?.value ?? BigInt(0));
                 return (
                   <Button
                     color="purple"
                     type="submit"
-                    disabled={isStaking || hasInsufficientEth}
+                    disabled={
+                      isStaking ||
+                      !stakeAmount ||
+                      Number(stakeAmount) <= 0 ||
+                      hasInsufficientEth
+                    }
                     className="w-full"
                   >
                     {isStaking

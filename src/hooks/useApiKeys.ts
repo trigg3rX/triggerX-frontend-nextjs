@@ -51,9 +51,7 @@ export function useApiKeys(address?: string) {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
         },
       });
       console.log("[fetchApiKeys] response.ok:", response.ok);
@@ -141,9 +139,7 @@ export function useApiKeys(address?: string) {
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          "ngrok-skip-browser-warning": "true",
         },
         body: JSON.stringify({
           owner: address,
@@ -189,9 +185,7 @@ export function useApiKeys(address?: string) {
       const response = await fetch(url, {
         method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          "ngrok-skip-browser-warning": "true",
         },
       });
       console.log("[deleteApiKey] response.ok:", response.ok);

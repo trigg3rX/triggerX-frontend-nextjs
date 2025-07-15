@@ -98,7 +98,9 @@ const JobCard: React.FC<JobCardProps> = ({
     <Card
       expanded={expanded}
       className={`!p-0 relative ${
-        expandedDetails ? "h-auto border border-white " : "h-[310px] "
+        expandedDetails
+          ? "h-auto border border-white "
+          : "h-[290px] md:h-[310px] "
       } ${
         expanded
           ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
