@@ -13,7 +13,6 @@ import { useDeleteJob } from "@/hooks/useDeleteJob";
 import { ErrorMessage } from "../common/ErrorMessage";
 import JobLogsTable from "./JobLogsTable";
 import { useJobLogs } from "@/hooks/useJobLogs";
-import { TablePagination } from "../ui/TablePagination";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -37,8 +36,6 @@ const MainJobs = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
   const [jobLogsOpenId, setJobLogsOpenId] = useState<number | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const jobsPerPage = 10;
 
   // Refs for Linked Jobs sections and Job Logs section
   const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -56,27 +53,6 @@ const MainJobs = ({
   useEffect(() => {
     // setJobs(fetchedJobs); // This line is removed as per the edit hint
   }, [jobs]); // Changed dependency to 'jobs'
-
-  const getFilteredJobs = () => {
-    if (selectedType !== "All Types") {
-      return jobs.filter((job) => job.taskDefinitionId === selectedType);
-    }
-    return jobs;
-  };
-
-  const filteredJobs = getFilteredJobs();
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
-  const paginatedJobs = filteredJobs.slice(
-    (currentPage - 1) * jobsPerPage,
-    currentPage * jobsPerPage,
-  );
-
-  useEffect(() => {
-    // Reset to first page if jobs or filter changes and currentPage is out of range
-    if (currentPage > totalPages) {
-      setCurrentPage(1);
-    }
-  }, [filteredJobs.length, totalPages]);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => {
@@ -160,6 +136,13 @@ const MainJobs = ({
     });
   };
 
+  const getFilteredJobs = () => {
+    if (selectedType !== "All Types") {
+      return jobs.filter((job) => job.taskDefinitionId === selectedType);
+    }
+    return jobs;
+  };
+
   // Map selectedType to allowed JobTypeTab values
   const mapToJobTypeTab = (
     type: string,
@@ -203,37 +186,30 @@ const MainJobs = ({
 
           {error && <ErrorMessage error={error} />}
 
-          {!error && filteredJobs.length > 0 && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
-                {paginatedJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="col-span-1"
-                    onClick={() => handleJobCardClick(job.id)}
-                    style={{ cursor: "pointer" }}
-                    ref={(el) => {
-                      linkedJobsRefs.current[job.id] = el;
-                    }}
-                  >
-                    <JobCard
-                      job={job}
-                      expanded={!!expandedJobs[job.id]}
-                      expandedDetails={!!expandedJobDetails[job.id]}
-                      onToggleExpand={toggleJobExpand}
-                      onToggleDetails={toggleJobDetails}
-                      onDelete={showDeleteConfirmation}
-                      isLogOpen={jobLogsOpenId === job.id}
-                    />
-                  </div>
-                ))}
-              </div>
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </>
+          {!error && getFilteredJobs().length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
+              {getFilteredJobs().map((job) => (
+                <div
+                  key={job.id}
+                  className="col-span-1"
+                  onClick={() => handleJobCardClick(job.id)}
+                  style={{ cursor: "pointer" }}
+                  ref={(el) => {
+                    linkedJobsRefs.current[job.id] = el;
+                  }}
+                >
+                  <JobCard
+                    job={job}
+                    expanded={!!expandedJobs[job.id]}
+                    expandedDetails={!!expandedJobDetails[job.id]}
+                    onToggleExpand={toggleJobExpand}
+                    onToggleDetails={toggleJobDetails}
+                    onDelete={showDeleteConfirmation}
+                    isLogOpen={jobLogsOpenId === job.id}
+                  />
+                </div>
+              ))}
+            </div>
           )}
         </>
       )}
@@ -252,7 +228,7 @@ const MainJobs = ({
         </div>
       )}
       <div>
-        {paginatedJobs.map((job) =>
+        {getFilteredJobs().map((job) =>
           job.linkedJobs &&
           job.linkedJobs.length > 0 &&
           expandedJobs[job.id] ? (
