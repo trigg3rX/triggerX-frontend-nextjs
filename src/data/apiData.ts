@@ -1076,8 +1076,8 @@ export const apiData: ApiEndpoint[] = [
     name: "Get Jobs By User Address API",
     method: "GET",
     description:
-      "Retrieve all automation jobs associated with a specific user's Ethereum wallet address. This endpoint returns detailed information about each job owned by the user.",
-    endpoint: "https://data.triggerx.network/api/jobs/user/{user_address}",
+      "Fetch all jobs for the user associated with the provided API key. The API key must be sent in the request header. This endpoint is protected and only accessible with a valid API key.",
+    endpoint: "https://data.triggerx.network/api/jobs/by-apikey",
     headers: [
       {
         name: "TriggerX-Api-Key",
@@ -1132,33 +1132,33 @@ export const apiData: ApiEndpoint[] = [
             React.createElement(
               "span",
               { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `"_"`,
+              `123`,
             ),
             ", ",
             React.createElement("br"),
             React.createElement(
               "span",
               { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"job_type"',
+              '"user_address"',
             ),
             ": ",
             React.createElement(
               "span",
               { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              '"_"',
+              "0xabc...",
             ),
             ", ",
             React.createElement("br"),
             React.createElement(
               "span",
               { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"status"',
+              '"task_definition_id"',
             ),
             ": ",
             React.createElement(
               "span",
               { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              "Comma-separated list of columns to return",
+              `1`,
             ),
             ", ",
             React.createElement("br"),
@@ -1171,7 +1171,7 @@ export const apiData: ApiEndpoint[] = [
             React.createElement(
               "span",
               { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Comma-separated list of columns to return`,
+              `"_"`,
             ),
             ", ",
             React.createElement("br"),
@@ -1184,7 +1184,7 @@ export const apiData: ApiEndpoint[] = [
             React.createElement(
               "span",
               { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Comma-separated list of columns to return`,
+              `"_"`,
             ),
           ),
           "}",
@@ -1200,7 +1200,7 @@ export const apiData: ApiEndpoint[] = [
           React.createElement(
             "span",
             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Invalid input data",
+            "Invalid API key",
           ),
         ),
       },
@@ -1214,7 +1214,7 @@ export const apiData: ApiEndpoint[] = [
           React.createElement(
             "span",
             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Invalid or missing API key",
+            "No owner found for API key",
           ),
         ),
       },
@@ -1228,7 +1228,7 @@ export const apiData: ApiEndpoint[] = [
           React.createElement(
             "span",
             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Resource not found",
+            "No jobs found for this user",
           ),
         ),
       },
@@ -1242,7 +1242,7 @@ export const apiData: ApiEndpoint[] = [
           React.createElement(
             "span",
             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Server-side error",
+            "Missing X-Api-Key header",
           ),
         ),
       },
@@ -1259,13 +1259,13 @@ export const apiData: ApiEndpoint[] = [
           React.createElement(
             "span",
             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            '"user_address (string)"',
+            '"curl -X GET https://data.triggerx.network/api/jobs/by-apikey"',
           ),
           ": ",
           React.createElement(
             "span",
             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Ethereum wallet address of the user",
+            "X-Api-Key: YOUR_API_KEY_HERE",
           ),
           React.createElement("br"),
         ),
@@ -1486,7 +1486,7 @@ export const apiData: ApiEndpoint[] = [
             React.createElement(
               "span",
               { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              "_",
+              `"_"`,
             ),
             ", ",
             React.createElement("br"),
