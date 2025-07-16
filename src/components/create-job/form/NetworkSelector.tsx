@@ -22,7 +22,11 @@ const networkIcons = Object.fromEntries(
   ]),
 );
 
-export const NetworkSelector = () => {
+export const NetworkSelector = ({
+  disabled = false,
+}: {
+  disabled?: boolean;
+}) => {
   const { selectedNetwork, setSelectedNetwork } = useJobFormContext();
 
   return (
@@ -30,8 +34,11 @@ export const NetworkSelector = () => {
       label="Network"
       options={networksData.supportedNetworks}
       selectedOption={selectedNetwork}
-      onChange={(option) => setSelectedNetwork(option.name)}
+      onChange={
+        disabled ? () => {} : (option) => setSelectedNetwork(option.name)
+      }
       icons={networkIcons}
+      disabled={disabled}
     />
   );
 };

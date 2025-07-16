@@ -16,6 +16,7 @@ interface DropdownProps {
   onChange: (option: DropdownOption) => void;
   className?: string;
   icons?: Record<string, React.ReactNode>;
+  disabled?: boolean;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -25,6 +26,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   onChange,
   className = "",
   icons = {},
+  disabled = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,8 +57,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
         className={twMerge("relative w-full md:w-[70%]", className)}
       >
         <div
-          className="text-xs xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-2.5 sm:py-3 px-4 rounded-md sm:rounded-lg cursor-pointer border border-white/10 flex items-center gap-5"
-          onClick={() => setIsOpen((prev) => !prev)}
+          className={twMerge(
+            "text-xs xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-2.5 sm:py-3 px-4 rounded-md sm:rounded-lg cursor-pointer border border-white/10 flex items-center gap-5",
+            disabled ? "opacity-50 cursor-not-allowed" : "",
+          )}
+          onClick={() => {
+            if (!disabled) setIsOpen((prev) => !prev);
+          }}
         >
           {icons[selectedOption] && (
             <span className="w-4 h-4 sm:w-6 sm:h-6">
@@ -71,15 +78,17 @@ export const Dropdown: React.FC<DropdownProps> = ({
           />
         </div>
 
-        {isOpen && (
+        {isOpen && !disabled && (
           <div className="absolute top-12 sm:top-14 w-full bg-[#1a1a1a] border border-white/10 rounded-md sm:rounded-xl overflow-hidden shadow-lg z-10">
             {options.map((option) => (
               <div
                 key={option.id}
                 className="py-2.5 sm:py-3 px-4 hover:bg-[#333] cursor-pointer rounded-md sm:rounded-lg flex items-center gap-5"
                 onClick={() => {
-                  onChange(option);
-                  setIsOpen(false);
+                  if (!disabled) {
+                    onChange(option);
+                    setIsOpen(false);
+                  }
                 }}
               >
                 {icons[option.name] && (

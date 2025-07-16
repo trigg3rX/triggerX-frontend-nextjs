@@ -68,7 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div className={`${defaultModalClass} ${className}`}>{children}</div>
     </div>,
-    document.body,
+    document.getElementById("modal-root") as HTMLElement,
   );
 };
 

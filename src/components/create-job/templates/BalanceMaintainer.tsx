@@ -306,7 +306,8 @@ const BalanceMaintainer = () => {
       ) {
         toast.error("Transaction rejected by user");
       } else {
-        toast.error("Deployment failed: " + (message || "Unknown error"));
+        // toast.error("Deployment failed: " + (message || "Unknown error"));
+        toast.error("Deployment failed");
       }
     } finally {
       setIsLoading(false);
@@ -390,7 +391,8 @@ const BalanceMaintainer = () => {
       ) {
         toast.error("Transaction rejected by user");
       } else {
-        toast.error("Failed to add address: " + (message || "Unknown error"));
+        // toast.error("Failed to add address: " + (message || "Unknown error"));
+        toast.error("Failed to add address");
       }
     } finally {
       setIsLoading(false);

@@ -7,7 +7,7 @@ import Modal from "@/components/ui/Modal";
 import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import ShortAddress from "@/components/ui/ShortAddress";
-import CopyButton from "@/components/ui/CopyButton";
+import { LucideCopyButton } from "@/components/ui/CopyButton";
 
 interface ClaimModalProps {
   isOpen: boolean;
@@ -197,7 +197,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
                   <Typography variant="h3">
                     <ShortAddress address={address} />
                   </Typography>
-                  <CopyButton value={address} />
+                  <LucideCopyButton text={address ?? ""} />
                 </div>
               </div>
               <div className="flex items-center gap-2">

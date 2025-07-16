@@ -18,6 +18,10 @@ export function useDeleteJob() {
       }
       const response = await fetch(`${API_BASE_URL}/api/jobs/delete/${jobId}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          // "ngrok-skip-browser-warning": "true",
+        },
       });
       devLog("Response....", response);
       if (!response.ok) {
