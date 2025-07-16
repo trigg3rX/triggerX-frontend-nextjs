@@ -125,7 +125,7 @@ const GenerateApi: React.FC = () => {
                 <DialogFooter>
                   <Button
                     onClick={() => setShowFullKey(null)}
-                    color="yellow"
+                    color="purple"
                     className="w-full"
                   >
                     I have saved my key
