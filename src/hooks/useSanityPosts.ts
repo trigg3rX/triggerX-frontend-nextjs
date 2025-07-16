@@ -27,10 +27,9 @@ const useSanityPosts = (query: string): UseSanityPostsReturn => {
         setPosts(fetchedPosts);
       }
     } catch (err: unknown) {
-      console.error("Error fetching posts from Sanity:", err);
       setError(
         err instanceof Error
-          ? err
+          ? new Error("An unknown error occurred while fetching posts.")
           : new Error("An unknown error occurred while fetching posts."),
       );
     } finally {

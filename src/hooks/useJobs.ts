@@ -89,11 +89,7 @@ export function useJobs() {
 
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
         devLog("[useJobs] Fetching jobs from:", apiUrl);
-        const headers = {
-          "Content-Type": "application/json",
-          // "ngrok-skip-browser-warning": "true",
-        };
-        const response = await fetch(apiUrl, { headers });
+        const response = await fetch(apiUrl);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -226,11 +222,10 @@ export function useJobs() {
         setJobs(tempJobs);
         setError(null);
       } catch (err: unknown) {
-        console.error("[useJobs] Error:", err);
-        setError("Something went wrong.");
+        setError(err instanceof Error ? "" : "Something went wrong.");
       } finally {
         setLoading(false);
-        // console.log("[useJobs] Loading finished.");
+        devLog("[useJobs] Loading finished.");
       }
     };
     fetchJobs();

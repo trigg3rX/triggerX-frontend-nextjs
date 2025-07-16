@@ -43,7 +43,7 @@ export default function useLeaderboardData(
 
         if (activeTab === "keeper") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/keepers`;
-          console.log("Calling URL:", apiUrl);
+          devLog("Calling URL:", apiUrl);
         } else if (activeTab === "developer" || activeTab === "contributor") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
         }
@@ -95,7 +95,6 @@ export default function useLeaderboardData(
           }));
         }
       } catch (err) {
-        console.error("[Leaderboard] Error fetching leaderboard data:", err);
         if (err instanceof Error) {
           setError("Something went wrong.");
         }
