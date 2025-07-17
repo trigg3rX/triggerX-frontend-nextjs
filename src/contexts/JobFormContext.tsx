@@ -1015,8 +1015,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const headers = {
-        "Content-Type": "application/json",
         ...(process.env.NODE_ENV !== "production" && {
+          "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         }),
       };
