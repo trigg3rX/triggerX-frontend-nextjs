@@ -11,11 +11,11 @@ export const metadata: Metadata = {
     title: "TriggerX Leaderboard | Track Points & Contributions",
     description:
       "See your rank and points as a Keeper, Developer, or Contributor in the TriggerX network. Transparent rewards. Real participation.",
-    url: `https://triggerx-app-nextjs.vercel.app/leaderboard`,
+    url: `https://app.triggerx.network/leaderboard`,
     siteName: "TriggerX",
     images: [
       {
-        url: `https://triggerx-app-nextjs.vercel.app/OGImages/leaderboard.png`,
+        url: `https://app.triggerx.network/OGImages/leaderboard.png`,
         width: 1200,
         height: 630,
         alt: "TriggerX Leaderboard display with ranks",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: `https://triggerx-app-nextjs.vercel.app/leaderboard`,
+    canonical: `https://app.triggerx.network/leaderboard`,
   },
 };
 

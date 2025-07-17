@@ -27,7 +27,7 @@ const QuickStartGuide = () => {
   ];
 
   return (
-    <Card className="!p-0 w-full lg:w-[35%] overflow-hidden">
+    <Card className="!p-0 w-full lg:w-[35%] overflow-hidden h-max">
       <div className="p-6">
         <Typography variant="h2" align="left">
           Quick Start Guide

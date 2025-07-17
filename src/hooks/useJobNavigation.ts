@@ -7,13 +7,16 @@ export const useJobNavigation = () => {
 
   const updateJobUrl = (template: Template) => {
     const params = new URLSearchParams(searchParams.toString());
+    params.delete("jobId"); // Remove jobId if present
     params.set("template", template.id);
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  const clearTemplateFromUrl = () => {
+  // New function to clear both jobId and template
+  const clearJobIdAndTemplateFromUrl = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("template");
+    params.delete("jobId");
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
@@ -28,7 +31,7 @@ export const useJobNavigation = () => {
 
   return {
     updateJobUrl,
-    clearTemplateFromUrl,
+    clearJobIdAndTemplateFromUrl,
     scrollToTemplate,
   };
 };

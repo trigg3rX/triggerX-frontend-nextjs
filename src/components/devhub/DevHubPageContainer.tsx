@@ -56,7 +56,7 @@ const DevHubPageContainer: React.FC = () => {
           Total
           <span className="text-[#F8FF7C]">{` { ${posts.length} } `}</span>
         </Typography>
-        <Link href="/api">
+        <Link href="/generate-api">
           <Button>API Services</Button>
         </Link>
       </div>

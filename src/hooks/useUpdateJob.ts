@@ -23,7 +23,11 @@ export function useUpdateJob() {
       }
       const response = await fetch(`${API_BASE_URL}/api/jobs/update/${jobId}`, {
         method: "PUT",
-
+        headers: {
+          ...(process.env.NODE_ENV !== "production" && {
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          }),
+        },
         body: JSON.stringify(payload),
       });
       devLog("Update response:", response);

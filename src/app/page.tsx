@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     title: "TriggerX App | Secure Onchain Automation",
     description:
       "Access the TriggerX App to create, manage, and run automated onchain tasks with shared security. Fast, reliable, and trust-minimized.",
-    url: `https://triggerx-app-nextjs.vercel.app/`,
+    url: `https://app.triggerx.network/`,
     siteName: "TriggerX",
     images: [
       {
-        url: `https://triggerx-app-nextjs.vercel.app/OGImages/build.png`,
+        url: `https://app.triggerx.network/OGImages/build.png`,
         width: 1200,
         height: 630,
         alt: "TriggerX App interface",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: `https://triggerx-app-nextjs.vercel.app/`,
+    canonical: `https://app.triggerx.network/`,
   },
 };
 

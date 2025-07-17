@@ -11,11 +11,11 @@ export const metadata: Metadata = {
     title: "TriggerX Dev Hub | Developer Docs & Tools",
     description:
       "Explore developer documentation, guides, and resources for building with TriggerX. Start automating smart contracts the right way.",
-    url: `https://triggerx-app-nextjs.vercel.app/devhub`,
+    url: `https://app.triggerx.network/devhub`,
     siteName: "TriggerX",
     images: [
       {
-        url: `https://triggerx-app-nextjs.vercel.app/OGImages/devhub.png`,
+        url: `https://app.triggerx.network/OGImages/devhub.png`,
         width: 1200,
         height: 630,
         alt: "TriggerX developer portal preview",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: `https://triggerx-app-nextjs.vercel.app/devhub`,
+    canonical: `https://app.triggerx.network/devhub`,
   },
 };
 

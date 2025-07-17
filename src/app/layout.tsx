@@ -7,6 +7,8 @@ import { TooltipProvider } from "@/components/common/TooltipWrap";
 import Header from "@/components/common/Header";
 import ScrollToTop from "@/components/common/ScrollToTop";
 import Footer from "@/components/common/Footer";
+import { ReactNode } from "react";
+import { GoogleTagManager } from "@next/third-parties/google";
 
 export const metadata: Metadata = {
   title: "TriggerX",
@@ -16,12 +18,14 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   const stakeRegistryAddress =
     process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS || "";
   return (
     <html lang="en">
+      <GoogleTagManager gtmId="GTM-N23BN7R5" />
+      <head>{/* Other <head> content if needed */}</head>
       <body className={`antialiated font-actay`}>
         <TooltipProvider>
           <Providers>

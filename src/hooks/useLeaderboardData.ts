@@ -48,7 +48,13 @@ export default function useLeaderboardData(
           apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
         }
         devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);
-        const response = await fetch(apiUrl);
+        const response = await fetch(apiUrl, {
+          headers: {
+            ...(process.env.NODE_ENV !== "production" && {
+              "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+            }),
+          },
+        });
         devLog("[Leaderboard] Response status:", response.status);
         if (!response.ok) throw new Error("Failed to fetch leaderboard data");
         const data = await response.json();
