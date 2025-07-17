@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: "TriggerX API | Secure Your Access & Start Building",
     description:
       "Generate your API key, access TriggerX endpoints, and start building automation workflows. Full documentation and support available in the API Console.",
-    url: `https://triggerx-app-nextjs.vercel.app/api`,
+    url: `https://triggerx-app-nextjs.vercel.app/generate-api`,
     siteName: "TriggerX",
     images: [
       {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: `https://triggerx-app-nextjs.vercel.app/api`,
+    canonical: `https://triggerx-app-nextjs.vercel.app/generate-api`,
   },
 };
 

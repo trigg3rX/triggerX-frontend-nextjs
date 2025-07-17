@@ -109,7 +109,6 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray text-white border border-gray-500 text-xs font-semibold px-3 py-1 rounded-lg hover:scale-105 transition-all duration-200"
                 style={{ minWidth: 40 }}
                 onClick={() => setWithdrawAmount(tgBalance || "0")}
-                disabled={isWithdrawing || !tgBalance || tgBalance === "0"}
               >
                 Max
               </button>
@@ -169,9 +168,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
               color="purple"
               type="submit"
               disabled={
-                isWithdrawing ||
-                !withdrawAmount ||
-                Number(withdrawAmount) > Number(tgBalance || 0)
+                isWithdrawing || !withdrawAmount || withdrawAmount === "0"
               }
               className="w-full"
             >

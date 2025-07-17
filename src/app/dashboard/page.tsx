@@ -36,10 +36,14 @@ function Dashboard() {
   return (
     <Suspense fallback={<DashboardSkeleton />}>
       <div className="w-[90%] mx-auto">
-        <Typography variant="h1" color="primary" className="mb-10">
+        <Typography variant="h1" color="primary">
           Dashboard
         </Typography>
-        <div className="flex  justify-evenly gap-5 lg:flex-row flex-col ">
+        <Typography variant="h4" color="secondary" className="my-6">
+          View all your jobs, logs, triggers, and automation status in one
+          place.
+        </Typography>
+        <div className="flex  justify-evenly gap-5 lg:flex-row flex-col p-4 sm:p-6 ">
           <div className="xl:w-[73%] lg:w-[70%] w-full">
             <ActiveJobs />
           </div>

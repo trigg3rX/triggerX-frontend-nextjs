@@ -263,7 +263,6 @@ export default function MainTable({
           <ErrorMessage
             error={"Something went wrong"}
             className="mt-4"
-            emoji="😒"
             retryText="Try Again"
             onRetry={onRetry}
           />
