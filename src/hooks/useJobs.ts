@@ -89,7 +89,13 @@ export function useJobs() {
 
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
         devLog("[useJobs] Fetching jobs from:", apiUrl);
-        const response = await fetch(apiUrl);
+        const headers = {
+          "Content-Type": "application/json",
+          ...(process.env.NODE_ENV !== "production" && {
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          }),
+        };
+        const response = await fetch(apiUrl, { headers });
 
         if (!response.ok) {
           if (response.status === 404) {

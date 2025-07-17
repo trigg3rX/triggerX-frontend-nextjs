@@ -96,7 +96,9 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
           }),
           headers: {
             "Content-Type": "application/json",
-            // "ngrok-skip-browser-warning": "true",
+            ...(process.env.NODE_ENV !== "production" && {
+              "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+            }),
           },
         },
       );

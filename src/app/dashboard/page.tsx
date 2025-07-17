@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     title: "TriggerX Dashboard | Job Management & Token Balances",
     description:
       "Access your job history, manage main and linked jobs, check TG balance, and create new automation tasks—all from one intuitive dashboard.",
-    url: `https://triggerx-app-nextjs.vercel.app/dashboard`,
+    url: `https://app.triggerx.network/dashboard`,
     siteName: "TriggerX",
     images: [
       {
-        url: `https://triggerx-app-nextjs.vercel.app/OGImages/dashboard.png`,
+        url: `https://app.triggerx.network/OGImages/dashboard.png`,
         width: 1200,
         height: 630,
         alt: "TriggerX dashboard showing main jobs, linked jobs, balance, and quick actions panel",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   alternates: {
-    canonical: `https://triggerx-app-nextjs.vercel.app/dashboard.png`,
+    canonical: `https://app.triggerx.network/dashboard.png`,
   },
 };
 

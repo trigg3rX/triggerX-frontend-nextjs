@@ -45,6 +45,11 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
         {
           method: "POST",
           body: JSON.stringify({ user_address, email_id: email }),
+          headers: {
+            ...(process.env.NODE_ENV !== "production" && {
+              "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+            }),
+          },
         },
       );
       devLog("API response status:", res.status);

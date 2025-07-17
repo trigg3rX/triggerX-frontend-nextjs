@@ -18,6 +18,12 @@ export function useDeleteJob() {
       }
       const response = await fetch(`${API_BASE_URL}/api/jobs/delete/${jobId}`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(process.env.NODE_ENV !== "production" && {
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          }),
+        },
       });
       devLog("Response....", response);
       if (!response.ok) {

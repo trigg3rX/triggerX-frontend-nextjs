@@ -862,7 +862,10 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
             const response = await fetch(
               `${API_BASE_URL}/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
-              { method: "GET" },
+              {
+                method: "GET",
+                headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
+              },
             );
             if (!response.ok) throw new Error("Failed to get fees");
             const data = await response.json();
@@ -1013,7 +1016,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const headers = {
         "Content-Type": "application/json",
-        // "ngrok-skip-browser-warning": "true", // This bypasses ngrok's warning page
+        ...(process.env.NODE_ENV !== "production" && {
+          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+        }),
       };
       let response;
       if (jobId) {

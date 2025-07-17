@@ -22,7 +22,7 @@ export const JobProvider: React.FC<JobProviderProps> = ({
   templates,
 }) => {
   const [selectedJob, setSelectedJob] = useState<Template | null>(null);
-  const { updateJobUrl, clearTemplateFromUrl, scrollToTemplate } =
+  const { updateJobUrl, clearJobIdAndTemplateFromUrl, scrollToTemplate } =
     useJobNavigation();
 
   const handleJobSelect = useCallback(
@@ -36,8 +36,8 @@ export const JobProvider: React.FC<JobProviderProps> = ({
 
   const handleCreateCustomJob = useCallback(() => {
     setSelectedJob(null);
-    clearTemplateFromUrl();
-  }, [clearTemplateFromUrl]);
+    clearJobIdAndTemplateFromUrl();
+  }, [clearJobIdAndTemplateFromUrl]);
 
   // On mount, check for ?template=... in the URL and select the template by id
   useEffect(() => {

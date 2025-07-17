@@ -4,6 +4,7 @@ import { Typography } from "../ui/Typography";
 import { Button } from "../ui/Button";
 import { Template } from "@/types/job";
 import { useJob } from "@/contexts/JobContext";
+import { useSearchParams } from "next/navigation";
 
 interface TemplateListProps {
   templates: Template[];
@@ -15,6 +16,9 @@ export const TemplateList: React.FC<TemplateListProps> = ({
   onTemplateSelect,
 }) => {
   const { selectedJob, handleJobSelect, handleCreateCustomJob } = useJob();
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("jobId");
+  const isUpdateMode = Boolean(jobId);
 
   return (
     <Card className="h-fit">
@@ -26,7 +30,7 @@ export const TemplateList: React.FC<TemplateListProps> = ({
           onClick={() => {
             handleCreateCustomJob();
           }}
-          disabled={!selectedJob}
+          disabled={!selectedJob && !isUpdateMode}
         >
           Create Custom Job
         </Button>
