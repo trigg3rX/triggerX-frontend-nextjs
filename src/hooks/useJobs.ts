@@ -228,11 +228,10 @@ export function useJobs() {
         setJobs(tempJobs);
         setError(null);
       } catch (err: unknown) {
-        console.error("[useJobs] Error:", err);
-        setError("Something went wrong.");
+        setError(err instanceof Error ? "" : "Something went wrong.");
       } finally {
         setLoading(false);
-        // console.log("[useJobs] Loading finished.");
+        devLog("[useJobs] Loading finished.");
       }
     };
     fetchJobs();

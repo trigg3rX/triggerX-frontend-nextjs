@@ -35,7 +35,7 @@ export function useApiKeys(address?: string) {
   const [deleteError, setDeleteError] = useState<string | null>(null); // <-- new error state
 
   const fetchApiKeys = async (addr?: string) => {
-    console.log("[fetchApiKeys] called with address:", addr);
+    devLog("[fetchApiKeys] called with address:", addr);
     if (!addr) return;
     setIsFetching(true); // <-- set fetching
     setFetchError(null); // <-- clear fetch error
@@ -47,7 +47,7 @@ export function useApiKeys(address?: string) {
         return;
       }
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys/${addr}`;
-      console.log("[fetchApiKeys] GET", url);
+      devLog("[fetchApiKeys] GET", url);
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -55,8 +55,8 @@ export function useApiKeys(address?: string) {
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         },
       });
-      console.log("[fetchApiKeys] response.ok:", response.ok);
-      console.log(
+      devLog("[fetchApiKeys] response.ok:", response.ok);
+      devLog(
         "[fetchApiKeys] response.ok:",
         response.ok,
         "status:",
@@ -75,7 +75,7 @@ export function useApiKeys(address?: string) {
         return;
       }
       const data = await response.json();
-      console.log("[fetchApiKeys] response data:", data);
+      devLog("[fetchApiKeys] response data:", data);
       if (Array.isArray(data) && data.length > 0) {
         setApiKeys(
           data.map((item: ApiKeyResponse) => ({
@@ -86,7 +86,7 @@ export function useApiKeys(address?: string) {
             status: item.status || "Active",
           })),
         );
-        console.log("[fetchApiKeys] setApiKeys (array):", data);
+        devLog("[fetchApiKeys] setApiKeys (array):", data);
       } else if (data && (data.key || data.apiKey)) {
         setApiKeys([
           {
@@ -97,7 +97,7 @@ export function useApiKeys(address?: string) {
             status: data.status || "Active",
           },
         ]);
-        console.log("[fetchApiKeys] setApiKeys (single):", data);
+        devLog("[fetchApiKeys] setApiKeys (single):", data);
       } else {
         setApiKeys([
           {
@@ -107,7 +107,7 @@ export function useApiKeys(address?: string) {
             status: "Inactive",
           },
         ]);
-        console.log("[fetchApiKeys] setApiKeys (none)");
+        devLog("[fetchApiKeys] setApiKeys (none)");
       }
       setIsFetching(false); // <-- done fetching
     } catch (err) {
@@ -136,7 +136,7 @@ export function useApiKeys(address?: string) {
         return null;
       }
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`;
-      console.log("[generateNewApiKey] POST", url);
+      devLog("[generateNewApiKey] POST", url);
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -147,9 +147,9 @@ export function useApiKeys(address?: string) {
           rate_limit: 20,
         }),
       });
-      console.log("[generateNewApiKey] response.ok:", response.ok);
+      devLog("[generateNewApiKey] response.ok:", response.ok);
       if (!response.ok) {
-        setGenerateError(`HTTP error! status: ${response.status}`);
+        setGenerateError(`HTTP error! status`);
         setIsLoading(false); // <-- done generating
         return null;
       }
@@ -186,14 +186,14 @@ export function useApiKeys(address?: string) {
         return;
       }
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys/${apiKey}?owner=${address}`;
-      console.log("[deleteApiKey] DELETE", url);
+      devLog("[deleteApiKey] DELETE", url);
       const response = await fetch(url, {
         method: "DELETE",
         headers: {
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         },
       });
-      console.log("[deleteApiKey] response.ok:", response.ok);
+      devLog("[deleteApiKey] response.ok:", response.ok);
       if (!response.ok) {
         setDeleteError(`HTTP error! status: ${response.status}`);
         setIsDeleting(false);

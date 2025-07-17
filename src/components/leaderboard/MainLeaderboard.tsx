@@ -10,6 +10,7 @@ import AnimatedTabs from "./AnimatedTabs";
 import WalletBanner from "../common/WalletBanner";
 import MainTable from "./MainTable";
 import { onRetry } from "sanity";
+import ContributorLinkButton from "./ContributorLinkButton";
 
 const tabs = [
   { id: "keeper", label: "Keeper" },
@@ -96,7 +97,7 @@ function MainLeaderboard() {
           activeTab={activeTab}
           setActiveTab={(tab: string) => setActiveTab(tab as TabType)}
         />
-
+        {activeTab === "contributor" && <ContributorLinkButton />}
         {!isConnected && (
           <WalletBanner message="Please connect your wallet to see your performance metrics in the leaderboard" />
         )}

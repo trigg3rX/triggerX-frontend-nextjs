@@ -16,7 +16,7 @@ export function useJobLogs(jobId: string | number | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("useJobLogs effect running, jobId:", jobId);
+    devLog("useJobLogs effect running, jobId:", jobId);
     if (!jobId) return;
     setLoading(true);
     setError(null);
@@ -37,15 +37,13 @@ export function useJobLogs(jobId: string | number | undefined) {
         });
         console.log("Raw response:", response);
         if (!response.ok) {
-          // setError(`Failed to fetch job logs. (${response.status})`);
           setError(`Failed to fetch job logs.`);
           setLoading(false);
           return;
         }
         const data = await response.json();
-        console.log("Parsed data:", data);
 
-        devLog("ress....", data);
+        devLog("Get Job Logs", data);
 
         setLoading(false);
       } catch {

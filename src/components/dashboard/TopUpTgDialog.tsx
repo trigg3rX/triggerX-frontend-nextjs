@@ -109,34 +109,37 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
               placeholder="Enter TG amount"
               className="rounded-xl"
             />
-            <Typography
-              variant="body"
-              color="gray"
-              align="left"
-              className="mt-3"
-            >
-              Your ETH Balance:{" "}
-              <span className="text-white">
-                {accountBalance?.formatted
-                  ? Number(accountBalance.formatted).toFixed(4)
-                  : "0.0000"}{" "}
-                ETH
-              </span>
-            </Typography>
+
             {stakeAmount && Number(stakeAmount) > 0 && (
-              <div className="mt-3 p-3 bg-[#242323] rounded-xl flex flex-col">
-                <Typography variant="body" color="gray" align="left">
-                  Estimated ETH
-                </Typography>
+              <>
                 <Typography
-                  variant="h3"
-                  color="white"
+                  variant="body"
+                  color="gray"
                   align="left"
-                  className="mt-1 font-bold tracking-wider"
+                  className="mt-3"
                 >
-                  {(Number(stakeAmount) / 1000).toFixed(6)}
+                  Your ETH Balance:{" "}
+                  <span className="text-white">
+                    {accountBalance?.formatted
+                      ? Number(accountBalance.formatted).toFixed(4)
+                      : "0.0000"}{" "}
+                    ETH
+                  </span>
                 </Typography>
-              </div>
+                <div className="mt-3 p-3 bg-[#242323] rounded-xl flex flex-col">
+                  <Typography variant="body" color="gray" align="left">
+                    Estimated ETH
+                  </Typography>
+                  <Typography
+                    variant="h3"
+                    color="white"
+                    align="left"
+                    className="mt-1 font-bold tracking-wider"
+                  >
+                    {(Number(stakeAmount) / 1000).toFixed(6)}
+                  </Typography>
+                </div>
+              </>
             )}
           </div>
 

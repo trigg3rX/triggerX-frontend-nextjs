@@ -75,7 +75,7 @@ export default function MainTable({
   const [sortField, setSortField] = useState<string>("points");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
   const columns = TAB_COLUMNS[activeTab as TabType] || [];
 
   // Filter out the developer row for the current user if activeTab is 'developer'
@@ -88,7 +88,7 @@ export default function MainTable({
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
       setSortField(field);
-      setSortDirection("desc");
+      setSortDirection("asc");
     }
   };
 
