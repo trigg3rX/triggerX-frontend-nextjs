@@ -856,11 +856,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       let totalFeeTG = 0;
       if (argType === 2) {
-        devLog("calculating fees for dynamic job");
+        console.log("calculating fees for dynamic job");
         if (codeUrls) {
-          devLog("codeUrls", codeUrls);
+          console.log("codeUrls", codeUrls);
           try {
             const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+            console.log(API_BASE_URL);
             if (!API_BASE_URL) {
               throw new Error(
                 "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
@@ -874,6 +875,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
               },
             );
+            console.log("response", response);
             if (!response.ok) throw new Error("Failed to get fees");
             const data = await response.json();
             if (data.error) throw new Error(data.error);
