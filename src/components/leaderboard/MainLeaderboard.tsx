@@ -50,10 +50,14 @@ function MainLeaderboard() {
   return (
     <Suspense fallback={<LeaderboardSkeleton />}>
       <div className="w-[90%] mx-auto">
-        <Typography variant="h1" color="primary" className="mb-10">
+        <Typography variant="h1" color="primary">
           Leaderboard
         </Typography>
-        <div className="flex flex-col xl:flex-row justify-between items-end gap-6">
+        <Typography variant="h4" color="secondary" className="my-6">
+          See how operators rank based on jobs completed and rewards earned
+          weekly.
+        </Typography>
+        <div className="flex flex-col xl:flex-row justify-between items-end gap-6 p-4 sm:p-6 !pb-0">
           <div className="w-full">
             <Typography
               variant="h2"
@@ -92,12 +96,13 @@ function MainLeaderboard() {
             />
           </div>
         </div>
+        {activeTab === "contributor" && <ContributorLinkButton />}
+
         <AnimatedTabs
           tabs={tabs}
           activeTab={activeTab}
           setActiveTab={(tab: string) => setActiveTab(tab as TabType)}
         />
-        {activeTab === "contributor" && <ContributorLinkButton />}
         {!isConnected && (
           <WalletBanner message="Please connect your wallet to see your performance metrics in the leaderboard" />
         )}

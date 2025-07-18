@@ -51,8 +51,17 @@ const DevHubPageContainer: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      <div className="w-full flex items-center justify-between mb-10 md:mb-12">
-        <Typography align="left" className="flex items-center gap-3 !text-2xl">
+      <Typography variant="h1" color="primary">
+        Dev Hub
+      </Typography>
+      <Typography variant="h4" color="secondary" className="my-6">
+        All the docs, tools, and guides you need to build with TriggerX.
+      </Typography>
+      <div className="w-full flex items-center justify-between my-10 my:mb-12">
+        <Typography
+          align="left"
+          className="flex items-center gap-3 !text-2xl sm:!text-4xl"
+        >
           Total
           <span className="text-[#F8FF7C]">{` { ${posts.length} } `}</span>
         </Typography>

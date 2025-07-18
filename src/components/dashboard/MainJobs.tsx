@@ -13,6 +13,7 @@ import { useDeleteJob } from "@/hooks/useDeleteJob";
 import { ErrorMessage } from "../common/ErrorMessage";
 import JobLogsTable from "./JobLogsTable";
 import { useJobLogs } from "@/hooks/useJobLogs";
+import styles from "@/app/styles/scrollbar.module.css";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -53,6 +54,14 @@ const MainJobs = ({
   useEffect(() => {
     // setJobs(fetchedJobs); // This line is removed as per the edit hint
   }, [jobs]); // Changed dependency to 'jobs'
+
+  // Close all expanded states and logs when filter changes
+  useEffect(() => {
+    setExpandedJobs({});
+    setExpandedJobDetails({});
+    setExpandedLinkedJobDetails({});
+    setJobLogsOpenId(null);
+  }, [selectedType]);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => {
@@ -187,7 +196,9 @@ const MainJobs = ({
           {error && <ErrorMessage error={error} />}
 
           {!error && getFilteredJobs().length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3">
+            <div
+              className={`p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3 max-h-[1000px] lg:max-h-auto overflow-y-auto ${styles.customScrollbar}`}
+            >
               {getFilteredJobs().map((job) => (
                 <div
                   key={job.id}

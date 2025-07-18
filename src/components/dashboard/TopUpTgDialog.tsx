@@ -176,12 +176,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
                   <Button
                     color="purple"
                     type="submit"
-                    disabled={
-                      isStaking ||
-                      !stakeAmount ||
-                      Number(stakeAmount) <= 0 ||
-                      hasInsufficientEth
-                    }
+                    disabled={isStaking || !stakeAmount || stakeAmount === "0"}
                     className="w-full"
                   >
                     {isStaking

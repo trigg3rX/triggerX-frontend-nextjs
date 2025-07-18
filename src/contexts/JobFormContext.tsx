@@ -856,7 +856,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       let totalFeeTG = 0;
       if (argType === 2) {
+        devLog("calculating fees for dynamic job");
         if (codeUrls) {
+          devLog("codeUrls", codeUrls);
           try {
             const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
             if (!API_BASE_URL) {
@@ -1020,10 +1022,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const headers = {
-        ...(process.env.NODE_ENV !== "production" && {
-          "Content-Type": "application/json",
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-        }),
+        // "Content-Type": "application/json",
+        "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
       };
       let response;
       if (jobId) {

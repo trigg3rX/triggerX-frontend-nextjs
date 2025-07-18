@@ -6,7 +6,7 @@ export const ContributorLinkButton: React.FC = () => {
     "https://docs.google.com/forms/d/e/1FAIpQLSccVydJ86vR99IlqCsy1q2N1tJaKHxkvkoqgKnK3_UNKjipfw/viewform";
 
   return (
-    <div className="flex md:gap-4 gap-2 md:justify-end justify-center my-10">
+    <div className="flex md:gap-4 gap-2 md:justify-start justify-center my-10">
       <a href={GOOGLE_FORM_URL} target="_blank" rel="noopener noreferrer">
         <Button color="white">
           <span className="hidden md:inline">Submit Your Contributions</span>

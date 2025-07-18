@@ -12,12 +12,14 @@ const tabs = [
 ];
 
 function ApiClientPage() {
-  const [activeTab, setActiveTab] = useState<string>(tabs[0].id);
+  const [activeTab, setActiveTab] = useState<string>(tabs[1].id);
 
   return (
     <>
-      <Typography variant="h1" className="mb-10">
-        API Documentation
+      <Typography variant="h1">API Documentation</Typography>
+      <Typography variant="h4" color="secondary" className="my-6">
+        Build and deploy custom APIs for automated triggers using simple job
+        logic.
       </Typography>
       <AnimatedTabs
         tabs={tabs}

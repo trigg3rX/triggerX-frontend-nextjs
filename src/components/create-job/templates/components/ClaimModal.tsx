@@ -96,9 +96,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
           }),
           headers: {
             "Content-Type": "application/json",
-            ...(process.env.NODE_ENV !== "production" && {
-              "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-            }),
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
           },
         },
       );

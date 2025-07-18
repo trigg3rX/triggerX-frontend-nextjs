@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import NavLink from "./header/NavLink";
 import MobileMenu from "./header/MobileMenu";
-// import BalanceDisplay from "../ui/BalanceDisplay";
 import { HoverHighlight } from "./HoverHighlight";
 import { LogoLink } from "./header/LogoLink";
 import { LandingImage } from "./header/LandingImage";

@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import { Modal } from "../ui/Modal";
 import { FiInfo } from "react-icons/fi";
 import { Typography } from "../ui/Typography";
@@ -11,12 +17,19 @@ import { useAccount, useBalance } from "wagmi";
 import { parseEther } from "viem";
 import JobProcessing from "./JobProcessing";
 import { useSearchParams } from "next/navigation";
+import GameCanvas from "./GameCanvas";
 
 interface JobFeeModalProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   estimatedFee: number;
 }
+
+const steps = [
+  { id: 1, text: "Updating Database", status: "pending" },
+  { id: 2, text: "Validating Job", status: "pending" },
+  { id: 3, text: "Calculating Fees", status: "pending" },
+];
 
 const JobFeeModal: React.FC<JobFeeModalProps> = ({
   isOpen,
@@ -30,6 +43,18 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     handleStakeTG,
     handleCreateJob,
     setIsJobCreated,
+    estimateFee,
+    jobType,
+    timeframe,
+    timeInterval,
+    recurring,
+    contractInteractions,
+    extractJobDetails,
+    getTimeframeInSeconds,
+    getIntervalInSeconds,
+    getNetworkIdByName,
+    selectedNetwork,
+    jobTitle,
   } = useJobForm();
   const router = useRouter();
 
@@ -42,6 +67,103 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   const [jobCreateFailed, setJobCreateFailed] = useState(false);
   const searchParams = useSearchParams();
   const jobId = searchParams.get("jobId");
+
+  // Stepper state
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isStepperVisible, setIsStepperVisible] = useState(true);
+  const [feeEstimated, setFeeEstimated] = useState(false);
+
+  // Prepare job details for fee estimation
+  const getJobDetailsForEstimate = useCallback(() => {
+    const networkId = getNetworkIdByName(selectedNetwork);
+    const timeframeInSeconds = getTimeframeInSeconds(timeframe);
+    const intervalInSeconds = getIntervalInSeconds(timeInterval);
+    return extractJobDetails(
+      "contract",
+      contractInteractions,
+      jobTitle,
+      timeframeInSeconds,
+      intervalInSeconds,
+      recurring,
+      address,
+      networkId,
+      jobType,
+    );
+  }, [
+    contractInteractions,
+    jobTitle,
+    timeframe,
+    timeInterval,
+    recurring,
+    address,
+    getNetworkIdByName,
+    selectedNetwork,
+    jobType,
+    extractJobDetails,
+    getTimeframeInSeconds,
+    getIntervalInSeconds,
+  ]);
+
+  // Stepper logic
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentStep(0);
+      setIsStepperVisible(true);
+      setFeeEstimated(false);
+      return;
+    }
+    if (isOpen && isStepperVisible) {
+      if (currentStep === 0) {
+        const timer = setTimeout(() => setCurrentStep(1), 500);
+        return () => clearTimeout(timer);
+      }
+      if (currentStep === 1) {
+        const timer = setTimeout(() => setCurrentStep(2), 500);
+        return () => clearTimeout(timer);
+      }
+      if (currentStep === 2 && !feeEstimated) {
+        // Call estimateFee and wait for it to finish
+        const doEstimate = async () => {
+          const jobDetails = getJobDetailsForEstimate();
+          await estimateFee(
+            jobType,
+            getTimeframeInSeconds(timeframe),
+            getIntervalInSeconds(timeInterval),
+            jobDetails.dynamic_arguments_script_url || "",
+            recurring,
+            Number(jobDetails.arg_type),
+          );
+          setFeeEstimated(true);
+          setTimeout(() => {
+            setIsStepperVisible(false);
+          }, 500); // Small delay for smooth transition
+        };
+        doEstimate();
+      }
+    }
+  }, [
+    isOpen,
+    currentStep,
+    isStepperVisible,
+    feeEstimated,
+    estimateFee,
+    getJobDetailsForEstimate,
+    jobType,
+    timeframe,
+    timeInterval,
+    recurring,
+    getTimeframeInSeconds,
+    getIntervalInSeconds,
+  ]);
+
+  // Reset stepper when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentStep(0);
+      setIsStepperVisible(true);
+      setFeeEstimated(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (
@@ -116,9 +238,18 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
-      <JobProcessing />
+      {/* Stepper and Game Canvas */}
+      {isStepperVisible && (
+        <JobProcessing
+          isStepperVisible={isStepperVisible}
+          currentStep={currentStep}
+          steps={steps}
+        />
+      )}
+      <GameCanvas />
 
-      {!isJobCreated ? (
+      {/* Fee summary and buttons, only after stepper is done */}
+      {!isStepperVisible && !isJobCreated && (
         <>
           <Typography variant="h2" className="mb-6">
             Estimated Fee
@@ -187,7 +318,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                   ? "Processing..."
                   : jobCreateFailed
                     ? "Try Again"
-                    : "Next"}
+                    : "Submit"}
               </Button>
             ) : (
               <Button
@@ -258,7 +389,9 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
             </Typography>
           )}
         </>
-      ) : (
+      )}
+      {/* Success state */}
+      {!isStepperVisible && isJobCreated && (
         <div className="flex flex-col items-center gap-3 sm:gap-4 mt-4 sm:mt-5">
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#A2A2A2] rounded-full flex items-center justify-center">
             <svg

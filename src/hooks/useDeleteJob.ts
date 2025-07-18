@@ -20,9 +20,7 @@ export function useDeleteJob() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          ...(process.env.NODE_ENV !== "production" && {
-            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          }),
+          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         },
       });
       devLog("Response....", response);
