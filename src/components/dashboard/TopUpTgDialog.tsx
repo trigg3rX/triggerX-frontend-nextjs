@@ -72,8 +72,8 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
       toast.success("Top Up TG successful!");
       onOpenChange(false);
       setStakeAmount("");
-    } catch (error: unknown) {
-      toast.error((error as Error).message || "Error Top Up TG");
+
+      toast.error("Error Top Up TG");
     } finally {
       setIsStaking(false);
     }

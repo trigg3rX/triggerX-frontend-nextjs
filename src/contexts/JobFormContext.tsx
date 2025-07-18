@@ -939,8 +939,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       // await handleCreateJob();
       return true;
     } catch (error) {
-      console.error("Error staking TG:", error);
-      toast.error("Error topping up TG: " + (error as Error).message);
+      devLog("Error topping up TG: " + (error as Error).message);
+      toast.error("Error topping up TG");
+
       return false;
     } finally {
       setIsSubmitting(false);
@@ -1047,7 +1048,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("API Error Response:", errorText);
         throw new Error(
           errorText ||
             (jobId ? "Failed to update job" : "Failed to create job"),
@@ -1060,14 +1060,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       );
       return true;
     } catch (error) {
-      console.error(
-        jobId ? "Error updating job:" : "Error creating job:",
-        error,
-      );
-      toast.error(
+      devLog(
         (jobId ? "Error updating job: " : "Error creating job: ") +
           (error as Error).message,
       );
+      toast.error(jobId ? "Error updating job: " : "Error creating job: ");
       setIsJobCreated(false);
       return false;
     } finally {

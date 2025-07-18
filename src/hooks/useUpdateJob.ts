@@ -40,9 +40,8 @@ export function useUpdateJob() {
         refetch();
       }
     } catch (err) {
-      devLog("Update job error");
+      devLog("Update job error", err);
       toast.error("Failed to update job");
-      setError(err instanceof Error ? "" : "Failed to update job");
     } finally {
       setLoading(false);
     }

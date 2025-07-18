@@ -45,6 +45,7 @@ const TAB_COLUMNS: Record<TabType, Column[]> = {
     { key: "address", label: "Address", sortable: false },
     { key: "jobPerformed", label: "Job Performed", sortable: true },
     { key: "jobAttested", label: "Job Attested", sortable: true },
+    // { key: "noOfDays", label: "No of Days", sortable: true },
     { key: "points", label: "Points", sortable: true },
     { key: "profile", label: "Profile", sortable: false },
   ],

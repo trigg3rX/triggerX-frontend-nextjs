@@ -13,6 +13,7 @@ import { Typography } from "../ui/Typography";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
+import { devLog } from "@/lib/devLog";
 
 interface WithdrawTgDialogProps {
   open: boolean;
@@ -67,8 +68,8 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
       onOpenChange(false);
       setWithdrawAmount("");
     } catch (error: unknown) {
-      console.error("Error withdrawing:", error);
-      toast.error((error as Error).message || "Error withdrawing TG");
+      devLog((error as Error).message || "Error withdrawing TG");
+      toast.error("Error withdrawing TG");
     } finally {
       setIsWithdrawing(false);
     }

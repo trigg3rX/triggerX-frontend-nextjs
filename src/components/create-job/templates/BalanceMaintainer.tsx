@@ -28,6 +28,7 @@ import {
   TableRow,
   TableCell,
 } from "@/components/leaderboard/Table";
+import { devLog } from "@/lib/devLog";
 
 // Implementation address for BalanceMaintainer
 const BALANCEMAINTAINER_IMPLEMENTATION =
@@ -306,7 +307,7 @@ const BalanceMaintainer = () => {
       ) {
         toast.error("Transaction rejected by user");
       } else {
-        // toast.error("Deployment failed: " + (message || "Unknown error"));
+        devLog("Deployment failed: " + (message || "Unknown error"));
         toast.error("Deployment failed");
       }
     } finally {
@@ -391,7 +392,7 @@ const BalanceMaintainer = () => {
       ) {
         toast.error("Transaction rejected by user");
       } else {
-        // toast.error("Failed to add address: " + (message || "Unknown error"));
+        devLog("Failed to add address: " + (message || "Unknown error"));
         toast.error("Failed to add address");
       }
     } finally {

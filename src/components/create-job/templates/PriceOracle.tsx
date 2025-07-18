@@ -17,6 +17,7 @@ import Link from "next/link";
 import ShortAddress from "../../ui/ShortAddress";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { useJob } from "@/contexts/JobContext";
+import { devLog } from "@/lib/devLog";
 
 // Minimal EIP-1193 type for ethereum provider
 interface EthereumProvider {
@@ -243,7 +244,7 @@ const PriceOracle = () => {
       ) {
         toast.error("Transaction rejected by user");
       } else {
-        // toast.error("Deployment failed: " + (error.message || "Unknown error"));
+        devLog("Deployment failed: " + (error.message || "Unknown error"));
         toast.error("Deployment failed");
       }
     } finally {

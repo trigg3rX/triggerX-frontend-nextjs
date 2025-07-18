@@ -58,7 +58,7 @@ const DevHubPageContainer: React.FC = () => {
         All the docs, tools, and guides you need to build with TriggerX.
       </Typography>
       <div className="w-full flex items-center justify-between mb-10 md:mb-12">
-        <Typography align="left" className="flex items-center gap-3 !text-4xl">
+        <Typography align="left" className="flex items-center gap-3 !text-3xl">
           Total
           <span className="text-[#F8FF7C]">{` { ${posts.length} } `}</span>
         </Typography>

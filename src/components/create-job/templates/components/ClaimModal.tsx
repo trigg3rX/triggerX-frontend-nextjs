@@ -8,6 +8,7 @@ import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import ShortAddress from "@/components/ui/ShortAddress";
 import { LucideCopyButton } from "@/components/ui/CopyButton";
+import { devLog } from "@/lib/devLog";
 
 interface ClaimModalProps {
   isOpen: boolean;
@@ -136,7 +137,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
       ) {
         toast.error("Transaction was rejected");
       } else {
-        toast.error(message);
+        devLog("Transaction was rejected", message);
       }
       throw error;
     }

@@ -24,6 +24,7 @@ import {
 import ShortAddress from "@/components/ui/ShortAddress";
 import { LucideCopyButton } from "@/components/ui/CopyButton";
 import { CodeBlockWithCopy } from "@/components/common/CodeBlockWithCopy";
+import { devLog } from "@/lib/devLog";
 
 const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_STAKER_TOKEN_ADDRESS;
 const STAKE_REWARD_CONTRACT_ADDRESS =
@@ -224,7 +225,7 @@ const StakingRewards = () => {
       } else if ((err as { code?: string }).code === "INSUFFICIENT_FUNDS") {
         errorMessage = "Insufficient gas funds";
       }
-      toast.error(errorMessage);
+      devLog(errorMessage);
     } finally {
       setIsStaking(false);
     }
@@ -280,7 +281,7 @@ const StakingRewards = () => {
       } else if ((err as { code?: string }).code === "INSUFFICIENT_FUNDS") {
         errorMessage = "Insufficient gas funds";
       }
-      toast.error(errorMessage);
+      devLog(errorMessage);
     } finally {
       setIsUnstaking(false);
     }
@@ -515,7 +516,7 @@ const StakingRewards = () => {
       if (typeof message === "string" && message.includes("rejected")) {
         toast.error("Transaction was rejected");
       } else {
-        toast.error(message);
+        devLog(message);
       }
     } finally {
       setShowTokenClaimModal(false);
@@ -552,7 +553,7 @@ const StakingRewards = () => {
       if (typeof message === "string" && message.includes("rejected")) {
         toast.error("Approval rejected by user");
       } else {
-        toast.error("Failed to approve tokens: " + message);
+        devLog("Failed to approve tokens: " + message);
       }
       return false;
     } finally {
