@@ -339,6 +339,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const { fetchTGBalance } = useTGBalance();
   const { stakeRegistryAddress } = useStakeRegistry();
 
+  // Refetch TG balance when selectedNetwork changes
+  React.useEffect(() => {
+    fetchTGBalance();
+  }, [selectedNetwork, fetchTGBalance]);
+
   const handleJobTypeChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, type: number) => {
       e.preventDefault();

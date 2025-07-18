@@ -13,14 +13,15 @@ import { Typography } from "../ui/Typography";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
+import { useTGBalance } from "@/contexts/TGBalanceContext";
 
 interface WithdrawTgDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   withdrawAmount: string;
   setWithdrawAmount: (value: string) => void;
-  tgBalance: string;
-  fetchTGBalance: () => Promise<void>;
+  // tgBalance: string;
+  // fetchTGBalance: () => Promise<void>;
 }
 
 const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
@@ -28,9 +29,10 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
   onOpenChange,
   withdrawAmount,
   setWithdrawAmount,
-  tgBalance,
-  fetchTGBalance,
+  // tgBalance,
+  // fetchTGBalance,
 }) => {
+  const { fetchTGBalance, userBalance } = useTGBalance();
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
@@ -57,11 +59,13 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
       if (withdrawAmountInWei === BigInt(0)) {
         throw new Error("Withdraw amount must be greater than zero.");
       }
-      if (withdrawAmountInWei > ethers.parseEther(tgBalance || "0")) {
+      if (withdrawAmountInWei > ethers.parseEther(userBalance || "0")) {
         throw new Error("Insufficient TG balance.");
       }
       const tx = await stakingContract.claimETHForTG(withdrawAmountInWei);
       await tx.wait();
+      // Add a small delay to allow the node to update state
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       await fetchTGBalance();
       toast.success("Withdrawal successful!");
       onOpenChange(false);
@@ -78,15 +82,9 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            <Typography variant="h3" color="white" align="left">
-              Withdraw TG
-            </Typography>
-          </DialogTitle>
+          <DialogTitle>Withdraw TG</DialogTitle>
           <DialogDescription>
-            <Typography variant="body" color="gray" align="left">
-              Withdraw TG back to ETH. 1 ETH = 1000 TG
-            </Typography>
+            Withdraw TG back to ETH. 1 ETH = 1000 TG
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleWithdraw} className="space-y-6 ">
@@ -108,8 +106,8 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 type="button"
                 className="absolute right-2 top-1/2 -translate-y-1/2 bg-gray text-white border border-gray-500 text-xs font-semibold px-3 py-1 rounded-lg hover:scale-105 transition-all duration-200"
                 style={{ minWidth: 40 }}
-                onClick={() => setWithdrawAmount(tgBalance || "0")}
-                disabled={isWithdrawing || !tgBalance || tgBalance === "0"}
+                onClick={() => setWithdrawAmount(userBalance || "0")}
+                disabled={isWithdrawing || !userBalance || userBalance === "0"}
               >
                 Max
               </button>
@@ -123,7 +121,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
             >
               Your TG Balance:{" "}
               <span className="text-white">
-                {tgBalance ? Number(tgBalance).toFixed(2) : "0.00"} TG
+                {userBalance ? Number(userBalance).toFixed(2) : "0.00"} TG
               </span>
             </Typography>
 
@@ -171,13 +169,13 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
               disabled={
                 isWithdrawing ||
                 !withdrawAmount ||
-                Number(withdrawAmount) > Number(tgBalance || 0)
+                Number(withdrawAmount) > Number(userBalance || 0)
               }
               className="w-full"
             >
               {isWithdrawing
                 ? "Withdrawing..."
-                : Number(withdrawAmount) > Number(tgBalance || 0)
+                : Number(withdrawAmount) > Number(userBalance || 0)
                   ? "Insufficient TG"
                   : "Withdraw TG"}
             </Button>

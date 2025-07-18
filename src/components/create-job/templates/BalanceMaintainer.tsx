@@ -306,7 +306,7 @@ const BalanceMaintainer = () => {
       ) {
         toast.error("Transaction rejected by user");
       } else {
-        // toast.error("Deployment failed: " + (message || "Unknown error"));
+        // devLog("Deployment failed: " + (message || "Unknown error"));
         toast.error("Deployment failed");
       }
     } finally {

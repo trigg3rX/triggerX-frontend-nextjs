@@ -48,6 +48,15 @@ const GenerateApi: React.FC = () => {
     setNames(apiKeys.map((_, i) => `Key ${i + 1}`));
   }, [apiKeys]);
 
+  // Sort apiKeys by created_at or created descending (most recent first)
+  const sortedApiKeys = React.useMemo(() => {
+    return [...apiKeys].sort((a, b) => {
+      const aDate = a.created_at || a.created;
+      const bDate = b.created_at || b.created;
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
+  }, [apiKeys]);
+
   const handleNameChange = (idx: number, value: string) => {
     setNames((prev) => prev.map((n, i) => (i === idx ? value : n)));
   };
@@ -152,7 +161,7 @@ const GenerateApi: React.FC = () => {
                 <div
                   className={`grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[600px] lg:max-h-auto overflow-y-auto ${styles.customScrollbar}`}
                 >
-                  {apiKeys.map((keyObj, idx) => (
+                  {sortedApiKeys.map((keyObj, idx) => (
                     <Card key={idx} className="flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         {editingIndex === idx ? (
@@ -199,13 +208,19 @@ const GenerateApi: React.FC = () => {
                           <span className="font-semibold text-white mr-2">
                             Created:
                           </span>{" "}
-                          {keyObj.created}
+                          {keyObj.created_at || keyObj.created
+                            ? new Date(
+                                keyObj.created_at || keyObj.created,
+                              ).toLocaleString()
+                            : "-"}
                         </Typography>
                         <Typography variant="body" align="left">
                           <span className="font-semibold text-white">
                             Last Used:
                           </span>{" "}
-                          -
+                          {keyObj.last_used
+                            ? new Date(keyObj.last_used).toLocaleString()
+                            : "-"}
                         </Typography>
                       </div>
                     </Card>

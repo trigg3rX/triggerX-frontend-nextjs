@@ -28,6 +28,7 @@ export const TGBalanceProvider: React.FC<{
   const { address } = useAccount();
 
   const fetchTGBalance = useCallback(async () => {
+    devLog("fetchhh");
     if (typeof window.ethereum == "undefined") return;
     if (!stakeRegistryAddress || !ethers.isAddress(stakeRegistryAddress)) {
       return;

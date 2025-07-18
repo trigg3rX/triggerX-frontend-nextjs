@@ -4,24 +4,20 @@ import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
 import TopUpTgDialog from "./TopUpTgDialog";
 import WithdrawTgDialog from "./WithdrawTgDialog";
-import { useTGBalance } from "@/contexts/TGBalanceContext";
 import { Card } from "../ui/Card";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
-import { useBalance, useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import AlertEmail from "./AlertEmail";
+import { useAccount } from "wagmi";
 
 export const QuickActions = () => {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [stakeAmount, setStakeAmount] = React.useState("");
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = React.useState(false);
   const [withdrawAmount, setWithdrawAmount] = React.useState("");
-  const { fetchTGBalance, userBalance } = useTGBalance();
   const { isConnected } = useWalletConnectionContext();
   const { address } = useAccount();
-  const { data: accountBalance } = useBalance({
-    address: address,
-  });
+
   const router = useRouter();
 
   return (
@@ -56,16 +52,16 @@ export const QuickActions = () => {
           onOpenChange={setIsDialogOpen}
           stakeAmount={stakeAmount}
           setStakeAmount={setStakeAmount}
-          accountBalance={accountBalance}
-          fetchTGBalance={fetchTGBalance}
+          // accountBalance={accountBalance}
+          // fetchTGBalance={fetchTGBalance}
         />
         <WithdrawTgDialog
           open={isWithdrawDialogOpen}
           onOpenChange={setIsWithdrawDialogOpen}
           withdrawAmount={withdrawAmount}
           setWithdrawAmount={setWithdrawAmount}
-          tgBalance={userBalance}
-          fetchTGBalance={fetchTGBalance}
+          // tgBalance={userBalance}
+          // fetchTGBalance={fetchTGBalance}
         />
       </Card>
       <AlertEmail user_address={address || ""} />

@@ -14,14 +14,16 @@ import { Typography } from "../ui/Typography";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
+import { useTGBalance } from "@/contexts/TGBalanceContext";
+import { useAccount, useBalance } from "wagmi";
 
 interface TopUpTgDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stakeAmount: string;
   setStakeAmount: (value: string) => void;
-  accountBalance?: { formatted?: string; value?: bigint };
-  fetchTGBalance: () => Promise<void>;
+  // accountBalance?: { formatted?: string; value?: bigint };
+  // fetchTGBalance: () => Promise<void>;
 }
 
 const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
@@ -29,11 +31,16 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
   onOpenChange,
   stakeAmount,
   setStakeAmount,
-  accountBalance,
-  fetchTGBalance,
+  // accountBalance,
+  // fetchTGBalance,
 }) => {
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isStaking, setIsStaking] = useState(false);
+  const { fetchTGBalance } = useTGBalance();
+  const { address } = useAccount();
+  const { data: accountBalance } = useBalance({
+    address: address,
+  });
 
   // Wrapper to clear stakeAmount when dialog closes
   const handleOpenChange = (open: boolean) => {
@@ -68,6 +75,8 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
         value: stakeAmountInWei,
       });
       await tx.wait();
+      // Add a small delay to allow the node to update state
+      await new Promise((resolve) => setTimeout(resolve, 1200));
       await fetchTGBalance();
       toast.success("Top Up TG successful!");
       onOpenChange(false);
@@ -83,16 +92,10 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            <Typography variant="h3" color="white" align="left">
-              Top Up TG
-            </Typography>
-          </DialogTitle>
+          <DialogTitle>Top Up TG</DialogTitle>
           <DialogDescription>
-            <Typography variant="body" color="gray" align="left">
-              Exchange ETH to TG (Flue of your job) to automate jobs on TriggerX
-              1 ETH = 1000 TG
-            </Typography>
+            Exchange ETH to TG (Flue of your job) to automate jobs on TriggerX 1
+            ETH = 1000 TG
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleStake} className="space-y-6 ">
