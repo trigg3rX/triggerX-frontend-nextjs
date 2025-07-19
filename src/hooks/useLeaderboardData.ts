@@ -50,9 +50,7 @@ export default function useLeaderboardData(
         devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);
         const response = await fetch(apiUrl, {
           headers: {
-            ...(process.env.NODE_ENV !== "production" && {
-              "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-            }),
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
           },
         });
         devLog("[Leaderboard] Response status:", response.status);

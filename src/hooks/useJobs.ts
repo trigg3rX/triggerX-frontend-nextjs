@@ -91,9 +91,7 @@ export function useJobs() {
         devLog("[useJobs] Fetching jobs from:", apiUrl);
         const headers = {
           "Content-Type": "application/json",
-          ...(process.env.NODE_ENV !== "production" && {
-            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-          }),
+          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         };
         const response = await fetch(apiUrl, { headers });
 

@@ -30,9 +30,7 @@ export function useJobLogs(jobId: string | number | undefined) {
         }
         const response = await fetch(`${API_BASE_URL}/tasks/job/${jobId}`, {
           headers: {
-            ...(process.env.NODE_ENV !== "production" && {
-              "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-            }),
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
           },
         });
         console.log("Raw response:", response);

@@ -339,6 +339,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const { fetchTGBalance } = useTGBalance();
   const { stakeRegistryAddress } = useStakeRegistry();
 
+  // Refetch TG balance when selectedNetwork changes
+  React.useEffect(() => {
+    fetchTGBalance();
+  }, [selectedNetwork, fetchTGBalance]);
+
   const handleJobTypeChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, type: number) => {
       e.preventDefault();
@@ -851,9 +856,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       let totalFeeTG = 0;
       if (argType === 2) {
+        console.log("calculating fees for dynamic job");
         if (codeUrls) {
+          console.log("codeUrls", codeUrls);
           try {
             const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+            console.log(API_BASE_URL);
             if (!API_BASE_URL) {
               throw new Error(
                 "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
@@ -867,6 +875,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
               },
             );
+            console.log("response", response);
             if (!response.ok) throw new Error("Failed to get fees");
             const data = await response.json();
             if (data.error) throw new Error(data.error);
@@ -1016,10 +1025,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const headers = {
-        "Content-Type": "application/json",
-        ...(process.env.NODE_ENV !== "production" && {
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
-        }),
+        // "Content-Type": "application/json",
+        "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
       };
       let response;
       if (jobId) {

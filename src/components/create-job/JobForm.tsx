@@ -14,7 +14,6 @@ import { DeleteConfirmationButton } from "./form/DeleteConfirmationButton";
 import { Dropdown } from "../ui/Dropdown";
 import networksData from "@/utils/networks.json";
 import { validateJobForm } from "./validateJobForm";
-import { useAccount } from "wagmi";
 import JobFeeModal from "./JobFeeModal";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { LucideCopyButton } from "../ui/CopyButton";
@@ -100,19 +99,12 @@ export const JobForm: React.FC = () => {
     contractInteractions,
     contractErrors,
     setContractErrors,
-    recurring,
-    extractJobDetails,
-    getTimeframeInSeconds,
-    getIntervalInSeconds,
-    getNetworkIdByName,
-    estimateFee,
     estimatedFee,
     isModalOpen,
     setIsModalOpen,
     setEstimatedFee,
   } = useJobFormContext();
-  const { address: userAddress } = useAccount();
-  const networkId = getNetworkIdByName(selectedNetwork);
+
   const { isConnected } = useWalletConnectionContext();
 
   const searchParams = useSearchParams();
@@ -220,63 +212,9 @@ export const JobForm: React.FC = () => {
       return;
     }
     // If all validations pass:
-    const timeframeInSeconds = getTimeframeInSeconds(timeframe);
-    const intervalInSeconds = getIntervalInSeconds(timeInterval);
-    const jobDetails = [
-      extractJobDetails(
-        "contract",
-        contractInteractions,
-        jobTitle,
-        timeframeInSeconds,
-        intervalInSeconds,
-        recurring,
-        userAddress,
-        networkId,
-        jobType,
-      ),
-    ];
-    if (linkedJobs[jobType]?.length > 0) {
-      for (const jobId of linkedJobs[jobType]) {
-        const jobKey = `${jobType}-${jobId}`;
-        jobDetails.push(
-          extractJobDetails(
-            jobKey,
-            contractInteractions,
-            jobTitle,
-            timeframeInSeconds,
-            intervalInSeconds,
-            recurring,
-            userAddress,
-            networkId,
-            jobType,
-          ),
-        );
-      }
-    }
-    // Set upper_limit and lower_limit as numbers according to the rules
-    jobDetails.forEach((jobData) => {
-      jobData.upper_limit =
-        jobData.condition_type === "In Range" || jobData.upper_limit
-          ? String(parseFloat(jobData.upper_limit as string) || 0)
-          : "0";
-      jobData.lower_limit =
-        jobData.condition_type === "In Range"
-          ? String(parseFloat(jobData.lower_limit as string) || 0)
-          : "0";
-    });
-
-    // Save jobDetails for modal actions
     setEstimatedFee(0);
     setIsModalOpen(true);
-    // Start fee estimation
-    await estimateFee(
-      jobType,
-      timeframeInSeconds,
-      intervalInSeconds,
-      jobDetails[0].dynamic_arguments_script_url || "",
-      recurring,
-      Number(jobDetails[0].arg_type),
-    );
+    // Do NOT call estimateFee here. The modal will handle it.
   };
 
   return (

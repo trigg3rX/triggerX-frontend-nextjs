@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 export interface ApiKey {
   key: string;
   created: string;
+  created_at?: string;
+  last_used?: string;
   rateLimit: string;
   status: string;
 }
@@ -13,6 +15,8 @@ interface ApiKeyResponse {
   key?: string;
   apiKey?: string;
   created?: string;
+  created_at?: string;
+  last_used?: string;
   rate_limit?: number;
   rateLimit?: number;
   status?: string;
@@ -80,7 +84,10 @@ export function useApiKeys(address?: string) {
         setApiKeys(
           data.map((item: ApiKeyResponse) => ({
             key: item.key || item.apiKey || "",
-            created: item.created || new Date().toLocaleString(),
+            created:
+              item.created || item.created_at || new Date().toLocaleString(),
+            created_at: item.created_at,
+            last_used: item.last_used,
             rateLimit:
               (item.rate_limit || item.rateLimit || 20) + " requests/min",
             status: item.status || "Active",
@@ -91,7 +98,10 @@ export function useApiKeys(address?: string) {
         setApiKeys([
           {
             key: data.key || data.apiKey || "",
-            created: data.created || new Date().toLocaleString(),
+            created:
+              data.created || data.created_at || new Date().toLocaleString(),
+            created_at: data.created_at,
+            last_used: data.last_used,
             rateLimit:
               (data.rate_limit || data.rateLimit || 20) + " requests/min",
             status: data.status || "Active",
