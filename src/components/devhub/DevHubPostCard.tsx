@@ -49,7 +49,7 @@ const DevHubPostCard: React.FC<DevHubPostCardProps> = ({ post }) => {
           {post.title || "Untitled Post"}
         </Typography>
 
-        <div className="flex items-center group-hover:text-[#FBF197] transition-colors duration-200 mt-auto pt-3 pb-1 ">
+        <div className="flex items-center group-hover:text-[#FBF197] transition-colors duration-200  pt-3 pb-1 ">
           <Typography
             variant="body"
             className="mr-2 group-hover:text-[#FBF197] transition-colors duration-200"

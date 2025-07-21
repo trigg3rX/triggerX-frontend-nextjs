@@ -4,8 +4,9 @@ import Skeleton from "../ui/Skeleton";
 const LeaderboardSkeleton: React.FC = () => {
   return (
     <div className="w-[90%] mx-auto">
-      {/* Title Skeleton */}
-      <Skeleton width="40%" height={60} borderRadius={12} className="mx-auto" />
+      <div className="md:w-[40%] mx-auto w-full ">
+        <Skeleton height={60} borderRadius={12} />
+      </div>
 
       <div className="flex justify-between my-6 lg:flex-row flex-col gap-4">
         <div>

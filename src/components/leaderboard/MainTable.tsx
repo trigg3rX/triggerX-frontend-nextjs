@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "./Table";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, ExternalLink } from "lucide-react";
 import { useState, useMemo } from "react";
 import { LucideCopyButton } from "../ui/CopyButton";
 import { TablePagination } from "../ui/TablePagination";
@@ -244,7 +244,7 @@ export default function MainTable({
                             if (onViewProfile) onViewProfile(item.address);
                           }}
                         >
-                          View
+                          <ExternalLink className="inline w-5 h-5 align-middle" />
                         </span>
                       </Typography>
                     </TableCell>

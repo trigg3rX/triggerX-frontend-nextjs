@@ -4,9 +4,9 @@ import Skeleton from "@/components/ui/Skeleton";
 const DashboardSkeleton = () => {
   return (
     <div className="w-[90%] mx-auto">
-      <Skeleton width="40%" height={60} borderRadius={12} className="mx-auto" />
-
-      <Skeleton height={50} width={300} borderRadius={12} className="my-6" />
+      <div className="md:w-[40%] mx-auto w-full ">
+        <Skeleton height={60} borderRadius={12} />
+      </div>
       <div className="flex justify-evenly gap-5 lg:flex-row flex-col my-6">
         <div className="xl:w-[73%] lg:w-[70%] w-full">
           {/* ActiveJobs Skeleton */}
