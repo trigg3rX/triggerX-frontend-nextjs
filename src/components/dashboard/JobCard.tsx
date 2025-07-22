@@ -297,7 +297,38 @@ const JobCard: React.FC<JobCardProps> = ({
                 // disabled={disableUpdate}
                 onClick={() => {
                   if (!disableUpdate) {
-                    router.push(`/?jobId=${job.id}`);
+                    // Log old job details for update
+                    const oldJobDetails = {
+                      jobId: job.id,
+                      oldJobName: job.jobTitle,
+                      jobType: job.taskDefinitionId,
+                      oldTimeFrame: job.timeFrame,
+                      targetContract: job.targetContractAddress,
+                      oldData: JSON.stringify({
+                        targetFunction: job.targetFunction,
+                        argType: job.argType,
+                        timeInterval: job.timeInterval,
+                        // Add more fields as needed
+                      }),
+                    };
+                    console.log(
+                      "[UpdateButton] Old job details:",
+                      oldJobDetails,
+                    );
+                    // Build query string with old job details
+                    const query = new URLSearchParams({
+                      jobId: String(job.id),
+                      oldJobName: job.jobTitle,
+                      jobType: job.taskDefinitionId,
+                      oldTimeFrame: job.timeFrame,
+                      targetContract: job.targetContractAddress,
+                      oldData: JSON.stringify({
+                        targetFunction: job.targetFunction,
+                        argType: job.argType,
+                        timeInterval: job.timeInterval,
+                      }),
+                    }).toString();
+                    router.push(`/?${query}`);
                   }
                 }}
                 className={`p-2 bg-[#C07AF6] rounded-full text-white ${disableUpdate ? "cursor-not-allowed" : "cursor-pointer"} hover:bg-[#a46be0] transition-colors`}

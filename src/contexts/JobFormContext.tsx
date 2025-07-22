@@ -9,6 +9,7 @@ import { useTGBalance } from "./TGBalanceContext";
 import toast from "react-hot-toast";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { devLog } from "@/lib/devLog";
+import JobRegistryArtifact from "@/artifacts/JobRegistry.json";
 
 interface ABIItem {
   type: string;
@@ -152,6 +153,34 @@ function getTaskDefinitionId(argumentType: string, jobType: number): number {
 
 function getArgType(argumentType: string): number {
   return argumentType === "static" ? 1 : 2;
+}
+
+// 1. Add encoding utility functions at the top (after imports):
+
+function toBytes32(ipfsHash: string): string {
+  // If already 66 chars (0x + 64 hex), return as is
+  if (/^0x[0-9a-fA-F]{64}$/.test(ipfsHash)) return ipfsHash;
+  // Otherwise, hash the string (keccak256)
+  return ethers.keccak256(ethers.toUtf8Bytes(ipfsHash));
+}
+
+function encodeJobType1Data(timeInterval: number) {
+  return ethers.AbiCoder.defaultAbiCoder().encode(["uint256"], [timeInterval]);
+}
+function encodeJobType2Data(timeInterval: number, ipfsHash: string) {
+  return ethers.AbiCoder.defaultAbiCoder().encode(
+    ["uint256", "bytes32"],
+    [timeInterval, toBytes32(ipfsHash)],
+  );
+}
+function encodeJobType3or5Data(recurringJob: boolean) {
+  return ethers.AbiCoder.defaultAbiCoder().encode(["bool"], [recurringJob]);
+}
+function encodeJobType4or6Data(recurringJob: boolean, ipfsHash: string) {
+  return ethers.AbiCoder.defaultAbiCoder().encode(
+    ["bool", "bytes32"],
+    [recurringJob, toBytes32(ipfsHash)],
+  );
 }
 
 export interface JobFormContextType {
@@ -1000,22 +1029,224 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         allJobDetails.push(jobDetails);
       });
 
-      // Add job cost prediction to all job details
-      const updatedJobDetails = allJobDetails.map((jobDetail) => ({
+      const updatedJobDetails: Array<
+        Omit<JobDetails, "job_id"> & { job_id?: number }
+      > = allJobDetails.map((jobDetail) => ({
         ...jobDetail,
         job_cost_prediction: estimatedFee,
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
-        job_id:
-          jobDetail.job_id && String(jobDetail.job_id).length > 0
-            ? jobDetail.job_id
-            : Math.floor(10000 + Math.random() * 90000), // 5-digit random number
+        // job_id will be set after contract call using the returned value
+        job_id: undefined,
       }));
+
+      // --- ENCODING LOGIC FOR CONTRACT CALL ---
+      let encodedData: string = "0x";
+      if (updatedJobDetails.length > 0) {
+        const jd = updatedJobDetails[0];
+        if (jobType === 1) {
+          encodedData = encodeJobType1Data(jd.time_interval);
+        } else if (jobType === 2) {
+          encodedData = encodeJobType2Data(
+            jd.time_interval,
+            jd.dynamic_arguments_script_url || "",
+          );
+        } else if (jobType === 3 || jobType === 5) {
+          encodedData = encodeJobType3or5Data(jd.recurring);
+        } else if (jobType === 4 || jobType === 6) {
+          encodedData = encodeJobType4or6Data(
+            jd.recurring,
+            jd.dynamic_arguments_script_url || "",
+          );
+        }
+
+        // --- ACTUAL CONTRACT CALL ---
+        try {
+          if (jobId) {
+            console.log("[JobForm] jobId exists (update mode):", jobId);
+            const urlParams = new URLSearchParams(window.location.search);
+            const oldJobName = urlParams.get("oldJobName") || "";
+            const oldJobType = urlParams.get("jobType") || "";
+            const oldTimeFrame = urlParams.get("oldTimeFrame") || "";
+            const oldTargetContract = urlParams.get("targetContract") || "";
+            let oldDataDecoded: OldDataDecoded = {};
+            try {
+              oldDataDecoded =
+                JSON.parse(urlParams.get("oldData") || "{}") || {};
+            } catch {}
+
+            // Map string jobType to number
+            const triggerTypeMap: Record<string, number> = {
+              "Time-based": 1,
+              "Condition-based": 2,
+              "Event-based": 3,
+            };
+            const oldJobTypeNum = triggerTypeMap[oldJobType] || 1;
+
+            // Encode oldData using the same logic as newData
+            let oldEncodedData = "0x";
+            if (oldJobTypeNum === 1) {
+              oldEncodedData = encodeJobType1Data(
+                Number(oldDataDecoded.timeInterval ?? 0),
+              );
+            } else if (oldJobTypeNum === 2) {
+              oldEncodedData = encodeJobType2Data(
+                Number(oldDataDecoded.timeInterval ?? 0),
+                oldDataDecoded.dynamic_arguments_script_url ?? "",
+              );
+            } else if (oldJobTypeNum === 3 || oldJobTypeNum === 5) {
+              oldEncodedData = encodeJobType3or5Data(
+                Boolean(oldDataDecoded.recurring ?? false),
+              );
+            } else if (oldJobTypeNum === 4 || oldJobTypeNum === 6) {
+              oldEncodedData = encodeJobType4or6Data(
+                Boolean(oldDataDecoded.recurring ?? false),
+                oldDataDecoded.dynamic_arguments_script_url ?? "",
+              );
+            }
+
+            // New values from form state
+            const newJobName = jd.job_title;
+            const newTimeFrame = jd.time_frame;
+            const newEncodedData = encodedData;
+
+            // Print in required format
+            console.log("[JobForm] updateJob arguments:", {
+              jobId,
+              oldJobName,
+              jobType: oldJobTypeNum,
+              oldTimeFrame,
+              targetContract: oldTargetContract,
+              oldData: oldEncodedData,
+              newJobName,
+              newTimeFrame,
+              newData: newEncodedData,
+            });
+
+            // Call updateJob on the contract
+            const jobCreationAddress =
+              process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
+            if (!jobCreationAddress)
+              throw new Error("Job creation contract address not set in env");
+            const jobContract = new ethers.Contract(
+              jobCreationAddress,
+              JobRegistryArtifact.abi,
+              signer,
+            );
+            console.log(
+              "[JobForm] Calling updateJob on contract:",
+              jobCreationAddress,
+            );
+            console.log("[JobForm] updateJob Arguments:", {
+              jobId,
+              oldJobName,
+              jobType: oldJobTypeNum,
+              oldTimeFrame: Number(oldTimeFrame),
+              oldTargetContract: oldTargetContract,
+              oldData: oldEncodedData,
+              newJobName,
+              newTimeFrame: Number(newTimeFrame),
+              newData: newEncodedData,
+            });
+            // Log how job_id is set
+            console.log(
+              `[JobForm] job_id will be set from contract event after creation. Current value:`,
+              jd.job_id,
+            );
+            const tx = await jobContract.updateJob(
+              jobId,
+              oldJobName,
+              oldJobTypeNum,
+              Number(oldTimeFrame),
+              oldTargetContract,
+              oldEncodedData,
+              newJobName,
+              newTimeFrame,
+              newEncodedData,
+            );
+            console.log("[JobForm] updateJob tx sent:", tx.hash);
+            const receipt = await tx.wait();
+            console.log(
+              "[JobForm] updateJob tx confirmed:",
+              receipt.transactionHash,
+            );
+            // Optionally, handle receipt and events for updateJob if needed
+          } else {
+            const jobCreationAddress =
+              process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
+            if (!jobCreationAddress)
+              throw new Error("Job creation contract address not set in env");
+            const jobContract = new ethers.Contract(
+              jobCreationAddress,
+              JobRegistryArtifact.abi,
+              signer,
+            );
+            const tx = await jobContract.createJob(
+              jd.job_title,
+              jobType,
+              jd.time_frame,
+              jd.target_contract_address,
+              encodedData,
+            );
+            console.log("[JobForm] createJob tx sent:", tx.hash);
+            const receipt = await tx.wait();
+            console.log(
+              "[JobForm] createJob tx confirmed:",
+              receipt.transactionHash,
+            );
+            // Try to get jobId from event
+            const jobCreatedEvent = receipt.logs
+              .map((log: unknown) => {
+                try {
+                  return jobContract.interface.parseLog(
+                    log as unknown as Parameters<
+                      typeof jobContract.interface.parseLog
+                    >[0],
+                  );
+                } catch {
+                  return null;
+                }
+              })
+              .find(
+                (
+                  parsed: unknown,
+                ): parsed is {
+                  name: string;
+                  args: { jobId?: { toString: () => string } };
+                } => {
+                  return (
+                    !!parsed &&
+                    typeof (parsed as { name?: string }).name === "string" &&
+                    (parsed as { name: string }).name === "JobCreated"
+                  );
+                },
+              );
+
+            if (jobCreatedEvent) {
+              const returnedJobId = jobCreatedEvent.args.jobId?.toString();
+              console.log("[JobForm] JobCreated event: jobId=", returnedJobId);
+              // Set job_id in updatedJobDetails[0]
+              updatedJobDetails[0].job_id = returnedJobId
+                ? Number(returnedJobId)
+                : undefined;
+            } else {
+              console.log("[JobForm] No JobCreated event found in logs.");
+            }
+            devLog("Job creation transaction confirmed: ", tx.hash);
+          }
+        } catch (err) {
+          devLog("Error calling createJob contract: ", err);
+          toast.error("Error creating job on-chain");
+          setIsSubmitting(false);
+          return false;
+        }
+        // --- END CONTRACT CALL ---
+      }
+      // --- END ENCODING LOGIC ---
 
       // For update, ensure job_id is set to jobId from URL
       if (jobId && updatedJobDetails[0]) {
         updatedJobDetails[0].job_id = Number(jobId);
       }
-
       devLog("Submitting job details:", updatedJobDetails);
 
       // Create or update job via API
@@ -1025,7 +1256,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const headers = {
-        // "Content-Type": "application/json",
         "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
       };
       let response;
@@ -1242,3 +1472,9 @@ export const useJobForm = () => {
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection:", reason);
 });
+
+type OldDataDecoded = {
+  timeInterval?: number | string;
+  dynamic_arguments_script_url?: string;
+  recurring?: boolean;
+};

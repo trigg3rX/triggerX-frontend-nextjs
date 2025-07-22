@@ -101,7 +101,7 @@ const DevHubPostContainer = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="bg-[#131313] rounded-3xl border border-gray-700 p-6 w-[90%] mx-auto">
+      <div className="bg-[#131313] rounded-3xl border border-gray-700 p-6">
         <div className="mb-4 sm:mb-8">
           {imageUrl ? (
             <div className="w-[95%] mx-auto rounded-3xl overflow-hidden h-max">
@@ -121,7 +121,7 @@ const DevHubPostContainer = () => {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-2 md:gap-8 w-[87%] mx-auto">
+      <div className="flex flex-col md:flex-row gap-2 md:gap-8 ">
         {/* Table of Content */}
         <aside className="w-full md:w-1/4 min-w-[180px] lg:min-w-[230px] md:sticky top-24 h-full">
           {/* Mobile Dropdown */}

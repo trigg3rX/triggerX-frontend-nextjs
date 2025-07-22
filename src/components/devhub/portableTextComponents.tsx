@@ -15,6 +15,11 @@ import {
   PortableTextMarkDefinition,
 } from "@/types/sanity";
 import CodeBlockWithCopy from "../common/CodeBlockWithCopy";
+import { Typography } from "../ui/Typography";
+import { FiChevronDown } from "react-icons/fi";
+import { Button } from "../ui/Button";
+import Link from "next/link";
+import { Card } from "../ui/Card";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractText(children: any): string {
@@ -34,18 +39,19 @@ function CodeBlock({ value }: { value: PortableTextCodeBlock }) {
 const ButtonLink = ({ value }: { value: PortableTextButtonLinkBlock }) => {
   if (!value?.url || !value?.text) return null;
   return (
-    <div className="my-8 flex justify-start relative bg-[#222222] text-black border border-black px-6 py-2 sm:px-8 sm:py-3 rounded-full group transition-transform w-max">
-      <span className="absolute inset-0 bg-[#222222] border border-[#FFFFFF80]/50 rounded-full scale-100 translate-y-0 transition-all duration-300 ease-out group-hover:translate-y-2"></span>
-      <span className="absolute inset-0 bg-white rounded-full scale-100 translate-y-0 group-hover:translate-y-0"></span>
-      <a
-        href={value.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="relative z-10 text-black font-semibold text-lg"
+    <Link
+      href={value.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-max"
+    >
+      <Button
+        color="white"
+        className="font-semibold text-lg px-6 py-2 sm:px-8 sm:py-3"
       >
         {value.text}
-      </a>
-    </div>
+      </Button>
+    </Link>
   );
 };
 
@@ -54,14 +60,14 @@ const Disclaimer = ({ value }: { value: PortableTextDisclaimerBlock }) => {
   return (
     <div className="rounded-2xl bg-[#F9FFE1] p-6 my-8 text-black shadow">
       <div className="flex items-center mb-3">
-        <FaExclamationTriangle className="text-red-500 mr-3 text-xl flex-shrink-0" />
-        <h3 className="font-bold text-lg text-black">
+        <FaExclamationTriangle className="text-red-500 mr-3 text-xl flex-shrink-0 mb-1" />
+        <Typography variant="h2" color="black">
           {value.title || "Disclaimer"}
-        </h3>
+        </Typography>
       </div>
-      <p className="text-base text-gray-800 leading-relaxed whitespace-pre-wrap">
+      <Typography variant="body" color="black" align="left">
         {value.text}
-      </p>
+      </Typography>
     </div>
   );
 };
@@ -79,16 +85,13 @@ const StepsAccordion = ({
   return (
     <div className="my-10">
       {value.heading && (
-        <h2 className="text-xl font-bold text-white mb-6 uppercase tracking-widest">
+        <Typography variant="h2" align="left" color="black">
           {value.heading}
-        </h2>
+        </Typography>
       )}
       <div className="space-y-3">
         {value.steps.map((step: AccordionStep, index: number) => (
-          <div
-            key={step._key || index}
-            className="bg-[#242323] rounded-xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300"
-          >
+          <Card key={step._key || index} className="!p-2">
             <button
               onClick={() => toggleStep(index)}
               className="w-full flex justify-between items-center px-5 py-4 text-left text-white"
@@ -96,24 +99,15 @@ const StepsAccordion = ({
               aria-controls={`step-content-${index}`}
             >
               {" "}
-              <span className="font-medium text-base md:text-lg flex items-center">
+              <Typography
+                variant="h3"
+                align="left"
+                className="max-w-[90%] !text-wrap"
+              >
                 <span className="mr-3 text-gray-400">{index + 1}</span>{" "}
                 {step.title || `Step ${index + 1}`}
-              </span>
-              <svg
-                className={`w-5 h-5 transform transition-transform duration-300 text-gray-400 ${openSteps[index] ? "rotate-180" : "rotate-0"}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                ></path>
-              </svg>
+              </Typography>
+              <FiChevronDown />
             </button>
             <div
               id={`step-content-${index}`}
@@ -128,7 +122,7 @@ const StepsAccordion = ({
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
