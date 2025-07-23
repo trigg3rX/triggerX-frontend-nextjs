@@ -67,6 +67,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   const [jobCreateFailed, setJobCreateFailed] = useState(false);
   const searchParams = useSearchParams();
   const jobId = searchParams.get("jobId");
+  const isUpdateMode = Boolean(jobId);
 
   // Stepper state
   const [currentStep, setCurrentStep] = useState(0);
@@ -412,13 +413,17 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
             variant="h3"
             className="text-white text-lg sm:text-xl text-center"
           >
-            Job Created Successfully!
+            {isUpdateMode
+              ? "Job Updated Successfully!"
+              : "Job Created Successfully!"}
           </Typography>
           <Typography
             variant="body"
             className="text-gray-400 text-center text-sm sm:text-base"
           >
-            Your job has been created and is now active.
+            {isUpdateMode
+              ? "Your job has been updated."
+              : "Your job has been created and is now active."}
           </Typography>
           <Button onClick={handleDashboardClick} className="mb-5">
             Go to Dashboard
