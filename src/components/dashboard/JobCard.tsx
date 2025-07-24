@@ -1,12 +1,16 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "../common/TooltipWrap";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import details from "../../assets/leaderboard/details.svg";
 import update from "../../assets/leaderboard/update.svg";
 import deleteIcon from "../../assets/leaderboard/delete.svg"; // Assuming you have a delete icon in your assets
+import networksData from "@/utils/networks.json";
+import { useChainId, useSwitchChain } from "wagmi";
+import Modal from "../ui/Modal";
+import { Button } from "../ui/Button";
 
 export type JobType = {
   id: number;
@@ -22,6 +26,7 @@ export type JobType = {
   targetFunction: string;
   targetChainId: string;
   linkedJobs?: JobType[];
+  created_chain_id: string;
 };
 
 type JobCardProps = {
@@ -99,6 +104,30 @@ const JobCard: React.FC<JobCardProps> = ({
   isLogOpen = false,
 }) => {
   const router = useRouter();
+  const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
+  const [showUpdateWarning, setShowUpdateWarning] = useState(false);
+  const [pendingRoute, setPendingRoute] = useState<string | null>(null);
+
+  const isNetworkMismatch =
+    chainId !== undefined && Number(job.created_chain_id) !== Number(chainId);
+
+  // Effect to handle reroute after network switch
+  useEffect(() => {
+    if (!isNetworkMismatch && pendingRoute) {
+      router.push(pendingRoute);
+      setPendingRoute(null);
+    }
+  }, [isNetworkMismatch, pendingRoute, router]);
+
+  const handleClose = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    setShowUpdateWarning(false);
+  };
+
+  const neededNetwork = networksData.supportedNetworks.find(
+    (n) => Number(job.created_chain_id) === n.id,
+  );
 
   return (
     <Card
@@ -119,22 +148,83 @@ const JobCard: React.FC<JobCardProps> = ({
     >
       <div>
         <div
-          className={`flex justify-between items-center mb-4 p-3  ${expanded || isLogOpen ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
+          className={`flex items-center mb-4 p-3 relative ${expanded || isLogOpen ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
         >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Typography
-                variant="h4"
-                color="yellow"
-                align="left"
-                className="font-bold max-w-[200px] truncate block"
-              >
-                {truncateText(job.jobTitle)}
-              </Typography>
-            </TooltipTrigger>
-            <TooltipContent>{job.jobTitle}</TooltipContent>
-          </Tooltip>
-          <div
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Typography
+                  variant="h4"
+                  color="yellow"
+                  align="left"
+                  className="font-bold max-w-[200px] truncate block"
+                >
+                  {truncateText(job.jobTitle)}
+                </Typography>
+              </TooltipTrigger>
+              <TooltipContent>{job.jobTitle}</TooltipContent>
+            </Tooltip>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Linked jobs button/placeholder */}
+            {job.linkedJobs && job.linkedJobs.length > 0 ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleExpand(job.id);
+                    }}
+                    className="p-2  rounded-full text-white hover:bg-[#3A3A3A] transition-colors bg-[#2a2a2a] border-[#FFFFFF] border"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={`transition-transform duration-300 w-3 h-3 ${expanded ? "rotate-180" : ""}`}
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Linked Jobs</TooltipContent>
+              </Tooltip>
+            ) : (
+              // Placeholder to keep header height consistent
+              <div style={{ width: 32, height: 32 }}></div>
+            )}
+            {/* Network Icon right after linked jobs button */}
+            {(() => {
+              const network = networksData.supportedNetworks.find(
+                (n) => Number(job.targetChainId) === n.id,
+              );
+              const icon = network
+                ? networksData.networkIcons[network.name]
+                : null;
+              return icon ? (
+                <svg
+                  viewBox={icon.viewBox}
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d={icon.path}
+                    fill="currentColor"
+                  />
+                </svg>
+              ) : null;
+            })()}
+          </div>
+          {/* <div
             style={{
               width: 40,
               display: "flex",
@@ -174,7 +264,7 @@ const JobCard: React.FC<JobCardProps> = ({
               // Placeholder to keep header height consistent
               <div style={{ width: 32, height: 32 }}></div>
             )}
-          </div>
+          </div> */}
         </div>
         <div className={` space-y-2  px-3 `}>
           <div className="flex items-center justify-between gap-2 py-1.5">
@@ -294,41 +384,28 @@ const JobCard: React.FC<JobCardProps> = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                // disabled={disableUpdate}
-                onClick={() => {
-                  if (!disableUpdate) {
-                    // Log old job details for update
-                    const oldJobDetails = {
-                      jobId: job.id,
-                      oldJobName: job.jobTitle,
-                      jobType: job.taskDefinitionId,
-                      oldTimeFrame: job.timeFrame,
-                      targetContract: job.targetContractAddress,
-                      oldData: JSON.stringify({
-                        targetFunction: job.targetFunction,
-                        argType: job.argType,
-                        timeInterval: job.timeInterval,
-                        // Add more fields as needed
-                      }),
-                    };
-                    console.log(
-                      "[UpdateButton] Old job details:",
-                      oldJobDetails,
-                    );
-                    // Build query string with old job details
-                    const query = new URLSearchParams({
-                      jobId: String(job.id),
-                      oldJobName: job.jobTitle,
-                      jobType: job.taskDefinitionId,
-                      oldTimeFrame: job.timeFrame,
-                      targetContract: job.targetContractAddress,
-                      oldData: JSON.stringify({
-                        targetFunction: job.targetFunction,
-                        argType: job.argType,
-                        timeInterval: job.timeInterval,
-                      }),
-                    }).toString();
-                    router.push(`/?${query}`);
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Build query string with old job details
+                  const query = new URLSearchParams({
+                    jobId:
+                      typeof job.id === "string" ? job.id : job.id?.toString(),
+                    oldJobName: job.jobTitle,
+                    jobType: job.taskDefinitionId,
+                    oldTimeFrame: job.timeFrame,
+                    targetContract: job.targetContractAddress,
+                    oldData: JSON.stringify({
+                      targetFunction: job.targetFunction,
+                      argType: job.argType,
+                      timeInterval: job.timeInterval,
+                    }),
+                  }).toString();
+                  const route = `/?${query}`;
+                  if (!disableUpdate && !isNetworkMismatch) {
+                    router.push(route);
+                  } else {
+                    setPendingRoute(route);
+                    setShowUpdateWarning(true);
                   }
                 }}
                 className={`p-2 bg-[#C07AF6] rounded-full text-white ${disableUpdate ? "cursor-not-allowed" : "cursor-pointer"} hover:bg-[#a46be0] transition-colors`}
@@ -369,6 +446,41 @@ const JobCard: React.FC<JobCardProps> = ({
             </TooltipContent>
           </Tooltip>
         </div>
+
+        <Modal isOpen={showUpdateWarning} onClose={handleClose}>
+          <div className="p-4 text-center space-y-4">
+            <Typography variant="h2" color="yellow">
+              Network Mismatch
+            </Typography>
+            <Typography variant="h3" color="white" className="!text-wrap">
+              Please switch to the{" "}
+              {neededNetwork ? neededNetwork.name : job.created_chain_id} to
+              continue.
+            </Typography>
+            <div className="flex items-center justify-center gap-4 ">
+              <Button
+                onClick={handleClose}
+                style={{ minWidth: 140 }}
+                disabled={isSwitching}
+              >
+                Cancel
+              </Button>
+              <Button
+                color="yellow"
+                style={{ minWidth: 140 }}
+                onClick={() => {
+                  if (switchChain && neededNetwork) {
+                    switchChain({ chainId: neededNetwork.id });
+                  }
+                  setShowUpdateWarning(false);
+                }}
+                disabled={!switchChain || !neededNetwork || isSwitching}
+              >
+                {isSwitching ? "Switching..." : `Change Network`}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       </div>
     </Card>
   );

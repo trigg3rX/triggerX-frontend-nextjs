@@ -18,6 +18,19 @@ const customTheme = darkTheme({
   overlayBlur: "small",
 });
 
+function InnerProviders({ children }: { children: React.ReactNode }) {
+  const { stakeRegistryAddress } = useStakeRegistry();
+  if (!stakeRegistryAddress) return null; // or a loading spinner
+
+  return (
+    <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
+      <WalletConnectionProvider>
+        <WalletProvider>{children}</WalletProvider>
+      </WalletConnectionProvider>
+    </TGBalanceProvider>
+  );
+}
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   // Create QueryClient inside the component to prevent re-initialization
   const [queryClient] = useState(
@@ -32,18 +45,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
-  const { stakeRegistryAddress } = useStakeRegistry();
-  if (!stakeRegistryAddress) return null; // or a loading spinner
-
   return (
     <QueryClientProvider client={queryClient}>
       <WagmiProvider config={config}>
         <RainbowKitProvider theme={customTheme}>
-          <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
-            <WalletConnectionProvider>
-              <WalletProvider>{children}</WalletProvider>
-            </WalletConnectionProvider>
-          </TGBalanceProvider>
+          <InnerProviders>{children}</InnerProviders>
         </RainbowKitProvider>
       </WagmiProvider>
     </QueryClientProvider>

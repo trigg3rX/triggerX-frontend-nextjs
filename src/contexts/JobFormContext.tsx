@@ -47,7 +47,7 @@ export type JobDetails = {
   condition_type?: string;
   upper_limit?: string;
   lower_limit?: string;
-  job_id?: number; // <-- add this line
+  job_id?: string; // <-- add this line
 };
 
 function extractJobDetails(
@@ -1030,13 +1030,14 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       const updatedJobDetails: Array<
-        Omit<JobDetails, "job_id"> & { job_id?: number }
+        Omit<JobDetails, "job_id"> & { job_id?: string }
       > = allJobDetails.map((jobDetail) => ({
         ...jobDetail,
         job_cost_prediction: estimatedFee,
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
         // job_id will be set after contract call using the returned value
         job_id: undefined,
+        created_chain_id: networkId.toString(),
       }));
 
       // --- ENCODING LOGIC FOR CONTRACT CALL ---
@@ -1222,12 +1223,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               );
 
             if (jobCreatedEvent) {
-              const returnedJobId = jobCreatedEvent.args.jobId?.toString();
-              console.log("[JobForm] JobCreated event: jobId=", returnedJobId);
-              // Set job_id in updatedJobDetails[0]
-              updatedJobDetails[0].job_id = returnedJobId
-                ? Number(returnedJobId)
-                : undefined;
+              // const returnedJobId = jobCreatedEvent.args.jobId?.toString();
+              const returnedJobId = jobCreatedEvent.args.jobId?.toString(); // this is fine
+              updatedJobDetails[0].job_id = returnedJobId;
             } else {
               console.log("[JobForm] No JobCreated event found in logs.");
             }
@@ -1245,7 +1243,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // For update, ensure job_id is set to jobId from URL
       if (jobId && updatedJobDetails[0]) {
-        updatedJobDetails[0].job_id = Number(jobId);
+        updatedJobDetails[0].job_id = jobId;
       }
       devLog("Submitting job details:", updatedJobDetails);
 

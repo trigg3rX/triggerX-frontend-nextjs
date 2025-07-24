@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Dropdown } from "../../ui/Dropdown";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import networksData from "@/utils/networks.json";
+import { useChainId } from "wagmi";
 
 const networkIcons = Object.fromEntries(
   Object.entries(networksData.networkIcons).map(([name, icon]) => [
@@ -22,23 +23,28 @@ const networkIcons = Object.fromEntries(
   ]),
 );
 
-export const NetworkSelector = ({
-  disabled = false,
-}: {
-  disabled?: boolean;
-}) => {
+export const NetworkSelector = () => {
   const { selectedNetwork, setSelectedNetwork } = useJobFormContext();
+  const chainId = useChainId();
+
+  // Pre-select network from connected wallet's chainId
+  useEffect(() => {
+    const found = networksData.supportedNetworks.find((n) => n.id === chainId);
+    if (found && selectedNetwork !== found.name) {
+      setSelectedNetwork(found.name);
+    }
+    // Only set on mount or when chainId changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chainId]);
 
   return (
     <Dropdown
       label="Network"
       options={networksData.supportedNetworks}
       selectedOption={selectedNetwork}
-      onChange={
-        disabled ? () => {} : (option) => setSelectedNetwork(option.name)
-      }
+      onChange={() => {}}
       icons={networkIcons}
-      disabled={disabled}
+      disabled={true}
     />
   );
 };

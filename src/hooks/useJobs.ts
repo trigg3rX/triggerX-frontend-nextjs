@@ -15,6 +15,7 @@ export type JobType = {
   createdAt: string;
   targetFunction: string;
   targetChainId: string;
+  created_chain_id: string; // <-- add this
   linkedJobs?: JobType[];
   type: string;
 };
@@ -38,6 +39,7 @@ interface RawJobData {
     task_ids?: string[];
     fee_used?: string;
     status: string;
+    created_chain_id?: string; // <-- add this
   };
   time_job_data?: Record<string, unknown>;
   event_job_data?: Record<string, unknown>;
@@ -162,6 +164,12 @@ export function useJobs() {
                   typeof typeSpecificData.target_chain_id === "string"
                     ? typeSpecificData.target_chain_id
                     : String(typeSpecificData.target_chain_id ?? ""),
+                created_chain_id:
+                  typeof nextJob.job_data.created_chain_id !== "undefined"
+                    ? String(nextJob.job_data.created_chain_id)
+                    : typeof typeSpecificData.target_chain_id === "string"
+                      ? typeSpecificData.target_chain_id
+                      : String(typeSpecificData.target_chain_id ?? ""),
                 linkedJobs: [],
                 type: mapJobType(nextJob.job_data.task_definition_id),
               };
@@ -219,6 +227,12 @@ export function useJobs() {
                 typeof typeSpecificData.target_chain_id === "string"
                   ? typeSpecificData.target_chain_id
                   : String(typeSpecificData.target_chain_id ?? ""),
+              created_chain_id:
+                typeof jobDetail.job_data.created_chain_id !== "undefined"
+                  ? String(jobDetail.job_data.created_chain_id)
+                  : typeof typeSpecificData.target_chain_id === "string"
+                    ? typeSpecificData.target_chain_id
+                    : String(typeSpecificData.target_chain_id ?? ""),
               type: mapJobType(jobDetail.job_data.task_definition_id),
             };
           });

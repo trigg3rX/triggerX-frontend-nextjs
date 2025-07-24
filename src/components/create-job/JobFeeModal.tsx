@@ -61,6 +61,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   const { address, chain } = useAccount();
   const prevAddress = useRef<string | undefined>(address);
   const [topUpFailed, setTopUpFailed] = useState(false);
+  const [isCheckingBalance, setIsCheckingBalance] = useState(false);
   const { data: ethBalance } = useBalance({
     address,
   });
@@ -212,8 +213,27 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     } else {
       const success = await handleStakeTG();
       setTopUpFailed(!success);
+      if (success) {
+        setIsCheckingBalance(true);
+      }
     }
   };
+
+  // Poll TG balance after top-up until hasEnoughBalance is true
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    if (isCheckingBalance && !hasEnoughBalance) {
+      interval = setInterval(() => {
+        fetchTGBalance();
+      }, 1200);
+    }
+    if (isCheckingBalance && hasEnoughBalance) {
+      setIsCheckingBalance(false);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isCheckingBalance, hasEnoughBalance, fetchTGBalance]);
 
   useEffect(() => {
     if (!isOpen) setTopUpFailed(false);
@@ -326,6 +346,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                 onClick={handleStake}
                 disabled={
                   isSubmitting ||
+                  isCheckingBalance ||
                   (!hasEnoughEthToStake && !topUpFailed) ||
                   !estimatedFee
                 }
@@ -333,11 +354,13 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               >
                 {isSubmitting
                   ? "Topping Up..."
-                  : topUpFailed
-                    ? "Try Again"
-                    : hasEnoughEthToStake && !hasEnoughBalance
-                      ? "Top Up TG"
-                      : "Insufficient ETH"}
+                  : isCheckingBalance
+                    ? "Checking TG Balance..."
+                    : topUpFailed
+                      ? "Try Again"
+                      : hasEnoughEthToStake && !hasEnoughBalance
+                        ? "Top Up TG"
+                        : "Insufficient ETH"}
               </Button>
             )}
             <Button

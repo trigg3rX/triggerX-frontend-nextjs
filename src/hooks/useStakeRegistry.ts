@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { fetchContractABI } from "@/utils/fetchContractABI";
+import { useChainId } from "wagmi";
 
 const TRIGGER_GAS_REGISTRY_ADDRESS =
   process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS;
@@ -9,6 +10,7 @@ export function useStakeRegistry() {
   const [stakeRegistryAddress, setStakeRegistryAddress] = useState("");
   const [stakeRegistryImplAddress, setStakeRegistryImplAddress] = useState("");
   const [stakeRegistryABI, setStakeRegistryABI] = useState("");
+  const chainId = useChainId();
 
   useEffect(() => {
     const fetchStakeRegistryABI = async () => {
@@ -52,7 +54,8 @@ export function useStakeRegistry() {
       }
     };
     fetchStakeRegistryABI();
-  }, [stakeRegistryImplAddress]);
+     
+  }, [stakeRegistryImplAddress, chainId]);
 
   return {
     stakeRegistryAddress,

@@ -179,7 +179,7 @@ export const JobForm: React.FC = () => {
     // Check if the permission checkbox is checked
     if (!hasConfirmedPermission) {
       setPermissionError(
-        "Please confirm that the address 0xd2B4F73FE4c747716F20839c37C451f241226b03 has the required role/permission.",
+        "Please confirm that the address 0x2469...F474 has the required role/permission.",
       );
       return;
     }
@@ -235,7 +235,8 @@ export const JobForm: React.FC = () => {
                   ref={jobTitleErrorRef}
                   readOnly={isUpdateMode}
                 />
-                <NetworkSelector disabled={isUpdateMode} />
+                {/* <NetworkSelector disabled={isUpdateMode} /> */}
+                <NetworkSelector />
                 <TimeframeInputs
                   timeframe={timeframe}
                   onTimeframeChange={handleTimeframeChange}
@@ -337,9 +338,10 @@ export const JobForm: React.FC = () => {
                     id="permission-checkbox"
                     type="checkbox"
                     checked={hasConfirmedPermission}
-                    onChange={(e) =>
-                      setHasConfirmedPermission(e.target.checked)
-                    }
+                    onChange={(e) => {
+                      setHasConfirmedPermission(e.target.checked);
+                      if (e.target.checked) setPermissionError(null);
+                    }}
                     className="w-4 h-4"
                   />
                   <label
@@ -349,7 +351,7 @@ export const JobForm: React.FC = () => {
                     If your target function contains a modifier or requires
                     certain address for calling the function, then make sure
                     that this
-                    <span className="ml-2 text-white">
+                    <span className="ml-2 text-white break-all">
                       0x2469e89386947535A350EEBccC5F2754fd35F474
                     </span>
                     <LucideCopyButton
