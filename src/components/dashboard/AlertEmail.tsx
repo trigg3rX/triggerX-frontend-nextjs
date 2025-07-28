@@ -15,6 +15,7 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     const isValid = /.+@.+\..+/.test(email);
@@ -31,6 +32,8 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
       devLog("Invalid email entered:", email);
       return;
     }
+    setIsLoading(true);
+
     try {
       devLog(
         "Sending POST request to:",
@@ -54,14 +57,16 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
       const data = await res.json().catch(() => null);
       devLog("API response body:", data);
       if (res.ok) {
-        setSuccess("Email saved! You'll be notified.");
+        setSuccess("Email sent successfully");
         setEmail("");
         setError("");
-        devLog("Email saved successfully for:", email);
+        devLog("Email sent successfully for:", email);
       }
     } catch (err) {
       setError("Failed to sent email. Try again.");
       devLog("Failed to sent email. Try again.", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -103,7 +108,7 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
           </Typography>
         )}
         <Button type="submit" className="w-full my-4">
-          Submit
+          {isLoading ? "Sending..." : "Submit"}
         </Button>
       </form>
     </Card>
