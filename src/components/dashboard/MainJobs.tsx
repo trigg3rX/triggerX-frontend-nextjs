@@ -113,7 +113,12 @@ const MainJobs = ({
     if (jobIdToDelete == null) return;
     await deleteJob(jobIdToDelete);
     setJobs((prevJobs) => prevJobs.filter((job) => job.id !== jobIdToDelete));
+    // Clear job logs if the deleted job is currently showing logs
+    if (jobLogsOpenId === jobIdToDelete) {
+      setJobLogsOpenId(null);
+    }
     setDeleteDialogOpen(false);
+    setExpandedLinkedJobDetails({});
     setJobIdToDelete(null);
   };
 
