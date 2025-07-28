@@ -61,13 +61,13 @@ const ActiveJobs = () => {
             </Typography>
           </div>
         </div>
-        <div className=" w-56">
+        <div className="w-full md:w-56">
           <Dropdown
             label=""
             options={dropdownOptions}
             selectedOption={selectedType}
             onChange={(option) => setSelectedType(option.name)}
-            className="gap-0 !w-full"
+            className="gap-0 w-full md:w-full"
           />
         </div>
       </div>
