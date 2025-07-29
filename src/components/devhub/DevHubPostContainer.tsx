@@ -205,7 +205,9 @@ const DevHubPostContainer = () => {
               </a>
               {/* Try Now Button */}
               <a
-                href={blog.redirect || "#"}
+                href={
+                  blog.redirect ? `/${blog.redirect}` : blog.redirect || "#"
+                }
                 rel="noopener noreferrer"
                 className="w-full sm:w-[200px]"
               >
