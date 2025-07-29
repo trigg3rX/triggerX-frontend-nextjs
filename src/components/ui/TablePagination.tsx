@@ -175,25 +175,88 @@ export function TablePagination({
 
   const renderPageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    // Adjust start page if we're near the end
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
+    if (totalPages <= 7) {
+      // If total pages is 7 or less, show all pages
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => onPageChange(i)}
+              isActive={currentPage === i}
+              text={i.toString()}
+            />
+          </PaginationItem>,
+        );
+      }
+    } else {
+      // Always show first page
       pages.push(
-        <PaginationItem key={i}>
+        <PaginationItem key={1}>
           <PaginationLink
-            onClick={() => onPageChange(i)}
-            isActive={currentPage === i}
-            text={i.toString()}
+            onClick={() => onPageChange(1)}
+            isActive={currentPage === 1}
+            text="1"
           />
         </PaginationItem>,
       );
+
+      // Determine the range around current page
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      // Adjust range to always show 3 pages in the middle when possible
+      if (currentPage <= 3) {
+        startPage = 2;
+        endPage = Math.min(4, totalPages - 1);
+      } else if (currentPage >= totalPages - 2) {
+        startPage = Math.max(totalPages - 3, 2);
+        endPage = totalPages - 1;
+      }
+
+      // Add ellipsis before middle section if needed
+      if (startPage > 2) {
+        pages.push(
+          <PaginationItem key="ellipsis-start">
+            <PaginationEllipsis />
+          </PaginationItem>,
+        );
+      }
+
+      // Add middle pages
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => onPageChange(i)}
+              isActive={currentPage === i}
+              text={i.toString()}
+            />
+          </PaginationItem>,
+        );
+      }
+
+      // Add ellipsis after middle section if needed
+      if (endPage < totalPages - 1) {
+        pages.push(
+          <PaginationItem key="ellipsis-end">
+            <PaginationEllipsis />
+          </PaginationItem>,
+        );
+      }
+
+      // Always show last page (if it's not already shown)
+      if (totalPages > 1) {
+        pages.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              onClick={() => onPageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              text={totalPages.toString()}
+            />
+          </PaginationItem>,
+        );
+      }
     }
 
     return pages;
