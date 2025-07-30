@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
@@ -15,7 +14,6 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email: string) => {
     const isValid = /.+@.+\..+/.test(email);
@@ -32,7 +30,6 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
       devLog("Invalid email entered:", email);
       return;
     }
-    setIsLoading(true);
 
     try {
       devLog(
@@ -65,8 +62,6 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
     } catch (err) {
       setError("Failed to sent email. Try again.");
       devLog("Failed to sent email. Try again.", err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -107,8 +102,8 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
             {success}
           </Typography>
         )}
-        <Button type="submit" className="w-full my-4">
-          {isLoading ? "Sending..." : "Submit"}
+        <Button type="submit" className="w-full my-4" disabled>
+          Submit
         </Button>
       </form>
     </Card>

@@ -16,6 +16,7 @@ import { ethers } from "ethers";
 import toast from "react-hot-toast";
 import { useTGBalance } from "@/contexts/TGBalanceContext";
 import { useAccount, useBalance } from "wagmi";
+import { devLog } from "@/lib/devLog";
 
 interface TopUpTgDialogProps {
   open: boolean;
@@ -81,7 +82,8 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
       toast.success("Top Up TG successful!");
       onOpenChange(false);
       setStakeAmount("");
-
+    } catch (error: unknown) {
+      devLog((error as Error).message || "Error Top Up TG");
       toast.error("Error Top Up TG");
     } finally {
       setIsStaking(false);
