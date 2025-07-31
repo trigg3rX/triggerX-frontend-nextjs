@@ -502,575 +502,575 @@ export const apiData: ApiEndpoint[] = [
       ),
     },
   },
-  {
-    id: "retrievejobdata",
-    name: "Retrieve Job Data",
-    method: "GET",
-    description:
-      "Fetches detailed information about a specific automation job using its unique ID. Returns comprehensive data including job status, configuration, execution history, and associated parameters.",
-    endpoint: "https://data.triggerx.network/api/jobs/{id}",
-    headers: [
-      {
-        name: "TriggerX-Api-Key",
-        type: "string",
-        required: true,
-        description: "Your unique API key.",
-      },
-      {
-        name: "Content-Type",
-        type: "application/json",
-        required: true,
-        description: "Specifies the content type.",
-      },
-    ],
-    queryParams: [
-      {
-        name: "api_key",
-        type: "string",
-        description:
-          "Alternative to using the TriggerX-Api-Key header for authentication",
-      },
-      {
-        name: "columns",
-        type: "string",
-        description:
-          "Comma-separated list of column names to return specific fields",
-      },
-      {
-        name: "filters",
-        type: "string",
-        description: "SQL-like WHERE clause to filter results",
-      },
-    ],
-    responses: [
-      {
-        status: "200",
-        description: "Successful response with job details.",
-        content: React.createElement(
-          "div",
-          { className: "text-sm" },
-          "{",
-          React.createElement(
-            "div",
-            { className: "ml-4" },
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"task_definition_id"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Task definition ID`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"user_id"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              "User ID",
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"link_job_id"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              "Linked job ID",
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"priority"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Job priority`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"security"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Security level`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"chain_status"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Status on the blockchain.`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"job_cost_prediction"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Predicted job cost.`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"time_frame"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Time frame for execution.`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"task_ids"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `List of task IDs.`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"last_executed_at"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Last execution timestamp.`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"target_chain_id"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Target chain ID`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"target_contract_addres"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Target Contract Address`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"target_function"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Target function name.`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"token_balance"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Token Balance`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"next_execution_timestamp"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `Next scheduled execution.`,
-            ),
-            ", ",
-          ),
-          "}",
-        ),
-      },
-      {
-        status: "400",
-        description: "Bad Request",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  // {
+  //   id: "retrievejobdata",
+  //   name: "Retrieve Job Data",
+  //   method: "GET",
+  //   description:
+  //     "Fetches detailed information about a specific automation job using its unique ID. Returns comprehensive data including job status, configuration, execution history, and associated parameters.",
+  //   endpoint: "https://data.triggerx.network/api/jobs/{id}",
+  //   headers: [
+  //     {
+  //       name: "TriggerX-Api-Key",
+  //       type: "string",
+  //       required: true,
+  //       description: "Your unique API key.",
+  //     },
+  //     {
+  //       name: "Content-Type",
+  //       type: "application/json",
+  //       required: true,
+  //       description: "Specifies the content type.",
+  //     },
+  //   ],
+  //   queryParams: [
+  //     {
+  //       name: "api_key",
+  //       type: "string",
+  //       description:
+  //         "Alternative to using the TriggerX-Api-Key header for authentication",
+  //     },
+  //     {
+  //       name: "columns",
+  //       type: "string",
+  //       description:
+  //         "Comma-separated list of column names to return specific fields",
+  //     },
+  //     {
+  //       name: "filters",
+  //       type: "string",
+  //       description: "SQL-like WHERE clause to filter results",
+  //     },
+  //   ],
+  //   responses: [
+  //     {
+  //       status: "200",
+  //       description: "Successful response with job details.",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "text-sm" },
+  //         "{",
+  //         React.createElement(
+  //           "div",
+  //           { className: "ml-4" },
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"task_definition_id"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Task definition ID`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"user_id"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             "User ID"
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"link_job_id"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             "Linked job ID"
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"priority"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Job priority`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"security"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Security level`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"chain_status"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Status on the blockchain.`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"job_cost_prediction"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Predicted job cost.`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"time_frame"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Time frame for execution.`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"task_ids"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `List of task IDs.`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"last_executed_at"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Last execution timestamp.`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"target_chain_id"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Target chain ID`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"target_contract_addres"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Target Contract Address`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"target_function"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Target function name.`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"token_balance"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Token Balance`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"next_execution_timestamp"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `Next scheduled execution.`
+  //           ),
+  //           ", "
+  //         ),
+  //         "}"
+  //       ),
+  //     },
+  //     {
+  //       status: "400",
+  //       description: "Bad Request",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Invalid input data",
-          ),
-        ),
-      },
-      {
-        status: "401",
-        description: "Unauthorized",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Invalid input data"
+  //         )
+  //       ),
+  //     },
+  //     {
+  //       status: "401",
+  //       description: "Unauthorized",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Invalid or missing API key",
-          ),
-        ),
-      },
-      {
-        status: "404",
-        description: "Not Found",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Invalid or missing API key"
+  //         )
+  //       ),
+  //     },
+  //     {
+  //       status: "404",
+  //       description: "Not Found",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Resource not found",
-          ),
-        ),
-      },
-      {
-        status: "500",
-        description: "Internal Server Error",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Resource not found"
+  //         )
+  //       ),
+  //     },
+  //     {
+  //       status: "500",
+  //       description: "Internal Server Error",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Server-side error",
-          ),
-        ),
-      },
-    ],
-    requestSample: {
-      language: "cURL",
-      code: React.createElement(
-        "div",
-        { className: "text-[10px] sm:text-xs" },
-        "{",
-        React.createElement(
-          "div",
-          { className: "ml-4" },
-          React.createElement(
-            "span",
-            { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            '"api_key"',
-          ),
-          ": ",
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "_",
-          ),
-          ", ",
-          React.createElement("br"),
-          React.createElement(
-            "span",
-            { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            '"allow_partial_results"',
-          ),
-          ": ",
-          React.createElement("span", { className: "text-[#C3E88D]" }, '"_"'),
-          ", ",
-          React.createElement("br"),
-          React.createElement(
-            "span",
-            { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            "columns",
-          ),
-          ": ",
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            '"_"',
-          ),
-          ", ",
-          React.createElement("br"),
-          React.createElement(
-            "span",
-            { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            "filters",
-          ),
-          ": ",
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            '"_"',
-          ),
-          React.createElement("br"),
-        ),
-        "}",
-      ),
-    },
-  },
-  {
-    id: "joblastexecutedtimeapi",
-    name: "Job Last Executed Time API",
-    method: "PUT",
-    description:
-      "Updates the last execution timestamp for a specific automation job. This is used to track when the job was last run and manage scheduling for recurring tasks.",
-    endpoint: "https://data.triggerx.network/api/jobs/{id}/lastexecuted",
-    headers: [
-      {
-        name: "TriggerX-Api-Key",
-        type: "string",
-        required: true,
-        description: "",
-      },
-      {
-        name: "Content-Type",
-        type: "application/json",
-        required: true,
-        description: "",
-      },
-    ],
-    queryParams: [
-      {
-        name: "api_key",
-        type: "string",
-        description:
-          "Alternative to using the TriggerX-Api-Key header for authentication",
-      },
-      {
-        name: "columns",
-        type: "string",
-        description:
-          "Comma-separated list of column names to return specific fields",
-      },
-      {
-        name: "filters",
-        type: "string",
-        description: "SQL-like WHERE clause to filter results",
-      },
-    ],
-    responses: [
-      {
-        status: "200",
-        description: "Success",
-        content: React.createElement(
-          "div",
-          { className: "text-sm" },
-          "{",
-          React.createElement(
-            "div",
-            { className: "ml-4" },
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"job_id"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              `"_"`,
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"time_frame"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              '"_"',
-            ),
-            ", ",
-            React.createElement("br"),
-            React.createElement(
-              "span",
-              { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-              '"recurring"',
-            ),
-            ": ",
-            React.createElement(
-              "span",
-              { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-              '"_"',
-            ),
-          ),
-          "}",
-        ),
-      },
-      {
-        status: "400",
-        description: "Bad Request",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Server-side error"
+  //         )
+  //       ),
+  //     },
+  //   ],
+  //   requestSample: {
+  //     language: "cURL",
+  //     code: React.createElement(
+  //       "div",
+  //       { className: "text-[10px] sm:text-xs" },
+  //       "{",
+  //       React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //           '"api_key"'
+  //         ),
+  //         ": ",
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "_"
+  //         ),
+  //         ", ",
+  //         React.createElement("br"),
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //           '"allow_partial_results"'
+  //         ),
+  //         ": ",
+  //         React.createElement("span", { className: "text-[#C3E88D]" }, '"_"'),
+  //         ", ",
+  //         React.createElement("br"),
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //           "columns"
+  //         ),
+  //         ": ",
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           '"_"'
+  //         ),
+  //         ", ",
+  //         React.createElement("br"),
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //           "filters"
+  //         ),
+  //         ": ",
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           '"_"'
+  //         ),
+  //         React.createElement("br")
+  //       ),
+  //       "}"
+  //     ),
+  //   },
+  // },
+  // {
+  //   id: "joblastexecutedtimeapi",
+  //   name: "Job Last Executed Time API",
+  //   method: "PUT",
+  //   description:
+  //     "Updates the last execution timestamp for a specific automation job. This is used to track when the job was last run and manage scheduling for recurring tasks.",
+  //   endpoint: "https://data.triggerx.network/api/jobs/{id}/lastexecuted",
+  //   headers: [
+  //     {
+  //       name: "TriggerX-Api-Key",
+  //       type: "string",
+  //       required: true,
+  //       description: "",
+  //     },
+  //     {
+  //       name: "Content-Type",
+  //       type: "application/json",
+  //       required: true,
+  //       description: "",
+  //     },
+  //   ],
+  //   queryParams: [
+  //     {
+  //       name: "api_key",
+  //       type: "string",
+  //       description:
+  //         "Alternative to using the TriggerX-Api-Key header for authentication",
+  //     },
+  //     {
+  //       name: "columns",
+  //       type: "string",
+  //       description:
+  //         "Comma-separated list of column names to return specific fields",
+  //     },
+  //     {
+  //       name: "filters",
+  //       type: "string",
+  //       description: "SQL-like WHERE clause to filter results",
+  //     },
+  //   ],
+  //   responses: [
+  //     {
+  //       status: "200",
+  //       description: "Success",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "text-sm" },
+  //         "{",
+  //         React.createElement(
+  //           "div",
+  //           { className: "ml-4" },
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"job_id"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             `"_"`
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"time_frame"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             '"_"'
+  //           ),
+  //           ", ",
+  //           React.createElement("br"),
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //             '"recurring"'
+  //           ),
+  //           ": ",
+  //           React.createElement(
+  //             "span",
+  //             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //             '"_"'
+  //           )
+  //         ),
+  //         "}"
+  //       ),
+  //     },
+  //     {
+  //       status: "400",
+  //       description: "Bad Request",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Invalid input data",
-          ),
-        ),
-      },
-      {
-        status: "401",
-        description: "Unauthorized",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Invalid input data"
+  //         )
+  //       ),
+  //     },
+  //     {
+  //       status: "401",
+  //       description: "Unauthorized",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Invalid or missing API key",
-          ),
-        ),
-      },
-      {
-        status: "404",
-        description: "Not Found",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Invalid or missing API key"
+  //         )
+  //       ),
+  //     },
+  //     {
+  //       status: "404",
+  //       description: "Not Found",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Resource not found",
-          ),
-        ),
-      },
-      {
-        status: "500",
-        description: "Internal Server Error",
-        content: React.createElement(
-          "div",
-          { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Resource not found"
+  //         )
+  //       ),
+  //     },
+  //     {
+  //       status: "500",
+  //       description: "Internal Server Error",
+  //       content: React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
 
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "Server-side error",
-          ),
-        ),
-      },
-    ],
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "Server-side error"
+  //         )
+  //       ),
+  //     },
+  //   ],
 
-    requestSample: {
-      language: "cURL",
-      code: React.createElement(
-        "div",
-        { className: "text-sm" },
-        "{",
-        React.createElement(
-          "div",
-          { className: "ml-4" },
-          React.createElement(
-            "span",
-            { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            '"job_id"',
-          ),
-          ": ",
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "123",
-          ),
-          ", ",
-          React.createElement("br"),
-          React.createElement(
-            "span",
-            { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            '"time_frame"',
-          ),
-          ": ",
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            `7200`,
-          ),
-          ", ",
-          React.createElement("br"),
-          React.createElement(
-            "span",
-            { className: "text-[#FF616D]" },
-            '"recurring"',
-          ),
-          ": ",
-          React.createElement(
-            "span",
-            { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            `false`,
-          ),
-          React.createElement("br"),
-        ),
-        "}",
-      ),
-    },
-  },
+  //   requestSample: {
+  //     language: "cURL",
+  //     code: React.createElement(
+  //       "div",
+  //       { className: "text-sm" },
+  //       "{",
+  //       React.createElement(
+  //         "div",
+  //         { className: "ml-4" },
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //           '"job_id"'
+  //         ),
+  //         ": ",
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           "123"
+  //         ),
+  //         ", ",
+  //         React.createElement("br"),
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#FF616D] text-[10px] sm:text-xs" },
+  //           '"time_frame"'
+  //         ),
+  //         ": ",
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           `7200`
+  //         ),
+  //         ", ",
+  //         React.createElement("br"),
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#FF616D]" },
+  //           '"recurring"'
+  //         ),
+  //         ": ",
+  //         React.createElement(
+  //           "span",
+  //           { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
+  //           `false`
+  //         ),
+  //         React.createElement("br")
+  //       ),
+  //       "}"
+  //     ),
+  //   },
+  // },
   {
     id: "getjobsbyuseraddressapi",
     name: "Get Jobs By User Address API",
@@ -1431,7 +1431,7 @@ export const apiData: ApiEndpoint[] = [
     method: "GET",
     description:
       "Retrieve user information including their job IDs and account balance.",
-    endpoint: "https://data.triggerx.network/api/users/{id}",
+    endpoint: "https://data.triggerx.network/api/users/:address",
     headers: [
       {
         name: "TriggerX-Api-Key",
@@ -1789,13 +1789,13 @@ export const apiData: ApiEndpoint[] = [
           React.createElement(
             "span",
             { className: "text-[#FF616D] text-[10px] sm:text-xs" },
-            '"id (Integer)"',
+            '"address"',
           ),
           ": ",
           React.createElement(
             "span",
             { className: "text-[#C3E88D] text-[10px] sm:text-xs" },
-            "The ID of the user to retrieve",
+            "The address of the user to retrieve",
           ),
           React.createElement("br"),
         ),

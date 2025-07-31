@@ -171,6 +171,7 @@ const PriceOracle = () => {
     if (!signer || !address) return;
     setIsLoading(true);
     setShowModal(false);
+    setShowModal(false);
     try {
       const network = await signer.provider.getNetwork();
       const currentChainId = network.chainId;
