@@ -192,7 +192,7 @@ export default function MainTable({
                     </TableCell>
                   )}
                   <TableCell className="px-6 py-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center">
                       <Typography variant="body" color="gray" align="left">
                         {truncateAddress(item.address)}
                       </Typography>
@@ -212,7 +212,7 @@ export default function MainTable({
                           align="left"
                           className={
                             column.key === "points"
-                              ? "bg-[#F8FF7C] p-2 rounded-full text-black w-[90px] text-center "
+                              ? "bg-[#976fb93e] text-white rounded-full p-1.5 border-[#C07AF6] border w-[90px] text-center "
                               : ""
                           }
                         >

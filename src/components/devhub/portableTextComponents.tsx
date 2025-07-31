@@ -113,7 +113,7 @@ const StepsAccordion = ({
               id={`step-content-${index}`}
               className={`overflow-hidden transition-all duration-300 ease-in-out ${openSteps[index] ? "max-h-screen" : "max-h-0"}`}
             >
-              <div className="px-5 pb-5 pt-2 bg-[#242323]">
+              <div className="px-5 pb-5 pt-2 ">
                 {step.content && (
                   <PortableText
                     value={step.content as PortableTextEntry[]}

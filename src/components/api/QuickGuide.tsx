@@ -35,15 +35,19 @@ const QuickStartGuide = () => {
         <ol className="space-y-4 my-6">
           {steps.map((step) => (
             <li key={step.label} className="flex gap-5 items-center">
-              <Typography
-                variant="badge"
-                className={`${step.bg} w-10 h-10 text-black rounded-full flex items-center justify-center`}
-              >
-                {step.label}
-              </Typography>
-              <Typography variant="body" align="left">
-                {step.text}
-              </Typography>
+              <div>
+                <Typography
+                  variant="badge"
+                  className={`${step.bg} md:w-10 md:h-10 h-8 w-8 text-black rounded-full flex items-center justify-center`}
+                >
+                  {step.label}
+                </Typography>
+              </div>
+              <div>
+                <Typography variant="body" align="left">
+                  {step.text}
+                </Typography>
+              </div>
             </li>
           ))}
         </ol>
