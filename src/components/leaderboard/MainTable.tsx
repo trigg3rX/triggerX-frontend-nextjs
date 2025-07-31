@@ -23,6 +23,7 @@ import useTruncateAddress from "@/hooks/useTruncateAddress";
 import { Card } from "../ui/Card";
 import { ErrorMessage } from "../common/ErrorMessage";
 import useCountUp from "@/hooks/useCountUp";
+import { TableSkeleton } from "../skeleton/TableSkeleton";
 
 interface Column {
   key: string;
@@ -36,6 +37,7 @@ interface MainTableProps {
   userAddress?: string | null;
   error?: string | null;
   onRetry?: () => void;
+  isLoading?: boolean;
 }
 
 // Column configurations for each tab
@@ -71,6 +73,7 @@ export default function MainTable({
   userAddress,
   error,
   onRetry,
+  isLoading = false,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<string>("points");
@@ -132,18 +135,18 @@ export default function MainTable({
       <Card
         className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
       >
-        {error && (
+        {error ? (
           <ErrorMessage
             error={error}
             className="mt-4"
             retryText="Try Again"
             onRetry={onRetry}
           />
-        )}
-        {!error && filteredData.length === 0 && (
+        ) : activeTab === "contributor" || filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
-        )}
-        {!error && filteredData.length > 0 && (
+        ) : isLoading ? (
+          <TableSkeleton columns={columns.length} rows={5} />
+        ) : (
           <Table>
             <TableHeader>
               <TableRow className="border-gray-800 ">
@@ -181,7 +184,6 @@ export default function MainTable({
                       ? "!bg-yellow-100/20 !border-yellow-300"
                       : ""
                   }
-                  // onClick={() => handleRowClick(item)}
                 >
                   {/* Only show name for keeper tab */}
                   {activeTab === "keeper" && (
@@ -212,7 +214,7 @@ export default function MainTable({
                           align="left"
                           className={
                             column.key === "points"
-                              ? "bg-[#976fb93e] text-white rounded-full p-1.5 border-[#C07AF6] border w-[90px] text-center "
+                              ? "bg-[#976fb93e] text-[#C07AF6] rounded-full py-1 w-[90px] text-center font-bold "
                               : ""
                           }
                         >
@@ -260,34 +262,39 @@ export default function MainTable({
       <Card
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
-        {error && (
+        {error ? (
           <ErrorMessage
             error={"Something went wrong"}
             className="mt-4"
             retryText="Try Again"
             onRetry={onRetry}
           />
-        )}
-        {!error && filteredData.length === 0 && (
+        ) : activeTab === "contributor" || filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
-        )}
-        {!error && filteredData.length > 0 && (
+        ) : isLoading ? (
+          <div>
+            <Typography variant="body" color="primary" align="center">
+              Loading Data...
+            </Typography>
+          </div>
+        ) : (
           <MobileTableGrid
             data={sortedAndPaginatedData}
             activeTab={activeTab as TabType}
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
-            // onItemClick={handleRowClick}
           />
         )}
       </Card>
 
-      <TablePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {!isLoading && !error && filteredData.length > 0 && (
+        <TablePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
     </>
   );
 }

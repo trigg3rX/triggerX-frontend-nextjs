@@ -163,7 +163,7 @@ const PriceOracle = () => {
   const handleDeploy = async () => {
     if (!signer || !address) return;
     setIsLoading(true);
-
+    setShowModal(false);
     try {
       const network = await signer.provider.getNetwork();
       const currentChainId = network.chainId;
@@ -319,7 +319,11 @@ const PriceOracle = () => {
       {isConnected && !isDeployed && (
         <div className="flex flex-wrap gap-3 sm:gap-4">
           {!hasSufficientBalance && <ClaimEth />}
-          <DeployButton onClick={showDeployModal} isLoading={isLoading} />
+          <DeployButton
+            onClick={showDeployModal}
+            isLoading={isLoading}
+            disabled={!hasSufficientBalance}
+          />
         </div>
       )}
       {isConnected && !isDeployed && hasSufficientBalance && (

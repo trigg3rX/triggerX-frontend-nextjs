@@ -279,7 +279,12 @@ const JobCard: React.FC<JobCardProps> = ({
             <Typography variant="body" color="white" align="left">
               Job Status :
             </Typography>
-            <Typography variant="body" color="gray" align="right">
+            <Typography
+              variant="body"
+              color="gray"
+              align="right"
+              className=" text-[#4caf50] font-bold"
+            >
               {job.status}
             </Typography>
           </div>

@@ -4,7 +4,7 @@ const useTruncateAddress = () => {
   return useCallback((address: string): string => {
     if (!address) return "";
     if (address.length < 10) return address;
-    return `${address.slice(0, 10)}...${address.slice(-4)}`;
+    return `${address.slice(0, 10)}...${address.slice(-10)}`;
   }, []);
 };
 

@@ -23,8 +23,6 @@ interface TopUpTgDialogProps {
   onOpenChange: (open: boolean) => void;
   stakeAmount: string;
   setStakeAmount: (value: string) => void;
-  // accountBalance?: { formatted?: string; value?: bigint };
-  // fetchTGBalance: () => Promise<void>;
 }
 
 const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
@@ -32,8 +30,6 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
   onOpenChange,
   stakeAmount,
   setStakeAmount,
-  // accountBalance,
-  // fetchTGBalance,
 }) => {
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isStaking, setIsStaking] = useState(false);

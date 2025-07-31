@@ -607,6 +607,7 @@ const BalanceMaintainer = () => {
           <DeployButton
             onClick={showDeployModal}
             isLoading={isLoading && modalType === "deploy"}
+            disabled={!hasSufficientBalance}
           />
         </div>
       )}
