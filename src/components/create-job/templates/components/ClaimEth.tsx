@@ -3,11 +3,25 @@ import ClaimModal from "./ClaimModal";
 import { SiEthereum } from "react-icons/si";
 import { Button } from "@/components/ui/Button";
 
-const ClaimEth: React.FC = () => {
+interface ClaimEthProps {
+  onClaimSuccess?: () => void;
+}
+
+const ClaimEth: React.FC<ClaimEthProps> = ({ onClaimSuccess }) => {
   const [showClaimModal, setShowClaimModal] = useState(false);
 
   const handleClaim = () => {
     setShowClaimModal(true);
+  };
+
+  const handleClose = () => {
+    setShowClaimModal(false);
+  };
+
+  const handleClaimSuccess = () => {
+    if (onClaimSuccess) {
+      onClaimSuccess();
+    }
   };
 
   return (
@@ -18,9 +32,8 @@ const ClaimEth: React.FC = () => {
       </Button>
       <ClaimModal
         isOpen={showClaimModal}
-        onClose={() => {
-          setShowClaimModal(false);
-        }}
+        onClose={handleClose}
+        onClaimSuccess={handleClaimSuccess}
       />
     </>
   );

@@ -66,7 +66,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
       const tx = await stakingContract.claimETHForTG(withdrawAmountInWei);
       await tx.wait();
       // Add a small delay to allow the node to update state
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       await fetchTGBalance();
       toast.success("Withdrawal successful!");
       onOpenChange(false);

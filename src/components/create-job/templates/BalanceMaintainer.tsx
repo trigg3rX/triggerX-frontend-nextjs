@@ -69,6 +69,7 @@ const BalanceMaintainer = () => {
   >([]);
 
   const [error, setError] = useState<string | null>(null);
+  const [isCheckingBalance, setIsCheckingBalance] = useState(false);
 
   useEffect(() => {
     const initProvider = async () => {
@@ -118,9 +119,13 @@ const BalanceMaintainer = () => {
     if (data) {
       const balance = data.value;
       const requiredBalance = ethers.parseEther("0.02");
-      setHasSufficientBalance(balance >= requiredBalance);
+      const hasBalance = balance >= requiredBalance;
+      setHasSufficientBalance(hasBalance);
+      if (hasBalance && isCheckingBalance) {
+        setIsCheckingBalance(false);
+      }
     }
-  }, [data]);
+  }, [data, isCheckingBalance]);
 
   // Check for existing contract
   const checkExistingContract = async (
@@ -178,6 +183,11 @@ const BalanceMaintainer = () => {
       contractMethod: "createProxy()",
     });
     setShowModal(true);
+  };
+
+  // Handle claim success
+  const handleClaimSuccess = () => {
+    setIsCheckingBalance(true);
   };
 
   // Add this function before the return statement
@@ -245,7 +255,7 @@ const BalanceMaintainer = () => {
       }
       const balance = await signer.provider.getBalance(address);
       const requiredBalance = ethers.parseEther("0.02");
-      if (balance < requiredBalance) {
+      if (!hasSufficientBalance) {
         throw new Error(
           `Insufficient balance. Required: ${ethers.formatEther(requiredBalance)} ETH, Current: ${ethers.formatEther(balance)} ETH`,
         );
@@ -537,6 +547,7 @@ const BalanceMaintainer = () => {
                 color="yellow"
                 onClick={showAddAddressModal}
                 disabled={isLoading || !newAddress || !newBalance}
+                className="h-max"
               >
                 {isLoading && modalType === "addAddress"
                   ? "Adding..."
@@ -603,10 +614,19 @@ const BalanceMaintainer = () => {
 
       {isConnected && !isDeployed && (
         <div className="flex flex-wrap gap-3 sm:gap-4">
-          {!hasSufficientBalance && <ClaimEth />}
+          {!hasSufficientBalance && !isCheckingBalance && (
+            <ClaimEth onClaimSuccess={handleClaimSuccess} />
+          )}
+          {isCheckingBalance && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#FFFFFF] rounded-full">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+              <span className="text-black text-sm">Checking balance...</span>
+            </div>
+          )}
           <DeployButton
             onClick={showDeployModal}
             isLoading={isLoading && modalType === "deploy"}
+            disabled={!hasSufficientBalance || isCheckingBalance}
           />
         </div>
       )}

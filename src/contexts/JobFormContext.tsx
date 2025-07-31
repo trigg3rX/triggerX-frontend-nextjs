@@ -373,6 +373,16 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     fetchTGBalance();
   }, [selectedNetwork, fetchTGBalance]);
 
+  // Refetch ABI for all contracts when selectedNetwork changes
+  React.useEffect(() => {
+    Object.entries(contractInteractions).forEach(([contractKey, contract]) => {
+      if (contract.address && ethers.isAddress(contract.address)) {
+        handleContractAddressChange(contractKey, contract.address);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNetwork]);
+
   const handleJobTypeChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, type: number) => {
       e.preventDefault();
@@ -469,7 +479,10 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       if (ethers.isAddress(value)) {
         // Use the shared ABI fetch utility
         try {
-          const abiString = await fetchContractABI(value);
+          const abiString = await fetchContractABI(
+            value,
+            getNetworkIdByName(selectedNetwork),
+          );
           if (abiString) {
             JSON.parse(abiString); // Validate JSON
             const functions = extractFunctions(abiString).filter(

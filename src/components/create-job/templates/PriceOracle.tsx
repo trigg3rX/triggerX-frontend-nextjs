@@ -4,7 +4,6 @@ import { ethers, JsonRpcSigner, Log } from "ethers";
 import { WalletConnectionCard } from "../../common/WalletConnectionCard";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import TemplateInfoSection from "./components/TemplateInfoSection";
-import ClaimEth from "./components/ClaimEth";
 import TransactionModal from "./components/TransactionModal";
 import DeployButton from "./components/DeployButton";
 import TriggerXTemplateFactory from "@/artifacts/TriggerXTemplateFactory.json";
@@ -18,6 +17,7 @@ import ShortAddress from "../../ui/ShortAddress";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { useJob } from "@/contexts/JobContext";
 import { devLog } from "@/lib/devLog";
+import ClaimEth from "./components/ClaimEth";
 
 // Minimal EIP-1193 type for ethereum provider
 interface EthereumProvider {
@@ -42,8 +42,10 @@ const PriceOracle = () => {
   const [chainId, setChainId] = useState<bigint | null>(null);
   const [hasSufficientBalance, setHasSufficientBalance] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [isCheckingBalance, setIsCheckingBalance] = useState(false);
+
   const [modalData, setModalData] = useState({
-    amount: "0.00",
+    // amount: "0.00",
     networkFee: "$0.00",
     speed: "0 sec",
     contractAddress: "",
@@ -103,6 +105,11 @@ const PriceOracle = () => {
     }
   }, [data]);
 
+  // Handle claim success
+  const handleClaimSuccess = () => {
+    setIsCheckingBalance(true);
+  };
+
   // Check for existing contract
   const checkExistingContract = async (
     provider: ethers.BrowserProvider,
@@ -148,7 +155,7 @@ const PriceOracle = () => {
 
   const showDeployModal = () => {
     setModalData({
-      amount: "0.02",
+      // amount: "0.02",
       networkFee: "$0.01",
       speed: "2 sec",
       contractAddress:
@@ -163,7 +170,7 @@ const PriceOracle = () => {
   const handleDeploy = async () => {
     if (!signer || !address) return;
     setIsLoading(true);
-
+    setShowModal(false);
     try {
       const network = await signer.provider.getNetwork();
       const currentChainId = network.chainId;
@@ -194,7 +201,7 @@ const PriceOracle = () => {
 
       const balance = await signer.provider.getBalance(address);
       const requiredBalance = ethers.parseEther("0.02");
-      if (balance < requiredBalance) {
+      if (!hasSufficientBalance) {
         throw new Error(
           `Insufficient balance. Required: ${ethers.formatEther(requiredBalance)} ETH, Current: ${ethers.formatEther(balance)} ETH`,
         );
@@ -202,9 +209,6 @@ const PriceOracle = () => {
 
       const tx = await factoryContract.createProxy(
         DYNAMICPRICEORACLE_IMPLEMENTATION,
-        {
-          value: ethers.parseEther("0.02"),
-        },
       );
 
       const receipt = await tx.wait();
@@ -318,8 +322,20 @@ const PriceOracle = () => {
 
       {isConnected && !isDeployed && (
         <div className="flex flex-wrap gap-3 sm:gap-4">
-          {!hasSufficientBalance && <ClaimEth />}
-          <DeployButton onClick={showDeployModal} isLoading={isLoading} />
+          {!hasSufficientBalance && (
+            <ClaimEth onClaimSuccess={handleClaimSuccess} />
+          )}
+          {isCheckingBalance && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#FFFFFF] rounded-full">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+              <span className="text-black text-sm">Checking balance...</span>
+            </div>
+          )}
+          <DeployButton
+            onClick={showDeployModal}
+            isLoading={isLoading}
+            disabled={!hasSufficientBalance}
+          />
         </div>
       )}
       {isConnected && !isDeployed && hasSufficientBalance && (

@@ -1,47 +1,29 @@
+import { devLog } from "@/lib/devLog";
 import { ethers } from "ethers";
 
-const ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY =
-  process.env.NEXT_PUBLIC_ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY;
-
+// Now fetches ABI via Next.js API route to avoid CORS
 export async function fetchContractABI(
   address: string,
+  chainId?: number,
 ): Promise<string | null> {
   if (!address || !ethers.isAddress(address)) return null;
-
-  // 1. Try Blockscout
-  const blockscoutUrl = `https://optimism-sepolia.blockscout.com/api?module=contract&action=getabi&address=${address}`;
   try {
-    const response = await fetch(blockscoutUrl);
-    const data = await response.json();
-    if (
-      data.status === "1" &&
-      data.result &&
-      typeof data.result === "string" &&
-      data.result.startsWith("[")
-    ) {
-      return data.result;
+    devLog(
+      `fetchContractABI (frontend): address=${address}, chainId=${chainId}`,
+    );
+    const params = new URLSearchParams({ address });
+    if (chainId) params.append("chainId", String(chainId));
+    const res = await fetch(`/api/fetch-abi?${params.toString()}`);
+    const data = await res.json();
+    if (data.abi && typeof data.abi === "string" && data.abi.startsWith("[")) {
+      devLog(`ABI fetch succeeded from ${data.source}`);
+      return data.abi;
+    } else {
+      devLog(`ABI fetch failed: ${data.error || "Unknown error"}`);
+      return null;
     }
-  } catch {
-    // Ignore, try Etherscan next
+  } catch (e) {
+    devLog(`fetchContractABI error: ${e}`);
+    return null;
   }
-
-  // 2. Try Etherscan
-  if (ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY) {
-    const etherscanUrl = `https://api-sepolia-optimism.etherscan.io/api?module=contract&action=getabi&address=${address}&apikey=${ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY}`;
-    try {
-      const response = await fetch(etherscanUrl);
-      const data = await response.json();
-      if (
-        data.status === "1" &&
-        data.result &&
-        typeof data.result === "string" &&
-        data.result.startsWith("[")
-      ) {
-        return data.result;
-      }
-    } catch {
-      // Ignore
-    }
-  }
-  return null;
 }

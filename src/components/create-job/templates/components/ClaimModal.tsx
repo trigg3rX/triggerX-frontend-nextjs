@@ -13,9 +13,14 @@ import { devLog } from "@/lib/devLog";
 interface ClaimModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onClaimSuccess?: () => void;
 }
 
-const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
+const ClaimModal: React.FC<ClaimModalProps> = ({
+  isOpen,
+  onClose,
+  onClaimSuccess,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [claimAmount] = useState("0.03");
@@ -110,9 +115,12 @@ const ClaimModal: React.FC<ClaimModalProps> = ({ isOpen, onClose }) => {
       setIsSuccess(true);
       setClaimFailed(false);
       playModalConfetti();
+      if (onClaimSuccess) {
+        onClaimSuccess();
+      }
       setTimeout(() => {
         triggerBalanceRefresh();
-      }, 1000);
+      }, 2000);
     } catch (error: unknown) {
       setIsLoading(false);
       setClaimFailed(true);

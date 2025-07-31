@@ -42,7 +42,7 @@ export function useStakeRegistry() {
         return;
       }
       // Use the utility for ABI fetching
-      const abiString = await fetchContractABI(currentImplAddress);
+      const abiString = await fetchContractABI(currentImplAddress, chainId);
       if (abiString) {
         try {
           setStakeRegistryABI(JSON.parse(abiString));
@@ -54,7 +54,6 @@ export function useStakeRegistry() {
       }
     };
     fetchStakeRegistryABI();
-     
   }, [stakeRegistryImplAddress, chainId]);
 
   return {

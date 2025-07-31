@@ -27,12 +27,36 @@ export const TGBalanceProvider: React.FC<{
   const [userBalance, setUserBalance] = useState<string>("0");
   const { address } = useAccount();
 
+  // Function to get RPC URL based on chain ID
+  const getRpcUrl = useCallback((chainId: number): string => {
+    const isBaseSepolia = chainId === 84532 || chainId === 8453;
+    if (isBaseSepolia) {
+      if (!process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL) {
+        throw new Error(
+          "NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL environment variable is not set",
+        );
+      }
+      return process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL;
+    } else {
+      if (!process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL) {
+        throw new Error(
+          "NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL environment variable is not set",
+        );
+      }
+      return process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL;
+    }
+  }, []);
+
   const fetchTGBalance = useCallback(async () => {
     devLog("fetchhh");
     if (typeof window.ethereum == "undefined") return;
     if (!stakeRegistryAddress || !ethers.isAddress(stakeRegistryAddress)) {
       return;
     }
+
+    // Add 2-second timeout before updating balance
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     try {
       if (!window.ethereum) {
         console.warn("No Ethereum provider found. Please install MetaMask.");
@@ -42,13 +66,25 @@ export const TGBalanceProvider: React.FC<{
         method: "eth_accounts",
       });
       if (accounts.length > 0) {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await browserProvider.getSigner();
         const userAddress = await signer.getAddress();
+
+        // Get current chain ID and RPC URL
+        const network = await browserProvider.getNetwork();
+        const chainId = Number(network.chainId);
+        const rpcUrl = getRpcUrl(chainId);
+
+        devLog("[TGBalance] Using RPC URL:", rpcUrl);
+
+        // Create JSON RPC provider using the RPC URL
+        const jsonRpcProvider = new ethers.JsonRpcProvider(rpcUrl);
+
+        // Use JSON RPC provider for contract interactions
         const stakeRegistryContract = new ethers.Contract(
           stakeRegistryAddress,
           ["function getBalance(address) view returns (uint256, uint256)"],
-          provider,
+          jsonRpcProvider,
         );
         const [, tgBalance] =
           await stakeRegistryContract.getBalance(userAddress);
@@ -61,7 +97,7 @@ export const TGBalanceProvider: React.FC<{
     } catch (error) {
       console.error("Error fetching TG balance:", error);
     }
-  }, [stakeRegistryAddress]);
+  }, [stakeRegistryAddress, getRpcUrl]);
 
   useEffect(() => {
     if (

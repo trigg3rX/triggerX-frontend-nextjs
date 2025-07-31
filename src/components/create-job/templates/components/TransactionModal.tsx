@@ -11,7 +11,7 @@ interface TransactionModalProps {
   onConfirm: () => void;
   modalType?: string;
   modalData: {
-    amount: string;
+    amount?: string;
     networkFee: string;
     speed: string;
     contractAddress: string;
@@ -42,20 +42,22 @@ const TransactionModal: React.FC<TransactionModalProps> = ({
         </div>
 
         <div className="bg-[#1E1E1E] p-3 sm:p-4 rounded-lg">
-          <div className="flex justify-between items-center mb-3 sm:mb-4">
-            <div className="flex items-center">
-              <Typography variant="body">Required ETH</Typography>
-              <Tooltip title="Extra ETH held in the contract, will be used automatically to top up the address if its balance falls below the set minimum.">
-                <FiInfo
-                  className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
-                  size={15}
-                />
-              </Tooltip>
+          {modalData.amount && (
+            <div className="flex justify-between items-center mb-3 sm:mb-4">
+              <div className="flex items-center">
+                <Typography variant="body">Required ETH</Typography>
+                <Tooltip title="Extra ETH held in the contract, will be used automatically to top up the address if its balance falls below the set minimum.">
+                  <FiInfo
+                    className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
+                    size={15}
+                  />
+                </Tooltip>
+              </div>
+              <Typography variant="body" color="secondary">
+                {modalData.amount} ETH
+              </Typography>
             </div>
-            <Typography variant="body" color="secondary">
-              {modalData.amount} ETH
-            </Typography>
-          </div>
+          )}
 
           <div className="flex justify-between items-center mb-3 sm:mb-4">
             <Typography variant="body">Network Fee</Typography>

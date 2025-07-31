@@ -20,6 +20,7 @@ import { LucideCopyButton } from "../ui/CopyButton";
 import { useSearchParams } from "next/navigation";
 import { useJobs } from "@/hooks/useJobs";
 import { fetchContractABI } from "@/utils/fetchContractABI";
+import { useChainId } from "wagmi";
 
 const networkIcons = Object.fromEntries(
   Object.entries(networksData.networkIcons).map(([name, icon]) => [
@@ -72,6 +73,7 @@ function scrollToErrorRef(
 export const JobForm: React.FC = () => {
   const formRef = useRef<HTMLFormElement>(null);
   const { handleKeyDown } = useFormKeyboardNavigation();
+  const chainId = useChainId();
   const {
     jobType,
     timeframe,
@@ -116,6 +118,7 @@ export const JobForm: React.FC = () => {
   React.useEffect(() => {
     if (jobId && jobs.length > 0) {
       const job = jobs.find((j) => String(j.id) === String(jobId));
+      console.log("jobbbbb", job);
       if (job) {
         (async () => {
           // Map string taskDefinitionId to numeric trigger type
@@ -144,7 +147,10 @@ export const JobForm: React.FC = () => {
             seconds: tiSeconds,
           });
           // Fetch ABI using contract address
-          const abiString = await fetchContractABI(job.targetContractAddress);
+          const abiString = await fetchContractABI(
+            job.targetContractAddress,
+            chainId,
+          );
           jobForm.handleSetContractDetails(
             "contract",
             job.targetContractAddress,

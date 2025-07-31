@@ -76,13 +76,15 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
       });
       await tx.wait();
       // Add a small delay to allow the node to update state
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       await fetchTGBalance();
       toast.success("Top Up TG successful!");
       onOpenChange(false);
       setStakeAmount("");
-
-      toast.error("Error Top Up TG");
+    } catch (error) {
+      console.log(error);
+      setIsStaking(false);
+      toast.error("Top Up TG failed!");
     } finally {
       setIsStaking(false);
     }

@@ -37,6 +37,13 @@ const DevHubPostContainer = () => {
     return undefined;
   }, [blog?.image]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const tocOptions =
+    blog?.headingPairs?.map((pair, index) => ({
+      id: pair.h2Heading,
+      name: `[ ${index + 1} ] ${pair.displayHeading}`,
+    })) || [];
+
   useEffect(() => {
     if (!blog || isLoading || error) return;
     const handleScroll = () => {
@@ -51,34 +58,37 @@ const DevHubPostContainer = () => {
         }
       }
       setActiveHeading(currentActive);
+
+      // Update mobile dropdown selection based on active heading
+      if (currentActive && tocOptions.length > 0) {
+        const matchingOption = tocOptions.find(
+          (option) =>
+            option.id === currentActive || option.name.includes(currentActive),
+        );
+        if (matchingOption) {
+          setSelectedTOC(matchingOption.name);
+        }
+      }
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [error, isLoading, blog]);
+  }, [error, isLoading, blog, tocOptions]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const tocOptions =
-    blog?.headingPairs?.map((pair, index) => ({
-      id: pair.h2Heading,
-      name: `[ ${index + 1} ] ${pair.displayHeading}`,
-    })) || [];
-  const [selectedTOC, setSelectedTOC] = useState<string>(
-    tocOptions[0]?.name || "",
-  );
+  const [selectedTOC, setSelectedTOC] = useState<string>("");
 
   // Ensure the first option is selected when tocOptions changes
   useEffect(() => {
-    if (tocOptions.length > 0) {
+    if (tocOptions.length > 0 && !selectedTOC) {
       setSelectedTOC(tocOptions[0].name);
     }
-  }, [tocOptions]);
+  }, [tocOptions, selectedTOC]);
 
   const handleTOCChange = (option: { id: string | number; name: string }) => {
     setSelectedTOC(option.name);
-    const targetElement = document.getElementById(String(option.id));
+    const targetElement = document.getElementById(slugify(String(option.id)));
     if (targetElement) {
-      const yOffset = -160;
+      const yOffset = -210;
       const y =
         targetElement.getBoundingClientRect().top + window.scrollY + yOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
@@ -122,21 +132,21 @@ const DevHubPostContainer = () => {
       </div>
 
       <div className="flex flex-col md:flex-row gap-2 md:gap-8 ">
+        {/* Mobile Dropdown - Sticky at 200px from top */}
+        <Card className="md:hidden sticky top-[80px] sm:top-[84px] z-50 backdrop-blur-lg my-6 py-3">
+          {blog && tocOptions.length > 0 && (
+            <Dropdown
+              label="Table Of Content"
+              options={tocOptions}
+              selectedOption={selectedTOC}
+              onChange={handleTOCChange}
+              className="w-full"
+            />
+          )}
+        </Card>
+
         {/* Table of Content */}
         <aside className="w-full md:w-1/4 min-w-[180px] lg:min-w-[230px] md:sticky top-24 h-full">
-          {/* Mobile Dropdown */}
-          <div className="md:hidden relative my-4">
-            {blog && (
-              <Dropdown
-                label="Table Of Content"
-                options={tocOptions}
-                selectedOption={selectedTOC}
-                onChange={handleTOCChange}
-                className="w-full"
-              />
-            )}
-          </div>
-
           <h2 className="hidden md:block font-actayWide text-sm lg:text-lg font-extrabold my-10">
             Table of Content
           </h2>
