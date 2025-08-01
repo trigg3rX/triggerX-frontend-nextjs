@@ -1,8 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TriggerX Frontend
 
-## Getting Started
+A modern Next.js application for the TriggerX platform, providing a comprehensive interface for blockchain job automation, API management, and developer tools.
 
-First, run the development server:
+## 🚀 Features
+
+- **Job Creation & Management**: Create and manage automated blockchain jobs with various trigger types
+- **Dashboard**: Monitor active jobs, view logs, and manage balances
+- **API Documentation**: Interactive API documentation with code examples
+- **Developer Hub**: Technical articles and resources for developers
+- **Leaderboard**: Track contributions and achievements
+- **Wallet Integration**: Seamless Web3 wallet connection with RainbowKit
+- **Sanity CMS**: Content management for blog posts and documentation
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS with custom animations
+- **UI Components**: Radix UI, Ant Design, Lucide React icons
+- **Web3**: Wagmi, Viem, Ethers.js, RainbowKit
+- **State Management**: React Query (TanStack Query)
+- **CMS**: Sanity Studio
+
+## 📋 Prerequisites
+
+- Node.js 18+
+- npm, yarn, pnpm, or bun
+- Web3 wallet (MetaMask, WalletConnect, etc.)
+
+## 🚀 Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone <repository-url>
+cd triggerX-frontend-nextjs
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+### 3. Environment Setup
+
+Create a `.env.local` file in the root directory and add your environment variables:
+
+```env
+# Sanity Configuration
+NEXT_PUBLIC_SANITY_PROJECT_ID=your_sanity_project_id
+NEXT_PUBLIC_SANITY_DATASET=production
+NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
+
+# Web3 Configuration (if needed)
+NEXT_PUBLIC_CHAIN_ID=1
+NEXT_PUBLIC_RPC_URL=your_rpc_url
+```
+
+### 4. Run the development server
 
 ```bash
 npm run dev
@@ -16,21 +78,65 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   ├── dashboard/         # Dashboard pages
+│   ├── devhub/           # Developer hub pages
+│   ├── leaderboard/      # Leaderboard pages
+│   └── studio/           # Sanity Studio
+├── components/            # React components
+│   ├── api/              # API-related components
+│   ├── common/           # Shared components
+│   ├── create-job/       # Job creation components
+│   ├── dashboard/        # Dashboard components
+│   ├── devhub/          # DevHub components
+│   ├── leaderboard/     # Leaderboard components
+│   └── ui/              # UI components
+├── contexts/             # React contexts
+├── hooks/                # Custom React hooks
+├── lib/                  # Utility libraries
+├── sanity/               # Sanity CMS configuration
+├── types/                # TypeScript type definitions
+└── utils/                # Utility functions
+```
 
-## Learn More
+## 🎯 Available Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run format` - Format code with Prettier
+- `npm run type-check` - Run TypeScript type checking
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔧 Configuration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Next.js Configuration
 
-## Deploy on Vercel
+The project uses Next.js 15 with Turbopack for faster development builds. Configuration is in `next.config.ts`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Sanity CMS
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Content management is handled by Sanity Studio, accessible at `/studio`. Configuration is in `sanity.config.ts`.
+
+### Tailwind CSS
+
+Styling is done with Tailwind CSS with custom animations and responsive design.
+
+## 🌐 Deployment
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme).
+
+### Environment Variables for Production
+
+Make sure to set the following environment variables in your deployment platform:
+
+- `NEXT_PUBLIC_SANITY_PROJECT_ID`
+- `NEXT_PUBLIC_SANITY_DATASET`
+- `NEXT_PUBLIC_SANITY_API_VERSION`
+
+Built with ❤️ using Next.js, TypeScript, and modern web technologies.
