@@ -135,17 +135,17 @@ export default function MainTable({
       <Card
         className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
       >
-        {error ? (
+        {isLoading ? (
+          <TableSkeleton columns={columns.length} rows={5} />
+        ) : error ? (
           <ErrorMessage
             error={error}
             className="mt-4"
             retryText="Try Again"
             onRetry={onRetry}
           />
-        ) : activeTab === "contributor" || filteredData.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
-        ) : isLoading ? (
-          <TableSkeleton columns={columns.length} rows={5} />
         ) : (
           <Table>
             <TableHeader>
