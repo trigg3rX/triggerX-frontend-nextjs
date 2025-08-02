@@ -118,7 +118,6 @@ export const JobForm: React.FC = () => {
   React.useEffect(() => {
     if (jobId && jobs.length > 0) {
       const job = jobs.find((j) => String(j.id) === String(jobId));
-      console.log("jobbbbb", job);
       if (job) {
         (async () => {
           // Map string taskDefinitionId to numeric trigger type
