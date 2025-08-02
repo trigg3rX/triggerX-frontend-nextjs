@@ -23,7 +23,7 @@ function MainLeaderboard() {
   const [activeTab, setActiveTab] = useState<TabType>("keeper");
   const { isConnected, address } = useAccount();
 
-  const { leaderboardData, error, isLoading } = useLeaderboardData(
+  const { leaderboardData, error } = useLeaderboardData(
     activeTab,
     address,
     isConnected,
@@ -119,7 +119,6 @@ function MainLeaderboard() {
           userAddress={address}
           error={error}
           onRetry={onRetry}
-          isLoading={isLoading}
         />
       </div>
     </Suspense>
