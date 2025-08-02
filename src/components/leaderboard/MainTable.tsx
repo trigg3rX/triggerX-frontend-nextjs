@@ -54,7 +54,7 @@ const TAB_COLUMNS: Record<TabType, Column[]> = {
   developer: [
     { key: "address", label: "Address", sortable: false },
     { key: "totalJobs", label: "Total Jobs", sortable: true },
-    { key: "taskPerformed", label: "Task Performed", sortable: true },
+    { key: "taskPerformed", label: "Task Executed", sortable: true },
     { key: "points", label: "Points", sortable: true },
   ],
   contributor: [],
