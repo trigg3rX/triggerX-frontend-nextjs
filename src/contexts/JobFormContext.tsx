@@ -538,7 +538,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         }));
       }
     },
-    [],
+    [selectedNetwork],
   );
 
   const handleManualABIChange = useCallback(
@@ -898,12 +898,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       let totalFeeTG = 0;
       if (argType === 2) {
-        console.log("calculating fees for dynamic job");
         if (codeUrls) {
-          console.log("codeUrls", codeUrls);
           try {
             const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-            console.log(API_BASE_URL);
             if (!API_BASE_URL) {
               throw new Error(
                 "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
@@ -917,7 +914,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
               },
             );
-            console.log("response", response);
             if (!response.ok) throw new Error("Failed to get fees");
             const data = await response.json();
             if (data.error) throw new Error(data.error);
@@ -1009,7 +1005,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
-
       // Get network ID
       const networkId = getNetworkIdByName(selectedNetwork);
       if (!networkId) {
@@ -1028,12 +1023,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           return;
         }
 
+        const timeframeInSeconds = getTimeframeInSeconds(timeframe);
+        const intervalInSeconds = getIntervalInSeconds(timeInterval);
+
         const jobDetails = extractJobDetails(
           contractKey,
           contractInteractions,
           jobTitle,
-          getTimeframeInSeconds(timeframe),
-          getIntervalInSeconds(timeInterval),
+          timeframeInSeconds,
+          intervalInSeconds,
           recurring,
           userAddress,
           networkId,
@@ -1057,26 +1055,36 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       let encodedData: string = "0x";
       if (updatedJobDetails.length > 0) {
         const jd = updatedJobDetails[0];
-        if (jobType === 1) {
+        // Get task definition ID to determine encoding format
+        const taskDefinitionId = jd.task_definition_id;
+
+        // Validate task definition ID for job type
+        if (jobType === 2 && taskDefinitionId === 2) {
+          throw new Error("Invalid task definition ID for condition-based job");
+        }
+        if (taskDefinitionId === 1) {
+          // Time-based, no IPFS
           encodedData = encodeJobType1Data(jd.time_interval);
-        } else if (jobType === 2) {
+        } else if (taskDefinitionId === 2) {
           encodedData = encodeJobType2Data(
             jd.time_interval,
             jd.dynamic_arguments_script_url || "",
           );
-        } else if (jobType === 3 || jobType === 5) {
+        } else if (taskDefinitionId === 3 || taskDefinitionId === 5) {
           encodedData = encodeJobType3or5Data(jd.recurring);
-        } else if (jobType === 4 || jobType === 6) {
+        } else if (taskDefinitionId === 4 || taskDefinitionId === 6) {
+          // Recurring flag + IPFS
           encodedData = encodeJobType4or6Data(
             jd.recurring,
             jd.dynamic_arguments_script_url || "",
           );
+        } else {
+          throw new Error(`Unknown task definition ID: ${taskDefinitionId}`);
         }
 
         // --- ACTUAL CONTRACT CALL ---
         try {
           if (jobId) {
-            console.log("[JobForm] jobId exists (update mode):", jobId);
             const urlParams = new URLSearchParams(window.location.search);
             const oldJobName = urlParams.get("oldJobName") || "";
             const oldJobType = urlParams.get("jobType") || "";
@@ -1086,7 +1094,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             try {
               oldDataDecoded =
                 JSON.parse(urlParams.get("oldData") || "{}") || {};
-            } catch {}
+            } catch (parseError) {
+              console.log("[JobForm] Error parsing oldData:", parseError);
+            }
 
             // Map string jobType to number
             const triggerTypeMap: Record<string, number> = {
@@ -1124,7 +1134,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             const newEncodedData = encodedData;
 
             // Print in required format
-            console.log("[JobForm] updateJob arguments:", {
+            devLog("[JobForm] updateJob arguments:", {
               jobId,
               oldJobName,
               jobType: oldJobTypeNum,
@@ -1139,30 +1149,17 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             // Call updateJob on the contract
             const jobCreationAddress =
               process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
-            if (!jobCreationAddress)
+            if (!jobCreationAddress) {
               throw new Error("Job creation contract address not set in env");
+            }
             const jobContract = new ethers.Contract(
               jobCreationAddress,
               JobRegistryArtifact.abi,
               signer,
             );
-            console.log(
-              "[JobForm] Calling updateJob on contract:",
-              jobCreationAddress,
-            );
-            console.log("[JobForm] updateJob Arguments:", {
-              jobId,
-              oldJobName,
-              jobType: oldJobTypeNum,
-              oldTimeFrame: Number(oldTimeFrame),
-              oldTargetContract: oldTargetContract,
-              oldData: oldEncodedData,
-              newJobName,
-              newTimeFrame: Number(newTimeFrame),
-              newData: newEncodedData,
-            });
+
             // Log how job_id is set
-            console.log(
+            devLog(
               `[JobForm] job_id will be set from contract event after creation. Current value:`,
               jd.job_id,
             );
@@ -1177,9 +1174,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               newTimeFrame,
               newEncodedData,
             );
-            console.log("[JobForm] updateJob tx sent:", tx.hash);
+            devLog("[JobForm] updateJob tx sent:", tx.hash);
             const receipt = await tx.wait();
-            console.log(
+            devLog(
               "[JobForm] updateJob tx confirmed:",
               receipt.transactionHash,
             );
@@ -1187,26 +1184,85 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           } else {
             const jobCreationAddress =
               process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
-            if (!jobCreationAddress)
+            if (!jobCreationAddress) {
               throw new Error("Job creation contract address not set in env");
+            }
             const jobContract = new ethers.Contract(
               jobCreationAddress,
               JobRegistryArtifact.abi,
               signer,
             );
+
+            // Check for common validation issues
+            if (!jd.job_title || jd.job_title.trim() === "") {
+              console.log("[JobForm] ERROR: Empty job title");
+              throw new Error("Job title cannot be empty");
+            }
+            if (
+              !jd.target_contract_address ||
+              jd.target_contract_address ===
+                "0x0000000000000000000000000000000000000000"
+            ) {
+              console.log("[JobForm] ERROR: Invalid target contract address");
+              throw new Error("Target contract address is required");
+            }
+
+            // Check for time interval requirement for task definition ID 2 (Time-based with IPFS)
+            if (jd.task_definition_id === 2 && jd.time_interval <= 0) {
+              console.log(
+                "[JobForm] ERROR: Time interval must be greater than 0 for task definition ID 2",
+              );
+              throw new Error(
+                "Time interval must be greater than 0 for task definition ID 2",
+              );
+            }
+
+            // Check for IPFS hash requirement for task definition IDs 2, 4, 6 (require IPFS)
+            if (
+              (jd.task_definition_id === 2 ||
+                jd.task_definition_id === 4 ||
+                jd.task_definition_id === 6) &&
+              (!jd.dynamic_arguments_script_url ||
+                jd.dynamic_arguments_script_url.trim() === "")
+            ) {
+              throw new Error(
+                `IPFS hash is required for task definition ID ${jd.task_definition_id}`,
+              );
+            }
+
+            // Try to estimate gas first to get more detailed error
+            try {
+            } catch (gasError: unknown) {
+              console.log("[JobForm] Gas estimation failed:", gasError);
+              // Try to decode the error
+              if (
+                gasError &&
+                typeof gasError === "object" &&
+                "data" in gasError
+              ) {
+                const errorData = (gasError as { data: string }).data;
+                console.log("[JobForm] Error data:", errorData);
+
+                try {
+                  const decodedError =
+                    jobContract.interface.parseError(errorData);
+                  console.log("[JobForm] Decoded error:", decodedError);
+                } catch (decodeError) {
+                  console.log("[JobForm] Could not decode error:", decodeError);
+                }
+              }
+              throw gasError;
+            }
+
             const tx = await jobContract.createJob(
               jd.job_title,
-              jobType,
+              jd.task_definition_id, // Use task definition ID instead of job type
               jd.time_frame,
               jd.target_contract_address,
               encodedData,
             );
-            console.log("[JobForm] createJob tx sent:", tx.hash);
             const receipt = await tx.wait();
-            console.log(
-              "[JobForm] createJob tx confirmed:",
-              receipt.transactionHash,
-            );
+
             // Try to get jobId from event
             const jobCreatedEvent = receipt.logs
               .map((log: unknown) => {
@@ -1216,7 +1272,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                       typeof jobContract.interface.parseLog
                     >[0],
                   );
-                } catch {
+                } catch (parseError) {
+                  console.log("[JobForm] Error parsing log:", parseError);
                   return null;
                 }
               })
@@ -1227,11 +1284,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                   name: string;
                   args: { jobId?: { toString: () => string } };
                 } => {
-                  return (
+                  const isValid =
                     !!parsed &&
                     typeof (parsed as { name?: string }).name === "string" &&
-                    (parsed as { name: string }).name === "JobCreated"
+                    (parsed as { name: string }).name === "JobCreated";
+                  devLog(
+                    "[JobForm] Checking if parsed log is JobCreated event:",
+                    isValid,
                   );
+                  return isValid;
                 },
               );
 
@@ -1245,6 +1306,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             devLog("Job creation transaction confirmed: ", tx.hash);
           }
         } catch (err) {
+          devLog("Error in contract call section:", err);
           devLog("Error calling createJob contract: ", err);
           toast.error("Error creating job on-chain");
           setIsSubmitting(false);
@@ -1272,7 +1334,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       let response;
       if (jobId) {
         // Update job
-        console.log(
+        devLog(
           `[JobForm] Calling UPDATE API: ${API_BASE_URL}/api/jobs/update/${jobId} (PUT)`,
         );
         response = await fetch(`${API_BASE_URL}/api/jobs/update/${jobId}`, {
@@ -1283,9 +1345,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       } else {
         // Create job
-        console.log(
-          `[JobForm] Calling CREATE API: ${API_BASE_URL}/api/jobs (POST)`,
-        );
+        devLog(`[JobForm] Calling CREATE API: ${API_BASE_URL}/api/jobs (POST)`);
         response = await fetch(`${API_BASE_URL}/api/jobs`, {
           method: "POST",
           mode: "cors",
