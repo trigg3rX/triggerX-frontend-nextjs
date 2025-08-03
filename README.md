@@ -33,7 +33,7 @@ A modern Next.js application for the TriggerX platform, providing a comprehensiv
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/trigg3rX/triggerX-frontend-nextjs.git
 cd triggerX-frontend-nextjs
 ```
 
@@ -76,7 +76,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 with your browser to see the result.
 
 ## 📁 Project Structure
 
