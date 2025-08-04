@@ -163,7 +163,7 @@ export function validateJobForm({
         scrollToId: "contract-condition-type-contract",
       };
     }
-    if (contract.conditionType === "In Range") {
+    if (contract.conditionType === "between") {
       if (
         !contract.upperLimit ||
         contract.upperLimit === "" ||
@@ -269,7 +269,7 @@ export function validateJobForm({
             scrollToId: `contract-condition-type-${jobKey}`,
           };
         }
-        if (linked.conditionType === "In Range") {
+        if (linked.conditionType === "between") {
           if (
             !linked.upperLimit ||
             linked.upperLimit === "" ||
