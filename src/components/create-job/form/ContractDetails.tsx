@@ -428,9 +428,9 @@ export const ContractDetails = ({
           <RadioGroup
             label="Source Type"
             options={[
-              { label: "API", value: "API" },
-              { label: "WebSocket", value: "WebSocket" },
-              { label: "Oracle", value: "Oracle", disabled: true },
+              { label: "API", value: "api" },
+              { label: "WebSocket", value: "static", disabled: true },
+              { label: "Oracle", value: "oracle", disabled: true },
             ]}
             value={contract.sourceType || "API"}
             onChange={
