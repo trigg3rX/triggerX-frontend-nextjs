@@ -111,7 +111,7 @@ function extractJobDetails(
     dynamic_arguments_script_url: ipfsCodeUrl,
     value_source_type: c.sourceType,
     value_source_url: c.sourceUrl,
-    condition_type: c.conditionType,
+    condition_type: mapConditionType(c.conditionType || ""),
     upper_limit: c.upperLimit ? parseFloat(c.upperLimit) : undefined,
     lower_limit: c.lowerLimit ? parseFloat(c.lowerLimit) : undefined,
   };
@@ -153,6 +153,21 @@ function getTaskDefinitionId(argumentType: string, jobType: number): number {
 
 function getArgType(argumentType: string): number {
   return argumentType === "static" ? 1 : 2;
+}
+
+// Map frontend condition type IDs to backend constants
+function mapConditionType(frontendConditionType: string): string {
+  const conditionTypeMap: Record<string, string> = {
+    equals: "equals",
+    not_equals: "not_equals",
+    less_than: "less_than",
+    greater_than: "greater_than",
+    between: "between",
+    less_equal: "less_equal",
+    greater_equal: "greater_equal",
+  };
+
+  return conditionTypeMap[frontendConditionType] || frontendConditionType;
 }
 
 // 1. Add encoding utility functions at the top (after imports):
