@@ -10,9 +10,9 @@ import {
   TableRow,
 } from "./Table";
 import { ChevronDownIcon, ExternalLink } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Pagination } from "../ui/Pagination";
+import { useState, useMemo, useEffect } from "react";
 import { LucideCopyButton } from "../ui/CopyButton";
-import { TablePagination } from "../ui/TablePagination";
 import { MobileTableGrid } from "./MobileTableGrid";
 import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
@@ -23,7 +23,6 @@ import useTruncateAddress from "@/hooks/useTruncateAddress";
 import { Card } from "../ui/Card";
 import { ErrorMessage } from "../common/ErrorMessage";
 import useCountUp from "@/hooks/useCountUp";
-import { TableSkeleton } from "../skeleton/TableSkeleton";
 
 interface Column {
   key: string;
@@ -37,7 +36,6 @@ interface MainTableProps {
   userAddress?: string | null;
   error?: string | null;
   onRetry?: () => void;
-  isLoading?: boolean;
 }
 
 // Column configurations for each tab
@@ -73,13 +71,17 @@ export default function MainTable({
   userAddress,
   error,
   onRetry,
-  isLoading = false,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("points");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  const itemsPerPage = 10;
+  // Reset to first page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   const columns = TAB_COLUMNS[activeTab as TabType] || [];
 
   // Filter out the developer row for the current user if activeTab is 'developer'
@@ -94,6 +96,11 @@ export default function MainTable({
       setSortField(field);
       setSortDirection("asc");
     }
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
   };
 
   const sortedAndPaginatedData = useMemo(() => {
@@ -112,7 +119,7 @@ export default function MainTable({
 
     const startIndex = (currentPage - 1) * itemsPerPage;
     return sorted.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, sortField, sortDirection, currentPage]);
+  }, [filteredData, sortField, sortDirection, currentPage, itemsPerPage]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
@@ -133,7 +140,7 @@ export default function MainTable({
 
       {/* Desktop View */}
       <Card
-        className={`hidden md:block w-full overflow-auto whitespace-nowrap ${styles.customScrollbar}`}
+        className={`hidden md:block w-full whitespace-nowrap ${styles.customScrollbar}`}
       >
         {error ? (
           <ErrorMessage
@@ -142,10 +149,8 @@ export default function MainTable({
             retryText="Try Again"
             onRetry={onRetry}
           />
-        ) : activeTab === "contributor" || filteredData.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
-        ) : isLoading ? (
-          <TableSkeleton columns={columns.length} rows={5} />
         ) : (
           <Table>
             <TableHeader>
@@ -256,6 +261,16 @@ export default function MainTable({
             </TableBody>
           </Table>
         )}
+        {!error && filteredData.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={handleItemsPerPageChange}
+            className="mt-6"
+          />
+        )}
       </Card>
 
       {/* Mobile View */}
@@ -271,12 +286,6 @@ export default function MainTable({
           />
         ) : activeTab === "contributor" || filteredData.length === 0 ? (
           <EmptyState type={activeTab as TabType} />
-        ) : isLoading ? (
-          <div>
-            <Typography variant="body" color="primary" align="center">
-              Loading Data...
-            </Typography>
-          </div>
         ) : (
           <MobileTableGrid
             data={sortedAndPaginatedData}
@@ -284,17 +293,24 @@ export default function MainTable({
             sortField={sortField}
             sortDirection={sortDirection}
             onSort={handleSort}
+            onItemClick={(item) => onViewProfile?.(item.address)}
+            pagination={
+              <div className="mt-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  itemsPerPage={itemsPerPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  totalItems={filteredData.length}
+                />
+              </div>
+            }
           />
         )}
       </Card>
 
-      {!isLoading && !error && filteredData.length > 0 && (
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
-      )}
+      {/* Etherscan-style Pagination */}
     </>
   );
 }

@@ -28,12 +28,12 @@ export function useJobLogs(jobId: string | number | undefined) {
           setLoading(false);
           return;
         }
-        const response = await fetch(`${API_BASE_URL}/tasks/job/${jobId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/tasks/job/${jobId}`, {
           headers: {
             "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
           },
         });
-        console.log("Raw response:", response);
+        devLog("Raw response:", response);
         if (!response.ok) {
           setError(`Failed to fetch job logs.`);
           setLoading(false);

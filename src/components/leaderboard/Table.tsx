@@ -1,16 +1,16 @@
 import * as React from "react";
-
+import { ChevronDownIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full overflow-auto rounded-lg">
     <table
       ref={ref}
       className={cn(
-        "w-full caption-bottom text-sm border-separate border-spacing-y-4 ",
+        "w-full caption-bottom text-sm border-separate border-spacing-y-2",
         className,
       )}
       {...props}
@@ -25,7 +25,10 @@ const TableHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <thead
     ref={ref}
-    className={cn("bg-[#303030] rounded-lg", className)}
+    className={cn(
+      "bg-[#2A2A2A] rounded-lg sticky top-0 z-10 shadow-md",
+      className,
+    )}
     {...props}
   />
 ));
@@ -62,7 +65,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "transition-colors data-[state=selected]:bg-muted rounded-lg ",
+      "transition-all duration-200 hover:bg-[#2A2A2A]/80 data-[state=selected]:bg-muted rounded-lg group",
       className,
     )}
     {...props}
@@ -72,16 +75,34 @@ TableRow.displayName = "TableRow";
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
-  React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+  React.ThHTMLAttributes<HTMLTableCellElement> & {
+    sortable?: boolean;
+    active?: boolean;
+    direction?: "asc" | "desc";
+  }
+>(({ className, sortable, active, direction, children, ...props }, ref) => (
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 first:rounded-tl-xl last:rounded-tr-xl first:rounded-bl-xl last:rounded-br-xl",
+      "h-14 px-6 text-left align-middle font-medium text-[#B0B0B0] transition-colors",
+      "[&:has([role=checkbox])]:pr-0 first:rounded-tl-lg last:rounded-tr-lg first:rounded-bl-lg last:rounded-br-lg",
+      sortable && "cursor-pointer hover:bg-[#3A3A3A] transition-colors",
+      active && "text-white bg-[#3A3A3A]",
       className,
     )}
     {...props}
-  />
+  >
+    <div className="flex items-center gap-2">
+      {children}
+      {sortable && (
+        <span
+          className={`transition-transform ${active && direction === "asc" ? "rotate-180" : ""}`}
+        >
+          <ChevronDownIcon className="h-4 w-4" />
+        </span>
+      )}
+    </div>
+  </th>
 ));
 TableHead.displayName = "TableHead";
 
@@ -92,7 +113,9 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "p-3 bg-[#1a1a1a] align-middle [&:has([role=checkbox])]:pr-0  first:rounded-tl-xl last:rounded-tr-xl first:rounded-bl-xl last:rounded-br-xl",
+      "p-4 bg-[#1E1E1E] align-middle transition-colors duration-150",
+      "[&:has([role=checkbox])]:pr-0 first:rounded-l-lg last:rounded-r-lg",
+      "group-hover:bg-[#2A2A2A]/80",
       className,
     )}
     {...props}
