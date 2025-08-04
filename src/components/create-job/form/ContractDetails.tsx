@@ -116,13 +116,13 @@ export const ContractDetails = ({
     )?.name || "Static";
 
   const conditionTypeOptions: DropdownOption[] = [
-    { id: "Equals to", name: "Equals to" },
-    { id: "Not Equals to", name: "Not Equals to" },
-    { id: "Less Than", name: "Less Than" },
-    { id: "Greater Than", name: "Greater Than" },
-    { id: "In Range", name: "In Range" },
-    { id: "Less Than or Equals to", name: "Less Than or Equals to" },
-    { id: "Greater Than or Equals to", name: "Greater Than or Equals to" },
+    { id: "equals", name: "Equals to" },
+    { id: "not_equals", name: "Not Equals to" },
+    { id: "less_than", name: "Less Than" },
+    { id: "greater_than", name: "Greater Than" },
+    { id: "between", name: "In Range" },
+    { id: "less_equal", name: "Less Than or Equals to" },
+    { id: "greater_equal", name: "Greater Than or Equals to" },
   ];
 
   const handleChange = (value: string) => {
@@ -428,9 +428,9 @@ export const ContractDetails = ({
           <RadioGroup
             label="Source Type"
             options={[
-              { label: "API", value: "API" },
-              { label: "WebSocket", value: "WebSocket" },
-              { label: "Oracle", value: "Oracle", disabled: true },
+              { label: "API", value: "api" },
+              { label: "WebSocket", value: "static", disabled: true },
+              { label: "Oracle", value: "oracle", disabled: true },
             ]}
             value={contract.sourceType || "API"}
             onChange={
@@ -485,14 +485,21 @@ export const ContractDetails = ({
               label="Condition Type"
               options={conditionTypeOptions}
               selectedOption={
-                contract.conditionType || "Select a condition type"
+                contract.conditionType
+                  ? conditionTypeOptions.find(
+                      (opt) => opt.id === contract.conditionType,
+                    )?.name || "Select a condition type"
+                  : "Select a condition type"
               }
               onChange={
                 readOnly
                   ? () => {}
                   : (option) => {
-                      handleConditionTypeChange(contractKey, option.name);
-                      if (option.name !== "In Range") {
+                      handleConditionTypeChange(
+                        contractKey,
+                        option.id as string,
+                      );
+                      if (option.id !== "between") {
                         handleLowerLimitChange(contractKey, "0");
                       }
                       setContractErrors((prev) => ({
@@ -512,7 +519,7 @@ export const ContractDetails = ({
           {/* Limits/Value Fields */}
           {contract.conditionType && (
             <>
-              {contract.conditionType === "In Range" ? (
+              {contract.conditionType === "between" ? (
                 <div className="space-y-auto">
                   <div
                     className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6"

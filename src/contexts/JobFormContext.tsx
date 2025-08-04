@@ -42,11 +42,11 @@ export type JobDetails = {
   arg_type?: number;
   arguments?: string[];
   dynamic_arguments_script_url?: string;
-  source_type?: string;
-  source_url?: string;
+  value_source_type?: string;
+  value_source_url?: string;
   condition_type?: string;
-  upper_limit?: string;
-  lower_limit?: string;
+  upper_limit?: number;
+  lower_limit?: number;
   job_id?: string; // <-- add this line
 };
 
@@ -109,11 +109,11 @@ function extractJobDetails(
     arg_type: argType,
     arguments: argsArray,
     dynamic_arguments_script_url: ipfsCodeUrl,
-    // source_type: c.sourceType,
-    // source_url: c.sourceUrl,
-    // condition_type: c.conditionType,
-    // upper_limit: c.upperLimit,
-    // lower_limit: c.lowerLimit,
+    value_source_type: c.sourceType,
+    value_source_url: c.sourceUrl,
+    condition_type: mapConditionType(c.conditionType || ""),
+    upper_limit: c.upperLimit ? parseFloat(c.upperLimit) : undefined,
+    lower_limit: c.lowerLimit ? parseFloat(c.lowerLimit) : undefined,
   };
 }
 
@@ -153,6 +153,21 @@ function getTaskDefinitionId(argumentType: string, jobType: number): number {
 
 function getArgType(argumentType: string): number {
   return argumentType === "static" ? 1 : 2;
+}
+
+// Map frontend condition type IDs to backend constants
+function mapConditionType(frontendConditionType: string): string {
+  const conditionTypeMap: Record<string, string> = {
+    equals: "equals",
+    not_equals: "not_equals",
+    less_than: "less_than",
+    greater_than: "greater_than",
+    between: "between",
+    less_equal: "less_equal",
+    greater_equal: "greater_equal",
+  };
+
+  return conditionTypeMap[frontendConditionType] || frontendConditionType;
 }
 
 // 1. Add encoding utility functions at the top (after imports):
@@ -266,6 +281,12 @@ export interface JobFormContextType {
   setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
   isJobCreated: boolean;
   setIsJobCreated: React.Dispatch<React.SetStateAction<boolean>>;
+  contractInteractionSuccessful: boolean;
+  setContractInteractionSuccessful: React.Dispatch<
+    React.SetStateAction<boolean>
+  >;
+  lastJobId: string | undefined;
+  setLastJobId: React.Dispatch<React.SetStateAction<string | undefined>>;
   handleStakeTG: () => Promise<boolean>;
   handleCreateJob: (jobId?: string) => Promise<boolean>;
   handleSetABI: (contractKey: string, value: string) => void;
@@ -274,6 +295,7 @@ export interface JobFormContextType {
     address: string,
     abiString: string,
   ) => void;
+  resetContractInteractionState: () => void;
 }
 
 export const JobFormContext = createContext<JobFormContextType | undefined>(
@@ -350,6 +372,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isJobCreated, setIsJobCreated] = useState<boolean>(false);
+  const [contractInteractionSuccessful, setContractInteractionSuccessful] =
+    useState<boolean>(false);
+  const [lastJobId, setLastJobId] = useState<string | undefined>(undefined);
 
   // Error refs (must be stable, not recreated on every render)
   const jobTitleErrorRef = React.useRef<HTMLDivElement | null>(null);
@@ -1084,7 +1109,17 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // --- ACTUAL CONTRACT CALL ---
         try {
-          if (jobId) {
+          // Check if we should skip contract interaction (if it was already successful)
+          const shouldSkipContract =
+            !jobId && contractInteractionSuccessful && lastJobId;
+
+          if (shouldSkipContract) {
+            devLog(
+              "[JobForm] Skipping contract interaction - already successful, using last job ID:",
+              lastJobId,
+            );
+            updatedJobDetails[0].job_id = lastJobId;
+          } else if (jobId) {
             const urlParams = new URLSearchParams(window.location.search);
             const oldJobName = urlParams.get("oldJobName") || "";
             const oldJobType = urlParams.get("jobType") || "";
@@ -1297,9 +1332,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               );
 
             if (jobCreatedEvent) {
-              // const returnedJobId = jobCreatedEvent.args.jobId?.toString();
-              const returnedJobId = jobCreatedEvent.args.jobId?.toString(); // this is fine
+              const returnedJobId = jobCreatedEvent.args.jobId?.toString();
               updatedJobDetails[0].job_id = returnedJobId;
+              // Mark contract interaction as successful and store the job ID
+              setContractInteractionSuccessful(true);
+              setLastJobId(returnedJobId);
+              devLog(
+                "[JobForm] Contract interaction successful, stored job ID:",
+                returnedJobId,
+              );
             } else {
               console.log("[JobForm] No JobCreated event found in logs.");
             }
@@ -1363,6 +1404,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       setIsJobCreated(true);
+      // Reset contract interaction state after successful job creation
+      setContractInteractionSuccessful(false);
+      setLastJobId(undefined);
       toast.success(
         jobId ? "Job updated successfully!" : "Job created successfully!",
       );
@@ -1455,6 +1499,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
+  const resetContractInteractionState = useCallback(() => {
+    setContractInteractionSuccessful(false);
+    setLastJobId(undefined);
+    devLog("[JobForm] Reset contract interaction state");
+  }, []);
+
   return (
     <JobFormContext.Provider
       value={{
@@ -1521,10 +1571,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsSubmitting,
         isJobCreated,
         setIsJobCreated,
+        contractInteractionSuccessful,
+        setContractInteractionSuccessful,
+        lastJobId,
+        setLastJobId,
         handleStakeTG,
         handleCreateJob,
         handleSetABI,
         handleSetContractDetails,
+        resetContractInteractionState,
       }}
     >
       {children}
