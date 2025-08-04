@@ -1361,7 +1361,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       if (jobId && updatedJobDetails[0]) {
         updatedJobDetails[0].job_id = jobId;
       }
-      devLog("Submitting job details:", updatedJobDetails);
+      console.log("Submitting job details:", updatedJobDetails);
 
       // Create or update job via API
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
