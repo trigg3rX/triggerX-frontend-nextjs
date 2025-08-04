@@ -11,7 +11,7 @@ export interface JobLog {
 }
 
 export function useJobLogs(jobId: string | number | undefined) {
-  const [logs] = useState<JobLog[]>([]);
+  const [logs, setLogs] = useState<JobLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +42,7 @@ export function useJobLogs(jobId: string | number | undefined) {
         const data = await response.json();
 
         devLog("Get Job Logs", data);
+        setLogs(data);
 
         setLoading(false);
       } catch {
