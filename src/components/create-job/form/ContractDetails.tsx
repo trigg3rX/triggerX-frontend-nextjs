@@ -64,7 +64,7 @@ export const ContractDetails = ({
     argumentType: "",
     ipfsCodeUrl: "",
     ipfsCodeUrlError: "",
-    sourceType: "API",
+    sourceType: "api",
   };
 
   const isEventContract = contractKey === "eventContract";
@@ -432,7 +432,7 @@ export const ContractDetails = ({
               { label: "WebSocket", value: "static", disabled: true },
               { label: "Oracle", value: "oracle", disabled: true },
             ]}
-            value={contract.sourceType || "API"}
+            value={contract.sourceType || ""}
             onChange={
               readOnly
                 ? () => {}
