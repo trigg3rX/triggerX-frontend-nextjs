@@ -432,7 +432,7 @@ export const ContractDetails = ({
               { label: "WebSocket", value: "static", disabled: true },
               { label: "Oracle", value: "oracle", disabled: true },
             ]}
-            value={contract.sourceType || "API"}
+            value={contract.sourceType || "api"}
             onChange={
               readOnly
                 ? () => {}
