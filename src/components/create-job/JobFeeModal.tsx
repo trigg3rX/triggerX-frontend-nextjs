@@ -55,6 +55,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     getNetworkIdByName,
     selectedNetwork,
     jobTitle,
+    resetContractInteractionState,
   } = useJobForm();
   const router = useRouter();
 
@@ -205,6 +206,12 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   const handleStake = async (e: React.MouseEvent) => {
     e.preventDefault();
     setJobCreateFailed(false);
+
+    // Reset contract interaction state when starting a new attempt
+    if (jobCreateFailed) {
+      resetContractInteractionState();
+    }
+
     if (hasEnoughBalance) {
       const success = await handleCreateJob(jobId || undefined);
       setJobCreateFailed(!success);
@@ -239,9 +246,20 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     if (!isOpen) setTopUpFailed(false);
   }, [isOpen]);
 
+  // Reset contract interaction state when modal opens
   useEffect(() => {
-    if (!isOpen) setJobCreateFailed(false);
-  }, [isOpen]);
+    if (isOpen) {
+      resetContractInteractionState();
+    }
+  }, [isOpen, resetContractInteractionState]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setJobCreateFailed(false);
+      // Reset contract interaction state when modal closes
+      resetContractInteractionState();
+    }
+  }, [isOpen, resetContractInteractionState]);
 
   const handleClose = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
