@@ -7,6 +7,7 @@ import EmptyState from "../common/EmptyState";
 import DeleteDialog from "../common/DeleteDialog";
 import { JobType } from "@/hooks/useJobs";
 import JobCardSkeleton from "../skeleton/JobCardSkeleton";
+import JobLogsSkeleton from "./JobLogsSkeleton";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { useDeleteJob } from "@/hooks/useDeleteJob";
@@ -233,13 +234,11 @@ const MainJobs = ({
       {jobLogsOpenId !== null && (
         <div ref={logsRef}>
           {logsLoading ? (
-            <div className="text-white text-center py-4">Loading logs...</div>
+            <JobLogsSkeleton />
           ) : logsError ? (
             <JobLogsTable logs={[]} error={logsError} />
           ) : (
-            <>
-              <JobLogsTable logs={jobLogs} />
-            </>
+            <JobLogsTable logs={jobLogs} />
           )}
         </div>
       )}

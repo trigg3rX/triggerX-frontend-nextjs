@@ -98,6 +98,7 @@ export default function useLeaderboardData(
             developers: transformedUserData,
           }));
         }
+        setIsLoading(true);
       } catch (err) {
         if (err instanceof Error) {
           setError("Something went wrong.");

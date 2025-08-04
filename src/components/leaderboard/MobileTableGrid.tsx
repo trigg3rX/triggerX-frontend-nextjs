@@ -18,12 +18,14 @@ interface MobileTableGridProps {
   sortDirection: "asc" | "desc";
   onSort: (field: string) => void;
   onItemClick?: (item: TableData) => void;
+  pagination?: React.ReactNode;
 }
 
 export function MobileTableGrid({
   data,
   activeTab,
   onItemClick,
+  pagination,
 }: MobileTableGridProps) {
   return (
     <>
@@ -129,6 +131,8 @@ export function MobileTableGrid({
           </div>
         ))}
       </div>
+      {/* Pagination */}
+      {pagination && <div className="mt-4">{pagination}</div>}
     </>
   );
 }
