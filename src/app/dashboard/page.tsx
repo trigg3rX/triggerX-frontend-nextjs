@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 function Dashboard() {
   return (
     <Suspense fallback={<DashboardSkeleton />}>
-      <div className="w-[90%] mx-auto">
+      <div>
         <Typography variant="h1" color="primary">
           Dashboard
         </Typography>
