@@ -38,12 +38,6 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
               <div className="flex flex-col gap-2 ">
                 <div className="flex justify-between  py-1">
                   <Typography variant="body" color="primary">
-                    Task ID
-                  </Typography>
-                  <Typography color="gray">{log.task_id}</Typography>
-                </div>
-                <div className="flex justify-between  py-1">
-                  <Typography variant="body" color="primary">
                     Task Number
                   </Typography>
                   <Typography color="gray">{log.task_number}</Typography>
@@ -74,7 +68,7 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                 </div>
                 <div className="flex justify-between   py-1">
                   <Typography color="primary" variant="body">
-                    OPX Cost
+                    Operat Cost
                   </Typography>
                   <Typography color="gray">{log.task_opx_cost}</Typography>
                 </div>
@@ -83,13 +77,12 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     Tx Hash
                   </Typography>
                   <Typography color="gray">
-                    {" "}
-                    {log.execution_tx_hash ? (
+                    {log.tx_url && log.execution_tx_hash ? (
                       <a
-                        href={`https://etherscan.io/tx/${log.execution_tx_hash}`}
+                        href={log.tx_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline text-blue-400"
+                        className="underline underline-offset-2 hover:text-[#F8ff7c]/80 "
                       >
                         {log.execution_tx_hash.slice(0, 8)}...
                         {log.execution_tx_hash.slice(-6)}
@@ -113,18 +106,12 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
     <>
       {/* Desktop/tablet view */}
       <div className="hidden md:block w-full overflow-x-auto">
-        <Typography
-          variant="h2"
-          color="white"
-          align="left"
-          className=" mt-7 mb-4"
-        >
+        <Typography variant="h2" color="white" align="left" className=" m-4">
           Job Logs
         </Typography>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Task ID</TableHead>
               <TableHead>Task Number</TableHead>
               <TableHead>Timestamp</TableHead>
               <TableHead>Status</TableHead>
@@ -148,7 +135,6 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
             ) : (
               logs.map((log) => (
                 <TableRow key={`${log.task_id}-${log.task_number}`}>
-                  <TableCell>{log.task_id}</TableCell>
                   <TableCell>{log.task_number}</TableCell>
                   <TableCell>
                     {log.execution_timestamp &&
@@ -170,9 +156,9 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                   </TableCell>
                   <TableCell>{log.task_opx_cost}</TableCell>
                   <TableCell>
-                    {log.execution_tx_hash ? (
+                    {log.tx_url && log.execution_tx_hash ? (
                       <a
-                        href={`https://etherscan.io/tx/${log.execution_tx_hash}`}
+                        href={log.tx_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline text-blue-400"
@@ -181,7 +167,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                         {log.execution_tx_hash.slice(-6)}
                       </a>
                     ) : (
-                      "-"
+                      <span>-</span>
                     )}
                   </TableCell>
                 </TableRow>

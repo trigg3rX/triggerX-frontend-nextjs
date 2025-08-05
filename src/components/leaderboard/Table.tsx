@@ -113,7 +113,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn(
-      "p-4 bg-[#1E1E1E] align-middle transition-colors duration-150",
+      "py-4 px-6 bg-[#1E1E1E] align-middle transition-colors duration-150",
       "[&:has([role=checkbox])]:pr-0 first:rounded-l-lg last:rounded-r-lg",
       "group-hover:bg-[#2A2A2A]/80",
       className,

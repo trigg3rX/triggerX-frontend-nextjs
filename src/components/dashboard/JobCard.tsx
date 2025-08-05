@@ -11,6 +11,7 @@ import networksData from "@/utils/networks.json";
 import { useChainId, useSwitchChain } from "wagmi";
 import Modal from "../ui/Modal";
 import { Button } from "../ui/Button";
+import opIcon from "../../assets/download.svg";
 
 export type JobType = {
   id: number;
@@ -132,10 +133,8 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 relative ${
-        expandedDetails
-          ? "h-auto border border-white "
-          : "h-[290px] md:h-[310px] "
+      className={`!p-0 relative z-[9999] ${
+        expandedDetails ? "h-auto border border-white " : " md:h-[310px] "
       } ${
         expanded
           ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
@@ -208,19 +207,12 @@ const JobCard: React.FC<JobCardProps> = ({
                 ? networksData.networkIcons[network.name]
                 : null;
               return icon ? (
-                <svg
-                  viewBox={icon.viewBox}
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-6 h-6"
-                >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d={icon.path}
-                    fill="currentColor"
-                  />
-                </svg>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Image src={opIcon} alt="op" width={20} height={20} />
+                  </TooltipTrigger>
+                  <TooltipContent>Optimism sepolia</TooltipContent>
+                </Tooltip>
               ) : null;
             })()}
           </div>

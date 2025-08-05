@@ -15,7 +15,12 @@ export const DeleteConfirmationButton: React.FC<
   return (
     <>
       <button
-        onClick={() => setShowModal(true)}
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setShowModal(true);
+        }}
         className="fill-white hover:scale-110 focus:outline-none w-5 h-5 mb-1"
       >
         <svg

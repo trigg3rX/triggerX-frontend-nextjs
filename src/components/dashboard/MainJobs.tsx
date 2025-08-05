@@ -21,6 +21,7 @@ type MainJobsProps = {
   jobs: JobType[];
   setJobs: React.Dispatch<React.SetStateAction<JobType[]>>;
 };
+
 const MainJobs = ({
   selectedType = "All Types",
   jobs,
@@ -171,6 +172,68 @@ const MainJobs = ({
     return "All Types";
   };
 
+  // Function to render jobs with logs table insertion
+  const renderJobsWithLogs = () => {
+    const filteredJobs = getFilteredJobs();
+    const elements = [];
+
+    for (let i = 0; i < filteredJobs.length; i += 3) {
+      const jobGroup = filteredJobs.slice(i, i + 3);
+
+      // Add the job cards for this group
+      elements.push(
+        <div
+          key={`group-${i}`}
+          className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3"
+        >
+          {jobGroup.map((job) => (
+            <div
+              key={job.id}
+              className="col-span-1"
+              onClick={() => handleJobCardClick(job.id)}
+              style={{ cursor: "pointer" }}
+              ref={(el) => {
+                linkedJobsRefs.current[job.id] = el;
+              }}
+            >
+              <JobCard
+                job={job}
+                expanded={!!expandedJobs[job.id]}
+                expandedDetails={!!expandedJobDetails[job.id]}
+                onToggleExpand={toggleJobExpand}
+                onToggleDetails={toggleJobDetails}
+                onDelete={showDeleteConfirmation}
+                isLogOpen={jobLogsOpenId === job.id}
+              />
+            </div>
+          ))}
+        </div>,
+      );
+
+      // Check if any job in this group has logs open
+      const jobWithLogsOpen = jobGroup.find((job) => jobLogsOpenId === job.id);
+      if (jobWithLogsOpen) {
+        elements.push(
+          <div
+            key={`logs-${jobWithLogsOpen.id}`}
+            className="col-span-full"
+            ref={logsRef}
+          >
+            {logsLoading ? (
+              <JobLogsSkeleton />
+            ) : logsError ? (
+              <JobLogsTable logs={[]} error={logsError} />
+            ) : (
+              <JobLogsTable logs={jobLogs} />
+            )}
+          </div>,
+        );
+      }
+    }
+
+    return elements;
+  };
+
   return (
     <>
       <DeleteDialog
@@ -203,45 +266,15 @@ const MainJobs = ({
 
           {!error && getFilteredJobs().length > 0 && (
             <div
-              className={`p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3 max-h-[1000px] lg:max-h-auto overflow-y-auto ${styles.customScrollbar}`}
+              className={`p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
             >
-              {getFilteredJobs().map((job) => (
-                <div
-                  key={job.id}
-                  className="col-span-1"
-                  onClick={() => handleJobCardClick(job.id)}
-                  style={{ cursor: "pointer" }}
-                  ref={(el) => {
-                    linkedJobsRefs.current[job.id] = el;
-                  }}
-                >
-                  <JobCard
-                    job={job}
-                    expanded={!!expandedJobs[job.id]}
-                    expandedDetails={!!expandedJobDetails[job.id]}
-                    onToggleExpand={toggleJobExpand}
-                    onToggleDetails={toggleJobDetails}
-                    onDelete={showDeleteConfirmation}
-                    isLogOpen={jobLogsOpenId === job.id}
-                  />
-                </div>
-              ))}
+              {renderJobsWithLogs()}
             </div>
           )}
         </>
       )}
-      {/* JobLogsTable outside the grid, full width */}
-      {jobLogsOpenId !== null && (
-        <div ref={logsRef}>
-          {logsLoading ? (
-            <JobLogsSkeleton />
-          ) : logsError ? (
-            <JobLogsTable logs={[]} error={logsError} />
-          ) : (
-            <JobLogsTable logs={jobLogs} />
-          )}
-        </div>
-      )}
+
+      {/* Linked Jobs Section */}
       <div>
         {getFilteredJobs().map((job) =>
           job.linkedJobs &&

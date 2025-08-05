@@ -309,8 +309,6 @@ export default function MainTable({
           />
         )}
       </Card>
-
-      {/* Etherscan-style Pagination */}
     </>
   );
 }

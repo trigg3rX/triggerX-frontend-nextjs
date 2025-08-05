@@ -11,6 +11,7 @@ interface ApiJobLog {
   task_attester_ids: number[] | null;
   is_successful: boolean;
   task_status: string;
+  tx_url: string;
 }
 
 export interface JobLog {
@@ -23,6 +24,7 @@ export interface JobLog {
   task_attester_ids: number[] | null;
   is_successful: boolean;
   task_status: string;
+  tx_url: string;
 }
 
 export function useJobLogs(jobId: string | number | undefined) {
@@ -67,6 +69,7 @@ export function useJobLogs(jobId: string | number | undefined) {
           task_attester_ids: log.task_attester_ids,
           is_successful: log.is_successful,
           task_status: log.task_status,
+          tx_url: log.tx_url,
         }));
 
         devLog("Get Job Logs", formattedLogs);
@@ -74,7 +77,7 @@ export function useJobLogs(jobId: string | number | undefined) {
 
         setLoading(false);
       } catch {
-        setError("Something went wrong fetching job logs.");
+        setError("No logs found.");
         setLoading(false);
       }
     };
