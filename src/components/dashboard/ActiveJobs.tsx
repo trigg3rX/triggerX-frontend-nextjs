@@ -7,7 +7,6 @@ import MainJobs from "./MainJobs";
 import { Card } from "../ui/Card";
 import { useJobs, JobType } from "@/hooks/useJobs";
 import React from "react";
-import styles from "@/app/styles/scrollbar.module.css";
 
 const dropdownOptions: DropdownOption[] = [
   { id: "all", name: "All Types" },
@@ -72,9 +71,7 @@ const ActiveJobs = () => {
           />
         </div>
       </div>
-      <div
-        className={`mb-10 max-h-[1000px] lg:max-h-auto overflow-y-auto ${styles.customScrollbar}  `}
-      >
+      <div className={`mb-10   `}>
         <MainJobs selectedType={selectedType} jobs={jobs} setJobs={setJobs} />
       </div>
     </Card>
