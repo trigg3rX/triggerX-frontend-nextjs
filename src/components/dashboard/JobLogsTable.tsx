@@ -34,21 +34,28 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
       ) : (
         <div className="grid grid-cols-1 gap-4">
           {logs.map((log) => (
-            <Card key={log.id} className="mb-2">
+            <Card key={`${log.task_id}-${log.task_number}`} className="mb-2">
               <div className="flex flex-col gap-2 ">
                 <div className="flex justify-between  py-1">
                   <Typography variant="body" color="primary">
-                    Id
+                    Task ID
                   </Typography>
-                  <Typography color="gray">{log.id}</Typography>
+                  <Typography color="gray">{log.task_id}</Typography>
+                </div>
+                <div className="flex justify-between  py-1">
+                  <Typography variant="body" color="primary">
+                    Task Number
+                  </Typography>
+                  <Typography color="gray">{log.task_number}</Typography>
                 </div>
                 <div className="flex justify-between  py-1">
                   <Typography color="primary" variant="body">
                     Timestamp
                   </Typography>
                   <Typography color="gray">
-                    {log.timestamp
-                      ? new Date(log.timestamp).toLocaleString()
+                    {log.execution_timestamp &&
+                    log.execution_timestamp !== "0001-01-01T00:00:00Z"
+                      ? new Date(log.execution_timestamp).toLocaleString()
                       : "-"}
                   </Typography>
                 </div>
@@ -58,18 +65,18 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                   </Typography>
                   <Typography color="gray">
                     {" "}
-                    {log.success ? (
+                    {log.is_successful ? (
                       <span className="text-green-400">Success</span>
                     ) : (
-                      <span className="text-red-400">Fail</span>
+                      <span className="text-red-400">Failed</span>
                     )}
                   </Typography>
                 </div>
                 <div className="flex justify-between   py-1">
                   <Typography color="primary" variant="body">
-                    TG Used
+                    OPX Cost
                   </Typography>
-                  <Typography color="gray">{log.tgUsed}</Typography>
+                  <Typography color="gray">{log.task_opx_cost}</Typography>
                 </div>
                 <div className="flex justify-between  py-1">
                   <Typography color="primary" variant="body">
@@ -77,14 +84,15 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                   </Typography>
                   <Typography color="gray">
                     {" "}
-                    {log.txHash ? (
+                    {log.execution_tx_hash ? (
                       <a
-                        href={`https://etherscan.io/tx/${log.txHash}`}
+                        href={`https://etherscan.io/tx/${log.execution_tx_hash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline text-blue-400"
                       >
-                        {log.txHash.slice(0, 8)}...{log.txHash.slice(-6)}
+                        {log.execution_tx_hash.slice(0, 8)}...
+                        {log.execution_tx_hash.slice(-6)}
                       </a>
                     ) : (
                       <span>-</span>
@@ -116,10 +124,11 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Id</TableHead>
+              <TableHead>Task ID</TableHead>
+              <TableHead>Task #</TableHead>
               <TableHead>Timestamp</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>TG Used</TableHead>
+              <TableHead>OPX Cost</TableHead>
               <TableHead>Tx Hash</TableHead>
             </TableRow>
           </TableHeader>
@@ -138,30 +147,38 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
               </TableRow>
             ) : (
               logs.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell>{log.id}</TableCell>
+                <TableRow key={`${log.task_id}-${log.task_number}`}>
+                  <TableCell>{log.task_id}</TableCell>
+                  <TableCell>{log.task_number}</TableCell>
                   <TableCell>
-                    {log.timestamp
-                      ? new Date(log.timestamp).toLocaleString()
+                    {log.execution_timestamp &&
+                    log.execution_timestamp !== "0001-01-01T00:00:00Z"
+                      ? new Date(log.execution_timestamp).toLocaleString()
                       : "-"}
                   </TableCell>
                   <TableCell>
-                    {log.success ? (
+                    {log.is_successful ? (
                       <span className="text-green-400">Success</span>
                     ) : (
-                      <span className="text-red-400">Fail</span>
+                      <span className="text-red-400">Failed</span>
+                    )}
+                    {log.task_status && (
+                      <span className="ml-2 text-gray-400">
+                        ({log.task_status})
+                      </span>
                     )}
                   </TableCell>
-                  <TableCell>{log.tgUsed}</TableCell>
+                  <TableCell>{log.task_opx_cost}</TableCell>
                   <TableCell>
-                    {log.txHash ? (
+                    {log.execution_tx_hash ? (
                       <a
-                        href={`https://etherscan.io/tx/${log.txHash}`}
+                        href={`https://etherscan.io/tx/${log.execution_tx_hash}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="underline text-blue-400"
                       >
-                        {log.txHash.slice(0, 8)}...{log.txHash.slice(-6)}
+                        {log.execution_tx_hash.slice(0, 8)}...
+                        {log.execution_tx_hash.slice(-6)}
                       </a>
                     ) : (
                       "-"

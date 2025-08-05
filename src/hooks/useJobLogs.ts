@@ -1,13 +1,28 @@
 import { devLog } from "@/lib/devLog";
 import { useState, useEffect } from "react";
 
+interface ApiJobLog {
+  task_id: number;
+  task_number: number;
+  task_opx_cost: number;
+  execution_timestamp: string;
+  execution_tx_hash: string;
+  task_performer_id: number;
+  task_attester_ids: number[] | null;
+  is_successful: boolean;
+  task_status: string;
+}
+
 export interface JobLog {
-  id: string;
-  message: string;
-  timestamp: string;
-  success: boolean;
-  tgUsed: number;
-  txHash: string;
+  task_id: number;
+  task_number: number;
+  task_opx_cost: number;
+  execution_timestamp: string;
+  execution_tx_hash: string;
+  task_performer_id: number;
+  task_attester_ids: number[] | null;
+  is_successful: boolean;
+  task_status: string;
 }
 
 export function useJobLogs(jobId: string | number | undefined) {
@@ -41,8 +56,21 @@ export function useJobLogs(jobId: string | number | undefined) {
         }
         const data = await response.json();
 
-        devLog("Get Job Logs", data);
-        setLogs(data);
+        // Transform the API response to match our JobLog interface
+        const formattedLogs = (data as ApiJobLog[]).map((log) => ({
+          task_id: log.task_id,
+          task_number: log.task_number,
+          task_opx_cost: log.task_opx_cost,
+          execution_timestamp: log.execution_timestamp,
+          execution_tx_hash: log.execution_tx_hash,
+          task_performer_id: log.task_performer_id,
+          task_attester_ids: log.task_attester_ids,
+          is_successful: log.is_successful,
+          task_status: log.task_status,
+        }));
+
+        devLog("Get Job Logs", formattedLogs);
+        setLogs(formattedLogs);
 
         setLoading(false);
       } catch {
