@@ -125,10 +125,10 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
           <TableHeader>
             <TableRow>
               <TableHead>Task ID</TableHead>
-              <TableHead>Task #</TableHead>
+              <TableHead>Task Number</TableHead>
               <TableHead>Timestamp</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>OPX Cost</TableHead>
+              <TableHead>Operation Cost</TableHead>
               <TableHead>Tx Hash</TableHead>
             </TableRow>
           </TableHeader>
