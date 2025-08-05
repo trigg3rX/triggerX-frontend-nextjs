@@ -28,7 +28,7 @@ interface EthereumProvider {
 const FACTORY_ADDRESS =
   process.env.NEXT_PUBLIC_TRIGGERXTEMPLATEFACTORY_ADDRESS || "";
 const DYNAMICPRICEORACLE_IMPLEMENTATION =
-  "0x632661bA1B3b78C2707A7cAFf9829456BB11eDfd";
+  "0x078858D14418D1eE19743560d80E114CFf3EC837";
 
 const PriceOracle = () => {
   const { address } = useAccount();
