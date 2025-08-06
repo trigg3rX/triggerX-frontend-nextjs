@@ -101,6 +101,18 @@ const PriceOracle = () => {
     if (data) {
       const balance = data.value;
       const requiredBalance = ethers.parseEther("0.02");
+      const hasBalance = balance >= requiredBalance;
+      setHasSufficientBalance(hasBalance);
+      if (hasBalance && isCheckingBalance) {
+        setIsCheckingBalance(false);
+      }
+    }
+  }, [data, isCheckingBalance]);
+
+  useEffect(() => {
+    if (data) {
+      const balance = data.value;
+      const requiredBalance = ethers.parseEther("0.02");
       setHasSufficientBalance(balance >= requiredBalance);
     }
   }, [data]);
@@ -171,7 +183,7 @@ const PriceOracle = () => {
     if (!signer || !address) return;
     setIsLoading(true);
     setShowModal(false);
-    setShowModal(false);
+
     try {
       const network = await signer.provider.getNetwork();
       const currentChainId = network.chainId;
@@ -323,9 +335,10 @@ const PriceOracle = () => {
 
       {isConnected && !isDeployed && (
         <div className="flex flex-wrap gap-3 sm:gap-4">
-          {!hasSufficientBalance && (
+          {!hasSufficientBalance && !isCheckingBalance && (
             <ClaimEth onClaimSuccess={handleClaimSuccess} />
           )}
+
           {isCheckingBalance && (
             <div className="flex items-center gap-2 px-4 py-2 bg-[#FFFFFF] rounded-full">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
@@ -335,7 +348,7 @@ const PriceOracle = () => {
           <DeployButton
             onClick={showDeployModal}
             isLoading={isLoading}
-            disabled={!hasSufficientBalance}
+            disabled={!hasSufficientBalance || isCheckingBalance}
           />
         </div>
       )}
