@@ -18,6 +18,10 @@ export type JobType = {
   created_chain_id: string; // <-- add this
   linkedJobs?: JobType[];
   type: string;
+  condition_type?: string;
+  upper_limit?: number;
+  lower_limit?: number;
+  value_source_url?: string;
 };
 
 // Types for raw API data
@@ -172,6 +176,26 @@ export function useJobs() {
                       : String(typeSpecificData.target_chain_id ?? ""),
                 linkedJobs: [],
                 type: mapJobType(nextJob.job_data.task_definition_id),
+                condition_type:
+                  typeof typeSpecificData.condition_type === "string"
+                    ? typeSpecificData.condition_type
+                    : undefined,
+                upper_limit:
+                  typeof typeSpecificData.upper_limit === "number"
+                    ? typeSpecificData.upper_limit
+                    : typeof typeSpecificData.upper_limit === "string"
+                      ? parseFloat(typeSpecificData.upper_limit)
+                      : undefined,
+                lower_limit:
+                  typeof typeSpecificData.lower_limit === "number"
+                    ? typeSpecificData.lower_limit
+                    : typeof typeSpecificData.lower_limit === "string"
+                      ? parseFloat(typeSpecificData.lower_limit)
+                      : undefined,
+                value_source_url:
+                  typeof typeSpecificData.value_source_url === "string"
+                    ? typeSpecificData.value_source_url
+                    : undefined,
               };
               linkedJobs.push(processedLinkedJob);
               nextJobId = nextJob.job_data.link_job_id;
@@ -234,6 +258,26 @@ export function useJobs() {
                     ? typeSpecificData.target_chain_id
                     : String(typeSpecificData.target_chain_id ?? ""),
               type: mapJobType(jobDetail.job_data.task_definition_id),
+              condition_type:
+                typeof typeSpecificData.condition_type === "string"
+                  ? typeSpecificData.condition_type
+                  : undefined,
+              upper_limit:
+                typeof typeSpecificData.upper_limit === "number"
+                  ? typeSpecificData.upper_limit
+                  : typeof typeSpecificData.upper_limit === "string"
+                    ? parseFloat(typeSpecificData.upper_limit)
+                    : undefined,
+              lower_limit:
+                typeof typeSpecificData.lower_limit === "number"
+                  ? typeSpecificData.lower_limit
+                  : typeof typeSpecificData.lower_limit === "string"
+                    ? parseFloat(typeSpecificData.lower_limit)
+                    : undefined,
+              value_source_url:
+                typeof typeSpecificData.value_source_url === "string"
+                  ? typeSpecificData.value_source_url
+                  : undefined,
             };
           });
         devLog("[useJobs] tempJobs:", tempJobs);

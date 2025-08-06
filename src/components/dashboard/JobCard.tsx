@@ -291,6 +291,55 @@ const JobCard: React.FC<JobCardProps> = ({
             </Typography>
           </div>
 
+          {job.type === "Condition-based" && job.condition_type && (
+            <>
+              <div className="flex items-center justify-between gap-2 py-1.5">
+                <Typography variant="body" color="white" align="left">
+                  Condition Type :
+                </Typography>
+                <Typography variant="body" color="gray" align="right">
+                  {formatConditionType(job.condition_type)}
+                </Typography>
+              </div>
+
+              {job.condition_type === "between" ? (
+                <>
+                  {job.lower_limit !== undefined && (
+                    <div className="flex items-center justify-between gap-2 py-1.5">
+                      <Typography variant="body" color="white" align="left">
+                        Lower Limit :
+                      </Typography>
+                      <Typography variant="body" color="gray" align="right">
+                        {job.lower_limit}
+                      </Typography>
+                    </div>
+                  )}
+                  {job.upper_limit !== undefined && (
+                    <div className="flex items-center justify-between gap-2 py-1.5">
+                      <Typography variant="body" color="white" align="left">
+                        Upper Limit :
+                      </Typography>
+                      <Typography variant="body" color="gray" align="right">
+                        {job.upper_limit}
+                      </Typography>
+                    </div>
+                  )}
+                </>
+              ) : (
+                job.upper_limit !== undefined && (
+                  <div className="flex items-center justify-between gap-2 py-1.5">
+                    <Typography variant="body" color="white" align="left">
+                      Upper Limit :
+                    </Typography>
+                    <Typography variant="body" color="gray" align="right">
+                      {job.upper_limit}
+                    </Typography>
+                  </div>
+                )
+              )}
+            </>
+          )}
+
           {expandedDetails && (
             <div className="space-y-2 text-[#A2A2A2] text-sm">
               <div className="flex items-center justify-between gap-2 py-1">
