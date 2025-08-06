@@ -16,8 +16,8 @@ interface JobLogsTableProps {
   error?: string;
 }
 
-// Mobile card view for job logs
 const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
+  const shouldScroll = logs.length > 10;
   return (
     <div className="md:hidden w-full">
       <Typography variant="h2" color="white" align="left" className="mt-7 mb-4">
@@ -32,7 +32,10 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
           <Typography>No logs found.</Typography>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div
+          className={`grid grid-cols-1 gap-4${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
+          style={shouldScroll ? { maxHeight: 600 } : {}}
+        >
           {logs.map((log) => (
             <Card key={`${log.task_id}-${log.task_number}`} className="mb-2">
               <div className="flex flex-col gap-2 ">
@@ -58,7 +61,6 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     Status
                   </Typography>
                   <Typography color="gray">
-                    {" "}
                     {log.is_successful ? (
                       <span className="text-green-400">Success</span>
                     ) : (
@@ -102,10 +104,15 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
 };
 
 const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
+  // Determine if we need to limit height and show scrollbar
+  const shouldScroll = logs.length > 10;
   return (
     <>
       {/* Desktop/tablet view */}
-      <div className="hidden md:block w-full overflow-x-auto">
+      <div
+        className={`hidden md:block w-full overflow-x-auto${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
+        style={shouldScroll ? { maxHeight: 600 } : {}}
+      >
         <Typography variant="h2" color="white" align="left" className=" m-4">
           Job Logs
         </Typography>

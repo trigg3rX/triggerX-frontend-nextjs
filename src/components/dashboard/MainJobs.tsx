@@ -15,6 +15,7 @@ import { ErrorMessage } from "../common/ErrorMessage";
 import JobLogsTable from "./JobLogsTable";
 import { useJobLogs } from "@/hooks/useJobLogs";
 import styles from "@/app/styles/scrollbar.module.css";
+import { Pagination } from "../ui/Pagination";
 
 type MainJobsProps = {
   selectedType?: string;
@@ -39,6 +40,8 @@ const MainJobs = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
   const [jobLogsOpenId, setJobLogsOpenId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobsPerPage, setJobsPerPage] = useState(6); // Allow dynamic change
 
   // Refs for Linked Jobs sections and Job Logs section
   const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -64,6 +67,11 @@ const MainJobs = ({
     setExpandedLinkedJobDetails({});
     setJobLogsOpenId(null);
   }, [selectedType]);
+
+  // Reset page to 1 when selectedType changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedType, jobsPerPage]);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => {
@@ -159,6 +167,15 @@ const MainJobs = ({
     return jobs;
   };
 
+  // Update getFilteredJobs to support pagination
+  const getPaginatedJobs = () => {
+    const filtered = getFilteredJobs();
+    const startIdx = (currentPage - 1) * jobsPerPage;
+    return filtered.slice(startIdx, startIdx + jobsPerPage);
+  };
+
+  const totalPages = Math.ceil(getFilteredJobs().length / jobsPerPage);
+
   // Map selectedType to allowed JobTypeTab values
   const mapToJobTypeTab = (
     type: string,
@@ -174,11 +191,11 @@ const MainJobs = ({
 
   // Function to render jobs with logs table insertion
   const renderJobsWithLogs = () => {
-    const filteredJobs = getFilteredJobs();
+    const paginatedJobs = getPaginatedJobs();
     const elements = [];
 
-    for (let i = 0; i < filteredJobs.length; i += 3) {
-      const jobGroup = filteredJobs.slice(i, i + 3);
+    for (let i = 0; i < paginatedJobs.length; i += 3) {
+      const jobGroup = paginatedJobs.slice(i, i + 3);
 
       // Add the job cards for this group
       elements.push(
@@ -265,11 +282,29 @@ const MainJobs = ({
           {error && <ErrorMessage error={error} />}
 
           {!error && getFilteredJobs().length > 0 && (
-            <div
-              className={`p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
-            >
-              {renderJobsWithLogs()}
-            </div>
+            <>
+              <div
+                className={`p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
+              >
+                {renderJobsWithLogs()}
+              </div>
+              {/* Pagination Controls */}
+              {getFilteredJobs().length >= 6 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  itemsPerPage={jobsPerPage}
+                  onItemsPerPageChange={(count) => {
+                    setJobsPerPage(count);
+                    setCurrentPage(1); // Reset to first page when changing per page
+                  }}
+                  itemsPerPageOptions={[6, 9, 12, 18]}
+                  totalItems={getFilteredJobs().length}
+                  className="mt-6"
+                />
+              )}
+            </>
           )}
         </>
       )}

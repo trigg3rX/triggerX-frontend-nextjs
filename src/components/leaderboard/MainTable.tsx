@@ -23,6 +23,7 @@ import useTruncateAddress from "@/hooks/useTruncateAddress";
 import { Card } from "../ui/Card";
 import { ErrorMessage } from "../common/ErrorMessage";
 import useCountUp from "@/hooks/useCountUp";
+import { TableSkeleton } from "../skeleton/TableSkeleton";
 
 interface Column {
   key: string;
@@ -36,6 +37,8 @@ interface MainTableProps {
   userAddress?: string | null;
   error?: string | null;
   onRetry?: () => void;
+  isLoading?: boolean;
+  apiLoading?: boolean;
 }
 
 // Column configurations for each tab
@@ -45,7 +48,6 @@ const TAB_COLUMNS: Record<TabType, Column[]> = {
     { key: "address", label: "Address", sortable: false },
     { key: "jobPerformed", label: "Job Performed", sortable: true },
     { key: "jobAttested", label: "Job Attested", sortable: true },
-    // { key: "noOfDays", label: "No of Days", sortable: true },
     { key: "points", label: "Points", sortable: true },
     { key: "profile", label: "Profile", sortable: false },
   ],
@@ -70,9 +72,12 @@ export default function MainTable({
   onViewProfile,
   userAddress,
   error,
+  apiLoading,
   onRetry,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("points");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -132,6 +137,23 @@ export default function MainTable({
     );
   }, [data, userAddress]);
 
+  useEffect(() => {
+    let timeout: NodeJS.Timeout | null = null;
+
+    if (apiLoading) {
+      setIsLoading(true);
+    } else {
+      // Wait at least 2 seconds before hiding the skeleton
+      timeout = setTimeout(() => {
+        setIsLoading(false);
+      }, 2000);
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [apiLoading]);
+
   return (
     <>
       {highlightedData && (
@@ -142,7 +164,9 @@ export default function MainTable({
       <Card
         className={`hidden md:block w-full whitespace-nowrap ${styles.customScrollbar}`}
       >
-        {error ? (
+        {isLoading ? (
+          <TableSkeleton />
+        ) : error ? (
           <ErrorMessage
             error={error}
             className="mt-4"
@@ -277,7 +301,9 @@ export default function MainTable({
       <Card
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
-        {error ? (
+        {isLoading ? (
+          <TableSkeleton />
+        ) : error ? (
           <ErrorMessage
             error={"Something went wrong"}
             className="mt-4"
