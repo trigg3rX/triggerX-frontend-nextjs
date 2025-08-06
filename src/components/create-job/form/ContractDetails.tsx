@@ -47,6 +47,7 @@ export const ContractDetails = ({
     handleIpfsCodeUrlChange,
     handleSourceTypeChange,
     handleSourceUrlChange,
+    handleApiKeySelection,
     handleConditionTypeChange,
     handleLowerLimitChange,
     handleUpperLimitChange,
@@ -478,6 +479,98 @@ export const ContractDetails = ({
               )}
             </div>
           )}
+
+          {contract.sourceUrl && !contract.sourceUrlError && (
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
+              <Typography
+                variant="h4"
+                color="secondary"
+                className="text-nowrap"
+              >
+                Keys
+              </Typography>
+
+              <div className="w-[70%] h-[38px] sm:h-[50px] text-start ml-3 flex items-center">
+                {contract.isFetchingApiKeys ? (
+                  <div className="flex items-center ml-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
+                    <Typography
+                      variant="body"
+                      color="secondary"
+                      className="pl-2"
+                    >
+                      Fetching key : value pairs...
+                    </Typography>
+                  </div>
+                ) : contract.apiKeys && contract.apiKeys.length > 0 ? (
+                  <RadioGroup
+                    options={contract.apiKeys.map((apiKey) => {
+                      return {
+                        label: apiKey.name,
+                        value: String(apiKey.value),
+                      };
+                    })}
+                    value={contract.selectedApiKey || ""}
+                    onChange={
+                      readOnly
+                        ? () => {}
+                        : (value) => {
+                            handleApiKeySelection(contractKey, value as string);
+                          }
+                    }
+                    name={`apiKey-${contractKey}`}
+                    disabled={readOnly}
+                  />
+                ) : contract.sourceUrl && !contract.isFetchingApiKeys ? (
+                  <Typography variant="body" color="error" align="left">
+                    No key : value pair found from the provided API, Please
+                    enter valid API.
+                  </Typography>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          {/* API Keys Selection */}
+          {/* {contract.sourceUrl && !contract.sourceUrlError && (
+            <div className="space-y-auto mt-4">
+              {contract.isFetchingApiKeys ? (
+                <div className="flex items-center ml-3">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
+                  <Typography variant="body" color="secondary" className="pl-2">
+                    Fetching API keys...
+                  </Typography>
+                </div>
+              ) : contract.apiKeysError ? (
+                <Typography variant="caption" color="error" align="left">
+                  {contract.apiKeysError}
+                </Typography>
+              ) : contract.apiKeys && contract.apiKeys.length > 0 ? (
+                <div className="space-y-2">
+                  <RadioGroup
+                    label="API Key"
+                    options={contract.apiKeys.map((apiKey) => ({
+                      label: apiKey.name,
+                      value: String(apiKey.value),
+                    }))}
+                    value={contract.selectedApiKey || ""}
+                    onChange={
+                      readOnly
+                        ? () => {}
+                        : (value) =>
+                            handleApiKeySelection(contractKey, String(value))
+                    }
+                    name={`apiKey-${contractKey}`}
+                    disabled={readOnly}
+                  />
+                </div>
+              ) : contract.sourceUrl && !contract.isFetchingApiKeys ? (
+                <Typography variant="caption" color="secondary" align="left">
+                  No API keys found from the provided URL.
+                </Typography>
+              ) : null}
+            </div>
+          )} */}
 
           {/* Condition Type Field */}
           <div id={`contract-condition-type-${contractKey}`}>

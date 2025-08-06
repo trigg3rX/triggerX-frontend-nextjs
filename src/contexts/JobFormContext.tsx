@@ -5,6 +5,7 @@ import { Timeframe, TimeInterval, ContractInteraction } from "@/types/job";
 import networksData from "@/utils/networks.json";
 import { ethers } from "ethers";
 import { fetchContractABI } from "@/utils/fetchContractABI";
+import { fetchApiKeys } from "@/utils/fetchApiKeys";
 import { useTGBalance } from "./TGBalanceContext";
 import toast from "react-hot-toast";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
@@ -44,10 +45,11 @@ export type JobDetails = {
   dynamic_arguments_script_url?: string;
   value_source_type?: string;
   value_source_url?: string;
+  selected_key_route?: string;
   condition_type?: string;
   upper_limit?: number;
   lower_limit?: number;
-  job_id?: string; // <-- add this line
+  job_id?: string;
 };
 
 function extractJobDetails(
@@ -89,6 +91,13 @@ function extractJobDetails(
   );
   const triggerChainId = networkId ? networkId.toString() : "";
 
+  // Generate unique job title for linked jobs
+  // let finalJobTitle = jobTitle;
+  // if (contractKey.includes('-')) {
+  //   const linkedJobId = contractKey.split('-')[1];
+  //   finalJobTitle = `${jobTitle} - Linked Job ${linkedJobId}`;
+  // }
+
   return {
     user_address: userAddress || "",
     ether_balance: 0,
@@ -111,6 +120,18 @@ function extractJobDetails(
     dynamic_arguments_script_url: ipfsCodeUrl,
     value_source_type: c.sourceType,
     value_source_url: c.sourceUrl,
+    selected_key_route: (() => {
+      // Get the selected API key name instead of value
+      if (c.selectedApiKey && c.apiKeys) {
+        const selectedApiKey = c.apiKeys.find(
+          (key) => String(key.value) === c.selectedApiKey,
+        );
+        if (selectedApiKey) {
+          return selectedApiKey.name; // Return the key name (e.g., "ethereum.usd")
+        }
+      }
+      return "";
+    })(),
     condition_type: mapConditionType(c.conditionType || ""),
     upper_limit: c.upperLimit ? parseFloat(c.upperLimit) : undefined,
     lower_limit: c.lowerLimit ? parseFloat(c.lowerLimit) : undefined,
@@ -234,6 +255,7 @@ export interface JobFormContextType {
   handleIpfsCodeUrlChange: (contractKey: string, value: string) => void;
   handleSourceTypeChange: (contractKey: string, value: string) => void;
   handleSourceUrlChange: (contractKey: string, value: string) => void;
+  handleApiKeySelection: (contractKey: string, apiKeyValue: string) => void;
   handleConditionTypeChange: (contractKey: string, value: string) => void;
   handleUpperLimitChange: (contractKey: string, value: string) => void;
   handleLowerLimitChange: (contractKey: string, value: string) => void;
@@ -342,6 +364,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         conditionType: "",
         upperLimit: "",
         lowerLimit: "",
+        apiKeys: [],
+        selectedApiKey: "",
+        selectedApiKeyValue: "",
+        isFetchingApiKeys: false,
+        apiKeysError: "",
       },
       contract: {
         address: "",
@@ -362,6 +389,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         conditionType: "",
         upperLimit: "",
         lowerLimit: "",
+        apiKeys: [],
+        selectedApiKey: "",
+        selectedApiKeyValue: "",
+        isFetchingApiKeys: false,
+        apiKeysError: "",
       },
     });
   const [linkedJobs, setLinkedJobs] = useState<{ [key: number]: number[] }>({});
@@ -706,20 +738,99 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const handleSourceUrlChange = useCallback(
-    (contractKey: string, value: string) => {
+    async (contractKey: string, value: string) => {
       let error = "";
       // Simple validation: must be a non-empty string and look like a URL
       if (!value || !/^https?:\/\//.test(value)) {
         error = "Invalid URL. Must start with http:// or https://";
       }
+
       setContractInteractions((prev) => ({
         ...prev,
         [contractKey]: {
           ...prev[contractKey],
           sourceUrl: value,
           sourceUrlError: error,
+          isFetchingApiKeys: !error,
+          apiKeys: [],
+          selectedApiKey: "",
+          apiKeysError: "",
         },
       }));
+
+      // If URL is valid, try to fetch API keys
+      if (!error && value) {
+        try {
+          setContractInteractions((prev) => ({
+            ...prev,
+            [contractKey]: {
+              ...prev[contractKey],
+              isFetchingApiKeys: true,
+              apiKeysError: "",
+            },
+          }));
+
+          const apiKeys = await fetchApiKeys(value);
+
+          setContractInteractions((prev) => ({
+            ...prev,
+            [contractKey]: {
+              ...prev[contractKey],
+              apiKeys,
+              isFetchingApiKeys: false,
+              apiKeysError: "",
+            },
+          }));
+        } catch (fetchError) {
+          setContractInteractions((prev) => ({
+            ...prev,
+            [contractKey]: {
+              ...prev[contractKey],
+              isFetchingApiKeys: false,
+              apiKeysError:
+                fetchError instanceof Error
+                  ? fetchError.message
+                  : "Failed to fetch API keys",
+            },
+          }));
+        }
+      }
+    },
+    [],
+  );
+
+  const handleApiKeySelection = useCallback(
+    (contractKey: string, apiKeyValue: string) => {
+      setContractInteractions((prev) => {
+        const contract = prev[contractKey];
+        const selectedApiKey = contract.apiKeys?.find(
+          (key) => String(key.value) === apiKeyValue,
+        );
+
+        // Get the actual value from the selected API key
+        let actualValue = "";
+        if (selectedApiKey) {
+          // Use the originalValue if available, otherwise use the value
+          actualValue = selectedApiKey.originalValue || selectedApiKey.value;
+        } else {
+          // Fallback to the apiKeyValue if no API key found
+          actualValue = apiKeyValue;
+        }
+
+        // Ensure we have a string value
+        if (typeof actualValue !== "string") {
+          actualValue = String(actualValue);
+        }
+
+        return {
+          ...prev,
+          [contractKey]: {
+            ...contract,
+            selectedApiKey: apiKeyValue, // Unique identifier for radio button
+            selectedApiKeyValue: actualValue, // Actual value to be used
+          },
+        };
+      });
     },
     [],
   );
@@ -793,6 +904,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               conditionType: "",
               upperLimit: "",
               lowerLimit: "",
+              apiKeys: [],
+              selectedApiKey: "",
+              selectedApiKeyValue: "",
+              isFetchingApiKeys: false,
+              apiKeysError: "",
             },
           };
           return newDetails;
@@ -1038,6 +1154,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Extract all job details from contract interactions
       const allJobDetails: JobDetails[] = [];
+      const linkedJobDetails: JobDetails[] = [];
 
       // Extract job details for each contract interaction
       Object.keys(contractInteractions).forEach((contractKey) => {
@@ -1062,7 +1179,13 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           networkId,
           jobType,
         );
-        allJobDetails.push(jobDetails);
+
+        // Check if this is a linked job (contractKey format: "jobType-jobId")
+        if (contractKey.includes("-")) {
+          linkedJobDetails.push(jobDetails);
+        } else {
+          allJobDetails.push(jobDetails);
+        }
       });
 
       const updatedJobDetails: Array<
@@ -1071,8 +1194,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         ...jobDetail,
         job_cost_prediction: estimatedFee,
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
-        // job_id will be set after contract call using the returned value
-        job_id: undefined,
+        created_chain_id: networkId.toString(),
+      }));
+
+      const updatedLinkedJobDetails: Array<
+        Omit<JobDetails, "job_id"> & { job_id?: string }
+      > = linkedJobDetails.map((jobDetail) => ({
+        ...jobDetail,
+        job_cost_prediction: estimatedFee,
+        is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
         created_chain_id: networkId.toString(),
       }));
 
@@ -1357,11 +1487,128 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       // --- END ENCODING LOGIC ---
 
+      // Process linked jobs if any exist
+      if (updatedLinkedJobDetails.length > 0) {
+        devLog(
+          "[JobForm] Processing linked jobs:",
+          updatedLinkedJobDetails.length,
+        );
+
+        for (let i = 0; i < updatedLinkedJobDetails.length; i++) {
+          const linkedJob = updatedLinkedJobDetails[i];
+
+          try {
+            // Encode data for linked job
+            let linkedEncodedData: string = "0x";
+            const linkedTaskDefinitionId = linkedJob.task_definition_id;
+
+            if (linkedTaskDefinitionId === 1) {
+              linkedEncodedData = encodeJobType1Data(linkedJob.time_interval);
+            } else if (linkedTaskDefinitionId === 2) {
+              linkedEncodedData = encodeJobType2Data(
+                linkedJob.time_interval,
+                linkedJob.dynamic_arguments_script_url || "",
+              );
+            } else if (
+              linkedTaskDefinitionId === 3 ||
+              linkedTaskDefinitionId === 5
+            ) {
+              linkedEncodedData = encodeJobType3or5Data(linkedJob.recurring);
+            } else if (
+              linkedTaskDefinitionId === 4 ||
+              linkedTaskDefinitionId === 6
+            ) {
+              linkedEncodedData = encodeJobType4or6Data(
+                linkedJob.recurring,
+                linkedJob.dynamic_arguments_script_url || "",
+              );
+            }
+
+            // Create linked job on contract
+            const jobCreationAddress =
+              process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
+            if (!jobCreationAddress) {
+              throw new Error("Job creation contract address not set in env");
+            }
+            const jobContract = new ethers.Contract(
+              jobCreationAddress,
+              JobRegistryArtifact.abi,
+              signer,
+            );
+
+            const linkedTx = await jobContract.createJob(
+              linkedJob.job_title,
+              linkedJob.task_definition_id,
+              linkedJob.time_frame,
+              linkedJob.target_contract_address,
+              linkedEncodedData,
+            );
+            const linkedReceipt = await linkedTx.wait();
+
+            // Get jobId from event for linked job
+            const linkedJobCreatedEvent = linkedReceipt.logs
+              .map((log: unknown) => {
+                try {
+                  return jobContract.interface.parseLog(
+                    log as unknown as Parameters<
+                      typeof jobContract.interface.parseLog
+                    >[0],
+                  );
+                } catch (parseError) {
+                  console.log(
+                    "[JobForm] Error parsing linked job log:",
+                    parseError,
+                  );
+                  return null;
+                }
+              })
+              .find(
+                (
+                  parsed: unknown,
+                ): parsed is {
+                  name: string;
+                  args: { jobId?: { toString: () => string } };
+                } => {
+                  const isValid =
+                    !!parsed &&
+                    typeof (parsed as { name?: string }).name === "string" &&
+                    (parsed as { name: string }).name === "JobCreated";
+                  return isValid;
+                },
+              );
+
+            if (linkedJobCreatedEvent) {
+              const linkedJobId = linkedJobCreatedEvent.args.jobId?.toString();
+              updatedLinkedJobDetails[i].job_id = linkedJobId;
+              devLog(
+                "[JobForm] Linked job created successfully, job ID:",
+                linkedJobId,
+              );
+            } else {
+              console.log(
+                "[JobForm] No JobCreated event found in linked job logs.",
+              );
+            }
+          } catch (err) {
+            devLog("Error creating linked job:", err);
+            toast.error("Error creating linked job on-chain");
+            setIsSubmitting(false);
+            return false;
+          }
+        }
+      }
+
       // For update, ensure job_id is set to jobId from URL
       if (jobId && updatedJobDetails[0]) {
         updatedJobDetails[0].job_id = jobId;
       }
-      console.log("Submitting job details:", updatedJobDetails);
+
+      // Combine main job and linked jobs for API submission
+      const allJobsForSubmission = [
+        ...updatedJobDetails,
+        ...updatedLinkedJobDetails,
+      ];
+      console.log("Submitting job details:", allJobsForSubmission);
 
       // Create or update job via API
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -1391,7 +1638,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           method: "POST",
           mode: "cors",
           headers,
-          body: JSON.stringify(updatedJobDetails), // send array for create
+          body: JSON.stringify(allJobsForSubmission), // send array for create
         });
       }
 
@@ -1533,6 +1780,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         handleIpfsCodeUrlChange,
         handleSourceTypeChange,
         handleSourceUrlChange,
+        handleApiKeySelection,
         handleConditionTypeChange,
         handleUpperLimitChange,
         handleLowerLimitChange,

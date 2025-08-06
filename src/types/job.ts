@@ -45,6 +45,13 @@ export interface ContractFunction {
   constant: boolean;
 }
 
+export interface ApiKey {
+  name: string;
+  value: string;
+  originalValue?: string;
+  description?: string;
+}
+
 export interface ContractDetails {
   address: string;
   abi: string | null;
@@ -64,6 +71,11 @@ export interface ContractDetails {
   conditionType?: string;
   upperLimit?: string;
   lowerLimit?: string;
+  apiKeys?: ApiKey[];
+  selectedApiKey?: string;
+  selectedApiKeyValue?: string;
+  isFetchingApiKeys?: boolean;
+  apiKeysError?: string;
 }
 
 export interface ContractInteraction {

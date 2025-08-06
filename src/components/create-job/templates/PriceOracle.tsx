@@ -28,7 +28,7 @@ interface EthereumProvider {
 const FACTORY_ADDRESS =
   process.env.NEXT_PUBLIC_TRIGGERXTEMPLATEFACTORY_ADDRESS || "";
 const DYNAMICPRICEORACLE_IMPLEMENTATION =
-  "0x632661bA1B3b78C2707A7cAFf9829456BB11eDfd";
+  "0x078858D14418D1eE19743560d80E114CFf3EC837";
 
 const PriceOracle = () => {
   const { address } = useAccount();
@@ -96,6 +96,18 @@ const PriceOracle = () => {
       }
     };
   }, [isConnected, address]);
+
+  useEffect(() => {
+    if (data) {
+      const balance = data.value;
+      const requiredBalance = ethers.parseEther("0.02");
+      const hasBalance = balance >= requiredBalance;
+      setHasSufficientBalance(hasBalance);
+      if (hasBalance && isCheckingBalance) {
+        setIsCheckingBalance(false);
+      }
+    }
+  }, [data, isCheckingBalance]);
 
   useEffect(() => {
     if (data) {
@@ -171,7 +183,7 @@ const PriceOracle = () => {
     if (!signer || !address) return;
     setIsLoading(true);
     setShowModal(false);
-    setShowModal(false);
+
     try {
       const network = await signer.provider.getNetwork();
       const currentChainId = network.chainId;
@@ -187,7 +199,6 @@ const PriceOracle = () => {
         TriggerXTemplateFactory.abi,
         signer,
       );
-
       try {
         const code = await signer.provider.getCode(FACTORY_ADDRESS);
         if (code === "0x") {
@@ -323,9 +334,10 @@ const PriceOracle = () => {
 
       {isConnected && !isDeployed && (
         <div className="flex flex-wrap gap-3 sm:gap-4">
-          {!hasSufficientBalance && (
+          {!hasSufficientBalance && !isCheckingBalance && (
             <ClaimEth onClaimSuccess={handleClaimSuccess} />
           )}
+
           {isCheckingBalance && (
             <div className="flex items-center gap-2 px-4 py-2 bg-[#FFFFFF] rounded-full">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
@@ -335,7 +347,7 @@ const PriceOracle = () => {
           <DeployButton
             onClick={showDeployModal}
             isLoading={isLoading}
-            disabled={!hasSufficientBalance}
+            disabled={!hasSufficientBalance || isCheckingBalance}
           />
         </div>
       )}

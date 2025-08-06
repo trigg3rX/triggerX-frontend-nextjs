@@ -203,7 +203,7 @@ const MainJobs = ({
 
           {!error && getFilteredJobs().length > 0 && (
             <div
-              className={`p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3 max-h-[1000px] lg:max-h-auto overflow-y-auto ${styles.customScrollbar}`}
+              className={`px-5 py-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3 max-h-[1000px] lg:max-h-auto overflow-y-auto overflow-x-hidden ${styles.customScrollbar}`}
             >
               {getFilteredJobs().map((job) => (
                 <div
