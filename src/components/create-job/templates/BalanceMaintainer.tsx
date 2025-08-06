@@ -624,6 +624,7 @@ const BalanceMaintainer = () => {
               <span className="text-black text-sm">Checking balance...</span>
             </div>
           )}
+
           <DeployButton
             onClick={showDeployModal}
             isLoading={isLoading && modalType === "deploy"}

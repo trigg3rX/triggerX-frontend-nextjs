@@ -1,3 +1,5 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipTrigger } from "../common/TooltipWrap";
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
@@ -6,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import details from "../../assets/leaderboard/details.svg";
 import update from "../../assets/leaderboard/update.svg";
-import deleteIcon from "../../assets/leaderboard/delete.svg"; // Assuming you have a delete icon in your assets
+import deleteIcon from "../../assets/leaderboard/delete.svg";
 import networksData from "@/utils/networks.json";
 import { useChainId, useSwitchChain } from "wagmi";
 import Modal from "../ui/Modal";
@@ -27,6 +29,11 @@ export type JobType = {
   targetChainId: string;
   linkedJobs?: JobType[];
   created_chain_id: string;
+  type?: string;
+  condition_type?: string;
+  upper_limit?: number;
+  lower_limit?: number;
+  value_source_url?: string;
 };
 
 type JobCardProps = {
@@ -56,14 +63,16 @@ const sliceAddress = (address: string) => {
 };
 
 const formatDate = (date: string) => {
-  return new Date(date).toLocaleString();
+  const parsedDate = new Date(date);
+  return isNaN(parsedDate.getTime())
+    ? "Invalid Date"
+    : parsedDate.toLocaleString();
 };
 
 const truncateText = (text: string) => {
   return text.length > 20 ? `${text.slice(0, 20)}...` : text;
 };
 
-// Converts seconds to the largest non-zero unit (e.g., "2 days", "4 hours", "30 min")
 const formatTimeframe = (secondsString: string) => {
   const seconds = parseInt(secondsString, 10);
   if (isNaN(seconds)) return secondsString;
@@ -77,7 +86,6 @@ const formatTimeframe = (secondsString: string) => {
   return "0 min";
 };
 
-// Converts seconds to the largest non-zero unit (e.g., "2 days", "4 hours", "30 sec")
 const formatInterval = (secondsString: string) => {
   const seconds = parseInt(secondsString, 10);
   if (isNaN(seconds)) return secondsString;
@@ -89,6 +97,27 @@ const formatInterval = (secondsString: string) => {
   if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
   if (secs > 0) return `${seconds} sec${seconds > 1 ? "s" : ""}`;
   return "0 sec";
+};
+
+const formatConditionType = (conditionType: string) => {
+  switch (conditionType) {
+    case "greater_than":
+      return "Greater Than";
+    case "less_than":
+      return "Less Than";
+    case "equals":
+      return "Equals";
+    case "not_equals":
+      return "Not Equals";
+    case "less_equal":
+      return "Less Than or Equal To";
+    case "between":
+      return "Between";
+    default:
+      return conditionType
+        .replace("_", " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+  }
 };
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -112,7 +141,6 @@ const JobCard: React.FC<JobCardProps> = ({
   const isNetworkMismatch =
     chainId !== undefined && Number(job.created_chain_id) !== Number(chainId);
 
-  // Effect to handle reroute after network switch
   useEffect(() => {
     if (!isNetworkMismatch && pendingRoute) {
       router.push(pendingRoute);
@@ -132,10 +160,8 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 relative ${
-        expandedDetails
-          ? "h-auto border border-white "
-          : "h-[290px] md:h-[310px] "
+      className={`!p-0 ${
+        expandedDetails ? "h-auto border border-white " : " md:h-[310px] "
       } ${
         expanded
           ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
@@ -166,7 +192,6 @@ const JobCard: React.FC<JobCardProps> = ({
             </Tooltip>
           </div>
           <div className="flex items-center gap-2">
-            {/* Linked jobs button/placeholder */}
             {job.linkedJobs && job.linkedJobs.length > 0 ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -175,7 +200,8 @@ const JobCard: React.FC<JobCardProps> = ({
                       e.stopPropagation();
                       onToggleExpand(job.id);
                     }}
-                    className="p-2  rounded-full text-white hover:bg-[#3A3A3A] transition-colors bg-[#2a2a2a] border-[#FFFFFF] border"
+                    className="p-2 rounded-full text-white hover:bg-[#3A3A3A] transition-colors bg-[#2a2a2a] border-[#FFFFFF] border"
+                    aria-label="Toggle Linked Jobs"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -196,7 +222,6 @@ const JobCard: React.FC<JobCardProps> = ({
                 <TooltipContent>Linked Jobs</TooltipContent>
               </Tooltip>
             ) : (
-              // Placeholder to keep header height consistent
               <div style={{ width: 32, height: 32 }}></div>
             )}
             {/* Network Icon right after linked jobs button */}
@@ -212,7 +237,7 @@ const JobCard: React.FC<JobCardProps> = ({
                   viewBox={icon.viewBox}
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-6 h-6"
+                  className="w-6 h-6 bg-red-500 rounded-full"
                 >
                   <path
                     fillRule="evenodd"
@@ -224,49 +249,8 @@ const JobCard: React.FC<JobCardProps> = ({
               ) : null;
             })()}
           </div>
-          {/* <div
-            style={{
-              width: 40,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            {job.linkedJobs && job.linkedJobs.length > 0 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleExpand(job.id);
-                    }}
-                    className="p-2  rounded-full text-white hover:bg-[#3A3A3A] transition-colors bg-[#2a2a2a] border-[#FFFFFF] border"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className={`transition-transform duration-300 w-3 h-3 ${expanded ? "rotate-180" : ""}`}
-                    >
-                      <path d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>Linked Jobs</TooltipContent>
-              </Tooltip>
-            ) : (
-              // Placeholder to keep header height consistent
-              <div style={{ width: 32, height: 32 }}></div>
-            )}
-          </div> */}
         </div>
-        <div className={` space-y-2  px-3 `}>
+        <div className={`space-y-2 px-3`}>
           <div className="flex items-center justify-between gap-2 py-1.5">
             <Typography variant="body" color="white" align="left">
               Job Type :
@@ -283,7 +267,7 @@ const JobCard: React.FC<JobCardProps> = ({
               variant="body"
               color="gray"
               align="right"
-              className=" text-[#4caf50] font-bold"
+              className="text-[#4caf50] font-bold"
             >
               {job.status}
             </Typography>
@@ -293,7 +277,9 @@ const JobCard: React.FC<JobCardProps> = ({
               TG Used :
             </Typography>
             <Typography variant="body" color="gray" align="right">
-              {parseFloat(job.job_cost_actual).toFixed(2)}
+              {isNaN(parseFloat(job.job_cost_actual))
+                ? "N/A"
+                : parseFloat(job.job_cost_actual).toFixed(2)}
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
@@ -306,7 +292,7 @@ const JobCard: React.FC<JobCardProps> = ({
           </div>
 
           {expandedDetails && (
-            <div className=" space-y-2 text-[#A2A2A2] text-sm">
+            <div className="space-y-2 text-[#A2A2A2] text-sm">
               <div className="flex items-center justify-between gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Arg Type :
@@ -380,21 +366,98 @@ const JobCard: React.FC<JobCardProps> = ({
                   {job.targetChainId}
                 </Typography>
               </div>
+
+              {job.type === "Condition-based" && (
+                <>
+                  <div className="flex items-center justify-between gap-2 py-1.5">
+                    <Typography variant="body" color="white" align="left">
+                      Condition Type :
+                    </Typography>
+                    <Typography variant="body" color="gray" align="right">
+                      {job.condition_type
+                        ? formatConditionType(job.condition_type)
+                        : "-"}
+                    </Typography>
+                  </div>
+
+                  {job.condition_type && (
+                    <>
+                      {job.condition_type === "between" ? (
+                        <>
+                          {job.lower_limit !== undefined && (
+                            <div className="flex items-center justify-between gap-2 py-1.5">
+                              <Typography
+                                variant="body"
+                                color="white"
+                                align="left"
+                              >
+                                Lower Limit :
+                              </Typography>
+                              <Typography
+                                variant="body"
+                                color="gray"
+                                align="right"
+                              >
+                                {job.lower_limit}
+                              </Typography>
+                            </div>
+                          )}
+                          {job.upper_limit !== undefined && (
+                            <div className="flex items-center justify-between gap-2 py-1.5">
+                              <Typography
+                                variant="body"
+                                color="white"
+                                align="left"
+                              >
+                                Upper Limit :
+                              </Typography>
+                              <Typography
+                                variant="body"
+                                color="gray"
+                                align="right"
+                              >
+                                {job.upper_limit}
+                              </Typography>
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        job.upper_limit !== undefined && (
+                          <div className="flex items-center justify-between gap-2 py-1.5">
+                            <Typography
+                              variant="body"
+                              color="white"
+                              align="left"
+                            >
+                              Upper Limit :
+                            </Typography>
+                            <Typography
+                              variant="body"
+                              color="gray"
+                              align="right"
+                            >
+                              {job.upper_limit}
+                            </Typography>
+                          </div>
+                        )
+                      )}
+                    </>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
         <div
-          className={`flex justify-end gap-2 mt-4  p-3  ${expanded || isLogOpen ? "border-t border-white " : "border-[#2A2A2A] border-t hover:border-[#3A3A3A]"}`}
+          className={`flex justify-end gap-2 mt-4 p-3 ${expanded || isLogOpen ? "border-t border-white " : "border-[#2A2A2A] border-t hover:border-[#3A3A3A]"}`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Build query string with old job details
                   const query = new URLSearchParams({
-                    jobId:
-                      typeof job.id === "string" ? job.id : job.id?.toString(),
+                    jobId: String(job.id),
                     oldJobName: job.jobTitle,
                     jobType: job.taskDefinitionId,
                     oldTimeFrame: job.timeFrame,
@@ -403,6 +466,9 @@ const JobCard: React.FC<JobCardProps> = ({
                       targetFunction: job.targetFunction,
                       argType: job.argType,
                       timeInterval: job.timeInterval,
+                      condition_type: job.condition_type,
+                      upper_limit: job.upper_limit?.toString(),
+                      lower_limit: job.lower_limit?.toString(),
                     }),
                   }).toString();
                   const route = `/?${query}`;
@@ -414,8 +480,9 @@ const JobCard: React.FC<JobCardProps> = ({
                   }
                 }}
                 className={`p-2 bg-[#C07AF6] rounded-full text-white ${disableUpdate ? "cursor-not-allowed" : "cursor-pointer"} hover:bg-[#a46be0] transition-colors`}
+                aria-label="Update Job"
               >
-                <Image src={update} alt="Update Job" />
+                <Image src={update} alt="Update Job Icon" />
               </button>
             </TooltipTrigger>
             <TooltipContent>Update</TooltipContent>
@@ -428,8 +495,9 @@ const JobCard: React.FC<JobCardProps> = ({
                   onDelete(job.id);
                 }}
                 className="p-2 bg-[#FF5757] rounded-full text-white hover:bg-[#ff4444] transition-colors"
+                aria-label="Delete Job"
               >
-                <Image src={deleteIcon} alt="Delete Job" />
+                <Image src={deleteIcon} alt="Delete Job Icon" />
               </button>
             </TooltipTrigger>
             <TooltipContent>Delete</TooltipContent>
@@ -442,8 +510,9 @@ const JobCard: React.FC<JobCardProps> = ({
                   onToggleDetails(job.id);
                 }}
                 className="p-2 bg-[#2A2A2A] rounded-full text-white hover:bg-[#3A3A3A] transition-colors"
+                aria-label={expandedDetails ? "Hide Details" : "Show Details"}
               >
-                <Image src={details} alt="Expand Details" />
+                <Image src={details} alt="Details Icon" />
               </button>
             </TooltipTrigger>
             <TooltipContent>
@@ -462,7 +531,7 @@ const JobCard: React.FC<JobCardProps> = ({
               {neededNetwork ? neededNetwork.name : job.created_chain_id} to
               continue.
             </Typography>
-            <div className="flex items-center justify-center gap-4 ">
+            <div className="flex items-center justify-center gap-4">
               <Button
                 onClick={handleClose}
                 style={{ minWidth: 140 }}
@@ -491,4 +560,4 @@ const JobCard: React.FC<JobCardProps> = ({
   );
 };
 
-export default JobCard;
+export default React.memo(JobCard);

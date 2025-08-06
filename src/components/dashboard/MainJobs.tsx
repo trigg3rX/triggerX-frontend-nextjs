@@ -15,12 +15,14 @@ import { ErrorMessage } from "../common/ErrorMessage";
 import JobLogsTable from "./JobLogsTable";
 import { useJobLogs } from "@/hooks/useJobLogs";
 import styles from "@/app/styles/scrollbar.module.css";
+import { Pagination } from "../ui/Pagination";
 
 type MainJobsProps = {
   selectedType?: string;
   jobs: JobType[];
   setJobs: React.Dispatch<React.SetStateAction<JobType[]>>;
 };
+
 const MainJobs = ({
   selectedType = "All Types",
   jobs,
@@ -38,6 +40,8 @@ const MainJobs = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
   const [jobLogsOpenId, setJobLogsOpenId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [jobsPerPage, setJobsPerPage] = useState(6); // Allow dynamic change
 
   // Refs for Linked Jobs sections and Job Logs section
   const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -63,6 +67,11 @@ const MainJobs = ({
     setExpandedLinkedJobDetails({});
     setJobLogsOpenId(null);
   }, [selectedType]);
+
+  // Reset page to 1 when selectedType changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedType, jobsPerPage]);
 
   const toggleJobExpand = (jobId: number) => {
     setExpandedJobs((prev) => {
@@ -158,6 +167,15 @@ const MainJobs = ({
     return jobs;
   };
 
+  // Update getFilteredJobs to support pagination
+  const getPaginatedJobs = () => {
+    const filtered = getFilteredJobs();
+    const startIdx = (currentPage - 1) * jobsPerPage;
+    return filtered.slice(startIdx, startIdx + jobsPerPage);
+  };
+
+  const totalPages = Math.ceil(getFilteredJobs().length / jobsPerPage);
+
   // Map selectedType to allowed JobTypeTab values
   const mapToJobTypeTab = (
     type: string,
@@ -169,6 +187,68 @@ const MainJobs = ({
     )
       return type;
     return "All Types";
+  };
+
+  // Function to render jobs with logs table insertion
+  const renderJobsWithLogs = () => {
+    const paginatedJobs = getPaginatedJobs();
+    const elements = [];
+
+    for (let i = 0; i < paginatedJobs.length; i += 3) {
+      const jobGroup = paginatedJobs.slice(i, i + 3);
+
+      // Add the job cards for this group
+      elements.push(
+        <div
+          key={`group-${i}`}
+          className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3"
+        >
+          {jobGroup.map((job) => (
+            <div
+              key={job.id}
+              className="col-span-1"
+              onClick={() => handleJobCardClick(job.id)}
+              style={{ cursor: "pointer" }}
+              ref={(el) => {
+                linkedJobsRefs.current[job.id] = el;
+              }}
+            >
+              <JobCard
+                job={job}
+                expanded={!!expandedJobs[job.id]}
+                expandedDetails={!!expandedJobDetails[job.id]}
+                onToggleExpand={toggleJobExpand}
+                onToggleDetails={toggleJobDetails}
+                onDelete={showDeleteConfirmation}
+                isLogOpen={jobLogsOpenId === job.id}
+              />
+            </div>
+          ))}
+        </div>,
+      );
+
+      // Check if any job in this group has logs open
+      const jobWithLogsOpen = jobGroup.find((job) => jobLogsOpenId === job.id);
+      if (jobWithLogsOpen) {
+        elements.push(
+          <div
+            key={`logs-${jobWithLogsOpen.id}`}
+            className="col-span-full"
+            ref={logsRef}
+          >
+            {logsLoading ? (
+              <JobLogsSkeleton />
+            ) : logsError ? (
+              <JobLogsTable logs={[]} error={logsError} />
+            ) : (
+              <JobLogsTable logs={jobLogs} />
+            )}
+          </div>,
+        );
+      }
+    }
+
+    return elements;
   };
 
   return (
@@ -202,46 +282,34 @@ const MainJobs = ({
           {error && <ErrorMessage error={error} />}
 
           {!error && getFilteredJobs().length > 0 && (
-            <div
-              className={`px-5 py-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3 max-h-[1000px] lg:max-h-auto overflow-y-auto overflow-x-hidden ${styles.customScrollbar}`}
-            >
-              {getFilteredJobs().map((job) => (
-                <div
-                  key={job.id}
-                  className="col-span-1"
-                  onClick={() => handleJobCardClick(job.id)}
-                  style={{ cursor: "pointer" }}
-                  ref={(el) => {
-                    linkedJobsRefs.current[job.id] = el;
+            <>
+              <div
+                className={`px-5 py-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
+              >
+                {renderJobsWithLogs()}
+              </div>
+              {/* Pagination Controls */}
+              {getFilteredJobs().length >= 6 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                  itemsPerPage={jobsPerPage}
+                  onItemsPerPageChange={(count) => {
+                    setJobsPerPage(count);
+                    setCurrentPage(1); // Reset to first page when changing per page
                   }}
-                >
-                  <JobCard
-                    job={job}
-                    expanded={!!expandedJobs[job.id]}
-                    expandedDetails={!!expandedJobDetails[job.id]}
-                    onToggleExpand={toggleJobExpand}
-                    onToggleDetails={toggleJobDetails}
-                    onDelete={showDeleteConfirmation}
-                    isLogOpen={jobLogsOpenId === job.id}
-                  />
-                </div>
-              ))}
-            </div>
+                  itemsPerPageOptions={[6, 9, 12, 18]}
+                  totalItems={getFilteredJobs().length}
+                  className="mt-6"
+                />
+              )}
+            </>
           )}
         </>
       )}
-      {/* JobLogsTable outside the grid, full width */}
-      {jobLogsOpenId !== null && (
-        <div ref={logsRef}>
-          {logsLoading ? (
-            <JobLogsSkeleton />
-          ) : logsError ? (
-            <JobLogsTable logs={[]} error={logsError} />
-          ) : (
-            <JobLogsTable logs={jobLogs} />
-          )}
-        </div>
-      )}
+
+      {/* Linked Jobs Section */}
       <div>
         {getFilteredJobs().map((job) =>
           job.linkedJobs &&

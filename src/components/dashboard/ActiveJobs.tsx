@@ -1,5 +1,4 @@
 "use client";
-
 import { Typography } from "../ui/Typography";
 import { Dropdown, DropdownOption } from "../ui/Dropdown";
 import { useState } from "react";
@@ -71,7 +70,7 @@ const ActiveJobs = () => {
           />
         </div>
       </div>
-      <div className="mb-10">
+      <div className={`mb-10   `}>
         <MainJobs selectedType={selectedType} jobs={jobs} setJobs={setJobs} />
       </div>
     </Card>

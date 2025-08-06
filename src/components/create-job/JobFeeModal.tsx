@@ -439,7 +439,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
             <svg
               className="w-6 h-6 sm:w-8 sm:h-8 text-white"
               fill="none"
-              stroke="white"
+              stroke="green"
               viewBox="0 0 24 24"
             >
               <path
