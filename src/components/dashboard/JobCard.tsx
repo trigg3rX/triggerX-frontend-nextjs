@@ -160,7 +160,7 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 relative z-[9999] ${
+      className={`!p-0 ${
         expandedDetails ? "h-auto border border-white " : " md:h-[310px] "
       } ${
         expanded
