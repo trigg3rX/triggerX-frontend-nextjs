@@ -10,7 +10,7 @@ import {
 import type { JobLog } from "@/hooks/useJobLogs";
 import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
-import { LucideCopyButton } from "../ui/CopyButton";
+import { ExternalLink } from "lucide-react";
 
 interface JobLogsTableProps {
   logs: JobLog[];
@@ -128,10 +128,10 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
           <TableHeader>
             <TableRow>
               <TableHead>Task Number</TableHead>
-              <TableHead>Timestamp</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Operation Cost</TableHead>
               <TableHead>Tx Hash</TableHead>
+              <TableHead>Timestamp</TableHead>
+              <TableHead>Operation Cost</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -149,38 +149,69 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
               </TableRow>
             ) : (
               logs.map((log) => (
-                <TableRow key={`${log.task_id}-${log.task_number}`}>
-                  <TableCell>{log.task_number}</TableCell>
-                  <TableCell>
-                    {log.execution_timestamp &&
-                    log.execution_timestamp !== "0001-01-01T00:00:00Z"
-                      ? new Date(log.execution_timestamp).toLocaleString()
-                      : "-"}
+                <TableRow
+                  key={`${log.task_id}-${log.task_number}`}
+                  className="group"
+                >
+                  <TableCell
+                    className={`border-l-4 px-6 py-4 ${
+                      log.is_successful ? "border-red-500" : "border-green-500"
+                    }`}
+                  >
+                    <Typography variant="body" color="primary" align="left">
+                      {" "}
+                      {log.task_number}
+                    </Typography>
                   </TableCell>
-                  <TableCell>
-                    {log.is_successful ? (
-                      <span className="text-green-400">{log.task_status}</span>
-                    ) : (
-                      <span className="text-red-400">{log.task_status}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>{log.task_opx_cost}</TableCell>
                   <TableCell>
                     {log.tx_url && log.execution_tx_hash ? (
-                      <div className="flex items-center">
-                        <a
-                          href={log.tx_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline-offset-2 hover:text-[#F8ff7c]/80 "
-                        >
-                          {log.execution_tx_hash.slice(0, 8)}...
-                          {log.execution_tx_hash.slice(-6)}
-                        </a>
-                        <LucideCopyButton text={log.execution_tx_hash} />
+                      <div className="flex items-center gap-2">
+                        <Typography variant="body" color="primary" align="left">
+                          <a
+                            href={log.tx_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline-offset-2 pt-1 hover:text-[#F8ff7c]/80 group-hover:text-[#F8ff7c] transition-colors"
+                          >
+                            {log.execution_tx_hash.slice(0, 8)}...
+                            {log.execution_tx_hash.slice(-6)}
+                          </a>
+                        </Typography>
+                        <ExternalLink className="inline w-4 h-4 align-middle group-hover:text-[#F8ff7c] transition-colors" />
                       </div>
                     ) : (
-                      <span>-</span>
+                      <Typography variant="body" color="gray" align="left">
+                        -
+                      </Typography>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    <Typography variant="body" color="primary" align="left">
+                      {log.execution_timestamp &&
+                      log.execution_timestamp !== "0001-01-01T00:00:00Z"
+                        ? new Date(log.execution_timestamp).toLocaleString()
+                        : "-"}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <div className="border border-[#C07AF6] bg-[#976fb93e] text-[#C07AF6]  py-1  text-center rounded-full ">
+                      <Typography variant="body" color="blue" align="center">
+                        {" "}
+                        {log.task_opx_cost}{" "}
+                      </Typography>{" "}
+                    </div>
+                  </TableCell>
+
+                  <TableCell>
+                    {log.is_successful ? (
+                      <span className="border border-red-400/10 bg-red-500/10 text-red-300 py-2 px-3 rounded-full">
+                        {log.task_status}
+                      </span>
+                    ) : (
+                      <span className=" border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
+                        {log.task_status}
+                      </span>
                     )}
                   </TableCell>
                 </TableRow>
