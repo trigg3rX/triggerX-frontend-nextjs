@@ -68,6 +68,11 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     ) : (
                       <span className="text-red-400">Failed</span>
                     )}
+                    {log.task_status && log.task_status.trim() !== "" && (
+                      <span className="ml-2 text-gray-400">
+                        ({log.task_status})
+                      </span>
+                    )}
                   </Typography>
                 </div>
                 <div className="flex justify-between   py-1">
@@ -111,15 +116,13 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   return (
     <>
       {/* Desktop/tablet view */}
-      <div
-        className={`hidden md:block w-full `}
-        style={shouldScroll ? { maxHeight: 600 } : {}}
-      >
+      <div className={`hidden md:block w-full `}>
         <Typography variant="h2" color="white" align="left" className=" m-4">
           Job Logs
         </Typography>
         <Table
           className={`overflow-x-auto ${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
+          style={shouldScroll ? { maxHeight: 600 } : {}}
         >
           <TableHeader>
             <TableRow>
@@ -159,7 +162,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     ) : (
                       <span className="text-red-400">Failed</span>
                     )}
-                    {log.task_status && (
+                    {log.task_status && log.task_status.trim() !== "" && (
                       <span className="ml-2 text-gray-400">
                         ({log.task_status})
                       </span>
