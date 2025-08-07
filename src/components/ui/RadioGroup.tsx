@@ -48,6 +48,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
             <input
               type="radio"
               name={name}
+              required
               value={option.value.toString()}
               className="form-radio h-4 w-4 accent-[#F8FF7C] "
               checked={String(value) === String(option.value)}
