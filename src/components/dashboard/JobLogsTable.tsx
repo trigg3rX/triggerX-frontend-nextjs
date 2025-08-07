@@ -25,11 +25,13 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
       </Typography>
       {error ? (
         <Card className="mb-4">
-          <Typography color="error">{error}</Typography>
+          <Typography className="text-center text-red-400">{error}</Typography>
         </Card>
       ) : logs.length === 0 ? (
         <Card className="mb-4">
-          <Typography>No logs found.</Typography>
+          <Typography className="text-center text-red-400">
+            No logs found.
+          </Typography>
         </Card>
       ) : (
         <div
@@ -110,13 +112,15 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
     <>
       {/* Desktop/tablet view */}
       <div
-        className={`hidden md:block w-full overflow-x-auto${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
+        className={`hidden md:block w-full `}
         style={shouldScroll ? { maxHeight: 600 } : {}}
       >
         <Typography variant="h2" color="white" align="left" className=" m-4">
           Job Logs
         </Typography>
-        <Table>
+        <Table
+          className={`overflow-x-auto ${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
+        >
           <TableHeader>
             <TableRow>
               <TableHead>Task Number</TableHead>

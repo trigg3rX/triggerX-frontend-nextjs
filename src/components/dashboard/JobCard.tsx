@@ -309,7 +309,7 @@ const JobCard: React.FC<JobCardProps> = ({
                   {formatInterval(job.timeInterval)}
                 </Typography>
               </div>
-              <div className="flex items-start justify-between flex-col md:flex-row md:items-center gap-2 py-1">
+              <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Target Contract :
                 </Typography>
@@ -327,7 +327,7 @@ const JobCard: React.FC<JobCardProps> = ({
                   <TooltipContent>{job.targetContractAddress}</TooltipContent>
                 </Tooltip>
               </div>
-              <div className="flex items-start justify-between flex-col md:flex-row md:items-center gap-2 py-1">
+              <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Created At:
                 </Typography>
@@ -340,7 +340,7 @@ const JobCard: React.FC<JobCardProps> = ({
                   {formatDate(job.createdAt)}
                 </Typography>
               </div>
-              <div className="flex items-start justify-between flex-col md:flex-row md:items-center gap-2 py-1">
+              <div className="flex items-start justify-between flex-col   sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Target Function :
                 </Typography>
@@ -358,7 +358,7 @@ const JobCard: React.FC<JobCardProps> = ({
                   <TooltipContent>{job.targetFunction}</TooltipContent>
                 </Tooltip>
               </div>
-              <div className="flex items-start justify-between flex-col md:flex-row md:items-center gap-2 py-1">
+              <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Target ChainId :
                 </Typography>
