@@ -49,14 +49,14 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
               type="radio"
               name={name}
               value={option.value.toString()}
-              className="form-radio h-4 w-4 text-blue-500 accent-[#F8FF7C] "
+              className="form-radio h-4 w-4 accent-[#F8FF7C] "
               checked={String(value) === String(option.value)}
               onChange={() =>
                 !(disabled || option.disabled) && onChange(option.value)
               }
               disabled={disabled || option.disabled}
             />
-            <span className="ml-2 text-white text-[10px] xs:text-xs sm:text-sm">
+            <span className="ml-2  text-[10px] xs:text-xs sm:text-sm">
               {option.label}
             </span>
           </label>
