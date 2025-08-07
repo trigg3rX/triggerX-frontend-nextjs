@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { devLog } from "@/lib/devLog";
 
 interface ApiJobLog {
   task_id: number;
@@ -32,7 +33,7 @@ export function useJobLogs(jobId: string | number | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log("useJobLogs effect running, jobId:", jobId);
+    devLog("useJobLogs effect running, jobId:", jobId);
     if (!jobId) return;
     setLoading(true);
     setError(null);
@@ -49,7 +50,7 @@ export function useJobLogs(jobId: string | number | undefined) {
             "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
           },
         });
-        console.log("Raw response:", response);
+        devLog("Raw response:", response);
         if (!response.ok) {
           setError(`Failed to fetch job logs.`);
           setLoading(false);
@@ -71,7 +72,7 @@ export function useJobLogs(jobId: string | number | undefined) {
           tx_url: log.tx_url,
         }));
 
-        console.log("Get Job Logs", formattedLogs);
+        devLog("Get Job Logs", formattedLogs);
         setLogs(formattedLogs);
 
         setLoading(false);
