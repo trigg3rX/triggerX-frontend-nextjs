@@ -199,7 +199,6 @@ const PriceOracle = () => {
         TriggerXTemplateFactory.abi,
         signer,
       );
-
       try {
         const code = await signer.provider.getCode(FACTORY_ADDRESS);
         if (code === "0x") {

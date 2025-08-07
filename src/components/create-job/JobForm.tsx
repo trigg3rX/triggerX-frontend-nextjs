@@ -117,7 +117,24 @@ export const JobForm: React.FC = () => {
 
   React.useEffect(() => {
     if (jobId && jobs.length > 0) {
-      const job = jobs.find((j) => String(j.id) === String(jobId));
+      // Search in main jobs first
+      let job = jobs.find((j) => String(j.id) === String(jobId));
+
+      // If not found in main jobs, search in linked jobs
+      if (!job) {
+        for (const mainJob of jobs) {
+          if (mainJob.linkedJobs && mainJob.linkedJobs.length > 0) {
+            const linkedJob = mainJob.linkedJobs.find(
+              (lj) => String(lj.id) === String(jobId),
+            );
+            if (linkedJob) {
+              job = linkedJob;
+              break;
+            }
+          }
+        }
+      }
+
       if (job) {
         (async () => {
           // Map string taskDefinitionId to numeric trigger type

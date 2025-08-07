@@ -284,7 +284,7 @@ const MainJobs = ({
           {!error && getFilteredJobs().length > 0 && (
             <>
               <div
-                className={`p-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
+                className={`px-5 py-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
               >
                 {renderJobsWithLogs()}
               </div>
