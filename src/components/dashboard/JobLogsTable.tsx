@@ -10,6 +10,7 @@ import {
 import type { JobLog } from "@/hooks/useJobLogs";
 import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
+import { LucideCopyButton } from "../ui/CopyButton";
 
 interface JobLogsTableProps {
   logs: JobLog[];
@@ -158,28 +159,26 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                   </TableCell>
                   <TableCell>
                     {log.is_successful ? (
-                      <span className="text-green-400">Success</span>
+                      <span className="text-green-400">{log.task_status}</span>
                     ) : (
-                      <span className="text-red-400">Failed</span>
-                    )}
-                    {log.task_status && log.task_status.trim() !== "" && (
-                      <span className="ml-2 text-gray-400">
-                        ({log.task_status})
-                      </span>
+                      <span className="text-red-400">{log.task_status}</span>
                     )}
                   </TableCell>
                   <TableCell>{log.task_opx_cost}</TableCell>
                   <TableCell>
                     {log.tx_url && log.execution_tx_hash ? (
-                      <a
-                        href={log.tx_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline text-blue-400"
-                      >
-                        {log.execution_tx_hash.slice(0, 8)}...
-                        {log.execution_tx_hash.slice(-6)}
-                      </a>
+                      <div className="flex items-center">
+                        <a
+                          href={log.tx_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline-offset-2 hover:text-[#F8ff7c]/80 "
+                        >
+                          {log.execution_tx_hash.slice(0, 8)}...
+                          {log.execution_tx_hash.slice(-6)}
+                        </a>
+                        <LucideCopyButton text={log.execution_tx_hash} />
+                      </div>
                     ) : (
                       <span>-</span>
                     )}
