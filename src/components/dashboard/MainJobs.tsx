@@ -21,12 +21,14 @@ type MainJobsProps = {
   selectedType?: string;
   jobs: JobType[];
   setJobs: React.Dispatch<React.SetStateAction<JobType[]>>;
+  loading?: boolean;
 };
 
 const MainJobs = ({
   selectedType = "All Types",
   jobs,
   setJobs,
+  loading = false,
 }: MainJobsProps) => {
   const [expandedJobs, setExpandedJobs] = useState<{ [key: number]: boolean }>(
     {},
@@ -47,7 +49,7 @@ const MainJobs = ({
   const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
   const logsRef = useRef<HTMLDivElement | null>(null);
 
-  const { loading, error } = { loading: false, error: null };
+  const { error } = { error: null };
   const { isConnected } = useWalletConnectionContext();
   const { deleteJob, loading: deleteLoading } = useDeleteJob();
   const {
@@ -221,6 +223,7 @@ const MainJobs = ({
                 onToggleDetails={toggleJobDetails}
                 onDelete={showDeleteConfirmation}
                 isLogOpen={jobLogsOpenId === job.id}
+                isLoading={loading}
               />
             </div>
           ))}

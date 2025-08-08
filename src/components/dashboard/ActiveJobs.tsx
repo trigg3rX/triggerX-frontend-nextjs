@@ -16,7 +16,7 @@ const dropdownOptions: DropdownOption[] = [
 
 const ActiveJobs = () => {
   const [selectedType, setSelectedType] = useState<string>("All Types");
-  const { jobs: fetchedJobs } = useJobs();
+  const { jobs: fetchedJobs, loading } = useJobs();
   const [jobs, setJobs] = useState<JobType[]>([]);
   // Sync local jobs state with fetched jobs
   React.useEffect(() => {
@@ -71,7 +71,12 @@ const ActiveJobs = () => {
         </div>
       </div>
       <div className={`mb-10   `}>
-        <MainJobs selectedType={selectedType} jobs={jobs} setJobs={setJobs} />
+        <MainJobs
+          selectedType={selectedType}
+          jobs={jobs}
+          setJobs={setJobs}
+          loading={loading}
+        />
       </div>
     </Card>
   );

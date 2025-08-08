@@ -13,6 +13,7 @@ import networksData from "@/utils/networks.json";
 import { useChainId, useSwitchChain } from "wagmi";
 import Modal from "../ui/Modal";
 import { Button } from "../ui/Button";
+import JobCardSkeleton from "../skeleton/JobCardSkeleton";
 
 export type JobType = {
   id: number;
@@ -47,6 +48,7 @@ type JobCardProps = {
   className?: string;
   onClick?: () => void;
   isLogOpen?: boolean;
+  isLoading?: boolean;
 };
 
 // Helper functions
@@ -131,6 +133,7 @@ const JobCard: React.FC<JobCardProps> = ({
   className = "",
   onClick,
   isLogOpen = false,
+  isLoading = false,
 }) => {
   const router = useRouter();
   const chainId = useChainId();
@@ -156,6 +159,11 @@ const JobCard: React.FC<JobCardProps> = ({
   const neededNetwork = networksData.supportedNetworks.find(
     (n) => Number(job.created_chain_id) === n.id,
   );
+
+  // Show skeleton when loading
+  if (isLoading) {
+    return <JobCardSkeleton />;
+  }
 
   return (
     <Card
