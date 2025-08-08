@@ -281,7 +281,18 @@ export function useJobs() {
             };
           });
         devLog("[useJobs] tempJobs:", tempJobs);
-        setJobs(tempJobs);
+        // Sort by createdAt (newest first); tie-breaker by id desc
+        const getTime = (isoString: string) => {
+          const time = Date.parse(isoString);
+          return Number.isNaN(time) ? -Infinity : time;
+        };
+        const sortedJobs = [...tempJobs].sort((a, b) => {
+          const timeDiff = getTime(b.createdAt) - getTime(a.createdAt);
+          if (timeDiff !== 0) return timeDiff;
+          return b.id - a.id;
+        });
+        devLog("[useJobs] sortedJobs:", sortedJobs);
+        setJobs(sortedJobs);
         setError(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? "" : "Something went wrong.");

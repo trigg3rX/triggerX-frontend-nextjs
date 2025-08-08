@@ -10,7 +10,7 @@ import {
 import type { JobLog } from "@/hooks/useJobLogs";
 import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, ChevronDownIcon } from "lucide-react";
 
 interface JobLogsTableProps {
   logs: JobLog[];
@@ -37,7 +37,7 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
         </Card>
       ) : (
         <div
-          className={`grid grid-cols-1 gap-4${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
+          className={`grid grid-cols-1 gap-4 ${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
           style={shouldScroll ? { maxHeight: 600 } : {}}
         >
           {displayLogs.map((log) => {
@@ -131,10 +131,41 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
 };
 
 const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
+  const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
+    "desc",
+  );
+
+  const sortedLogs = React.useMemo(() => {
+    const isValidTimestamp = (ts?: string) =>
+      !!ts && ts !== "0001-01-01T00:00:00Z";
+
+    return [...logs].sort((a, b) => {
+      const aValid = isValidTimestamp(a.execution_timestamp);
+      const bValid = isValidTimestamp(b.execution_timestamp);
+
+      if (aValid && bValid) {
+        const aTime = new Date(a.execution_timestamp).getTime();
+        const bTime = new Date(b.execution_timestamp).getTime();
+        if (bTime !== aTime)
+          return sortDirection === "asc" ? aTime - bTime : bTime - aTime;
+        // tie-breaker on task number based on sort direction for consistency
+        return sortDirection === "asc"
+          ? a.task_number - b.task_number
+          : b.task_number - a.task_number;
+      }
+      if (aValid && !bValid) return -1; // valid timestamps first
+      if (!aValid && bValid) return 1;
+      // both invalid -> fall back to task number
+      return sortDirection === "asc"
+        ? a.task_number - b.task_number
+        : b.task_number - a.task_number;
+    });
+  }, [logs, sortDirection]);
+
   // Show all logs if 11 or more, otherwise limit to 10
-  const shouldShowAll = logs.length >= 11;
-  const displayLogs = shouldShowAll ? logs : logs.slice(0, 10);
-  const shouldScroll = logs.length > 10;
+  const shouldShowAll = sortedLogs.length >= 11;
+  const displayLogs = shouldShowAll ? sortedLogs : sortedLogs.slice(0, 10);
+  const shouldScroll = sortedLogs.length > 10;
 
   return (
     <>
@@ -152,7 +183,21 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
             <TableRow>
               <TableHead>Task Number</TableHead>
               <TableHead>Tx Hash</TableHead>
-              <TableHead>Timestamp</TableHead>
+              <TableHead
+                className="cursor-pointer select-none"
+                onClick={() =>
+                  setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+                }
+              >
+                <div className="flex items-center gap-1">
+                  <span>Timestamp</span>
+                  <ChevronDownIcon
+                    className={`h-4 w-4 transition-transform ${
+                      sortDirection === "asc" ? "rotate-180" : ""
+                    }`}
+                  />
+                </div>
+              </TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Operation Cost</TableHead>
             </TableRow>
@@ -268,7 +313,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
         </Table>
       </div>
       {/* Mobile/card view */}
-      <JobLogsMobileView logs={logs} error={error} />
+      <JobLogsMobileView logs={sortedLogs} error={error} />
     </>
   );
 };
