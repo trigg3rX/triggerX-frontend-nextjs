@@ -662,8 +662,8 @@ const CreateJobButton: React.FC<{ contractAddress: string }> = ({
         handleCreateCustomJob();
         jobForm.setJobType(1);
         jobForm.setJobTitle("Balance Maintainer Job");
-        jobForm.setTimeframe({ days: 1, hours: 0, minutes: 0 });
-        jobForm.setTimeInterval({ hours: 1, minutes: 0, seconds: 0 });
+        jobForm.setTimeframe({ days: 0, hours: 0, minutes: 1 });
+        jobForm.setTimeInterval({ hours: 0, minutes: 0, seconds: 40 });
 
         const abiString = JSON.stringify([
           {
