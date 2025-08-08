@@ -301,7 +301,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     <TableCell>
                       <div className="border border-[#C07AF6] bg-[#976fb93e] text-[#C07AF6]  py-1  text-center rounded-full ">
                         <Typography variant="body" color="blue" align="center">
-                          {log.task_opx_cost}
+                          {Number(log.task_opx_cost).toFixed(2)}
                         </Typography>
                       </div>
                     </TableCell>
