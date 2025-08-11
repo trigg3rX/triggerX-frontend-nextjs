@@ -353,7 +353,7 @@ const JobCard: React.FC<JobCardProps> = ({
               </div>
               <div className="flex items-start justify-between flex-col   sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
-                  Target Function :
+                  Function :
                 </Typography>
                 <Tooltip>
                   <TooltipTrigger asChild>

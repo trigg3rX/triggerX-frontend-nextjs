@@ -9,6 +9,7 @@ import { HoverHighlight } from "./HoverHighlight";
 import { LogoLink } from "./header/LogoLink";
 import { LandingImage } from "./header/LandingImage";
 import BalanceDisplay from "../ui/BalanceDisplay";
+import GlobalBanner from "@/app/GlobalBanner";
 
 const navItems = [
   { href: "/devhub", label: "Dev Hub" },
@@ -58,9 +59,11 @@ const Header: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
+      <GlobalBanner />
+
       {isDesktop ? (
         /* Desktop Header */
-        <div className="w-[90%] mx-auto my-6 md:my-8 header flex items-center justify-between">
+        <div className="w-[90%] mx-auto my-6 md:my-12 header flex items-center justify-between">
           <div className="w-[170px]">
             <LogoLink
               width={180}
