@@ -6,7 +6,7 @@ export type JobType = {
   id: number;
   jobTitle: string;
   taskDefinitionId: string;
-  status: string;
+  status: boolean;
   job_cost_actual: string;
   timeFrame: string;
   argType: string;
@@ -44,6 +44,7 @@ interface RawJobData {
     fee_used?: string;
     status: string;
     created_chain_id?: string; // <-- add this
+    is_active?: boolean;
   };
   time_job_data?: Record<string, unknown>;
   event_job_data?: Record<string, unknown>;
@@ -141,7 +142,7 @@ export function useJobs() {
                 taskDefinitionId: mapJobType(
                   nextJob.job_data.task_definition_id,
                 ),
-                status: "Active",
+                status: nextJob.job_data.is_active === true,
                 job_cost_actual: nextJob.job_data.job_cost_actual,
                 timeFrame: nextJob.job_data.time_frame || "",
                 argType:
@@ -223,7 +224,7 @@ export function useJobs() {
               taskDefinitionId: mapJobType(
                 jobDetail.job_data.task_definition_id,
               ),
-              status: "Active",
+              status: jobDetail.job_data.is_active === true,
               linkedJobs: linkedJobsMap[jobDetail.job_data.job_id] || [],
               job_cost_actual: jobDetail.job_data.job_cost_actual,
               timeFrame: jobDetail.job_data.time_frame || "",
