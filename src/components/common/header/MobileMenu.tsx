@@ -34,7 +34,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   };
 
   return (
-    <div className="absolute top-full right-0 mt-3 bg-[#181818F0] backdrop-blur-sm rounded-md shadow-lg z-20 min-w-[200px] border border-[#4B4A4A]">
+    <div className="absolute top-full right-0 mt-3 bg-[#181818F0] backdrop-blur-sm rounded-md shadow-lg z-20 min-w-[280px] border border-[#4B4A4A]">
       <div className="flex flex-col text-white">
         {navItems.map((item) => (
           <button
@@ -49,7 +49,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
         ))}
         <div className="px-4 py-3 ">
           <ConnectButton
-            chainStatus="none"
+            chainStatus="icon"
             accountStatus="address"
             showBalance={false}
           />
