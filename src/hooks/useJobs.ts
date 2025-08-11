@@ -6,7 +6,7 @@ export type JobType = {
   id: number;
   jobTitle: string;
   taskDefinitionId: string;
-  status: boolean;
+  is_active: boolean;
   job_cost_actual: string;
   timeFrame: string;
   argType: string;
@@ -142,7 +142,7 @@ export function useJobs() {
                 taskDefinitionId: mapJobType(
                   nextJob.job_data.task_definition_id,
                 ),
-                status: nextJob.job_data.is_active === true,
+                is_active: nextJob.job_data.is_active === true,
                 job_cost_actual: nextJob.job_data.job_cost_actual,
                 timeFrame: nextJob.job_data.time_frame || "",
                 argType:
@@ -224,7 +224,7 @@ export function useJobs() {
               taskDefinitionId: mapJobType(
                 jobDetail.job_data.task_definition_id,
               ),
-              status: jobDetail.job_data.is_active === true,
+              is_active: jobDetail.job_data.is_active === true,
               linkedJobs: linkedJobsMap[jobDetail.job_data.job_id] || [],
               job_cost_actual: jobDetail.job_data.job_cost_actual,
               timeFrame: jobDetail.job_data.time_frame || "",

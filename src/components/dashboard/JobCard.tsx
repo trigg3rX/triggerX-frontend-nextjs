@@ -19,7 +19,7 @@ export type JobType = {
   id: number;
   jobTitle: string;
   taskDefinitionId: string;
-  status: boolean;
+  is_active: boolean;
   job_cost_actual: string;
   timeFrame: string;
   argType: string;
@@ -276,9 +276,9 @@ const JobCard: React.FC<JobCardProps> = ({
               variant="body"
               color="gray"
               align="right"
-              className={`${job.status ? "text-[#4caf50]" : "text-[#ff4444]"}`}
+              className={`${job.is_active ? "text-[#4caf50]" : "text-[#ff4444]"}`}
             >
-              {job.status ? "Active" : "Inactive"}
+              {job.is_active ? "Active" : "Inactive"}
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
