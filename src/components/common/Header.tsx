@@ -20,6 +20,8 @@ const navItems = [
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bannerVisible, setBannerVisible] = useState(true); // Lifted state for banner visibility
+
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -59,11 +61,14 @@ const Header: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
-      <GlobalBanner />
+      <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
 
       {isDesktop ? (
         /* Desktop Header */
-        <div className="w-[90%] mx-auto my-6 md:my-12 header flex items-center justify-between">
+        <div
+          className={`w-[90%] mx-auto ${bannerVisible ? "my-6 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
+        >
+          {" "}
           <div className="w-[170px]">
             <LogoLink
               width={180}
@@ -72,7 +77,6 @@ const Header: React.FC = () => {
               priority={true}
             />
           </div>
-
           <div className="relative">
             <div
               className="absolute z-0 w-[500px] h-max transition-all duration-700 ease-out"
@@ -105,7 +109,6 @@ const Header: React.FC = () => {
               </HoverHighlight>
             </nav>
           </div>
-
           <div className="flex items-center gap-3">
             <ConnectButton
               chainStatus="icon"
