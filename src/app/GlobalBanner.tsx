@@ -14,7 +14,7 @@ export default function GlobalBanner({
   if (!visible) return null;
 
   return (
-    <div className="fixed top-0 left-0 w-full z-[1000] bg-yellow-100 text-yellow-900 border-b border-yellow-300">
+    <div className="md:fixed lg:block md:hidden hidden top-0 left-0 w-full z-[1000] bg-yellow-100 text-yellow-900 border-b border-yellow-300">
       <div className="flex items-center justify-center relative px-4 py-2 mx-auto">
         <button
           onClick={() => setVisible(false)}

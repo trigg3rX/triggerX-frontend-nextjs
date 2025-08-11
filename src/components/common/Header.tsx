@@ -121,6 +121,8 @@ const Header: React.FC = () => {
       ) : (
         /* Mobile Header */
         <div className="w-[90%] mx-auto flex justify-between items-center my-6 header">
+          <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
+
           <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
             <LogoLink
               width={130}
