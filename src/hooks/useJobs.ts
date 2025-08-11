@@ -1,4 +1,3 @@
-import { devLog } from "@/lib/devLog";
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 
@@ -95,7 +94,7 @@ export function useJobs() {
         }
 
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
-        devLog("[useJobs] Fetching jobs from:", apiUrl);
+        console.log("[useJobs] Fetching jobs from:", apiUrl);
         const headers = {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
@@ -114,7 +113,7 @@ export function useJobs() {
           return;
         }
         const jobsData: JobsApiResponse = await response.json();
-        devLog("[useJobs] Raw jobsData:", jobsData);
+        console.log("[useJobs] Raw jobsData:", jobsData);
 
         // Build job map for linked jobs
         const jobMap: Record<number, RawJobData> = {};
@@ -204,7 +203,7 @@ export function useJobs() {
             linkedJobsMap[mainJobId] = linkedJobs;
           }
         });
-        devLog("[useJobs] linkedJobsMap:", linkedJobsMap);
+        console.log("[useJobs] linkedJobsMap:", linkedJobsMap);
         // Build main jobs array
         const tempJobs: JobType[] = jobsData.jobs
           .filter(
@@ -281,7 +280,7 @@ export function useJobs() {
                   : undefined,
             };
           });
-        devLog("[useJobs] tempJobs:", tempJobs);
+        console.log("[useJobs] tempJobs:", tempJobs);
         // Sort by createdAt (newest first); tie-breaker by id desc
         const getTime = (isoString: string) => {
           const time = Date.parse(isoString);
@@ -292,14 +291,14 @@ export function useJobs() {
           if (timeDiff !== 0) return timeDiff;
           return b.id - a.id;
         });
-        devLog("[useJobs] sortedJobs:", sortedJobs);
+        console.log("[useJobs] sortedJobs:", sortedJobs);
         setJobs(sortedJobs);
         setError(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? "" : "Something went wrong.");
       } finally {
         setLoading(false);
-        devLog("[useJobs] Loading finished.");
+        console.log("[useJobs] Loading finished.");
       }
     };
     fetchJobs();
