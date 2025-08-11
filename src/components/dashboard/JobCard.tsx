@@ -91,13 +91,14 @@ const formatTimeframe = (secondsString: string) => {
 const formatInterval = (secondsString: string) => {
   const seconds = parseInt(secondsString, 10);
   if (isNaN(seconds)) return secondsString;
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
+
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
 
-  if (days > 0) return `${days} day${days > 1 ? "s" : ""}`;
   if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
-  if (secs > 0) return `${seconds} sec${seconds > 1 ? "s" : ""}`;
+  if (mins > 0) return `${mins} min${mins > 1 ? "s" : ""}`;
+  if (secs > 0) return `${secs} sec${secs > 1 ? "s" : ""}`;
   return "0 sec";
 };
 
@@ -309,14 +310,16 @@ const JobCard: React.FC<JobCardProps> = ({
                   {job.argType}
                 </Typography>
               </div>
-              <div className="flex items-center justify-between gap-2 py-1">
-                <Typography variant="body" color="white" align="left">
-                  TimeInterval :
-                </Typography>
-                <Typography variant="body" color="gray" align="right">
-                  {formatInterval(job.timeInterval)}
-                </Typography>
-              </div>
+              {job.type === "Time-based" && (
+                <div className="flex items-center justify-between gap-2 py-1">
+                  <Typography variant="body" color="white" align="left">
+                    TimeInterval :
+                  </Typography>
+                  <Typography variant="body" color="gray" align="right">
+                    {formatInterval(job.timeInterval)}
+                  </Typography>
+                </div>
+              )}
               <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Target Contract :

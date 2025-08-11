@@ -284,11 +284,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      {isPending ? (
-                        <span className="border border-yellow-400/10 bg-yellow-500/10 text-yellow-300 py-2 px-3 rounded-full">
-                          Pending
-                        </span>
-                      ) : log.is_successful ? (
+                      {log.is_successful ? (
                         <span className="border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
                           {hasStatusText ? log.task_status : "Success"}
                         </span>
