@@ -510,7 +510,12 @@ export const ContractDetails = ({
                         value: String(apiKey.value),
                       };
                     })}
-                    value={contract.selectedApiKey || ""}
+                    value={
+                      contract.selectedApiKey ||
+                      (contract.apiKeys && contract.apiKeys.length > 0
+                        ? String(contract.apiKeys[0].value)
+                        : "")
+                    }
                     onChange={
                       readOnly
                         ? () => {}

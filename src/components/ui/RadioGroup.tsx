@@ -50,7 +50,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
               name={name}
               required
               value={option.value.toString()}
-              className="form-radio h-4 w-4 accent-[#F8FF7C] "
+              className="appearance-none rounded-full h-4 w-4 border-2 border-gray-300 bg-transparent checked:bg-[#F8FF7C] checked:border-black checked:ring-2 checked:ring-[#F8FF7C] disabled:cursor-not-allowed"
               checked={String(value) === String(option.value)}
               onChange={() =>
                 !(disabled || option.disabled) && onChange(option.value)
