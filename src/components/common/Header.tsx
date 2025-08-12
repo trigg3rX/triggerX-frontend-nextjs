@@ -9,6 +9,7 @@ import { HoverHighlight } from "./HoverHighlight";
 import { LogoLink } from "./header/LogoLink";
 import { LandingImage } from "./header/LandingImage";
 import BalanceDisplay from "../ui/BalanceDisplay";
+import GlobalBanner from "@/app/GlobalBanner";
 
 const navItems = [
   { href: "/devhub", label: "Dev Hub" },
@@ -19,6 +20,8 @@ const navItems = [
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [bannerVisible, setBannerVisible] = useState(false); // Lifted state for banner visibility
+
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -58,9 +61,14 @@ const Header: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
+      <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
+
       {isDesktop ? (
         /* Desktop Header */
-        <div className="w-[90%] mx-auto my-6 md:my-8 header flex items-center justify-between">
+        <div
+          className={`w-[90%] mx-auto ${bannerVisible ? "my-6 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
+        >
+          {" "}
           <div className="w-[170px]">
             <LogoLink
               width={180}
@@ -69,7 +77,6 @@ const Header: React.FC = () => {
               priority={true}
             />
           </div>
-
           <div className="relative">
             <div
               className="absolute z-0 w-[500px] h-max transition-all duration-700 ease-out"
@@ -102,7 +109,6 @@ const Header: React.FC = () => {
               </HoverHighlight>
             </nav>
           </div>
-
           <div className="flex items-center gap-3">
             <ConnectButton
               chainStatus="icon"
@@ -114,42 +120,47 @@ const Header: React.FC = () => {
         </div>
       ) : (
         /* Mobile Header */
-        <div className="w-[90%] mx-auto flex justify-between items-center my-6 header">
-          <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
-            <LogoLink
-              width={130}
-              height={30}
-              className="w-[170px] h-auto"
-              priority={true}
-            />
-          </div>
+        <>
+          <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
+          <div
+            className={`w-[90%] mx-auto ${bannerVisible ? "my-8 sm:my-12 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
+          >
+            <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
+              <LogoLink
+                width={130}
+                height={30}
+                className="w-[170px] h-auto"
+                priority={true}
+              />
+            </div>
 
-          <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
-            <LandingImage
-              alt="Mobile Navigation Background"
-              width={256}
-              height={100}
-              priority={true}
-            />
-          </div>
+            <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
+              <LandingImage
+                alt="Mobile Navigation Background"
+                width={256}
+                height={100}
+                priority={true}
+              />
+            </div>
 
-          <div className="relative flex items-center gap-2 md:gap-4 z-10">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
-              aria-label="Toggle menu"
-              aria-expanded={menuOpen}
-            >
-              {menuOpen ? "✖" : "☰"}
-            </button>
-            <MobileMenu
-              isOpen={menuOpen}
-              onClose={() => setMenuOpen(false)}
-              navItems={navItems}
-              currentPath={pathname}
-            />
+            <div className="relative flex items-center gap-2 md:gap-4 z-10">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
+                aria-label="Toggle menu"
+                aria-expanded={menuOpen}
+              >
+                {menuOpen ? "✖" : "☰"}
+              </button>
+              <MobileMenu
+                isOpen={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                navItems={navItems}
+                currentPath={pathname}
+              />
+            </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

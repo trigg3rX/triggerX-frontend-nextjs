@@ -1,3 +1,4 @@
+import { devLog } from "@/lib/devLog";
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 
@@ -5,7 +6,7 @@ export type JobType = {
   id: number;
   jobTitle: string;
   taskDefinitionId: string;
-  status: boolean;
+  is_active: boolean;
   job_cost_actual: string;
   timeFrame: string;
   argType: string;
@@ -94,7 +95,7 @@ export function useJobs() {
         }
 
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
-        console.log("[useJobs] Fetching jobs from:", apiUrl);
+        devLog("[useJobs] Fetching jobs from:", apiUrl);
         const headers = {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
@@ -113,7 +114,7 @@ export function useJobs() {
           return;
         }
         const jobsData: JobsApiResponse = await response.json();
-        console.log("[useJobs] Raw jobsData:", jobsData);
+        devLog("[useJobs] Raw jobsData:", jobsData);
 
         // Build job map for linked jobs
         const jobMap: Record<number, RawJobData> = {};
@@ -141,7 +142,7 @@ export function useJobs() {
                 taskDefinitionId: mapJobType(
                   nextJob.job_data.task_definition_id,
                 ),
-                status: nextJob.job_data.is_active === true,
+                is_active: typeSpecificData.is_active === true,
                 job_cost_actual: nextJob.job_data.job_cost_actual,
                 timeFrame: nextJob.job_data.time_frame || "",
                 argType:
@@ -203,7 +204,7 @@ export function useJobs() {
             linkedJobsMap[mainJobId] = linkedJobs;
           }
         });
-        console.log("[useJobs] linkedJobsMap:", linkedJobsMap);
+        devLog("[useJobs] linkedJobsMap:", linkedJobsMap);
         // Build main jobs array
         const tempJobs: JobType[] = jobsData.jobs
           .filter(
@@ -223,7 +224,7 @@ export function useJobs() {
               taskDefinitionId: mapJobType(
                 jobDetail.job_data.task_definition_id,
               ),
-              status: jobDetail.job_data.is_active === true,
+              is_active: typeSpecificData.is_active === true,
               linkedJobs: linkedJobsMap[jobDetail.job_data.job_id] || [],
               job_cost_actual: jobDetail.job_data.job_cost_actual,
               timeFrame: jobDetail.job_data.time_frame || "",
@@ -280,7 +281,7 @@ export function useJobs() {
                   : undefined,
             };
           });
-        console.log("[useJobs] tempJobs:", tempJobs);
+        devLog("[useJobs] tempJobs:", tempJobs);
         // Sort by createdAt (newest first); tie-breaker by id desc
         const getTime = (isoString: string) => {
           const time = Date.parse(isoString);
@@ -291,14 +292,14 @@ export function useJobs() {
           if (timeDiff !== 0) return timeDiff;
           return b.id - a.id;
         });
-        console.log("[useJobs] sortedJobs:", sortedJobs);
+        devLog("[useJobs] sortedJobs:", sortedJobs);
         setJobs(sortedJobs);
         setError(null);
       } catch (err: unknown) {
         setError(err instanceof Error ? "" : "Something went wrong.");
       } finally {
         setLoading(false);
-        console.log("[useJobs] Loading finished.");
+        devLog("[useJobs] Loading finished.");
       }
     };
     fetchJobs();

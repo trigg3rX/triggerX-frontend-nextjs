@@ -44,17 +44,10 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
             const hasValidTimestamp =
               !!log.execution_timestamp &&
               log.execution_timestamp !== "0001-01-01T00:00:00Z";
-            const hasTxHash = !!(
-              log.execution_tx_hash && log.execution_tx_hash.trim() !== ""
-            );
+
             const hasStatusText = !!(
               log.task_status && log.task_status.trim() !== ""
             );
-            const isPending =
-              !log.is_successful &&
-              !hasTxHash &&
-              !hasStatusText &&
-              !hasValidTimestamp;
 
             return (
               <Card key={`${log.task_id}-${log.task_number}`} className="mb-2">
@@ -80,9 +73,7 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                       Status
                     </Typography>
                     <Typography color="gray">
-                      {isPending ? (
-                        <span className="text-yellow-400">Pending</span>
-                      ) : log.is_successful ? (
+                      {log.is_successful ? (
                         <span className="text-green-400">Success</span>
                       ) : (
                         <span className="text-red-400">Failed</span>
@@ -220,17 +211,10 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                 const hasValidTimestamp =
                   !!log.execution_timestamp &&
                   log.execution_timestamp !== "0001-01-01T00:00:00Z";
-                const hasTxHash = !!(
-                  log.execution_tx_hash && log.execution_tx_hash.trim() !== ""
-                );
+
                 const hasStatusText = !!(
                   log.task_status && log.task_status.trim() !== ""
                 );
-                const isPending =
-                  !log.is_successful &&
-                  !hasTxHash &&
-                  !hasStatusText &&
-                  !hasValidTimestamp;
 
                 return (
                   <TableRow
@@ -239,11 +223,9 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                   >
                     <TableCell
                       className={`border-l-4 px-6 py-4 ${
-                        isPending
-                          ? "border-yellow-500"
-                          : log.is_successful
-                            ? "border-green-500"
-                            : "border-red-500"
+                        log.is_successful
+                          ? "border-green-500"
+                          : "border-red-500"
                       }`}
                     >
                       <Typography variant="body" color="primary" align="left">

@@ -1619,7 +1619,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         ...updatedJobDetails,
         ...updatedLinkedJobDetails,
       ];
-      console.log("Submitting job details:", allJobsForSubmission);
+      // console.log("Submitting job details:", allJobsForSubmission);
 
       // Create or update job via API
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
