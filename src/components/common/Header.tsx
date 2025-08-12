@@ -120,44 +120,47 @@ const Header: React.FC = () => {
         </div>
       ) : (
         /* Mobile Header */
-        <div className="w-[90%] mx-auto flex justify-between items-center my-6 header">
+        <>
           <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
+          <div
+            className={`w-[90%] mx-auto ${bannerVisible ? "my-8 sm:my-12 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
+          >
+            <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
+              <LogoLink
+                width={130}
+                height={30}
+                className="w-[170px] h-auto"
+                priority={true}
+              />
+            </div>
 
-          <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
-            <LogoLink
-              width={130}
-              height={30}
-              className="w-[170px] h-auto"
-              priority={true}
-            />
-          </div>
+            <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
+              <LandingImage
+                alt="Mobile Navigation Background"
+                width={256}
+                height={100}
+                priority={true}
+              />
+            </div>
 
-          <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
-            <LandingImage
-              alt="Mobile Navigation Background"
-              width={256}
-              height={100}
-              priority={true}
-            />
+            <div className="relative flex items-center gap-2 md:gap-4 z-10">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
+                aria-label="Toggle menu"
+                aria-expanded={menuOpen}
+              >
+                {menuOpen ? "✖" : "☰"}
+              </button>
+              <MobileMenu
+                isOpen={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                navItems={navItems}
+                currentPath={pathname}
+              />
+            </div>
           </div>
-
-          <div className="relative flex items-center gap-2 md:gap-4 z-10">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
-              aria-label="Toggle menu"
-              aria-expanded={menuOpen}
-            >
-              {menuOpen ? "✖" : "☰"}
-            </button>
-            <MobileMenu
-              isOpen={menuOpen}
-              onClose={() => setMenuOpen(false)}
-              navItems={navItems}
-              currentPath={pathname}
-            />
-          </div>
-        </div>
+        </>
       )}
     </header>
   );
