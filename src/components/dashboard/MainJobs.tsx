@@ -44,6 +44,7 @@ const MainJobs = ({
   const [jobLogsOpenId, setJobLogsOpenId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [jobsPerPage, setJobsPerPage] = useState(6); // Allow dynamic change
+  const [groupSize, setGroupSize] = useState(2); // Add state for group size
 
   // Refs for Linked Jobs sections and Job Logs section
   const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -57,6 +58,23 @@ const MainJobs = ({
     loading: logsLoading,
     error: logsError,
   } = useJobLogs(jobLogsOpenId ?? undefined);
+
+  // Add resize effect to update group size
+  useEffect(() => {
+    const updateGroupSize = () => {
+      const newGroupSize = window.innerWidth >= 1280 ? 3 : 2;
+      setGroupSize(newGroupSize);
+    };
+
+    // Set initial group size
+    updateGroupSize();
+
+    // Add resize listener
+    window.addEventListener("resize", updateGroupSize);
+
+    // Cleanup
+    return () => window.removeEventListener("resize", updateGroupSize);
+  }, []);
 
   useEffect(() => {
     // setJobs(fetchedJobs); // This line is removed as per the edit hint
@@ -159,7 +177,7 @@ const MainJobs = ({
           }
         }, 500);
       }
-      console.log("clicked job", jobId, newId);
+      // console.log("clicked job", jobId, newId);
       return newId;
     });
   };
@@ -198,19 +216,20 @@ const MainJobs = ({
     const paginatedJobs = getPaginatedJobs();
     const elements = [];
 
-    for (let i = 0; i < paginatedJobs.length; i += 3) {
-      const jobGroup = paginatedJobs.slice(i, i + 3);
+    // Use the groupSize state that updates with window resize
+    for (let i = 0; i < paginatedJobs.length; i += groupSize) {
+      const jobGroup = paginatedJobs.slice(i, i + groupSize);
 
       // Add the job cards for this group
       elements.push(
         <div
           key={`group-${i}`}
-          className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3"
+          className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6 xl:grid-cols-3"
         >
           {jobGroup.map((job) => (
             <div
               key={job.id}
-              className="col-span-1"
+              className=""
               onClick={() => handleJobCardClick(job.id)}
               style={{ cursor: "pointer" }}
               ref={(el) => {
