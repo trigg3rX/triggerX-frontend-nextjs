@@ -61,7 +61,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
-      {/* <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} /> */}
+      <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
 
       {isDesktop ? (
         /* Desktop Header */
