@@ -143,6 +143,7 @@ const MainJobs = ({
     setExpandedJobs({}); // Close all linked jobs
     setJobLogsOpenId((prev) => {
       const newId = prev === jobId ? null : jobId;
+
       // Only scroll when opening logs (not closing)
       if (newId !== null) {
         setTimeout(() => {
@@ -158,6 +159,7 @@ const MainJobs = ({
           }
         }, 500);
       }
+      console.log("clicked job", jobId, newId);
       return newId;
     });
   };
