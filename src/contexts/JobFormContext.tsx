@@ -1260,7 +1260,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               oldDataDecoded =
                 JSON.parse(urlParams.get("oldData") || "{}") || {};
             } catch (parseError) {
-              devLog("[JobForm] Error parsing oldData:", parseError);
+              console.log("[JobForm] Error parsing oldData:", parseError);
             }
 
             // Map string jobType to number
@@ -1360,7 +1360,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
             // Check for common validation issues
             if (!jd.job_title || jd.job_title.trim() === "") {
-              devLog("[JobForm] ERROR: Empty job title");
+              console.log("[JobForm] ERROR: Empty job title");
               throw new Error("Job title cannot be empty");
             }
             if (
@@ -1368,13 +1368,13 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               jd.target_contract_address ===
                 "0x0000000000000000000000000000000000000000"
             ) {
-              devLog("[JobForm] ERROR: Invalid target contract address");
+              console.log("[JobForm] ERROR: Invalid target contract address");
               throw new Error("Target contract address is required");
             }
 
             // Check for time interval requirement for task definition ID 2 (Time-based with IPFS)
             if (jd.task_definition_id === 2 && jd.time_interval <= 0) {
-              devLog(
+              console.log(
                 "[JobForm] ERROR: Time interval must be greater than 0 for task definition ID 2",
               );
               throw new Error(
@@ -1398,7 +1398,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             // Try to estimate gas first to get more detailed error
             try {
             } catch (gasError: unknown) {
-              devLog("[JobForm] Gas estimation failed:", gasError);
+              console.log("[JobForm] Gas estimation failed:", gasError);
               // Try to decode the error
               if (
                 gasError &&
@@ -1406,14 +1406,14 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 "data" in gasError
               ) {
                 const errorData = (gasError as { data: string }).data;
-                devLog("[JobForm] Error data:", errorData);
+                console.log("[JobForm] Error data:", errorData);
 
                 try {
                   const decodedError =
                     jobContract.interface.parseError(errorData);
-                  devLog("[JobForm] Decoded error:", decodedError);
+                  console.log("[JobForm] Decoded error:", decodedError);
                 } catch (decodeError) {
-                  devLog("[JobForm] Could not decode error:", decodeError);
+                  console.log("[JobForm] Could not decode error:", decodeError);
                 }
               }
               throw gasError;
@@ -1438,7 +1438,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                     >[0],
                   );
                 } catch (parseError) {
-                  devLog("[JobForm] Error parsing log:", parseError);
+                  console.log("[JobForm] Error parsing log:", parseError);
                   return null;
                 }
               })
@@ -1472,7 +1472,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 returnedJobId,
               );
             } else {
-              devLog("[JobForm] No JobCreated event found in logs.");
+              console.log("[JobForm] No JobCreated event found in logs.");
             }
             devLog("Job creation transaction confirmed: ", tx.hash);
           }
@@ -1555,7 +1555,10 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                     >[0],
                   );
                 } catch (parseError) {
-                  devLog("[JobForm] Error parsing linked job log:", parseError);
+                  console.log(
+                    "[JobForm] Error parsing linked job log:",
+                    parseError,
+                  );
                   return null;
                 }
               })
@@ -1582,7 +1585,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 linkedJobId,
               );
             } else {
-              devLog("[JobForm] No JobCreated event found in linked job logs.");
+              console.log(
+                "[JobForm] No JobCreated event found in linked job logs.",
+              );
             }
           } catch (err) {
             devLog("Error creating linked job:", err);
@@ -1603,7 +1608,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         ...updatedJobDetails,
         ...updatedLinkedJobDetails,
       ];
-      devLog("Submitting job details:", allJobsForSubmission);
+      console.log("Submitting job details:", allJobsForSubmission);
 
       // Create or update job via API
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
