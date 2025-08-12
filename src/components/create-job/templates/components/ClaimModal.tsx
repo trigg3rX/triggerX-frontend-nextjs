@@ -38,6 +38,8 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
         return "Optimism Sepolia";
       case 84532:
         return "Base Sepolia";
+      case 421614:
+        return "Arbitrum Sepolia";
       default:
         return `Chain ${chainId}`;
     }
@@ -91,6 +93,8 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
       let networkName = "op_sepolia";
       if (chainIdHex === "0x14a34") {
         networkName = "base_sepolia";
+      } else if (chainIdHex === "0x66eee") {
+        networkName = "arbitrum_sepolia";
       }
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/claim-fund`,

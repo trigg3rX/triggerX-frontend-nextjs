@@ -507,7 +507,9 @@ const BalanceMaintainer = () => {
                 href={`${
                   chainId === BigInt(11155420)
                     ? "https://sepolia-optimism.etherscan.io/address/"
-                    : "https://sepolia.basescan.org/address/"
+                    : chainId === BigInt(421614)
+                      ? "https://sepolia.arbiscan.io/address/"
+                      : "https://sepolia.basescan.org/address/"
                 }${contractAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"

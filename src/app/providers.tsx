@@ -23,7 +23,7 @@ function InnerProviders({ children }: { children: React.ReactNode }) {
   if (!stakeRegistryAddress) return null; // or a loading spinner
 
   return (
-    <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
+    <TGBalanceProvider>
       <WalletConnectionProvider>
         <WalletProvider>{children}</WalletProvider>
       </WalletConnectionProvider>

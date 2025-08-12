@@ -1,7 +1,8 @@
 declare module "@/utils/networks.json" {
   interface NetworkIcon {
     viewBox: string;
-    path: string;
+    path?: string;
+    paths?: string[];
   }
 
   interface Network {

@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { fetchContractABI } from "@/utils/fetchContractABI";
 import { useChainId } from "wagmi";
-
-const TRIGGER_GAS_REGISTRY_ADDRESS =
-  process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS;
+import { getTriggerGasRegistryAddress } from "@/utils/contractAddresses";
 
 export function useStakeRegistry() {
   const [stakeRegistryAddress, setStakeRegistryAddress] = useState("");
@@ -15,7 +13,8 @@ export function useStakeRegistry() {
   useEffect(() => {
     const fetchStakeRegistryABI = async () => {
       let currentImplAddress = stakeRegistryImplAddress;
-      setStakeRegistryAddress(TRIGGER_GAS_REGISTRY_ADDRESS || "");
+      const triggerGasRegistryAddress = getTriggerGasRegistryAddress(chainId);
+      setStakeRegistryAddress(triggerGasRegistryAddress);
       if (!currentImplAddress) {
         const url =
           "https://raw.githubusercontent.com/trigg3rX/triggerx-contracts/main/contracts/script/output/stake.opsepolia.json";
@@ -35,7 +34,7 @@ export function useStakeRegistry() {
         }
       }
       if (!currentImplAddress) {
-        currentImplAddress = TRIGGER_GAS_REGISTRY_ADDRESS || "";
+        currentImplAddress = triggerGasRegistryAddress;
       }
       if (!currentImplAddress || !ethers.isAddress(currentImplAddress)) {
         setStakeRegistryABI("");

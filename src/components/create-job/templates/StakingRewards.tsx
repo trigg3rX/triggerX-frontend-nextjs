@@ -27,8 +27,18 @@ import { CodeBlockWithCopy } from "@/components/common/CodeBlockWithCopy";
 import { devLog } from "@/lib/devLog";
 
 const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_STAKER_TOKEN_ADDRESS;
+if (!TOKEN_ADDRESS) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_STAKER_TOKEN_ADDRESS environment variable. Please set it in your environment.",
+  );
+}
 const STAKE_REWARD_CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_STAKING_REWARD_CONTRACT_ADDRESS;
+if (!STAKE_REWARD_CONTRACT_ADDRESS) {
+  throw new Error(
+    "Missing NEXT_PUBLIC_STAKING_REWARD_CONTRACT_ADDRESS environment variable. Please set it in your environment.",
+  );
+}
 const THRESHOLD = "10";
 const jobConfig = {
   jobType: "Event Based (2)",

@@ -3,10 +3,13 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { ethers } from "ethers";
 import JobRegistryArtifact from "@/artifacts/JobRegistry.json";
+import { useChainId } from "wagmi";
+import { getJobRegistryAddress } from "@/utils/contractAddresses";
 
 export function useDeleteJob() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const chainId = useChainId();
 
   const deleteJob = async (jobId: number, refetch?: () => void) => {
     setLoading(true);
@@ -20,11 +23,10 @@ export function useDeleteJob() {
       }
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const jobRegistryAddress =
-        process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
+      const jobRegistryAddress = getJobRegistryAddress(chainId);
       if (!jobRegistryAddress) {
         setError(
-          "Job registry contract address not set. Please contact support.",
+          `Job registry contract address not set for chain ${chainId}. Please contact support.`,
         );
         setLoading(false);
         return;

@@ -7,8 +7,9 @@ import React, {
   useState,
 } from "react";
 import { ethers } from "ethers";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { devLog } from "@/lib/devLog";
+import { getTriggerGasRegistryAddress } from "@/utils/contractAddresses";
 
 interface TGBalanceContextType {
   userBalance: string;
@@ -21,15 +22,16 @@ const TGBalanceContext = createContext<TGBalanceContextType | undefined>(
 );
 
 export const TGBalanceProvider: React.FC<{
-  stakeRegistryAddress: string;
   children: React.ReactNode;
-}> = ({ stakeRegistryAddress, children }) => {
+}> = ({ children }) => {
   const [userBalance, setUserBalance] = useState<string>("0");
   const { address } = useAccount();
+  const chainId = useChainId();
 
   // Function to get RPC URL based on chain ID
   const getRpcUrl = useCallback((chainId: number): string => {
     const isBaseSepolia = chainId === 84532 || chainId === 8453;
+    const isArbitrumSepolia = chainId === 421614;
     if (isBaseSepolia) {
       if (!process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL) {
         throw new Error(
@@ -37,6 +39,13 @@ export const TGBalanceProvider: React.FC<{
         );
       }
       return process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL;
+    } else if (isArbitrumSepolia) {
+      if (!process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL) {
+        throw new Error(
+          "NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL environment variable is not set",
+        );
+      }
+      return process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL;
     } else {
       if (!process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL) {
         throw new Error(
@@ -50,7 +59,13 @@ export const TGBalanceProvider: React.FC<{
   const fetchTGBalance = useCallback(async () => {
     devLog("fetchhh");
     if (typeof window.ethereum == "undefined") return;
-    if (!stakeRegistryAddress || !ethers.isAddress(stakeRegistryAddress)) {
+
+    // Get the address for the current chain
+    const currentStakeRegistryAddress = getTriggerGasRegistryAddress(chainId);
+    if (
+      !currentStakeRegistryAddress ||
+      !ethers.isAddress(currentStakeRegistryAddress)
+    ) {
       return;
     }
 
@@ -82,7 +97,7 @@ export const TGBalanceProvider: React.FC<{
 
         // Use JSON RPC provider for contract interactions
         const stakeRegistryContract = new ethers.Contract(
-          stakeRegistryAddress,
+          currentStakeRegistryAddress,
           ["function getBalance(address) view returns (uint256, uint256)"],
           jsonRpcProvider,
         );
@@ -97,12 +112,13 @@ export const TGBalanceProvider: React.FC<{
     } catch (error) {
       console.error("Error fetching TG balance:", error);
     }
-  }, [stakeRegistryAddress, getRpcUrl]);
+  }, [chainId, getRpcUrl]);
 
   useEffect(() => {
+    const currentStakeRegistryAddress = getTriggerGasRegistryAddress(chainId);
     if (
-      stakeRegistryAddress &&
-      ethers.isAddress(stakeRegistryAddress) &&
+      currentStakeRegistryAddress &&
+      ethers.isAddress(currentStakeRegistryAddress) &&
       address
     ) {
       fetchTGBalance();
@@ -110,8 +126,8 @@ export const TGBalanceProvider: React.FC<{
     const handleAccountsChanged = (accounts: string[]) => {
       if (
         accounts.length > 0 &&
-        stakeRegistryAddress &&
-        ethers.isAddress(stakeRegistryAddress)
+        currentStakeRegistryAddress &&
+        ethers.isAddress(currentStakeRegistryAddress)
       ) {
         fetchTGBalance();
       } else if (accounts.length === 0) {
@@ -134,7 +150,7 @@ export const TGBalanceProvider: React.FC<{
         window.ethereum.removeListener("chainChanged", handleChainChanged);
       }
     };
-  }, [stakeRegistryAddress, fetchTGBalance, address]);
+  }, [chainId, fetchTGBalance, address]);
 
   return (
     <TGBalanceContext.Provider

@@ -13,12 +13,24 @@ const networkIcons = Object.fromEntries(
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d={icon.path}
-        fill="currentColor"
-      />
+      {icon.paths ? (
+        icon.paths.map((d, i) => (
+          <path
+            key={i}
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d={d}
+            fill="currentColor"
+          />
+        ))
+      ) : (
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d={icon.path}
+          fill="currentColor"
+        />
+      )}
     </svg>,
   ]),
 );

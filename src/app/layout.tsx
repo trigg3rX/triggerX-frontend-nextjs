@@ -20,8 +20,6 @@ export default function RootLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const stakeRegistryAddress =
-    process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS || "";
   return (
     <html lang="en">
       <GoogleTagManager gtmId="GTM-N23BN7R5" />
@@ -29,7 +27,7 @@ export default function RootLayout({
       <body className={`antialiated font-actay`}>
         <TooltipProvider>
           <Providers>
-            <TGBalanceProvider stakeRegistryAddress={stakeRegistryAddress}>
+            <TGBalanceProvider>
               <Header />
               <ScrollToTop />
               <main className="max-w-[1600px] w-[90%] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">

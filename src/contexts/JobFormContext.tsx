@@ -11,6 +11,8 @@ import toast from "react-hot-toast";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { devLog } from "@/lib/devLog";
 import JobRegistryArtifact from "@/artifacts/JobRegistry.json";
+import { useChainId } from "wagmi";
+import { getJobRegistryAddress } from "@/utils/contractAddresses";
 
 interface ABIItem {
   type: string;
@@ -424,6 +426,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   // Get TG balance context
   const { fetchTGBalance } = useTGBalance();
   const { stakeRegistryAddress } = useStakeRegistry();
+  const chainId = useChainId();
 
   // Refetch TG balance when selectedNetwork changes
   React.useEffect(() => {
@@ -982,6 +985,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
+  // Helper function to get job registry address for current chain
+  const getJobRegistryAddressForCurrentChain = useCallback(() => {
+    return getJobRegistryAddress(chainId);
+  }, [chainId]);
+
   // Validation helpers
   const validateTimeframe = (tf: Timeframe = timeframe) => {
     if (tf.days === 0 && tf.hours === 0 && tf.minutes === 0) {
@@ -1312,10 +1320,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             });
 
             // Call updateJob on the contract
-            const jobCreationAddress =
-              process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
+            const jobCreationAddress = getJobRegistryAddressForCurrentChain();
             if (!jobCreationAddress) {
-              throw new Error("Job creation contract address not set in env");
+              throw new Error(
+                `Job creation contract address not set for chain ${chainId}`,
+              );
             }
             const jobContract = new ethers.Contract(
               jobCreationAddress,
@@ -1347,10 +1356,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             );
             // Optionally, handle receipt and events for updateJob if needed
           } else {
-            const jobCreationAddress =
-              process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
+            const jobCreationAddress = getJobRegistryAddressForCurrentChain();
             if (!jobCreationAddress) {
-              throw new Error("Job creation contract address not set in env");
+              throw new Error(
+                `Job creation contract address not set for chain ${chainId}`,
+              );
             }
             const jobContract = new ethers.Contract(
               jobCreationAddress,
@@ -1525,10 +1535,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             }
 
             // Create linked job on contract
-            const jobCreationAddress =
-              process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS;
+            const jobCreationAddress = getJobRegistryAddressForCurrentChain();
             if (!jobCreationAddress) {
-              throw new Error("Job creation contract address not set in env");
+              throw new Error(
+                `Job creation contract address not set for chain ${chainId}`,
+              );
             }
             const jobContract = new ethers.Contract(
               jobCreationAddress,

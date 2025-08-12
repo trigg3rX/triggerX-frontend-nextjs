@@ -246,14 +246,28 @@ const JobCard: React.FC<JobCardProps> = ({
                   viewBox={icon.viewBox}
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-6 h-6 bg-red-500 rounded-full"
+                  className="w-6 h-6 rounded-full"
                 >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d={icon.path}
-                    fill="currentColor"
-                  />
+                  {icon.paths ? (
+                    // Handle multiple paths (like Arbitrum)
+                    icon.paths.map((path: string, index: number) => (
+                      <path
+                        key={index}
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d={path}
+                        fill="currentColor"
+                      />
+                    ))
+                  ) : (
+                    // Handle single path
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d={icon.path}
+                      fill="currentColor"
+                    />
+                  )}
                 </svg>
               ) : null;
             })()}
