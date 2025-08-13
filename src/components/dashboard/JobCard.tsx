@@ -233,7 +233,6 @@ const JobCard: React.FC<JobCardProps> = ({
             ) : (
               <div style={{ width: 32, height: 32 }}></div>
             )}
-            {/* Network Icon right after linked jobs button */}
             {(() => {
               const network = networksData.supportedNetworks.find(
                 (n) => Number(job.targetChainId) === n.id,
@@ -241,34 +240,37 @@ const JobCard: React.FC<JobCardProps> = ({
               const icon = network
                 ? networksData.networkIcons[network.name]
                 : null;
+              const bgClass = getNetworkBgClass(network?.id);
+
               return icon ? (
-                <svg
-                  viewBox={icon.viewBox}
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-6 h-6 rounded-full"
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center p-1 ${bgClass}`}
                 >
-                  {icon.paths ? (
-                    // Handle multiple paths (like Arbitrum)
-                    icon.paths.map((path: string, index: number) => (
+                  <svg
+                    viewBox={icon.viewBox}
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-4 h-4"
+                  >
+                    {icon.paths ? (
+                      icon.paths.map((path: string, index: number) => (
+                        <path
+                          key={index}
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d={path}
+                          fill="currentColor" // Will be white due to text-white class
+                        />
+                      ))
+                    ) : (
                       <path
-                        key={index}
                         fillRule="evenodd"
                         clipRule="evenodd"
-                        d={path}
+                        d={icon.path}
                         fill="currentColor"
                       />
-                    ))
-                  ) : (
-                    // Handle single path
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d={icon.path}
-                      fill="currentColor"
-                    />
-                  )}
-                </svg>
+                    )}
+                  </svg>
+                </div>
               ) : null;
             })()}
           </div>
@@ -586,3 +588,12 @@ const JobCard: React.FC<JobCardProps> = ({
 };
 
 export default React.memo(JobCard);
+
+const getNetworkBgClass = (networkId: number | undefined): string => {
+  const networkBgClasses: Record<number, string> = {
+    84532: "bg-blue-600 text-white", // Base
+    11155420: "bg-red-500 text-white", // Optimism
+    421614: "bg-slate-700 text-white", // Arbitrum
+  };
+  return networkBgClasses[networkId || 0] || "";
+};

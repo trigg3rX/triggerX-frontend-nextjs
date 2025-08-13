@@ -1,5 +1,6 @@
 declare module "@/utils/networks.json" {
   interface NetworkIcon {
+    fill: string | undefined;
     viewBox: string;
     path?: string;
     paths?: string[];
