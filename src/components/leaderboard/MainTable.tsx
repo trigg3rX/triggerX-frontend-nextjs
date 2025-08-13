@@ -23,7 +23,6 @@ import useTruncateAddress from "@/hooks/useTruncateAddress";
 import { Card } from "../ui/Card";
 import { ErrorMessage } from "../common/ErrorMessage";
 import useCountUp from "@/hooks/useCountUp";
-import { TableSkeleton } from "../skeleton/TableSkeleton";
 
 interface Column {
   key: string;
@@ -72,11 +71,9 @@ export default function MainTable({
   onViewProfile,
   userAddress,
   error,
-  apiLoading,
   onRetry,
 }: MainTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
 
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortField, setSortField] = useState<string>("points");
@@ -136,24 +133,6 @@ export default function MainTable({
       (item) => item.address.toLowerCase() === userAddress.toLowerCase(),
     );
   }, [data, userAddress]);
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout | null = null;
-
-    if (apiLoading) {
-      setIsLoading(true);
-    } else {
-      // Wait at least 2 seconds before hiding the skeleton
-      timeout = setTimeout(() => {
-        setIsLoading(false);
-      }, 2000);
-    }
-
-    return () => {
-      if (timeout) clearTimeout(timeout);
-    };
-  }, [apiLoading]);
-
   return (
     <>
       {highlightedData && (
@@ -164,146 +143,143 @@ export default function MainTable({
       <Card
         className={`hidden md:block w-full whitespace-nowrap ${styles.customScrollbar}`}
       >
-        {isLoading ? (
-          <TableSkeleton />
-        ) : error ? (
-          <ErrorMessage
-            error={error}
-            className="mt-4"
-            retryText="Try Again"
-            onRetry={onRetry}
-          />
-        ) : filteredData.length === 0 ? (
-          <EmptyState type={activeTab as TabType} />
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="border-gray-800 ">
-                {columns.map((column) => (
-                  <TableHead
-                    key={column.key}
-                    className="h-14 px-6 cursor-pointer "
-                    onClick={() => column.sortable && handleSort(column.key)}
+        {!error && filteredData.length > 0 && (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-gray-800 ">
+                  {columns.map((column) => (
+                    <TableHead
+                      key={column.key}
+                      className="h-14 px-6 cursor-pointer "
+                      onClick={() => column.sortable && handleSort(column.key)}
+                    >
+                      <div className="flex items-center gap-1">
+                        <Typography variant="h4" color="primary" align="left">
+                          {column.label}
+                        </Typography>
+                        {column.sortable && (
+                          <ChevronDownIcon
+                            className={`h-4 w-4 transition-transform ${
+                              sortField === column.key &&
+                              sortDirection === "asc"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </div>
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedAndPaginatedData.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    className={
+                      userAddress &&
+                      item.address.toLowerCase() === userAddress.toLowerCase()
+                        ? "!bg-yellow-100/20 !border-yellow-300"
+                        : ""
+                    }
                   >
-                    <div className="flex items-center gap-1">
-                      <Typography variant="h4" color="primary" align="left">
-                        {column.label}
-                      </Typography>
-                      {column.sortable && (
-                        <ChevronDownIcon
-                          className={`h-4 w-4 transition-transform ${
-                            sortField === column.key && sortDirection === "asc"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </div>
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedAndPaginatedData.map((item) => (
-                <TableRow
-                  key={item.id}
-                  className={
-                    userAddress &&
-                    item.address.toLowerCase() === userAddress.toLowerCase()
-                      ? "!bg-yellow-100/20 !border-yellow-300"
-                      : ""
-                  }
-                >
-                  {/* Only show name for keeper tab */}
-                  {activeTab === "keeper" && (
+                    {/* Only show name for keeper tab */}
+                    {activeTab === "keeper" && (
+                      <TableCell className="px-6 py-4">
+                        <Typography variant="body" color="primary" align="left">
+                          {item.name}
+                        </Typography>
+                      </TableCell>
+                    )}
                     <TableCell className="px-6 py-4">
-                      <Typography variant="body" color="primary" align="left">
-                        {item.name}
-                      </Typography>
+                      <div className="flex items-center">
+                        <Typography variant="body" color="gray" align="left">
+                          {truncateAddress(item.address)}
+                        </Typography>
+                        <LucideCopyButton text={item.address} />
+                      </div>
                     </TableCell>
-                  )}
-                  <TableCell className="px-6 py-4">
-                    <div className="flex items-center">
-                      <Typography variant="body" color="gray" align="left">
-                        {truncateAddress(item.address)}
-                      </Typography>
-                      <LucideCopyButton text={item.address} />
-                    </div>
-                  </TableCell>
-                  {columns
-                    .slice(
-                      activeTab === "keeper" ? 2 : 1,
-                      columns.length - (activeTab === "keeper" ? 1 : 0),
-                    )
-                    .map((column) => (
-                      <TableCell key={column.key} className="px-6 py-4">
+                    {columns
+                      .slice(
+                        activeTab === "keeper" ? 2 : 1,
+                        columns.length - (activeTab === "keeper" ? 1 : 0),
+                      )
+                      .map((column) => (
+                        <TableCell key={column.key} className="px-6 py-4">
+                          <Typography
+                            variant="body"
+                            color="primary"
+                            align="left"
+                            className={
+                              column.key === "points"
+                                ? "bg-[#976fb93e] text-[#C07AF6] rounded-full py-1 w-[90px] text-center font-bold "
+                                : ""
+                            }
+                          >
+                            {column.key === "points" ? (
+                              <PointsCounter
+                                points={Number(
+                                  item[column.key as keyof typeof item],
+                                )}
+                              />
+                            ) : (
+                              item[column.key as keyof typeof item]
+                            )}
+                          </Typography>
+                        </TableCell>
+                      ))}
+                    {/* Only show profile for keeper tab */}
+                    {activeTab === "keeper" && (
+                      <TableCell className="px-6 py-4">
                         <Typography
                           variant="body"
                           color="primary"
                           align="left"
-                          className={
-                            column.key === "points"
-                              ? "bg-[#976fb93e] text-[#C07AF6] rounded-full py-1 w-[90px] text-center font-bold "
-                              : ""
-                          }
+                          className="underline underline-offset-2 hover:text-[#F8ff7c]/80 "
                         >
-                          {column.key === "points" ? (
-                            <PointsCounter
-                              points={Number(
-                                item[column.key as keyof typeof item],
-                              )}
-                            />
-                          ) : (
-                            item[column.key as keyof typeof item]
-                          )}
+                          <span
+                            className="cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onViewProfile) onViewProfile(item.address);
+                            }}
+                          >
+                            <ExternalLink className="inline w-5 h-5 align-middle" />
+                          </span>
                         </Typography>
                       </TableCell>
-                    ))}
-                  {/* Only show profile for keeper tab */}
-                  {activeTab === "keeper" && (
-                    <TableCell className="px-6 py-4">
-                      <Typography
-                        variant="body"
-                        color="primary"
-                        align="left"
-                        className="underline underline-offset-2 hover:text-[#F8ff7c]/80 "
-                      >
-                        <span
-                          className="cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onViewProfile) onViewProfile(item.address);
-                          }}
-                        >
-                          <ExternalLink className="inline w-5 h-5 align-middle" />
-                        </span>
-                      </Typography>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    )}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {/* Pagination Controls */}
+            {filteredData.length >= 6 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={handleItemsPerPageChange}
+                className="mt-6"
+              />
+            )}
+          </>
         )}
-        {!error && filteredData.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={handleItemsPerPageChange}
-            className="mt-6"
-          />
+        {filteredData.length === 0 && !error && (
+          <EmptyState type={activeTab as TabType} />
         )}
+
+        {error && <ErrorMessage error={error} />}
       </Card>
 
       {/* Mobile View */}
       <Card
         className={`md:hidden w-full overflow-auto ${styles.customScrollbar}`}
       >
-        {isLoading ? (
-          <TableSkeleton />
-        ) : error ? (
+        {error ? (
           <ErrorMessage
             error={"Something went wrong"}
             className="mt-4"

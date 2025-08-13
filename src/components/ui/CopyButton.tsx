@@ -29,7 +29,6 @@ export function LucideCopyButton({ text, onCopy }: LucideCopyButtonProps) {
       onClick={handleCopy}
       variant="ghost"
       size="sm"
-      className="!p-0"
       icon={
         copied ? (
           <CheckIcon className="h-4 w-4 text-gray-500" />
