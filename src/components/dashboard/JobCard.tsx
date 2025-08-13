@@ -14,6 +14,7 @@ import { useChainId, useSwitchChain } from "wagmi";
 import Modal from "../ui/Modal";
 import { Button } from "../ui/Button";
 import JobCardSkeleton from "../skeleton/JobCardSkeleton";
+import { LucideCopyButton } from "../ui/CopyButton";
 
 export type JobType = {
   id: number;
@@ -340,19 +341,17 @@ const JobCard: React.FC<JobCardProps> = ({
                 <Typography variant="body" color="white" align="left">
                   Target Contract :
                 </Typography>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Typography
-                      variant="body"
-                      color="gray"
-                      align="right"
-                      className="max-w-[160px] truncate block"
-                    >
-                      {sliceAddress(job.targetContractAddress)}
-                    </Typography>
-                  </TooltipTrigger>
-                  <TooltipContent>{job.targetContractAddress}</TooltipContent>
-                </Tooltip>
+                <div className="flex text-center">
+                  <Typography
+                    variant="body"
+                    color="gray"
+                    align="right"
+                    className="max-w-[160px] truncate block"
+                  >
+                    {sliceAddress(job.targetContractAddress)}
+                  </Typography>
+                  <LucideCopyButton text={job.targetContractAddress} />
+                </div>
               </div>
               <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">

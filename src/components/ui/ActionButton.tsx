@@ -18,7 +18,8 @@ type ButtonSize = "sm" | "md" | "lg";
 interface ActionButtonProps {
   text: string;
   href?: string; // If it's a navigation link
-  onClick?: () => void; // If it's an action button
+  onClick?: React.MouseEventHandler<HTMLButtonElement>; // ✅ proper type
+
   className?: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
