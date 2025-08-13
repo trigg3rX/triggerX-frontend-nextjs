@@ -44,7 +44,7 @@ export default function useLeaderboardData(
         if (activeTab === "keeper") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/keepers`;
           devLog("Calling URL:", apiUrl);
-        } else if (activeTab === "developer" || activeTab === "contributor") {
+        } else if (activeTab === "developer") {
           apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
         }
         devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);

@@ -8,11 +8,7 @@ interface LucideCopyButtonProps {
   onCopy?: () => void;
 }
 
-export function LucideCopyButton({
-  text,
-  className = "",
-  onCopy,
-}: LucideCopyButtonProps) {
+export function LucideCopyButton({ text, onCopy }: LucideCopyButtonProps) {
   const [copied, setCopied] = React.useState(false);
 
   const handleCopy = async () => {
@@ -33,7 +29,7 @@ export function LucideCopyButton({
       onClick={handleCopy}
       variant="ghost"
       size="sm"
-      className={className}
+      className="!p-0"
       icon={
         copied ? (
           <CheckIcon className="h-4 w-4 text-gray-500" />
