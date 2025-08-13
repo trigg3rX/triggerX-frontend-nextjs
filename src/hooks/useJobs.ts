@@ -1,6 +1,6 @@
 import { devLog } from "@/lib/devLog";
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 
 export type JobType = {
   id: number;
@@ -74,13 +74,16 @@ const mapJobType = (taskDefinitionId: string) => {
 
 export function useJobs() {
   const { address } = useAccount();
+  const chainId = useChainId();
   const [jobs, setJobs] = useState<JobType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isActive = true;
+    const controller = new AbortController();
     const fetchJobs = async () => {
-      if (!address) {
+      if (!address || typeof chainId === "undefined" || chainId === null) {
         setJobs([]);
         return;
       }
@@ -94,21 +97,26 @@ export function useJobs() {
           return;
         }
 
-        const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}`;
-        devLog("[useJobs] Fetching jobs from:", apiUrl);
+        const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}/chain/${chainId}`;
+        devLog("[useJobs] Fetching jobs from:", apiUrl, "chain:", chainId);
         const headers = {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         };
-        const response = await fetch(apiUrl, { headers });
+        const response = await fetch(apiUrl, {
+          headers,
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           if (response.status === 404) {
+            if (!isActive) return;
             setJobs([]);
             setError(null); // treat as empty, not error
             setLoading(false);
             return;
           }
+          if (!isActive) return;
           setError(`Failed to fetch jobs. (${response.status})`);
           setLoading(false);
           return;
@@ -282,28 +290,46 @@ export function useJobs() {
             };
           });
         devLog("[useJobs] tempJobs:", tempJobs);
+        // As a safeguard, ensure only jobs from the connected chain are shown
+        const chainFilteredJobs = tempJobs.filter(
+          (j) => Number(j.created_chain_id) === Number(chainId),
+        );
         // Sort by createdAt (newest first); tie-breaker by id desc
         const getTime = (isoString: string) => {
           const time = Date.parse(isoString);
           return Number.isNaN(time) ? -Infinity : time;
         };
-        const sortedJobs = [...tempJobs].sort((a, b) => {
+        const sortedJobs = [...chainFilteredJobs].sort((a, b) => {
           const timeDiff = getTime(b.createdAt) - getTime(a.createdAt);
           if (timeDiff !== 0) return timeDiff;
           return b.id - a.id;
         });
         devLog("[useJobs] sortedJobs:", sortedJobs);
+        if (!isActive) return;
         setJobs(sortedJobs);
         setError(null);
       } catch (err: unknown) {
+        if (!isActive) return;
+        if (
+          typeof err === "object" &&
+          err !== null &&
+          (err as { name?: string }).name === "AbortError"
+        ) {
+          return;
+        }
         setError(err instanceof Error ? "" : "Something went wrong.");
       } finally {
+        if (!isActive) return;
         setLoading(false);
         devLog("[useJobs] Loading finished.");
       }
     };
     fetchJobs();
-  }, [address]);
+    return () => {
+      isActive = false;
+      controller.abort();
+    };
+  }, [address, chainId]);
 
   return { jobs, loading, error };
 }

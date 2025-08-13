@@ -22,6 +22,7 @@ type MainJobsProps = {
   jobs: JobType[];
   setJobs: React.Dispatch<React.SetStateAction<JobType[]>>;
   loading?: boolean;
+  chainName?: string;
 };
 
 const MainJobs = ({
@@ -29,6 +30,7 @@ const MainJobs = ({
   jobs,
   setJobs,
   loading = false,
+  chainName,
 }: MainJobsProps) => {
   const [expandedJobs, setExpandedJobs] = useState<{ [key: number]: boolean }>(
     {},
@@ -300,6 +302,7 @@ const MainJobs = ({
             <EmptyState
               jobType={mapToJobTypeTab(selectedType)}
               type="All Types"
+              chainName={chainName}
             />
           )}
 

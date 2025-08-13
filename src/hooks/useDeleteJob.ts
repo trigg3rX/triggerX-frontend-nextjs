@@ -41,7 +41,6 @@ export function useDeleteJob() {
       toast.loading("Waiting for blockchain confirmation...");
       await tx.wait();
       toast.dismiss();
-      toast.success("Job deleted on blockchain");
 
       // 2. Call API to delete job from DB
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;

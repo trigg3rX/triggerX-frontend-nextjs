@@ -12,15 +12,21 @@ type JobTypeTab =
 interface EmptyStateProps {
   type: TabType;
   jobType?: JobTypeTab;
+  chainName?: string;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({ type, jobType }) => {
+const EmptyState: React.FC<EmptyStateProps> = ({
+  type,
+  jobType,
+  chainName,
+}) => {
   // Dashboard job type empty state
   if (jobType) {
     let message = "No jobs available";
     if (jobType !== "All Types") {
       message = `No ${jobType} jobs available`;
     }
+    if (chainName) message = `${message} on ${chainName}`;
     return (
       <div className="flex flex-col items-center justify-center h-[300px] text-[#A2A2A2] w-full col-span-full">
         <svg

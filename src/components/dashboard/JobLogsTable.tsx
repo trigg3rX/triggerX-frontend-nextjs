@@ -171,7 +171,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
       >
         <Table className={``}>
           <TableHeader className="sticky">
-            <TableRow>
+            <TableRow className="whitespace-nowrap">
               <TableHead>Task Number</TableHead>
               <TableHead>Tx Hash</TableHead>
               <TableHead

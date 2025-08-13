@@ -6,6 +6,8 @@ import MainJobs from "./MainJobs";
 import { Card } from "../ui/Card";
 import { useJobs, JobType } from "@/hooks/useJobs";
 import React from "react";
+import { useChainId } from "wagmi";
+import networksData from "@/utils/networks.json";
 
 const dropdownOptions: DropdownOption[] = [
   { id: "all", name: "All Types" },
@@ -18,10 +20,17 @@ const ActiveJobs = () => {
   const [selectedType, setSelectedType] = useState<string>("All Types");
   const { jobs: fetchedJobs, loading } = useJobs();
   const [jobs, setJobs] = useState<JobType[]>([]);
+  const chainId = useChainId();
+
   // Sync local jobs state with fetched jobs
   React.useEffect(() => {
-    setJobs(fetchedJobs);
-  }, [fetchedJobs]);
+    const currentChainId = Number(chainId);
+    const filtered = fetchedJobs.filter((job) => {
+      const createdId = Number(job.created_chain_id);
+      return !Number.isNaN(createdId) && createdId === currentChainId;
+    });
+    setJobs(filtered);
+  }, [fetchedJobs, chainId]);
 
   const totalJobs = jobs.length;
   const totalLinkedJobs = jobs.reduce(
@@ -76,6 +85,10 @@ const ActiveJobs = () => {
           jobs={jobs}
           setJobs={setJobs}
           loading={loading}
+          chainName={
+            networksData.supportedNetworks.find((n) => n.id === Number(chainId))
+              ?.name
+          }
         />
       </div>
     </Card>
