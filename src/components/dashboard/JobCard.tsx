@@ -170,21 +170,25 @@ const JobCard: React.FC<JobCardProps> = ({
   return (
     <Card
       expanded={expanded}
-      className={`!p-0 ${
+      className={`!p-0 group ${
         expandedDetails ? "h-auto border border-white " : " md:h-[310px] "
       } ${
         expanded
           ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
           : isLogOpen
             ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-white hover:border-b hover:border-white"
-            : "border-[#2A2A2A] hover:border-[#3A3A3A]"
-      } hover:transform hover:scale-[1.02] transition-transform duration-300 ease ${className}`}
+            : "border-[#2A2A2A] hover:bg-gradient-to-r hover:from-[#D9D9D924] hover:to-[#14131324] hover:border hover:border-white"
+      } transition-all duration-300 ease ${className}`}
       onClick={onClick}
       style={{ cursor: onClick ? "pointer" : undefined }}
     >
       <div>
         <div
-          className={`flex items-center mb-4 p-3 relative ${expanded || isLogOpen ? "border-b border-white " : "border-[#2A2A2A] border-b "}`}
+          className={`flex items-center mb-4 p-3 relative ${
+            expanded || isLogOpen
+              ? "border-b border-white "
+              : "border-[#2A2A2A] border-b group-hover:border-white"
+          }`}
         >
           <div className="flex items-center gap-2 flex-1 min-w-0">
             <Tooltip>
@@ -475,7 +479,11 @@ const JobCard: React.FC<JobCardProps> = ({
           )}
         </div>
         <div
-          className={`flex justify-end gap-2 mt-4 p-3 ${expanded || isLogOpen ? "border-t border-white " : "border-[#2A2A2A] border-t hover:border-[#3A3A3A]"}`}
+          className={`flex justify-end gap-2 mt-4 p-3  border-t group-hover:border-white ${
+            expanded || isLogOpen
+              ? "border-t border-white "
+              : "border-[#2A2A2A]"
+          }`}
         >
           <Tooltip>
             <TooltipTrigger asChild>
