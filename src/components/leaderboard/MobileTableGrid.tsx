@@ -24,18 +24,14 @@ interface MobileTableGridProps {
 export function MobileTableGrid({
   data,
   activeTab,
-  onItemClick,
+
   pagination,
 }: MobileTableGridProps) {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 ">
         {data.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => onItemClick?.(item)}
-            className="cursor-pointer"
-          >
+          <div key={item.id} className="cursor-pointer">
             <Card className="p-3">
               <div className="grid grid-cols-1 gap-3 pt-2">
                 {/* Address */}

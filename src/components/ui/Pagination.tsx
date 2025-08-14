@@ -103,7 +103,7 @@ const Pagination: React.FC<PaginationProps> = ({
       <MobilePagination />
 
       {/* Desktop Pagination */}
-      <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 w-full">
+      <div className="hidden md:flex flex-col md:flex-row items-center justify-between gap-4 mt-6 w-full">
         {/* Rows per page selector */}
         <div className="flex items-center gap-2">
           <Typography
