@@ -67,14 +67,17 @@ const PriceOracle = () => {
             setSigner(signer);
             setChainId(network.chainId);
           }
-
-          win.ethereum.on("chainChanged", async (chainIdHex: string) => {
+          win.ethereum.on("chainChanged", async () => {
             try {
-              const newChainId = parseInt(chainIdHex, 16);
-              setChainId(BigInt(newChainId));
-              await new Promise((resolve) => setTimeout(resolve, 1000));
+              const provider = new ethers.BrowserProvider(
+                win.ethereum as unknown as ethers.Eip1193Provider,
+              );
+              const newSigner = await provider.getSigner();
+              const network = await provider.getNetwork();
+              setSigner(newSigner);
+              setChainId(network.chainId);
             } catch (error) {
-              console.error("Error handling chain change:", error);
+              console.error("Error reinitializing after chain change:", error);
             }
           });
         } catch (error) {

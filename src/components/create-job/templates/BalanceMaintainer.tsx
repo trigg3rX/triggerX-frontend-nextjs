@@ -86,13 +86,17 @@ const BalanceMaintainer = () => {
             setSigner(signer);
             setChainId(network.chainId);
           }
-          win.ethereum.on("chainChanged", async (chainIdHex: string) => {
+          win.ethereum.on("chainChanged", async () => {
             try {
-              const newChainId = parseInt(chainIdHex, 16);
-              setChainId(BigInt(newChainId));
-              await new Promise((resolve) => setTimeout(resolve, 1000));
+              const provider = new ethers.BrowserProvider(
+                win.ethereum as ethers.Eip1193Provider,
+              );
+              const newSigner = await provider.getSigner();
+              const network = await provider.getNetwork();
+              setSigner(newSigner);
+              setChainId(network.chainId);
             } catch (error) {
-              console.error("Error handling chain change:", error);
+              console.error("Error reinitializing after chain change:", error);
             }
           });
         } catch (error) {
@@ -283,6 +287,11 @@ const BalanceMaintainer = () => {
           setIsDeployed(true);
           toast.success("Contract deployed successfully!");
           setShowModal(false);
+          // Give the network a brief moment and then fetch data from the new contract
+          try {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await fetchContractData(signer, proxyAddress);
+          } catch {}
         } else {
           throw new Error("Failed to parse deployment event");
         }
@@ -412,16 +421,24 @@ const BalanceMaintainer = () => {
 
   // Fetch contract data
   const fetchContractData = async (
-    provider: ethers.BrowserProvider,
+    signerOrProvider: ethers.BrowserProvider | JsonRpcSigner,
     contractAddr: string,
   ) => {
-    if (!provider || !contractAddr) return;
+    if (!signerOrProvider || !contractAddr) return;
     try {
+      const provider = (signerOrProvider as JsonRpcSigner).provider
+        ? ((signerOrProvider as JsonRpcSigner)
+            .provider as ethers.BrowserProvider)
+        : (signerOrProvider as ethers.BrowserProvider);
+      const code = await provider.getCode(contractAddr);
+      if (!code || code === "0x") {
+        return;
+      }
       // TODO: Replace with actual ABI if available
       const contract = new ethers.Contract(
         contractAddr,
         BalanceMaintainerArtifact.abi,
-        provider,
+        signerOrProvider,
       );
       // Get contract balance
       // const balance = await contract.getContractBalance();
@@ -447,7 +464,6 @@ const BalanceMaintainer = () => {
         })),
       );
     } catch (err) {
-      setError("Error fetching contract data");
       console.error("Error fetching contract data:", err);
     }
   };

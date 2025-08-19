@@ -424,15 +424,17 @@ const StakingRewards = () => {
           }
           (window as { ethereum: EthereumProvider }).ethereum.on(
             "chainChanged",
-            (chainIdHex: unknown) => {
+            async () => {
               try {
-                if (typeof chainIdHex === "string") {
-                  const newChainId = BigInt(parseInt(chainIdHex, 16));
-                  setChainId(newChainId);
-                }
-                setTimeout(() => {}, 1000);
+                const provider = new ethers.BrowserProvider(
+                  (window as { ethereum: EthereumProvider }).ethereum,
+                );
+                const newSigner = await provider.getSigner();
+                const network = await provider.getNetwork();
+                setSigner(newSigner);
+                setChainId(BigInt(network.chainId));
               } catch (err) {
-                console.error("Error handling chain change:", err);
+                console.error("Error reinitializing after chain change:", err);
               }
             },
           );
@@ -601,12 +603,15 @@ const StakingRewards = () => {
               {isClaimingToken ? "Claiming..." : "Claim Token"}
             </Button>
           )
-        : isConnected && <ClaimEth />}
+        : isConnected && isOptimismSepoliaNetwork() && <ClaimEth />}
 
-      {isConnected && hasSufficientBalance && !hasSufficientTokenBalance && (
-        <Banner>You need to claim tokens before staking them.</Banner>
-      )}
-      {isConnected && !hasSufficientBalance && (
+      {isConnected &&
+        hasSufficientBalance &&
+        !hasSufficientTokenBalance &&
+        isOptimismSepoliaNetwork() && (
+          <Banner>You need to claim tokens before staking them.</Banner>
+        )}
+      {isConnected && !hasSufficientBalance && isOptimismSepoliaNetwork() && (
         <Banner>You need to claim ETH before Stake/Unstake Tokens.</Banner>
       )}
 
