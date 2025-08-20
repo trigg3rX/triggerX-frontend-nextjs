@@ -1040,7 +1040,13 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       let executionCount;
       if (jobType === 1) {
-        executionCount = Math.ceil(timeframeInSeconds / intervalInSeconds);
+        executionCount = Math.floor(timeframeInSeconds / intervalInSeconds);
+        devLog(
+          "execution count",
+          executionCount,
+          timeframeInSeconds,
+          intervalInSeconds,
+        );
       } else {
         executionCount = recurring ? 10 : 1;
       }
