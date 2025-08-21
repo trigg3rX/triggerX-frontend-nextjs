@@ -191,10 +191,22 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     }
   }, [address, chain, isOpen, fetchTGBalance, setIsJobCreated]);
 
-  const hasEnoughBalance = useMemo(
-    () => estimatedFee <= Number(userBalance),
-    [estimatedFee, userBalance],
-  );
+  const hasEnoughBalance = useMemo(() => {
+    const fee = Number(estimatedFee);
+    const balance = Number(userBalance);
+    const epsilon = 1e-6;
+    const result = fee - balance <= epsilon;
+    console.log(
+      "estimatedFee:",
+      fee,
+      "userBalance:",
+      balance,
+      "hasEnoughBalance:",
+      result,
+    );
+    return result;
+  }, [estimatedFee, userBalance]);
+
   const requiredEth = useMemo(
     () => (0.001 * estimatedFee).toFixed(4),
     [estimatedFee],
