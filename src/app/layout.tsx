@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/common/TooltipWrap";
 import Header from "@/components/common/Header";
 import ScrollToTop from "@/components/common/ScrollToTop";
 import Footer from "@/components/common/Footer";
+import StickySocialIcons from "@/components/common/StickySocialIcons";
 import { ReactNode } from "react";
 import { GoogleTagManager } from "@next/third-parties/google";
 
@@ -30,6 +31,7 @@ export default function RootLayout({
             <TGBalanceProvider>
               <Header />
               <ScrollToTop />
+              <StickySocialIcons />
               <main className="max-w-[1600px] w-[90%] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
                 {children}
               </main>
