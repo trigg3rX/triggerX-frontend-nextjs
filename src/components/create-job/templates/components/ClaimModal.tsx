@@ -93,7 +93,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
       let networkName = "op_sepolia";
       if (chainIdHex === "0x14a34") {
         networkName = "base_sepolia";
-      } else if (chainIdHex === "0x66eee") {
+      } else if (chainIdHex === "0x66eeb" || "0x66eee") {
         networkName = "arbitrum_sepolia";
       }
       const response = await fetch(
@@ -147,7 +147,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
       ) {
         toast.error("Transaction was rejected");
       } else {
-        devLog("Transaction was rejected", message);
+        devLog("Transaction was rejected:", message);
       }
       throw error;
     }
