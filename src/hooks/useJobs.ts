@@ -22,6 +22,7 @@ export type JobType = {
   upper_limit?: number;
   lower_limit?: number;
   value_source_url?: string;
+  next_execution_timestamp?: string;
 };
 
 // Types for raw API data
@@ -45,6 +46,7 @@ interface RawJobData {
     status: string;
     created_chain_id?: string; // <-- add this
     is_active?: boolean;
+    next_execution_timestamp?: string;
   };
   time_job_data?: Record<string, unknown>;
   event_job_data?: Record<string, unknown>;
@@ -151,6 +153,14 @@ export function useJobs() {
                   nextJob.job_data.task_definition_id,
                 ),
                 is_active: typeSpecificData.is_active === true,
+                next_execution_timestamp:
+                  mapJobType(nextJob.job_data.task_definition_id) ===
+                  "Time-based"
+                    ? typeof typeSpecificData.next_execution_timestamp ===
+                      "string"
+                      ? typeSpecificData.next_execution_timestamp
+                      : undefined
+                    : undefined,
                 job_cost_actual: nextJob.job_data.job_cost_actual,
                 timeFrame: nextJob.job_data.time_frame || "",
                 argType:
@@ -233,6 +243,14 @@ export function useJobs() {
                 jobDetail.job_data.task_definition_id,
               ),
               is_active: typeSpecificData.is_active === true,
+              next_execution_timestamp:
+                mapJobType(jobDetail.job_data.task_definition_id) ===
+                "Time-based"
+                  ? typeof typeSpecificData.next_execution_timestamp ===
+                    "string"
+                    ? typeSpecificData.next_execution_timestamp
+                    : undefined
+                  : undefined,
               linkedJobs: linkedJobsMap[jobDetail.job_data.job_id] || [],
               job_cost_actual: jobDetail.job_data.job_cost_actual,
               timeFrame: jobDetail.job_data.time_frame || "",

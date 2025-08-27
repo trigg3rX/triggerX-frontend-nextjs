@@ -15,28 +15,7 @@ import Modal from "../ui/Modal";
 import { Button } from "../ui/Button";
 import JobCardSkeleton from "../skeleton/JobCardSkeleton";
 import { LucideCopyButton } from "../ui/CopyButton";
-
-export type JobType = {
-  id: number;
-  jobTitle: string;
-  taskDefinitionId: string;
-  is_active: boolean;
-  job_cost_actual: string;
-  timeFrame: string;
-  argType: string;
-  timeInterval: string;
-  targetContractAddress: string;
-  createdAt: string;
-  targetFunction: string;
-  targetChainId: string;
-  linkedJobs?: JobType[];
-  created_chain_id: string;
-  type?: string;
-  condition_type?: string;
-  upper_limit?: number;
-  lower_limit?: number;
-  value_source_url?: string;
-};
+import { JobType } from "@/hooks/useJobs";
 
 type JobCardProps = {
   job: JobType;
@@ -238,46 +217,6 @@ const JobCard: React.FC<JobCardProps> = ({
             ) : (
               <div style={{ width: 32, height: 32 }}></div>
             )}
-            {(() => {
-              const network = networksData.supportedNetworks.find(
-                (n) => Number(job.targetChainId) === n.id,
-              );
-              const icon = network
-                ? networksData.networkIcons[network.name]
-                : null;
-              const bgClass = getNetworkBgClass(network?.id);
-
-              return icon ? (
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center p-1 ${bgClass}`}
-                >
-                  <svg
-                    viewBox={icon.viewBox}
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-4 h-4"
-                  >
-                    {icon.paths ? (
-                      icon.paths.map((path: string, index: number) => (
-                        <path
-                          key={index}
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d={path}
-                          fill="currentColor" // Will be white due to text-white class
-                        />
-                      ))
-                    ) : (
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d={icon.path}
-                        fill="currentColor"
-                      />
-                    )}
-                  </svg>
-                </div>
-              ) : null;
-            })()}
           </div>
         </div>
         <div className={`space-y-2 px-3`}>
@@ -314,7 +253,7 @@ const JobCard: React.FC<JobCardProps> = ({
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
             <Typography variant="body" color="white" align="left">
-              TimeFrame :
+              Time Frame :
             </Typography>
             <Typography variant="body" color="gray" align="right">
               {formatTimeframe(job.timeFrame)}
@@ -323,24 +262,6 @@ const JobCard: React.FC<JobCardProps> = ({
 
           {expandedDetails && (
             <div className="space-y-2 text-[#A2A2A2] text-sm">
-              <div className="flex items-center justify-between gap-2 py-1">
-                <Typography variant="body" color="white" align="left">
-                  Arg Type :
-                </Typography>
-                <Typography variant="body" color="gray" align="right">
-                  {job.argType}
-                </Typography>
-              </div>
-              {job.type === "Time-based" && (
-                <div className="flex items-center justify-between gap-2 py-1">
-                  <Typography variant="body" color="white" align="left">
-                    TimeInterval :
-                  </Typography>
-                  <Typography variant="body" color="gray" align="right">
-                    {formatInterval(job.timeInterval)}
-                  </Typography>
-                </div>
-              )}
               <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Target Contract :
@@ -357,6 +278,28 @@ const JobCard: React.FC<JobCardProps> = ({
                   <LucideCopyButton text={job.targetContractAddress} />
                 </div>
               </div>
+              {job.type === "Time-based" && (
+                <>
+                  <div className="flex items-center justify-between gap-2 py-1">
+                    <Typography variant="body" color="white" align="left">
+                      Time Interval :
+                    </Typography>
+                    <Typography variant="body" color="gray" align="right">
+                      {formatInterval(job.timeInterval)}
+                    </Typography>
+                  </div>
+                  <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
+                    <Typography variant="body" color="white" align="left">
+                      Next Execution :
+                    </Typography>
+                    <Typography variant="body" color="gray" align="right">
+                      {job.next_execution_timestamp
+                        ? formatDate(job.next_execution_timestamp)
+                        : "N/A"}
+                    </Typography>
+                  </div>
+                </>
+              )}
               <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
                 <Typography variant="body" color="white" align="left">
                   Created At:
@@ -387,14 +330,6 @@ const JobCard: React.FC<JobCardProps> = ({
                   </TooltipTrigger>
                   <TooltipContent>{job.targetFunction}</TooltipContent>
                 </Tooltip>
-              </div>
-              <div className="flex items-start justify-between flex-col sm:flex-row md:items-center gap-2 py-1">
-                <Typography variant="body" color="white" align="left">
-                  Target ChainId :
-                </Typography>
-                <Typography variant="body" color="gray" align="right">
-                  {job.targetChainId}
-                </Typography>
               </div>
 
               {job.type === "Condition-based" && (
@@ -595,12 +530,3 @@ const JobCard: React.FC<JobCardProps> = ({
 };
 
 export default React.memo(JobCard);
-
-const getNetworkBgClass = (networkId: number | undefined): string => {
-  const networkBgClasses: Record<number, string> = {
-    84532: "bg-blue-600 text-white", // Base
-    11155420: "bg-red-500 text-white", // Optimism
-    421614: "bg-slate-700 text-white", // Arbitrum
-  };
-  return networkBgClasses[networkId || 0] || "";
-};
