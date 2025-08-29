@@ -70,7 +70,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
   // Mobile pagination controls (simplified for small screens)
   const MobilePagination = () => (
-    <div className="flex items-center gap-2 sm:hidden w-full">
+    <div className="flex items-center gap-2 md:hidden w-full">
       <button
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}

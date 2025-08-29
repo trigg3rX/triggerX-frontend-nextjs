@@ -11,6 +11,7 @@ import type { JobLog } from "@/hooks/useJobLogs";
 import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
 import { ExternalLink, ChevronDownIcon } from "lucide-react";
+import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 
 interface JobLogsTableProps {
   logs: JobLog[];
@@ -25,22 +26,30 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
 
   return (
     <div className="md:hidden w-full">
-      {error ? (
-        <Card className="mb-4">
-          <Typography className="text-center text-red-400">{error}</Typography>
-        </Card>
-      ) : logs.length === 0 ? (
-        <Card className="mb-4">
-          <Typography className="text-center text-red-400">
-            No logs found.
-          </Typography>
-        </Card>
-      ) : (
-        <div
-          className={`grid grid-cols-1 gap-4 ${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
-          style={shouldScroll ? { maxHeight: 600 } : {}}
-        >
-          {displayLogs.map((log) => {
+      <div className="flex justify-between items-center mb-4">
+        <Typography variant="h3" color="primary">
+          Job Logs
+        </Typography>
+      </div>
+
+      <div
+        className={`grid grid-cols-1 gap-4 ${shouldScroll ? `max-h-[600px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
+        style={shouldScroll ? { maxHeight: 600 } : {}}
+      >
+        {error ? (
+          <Card className="mb-4">
+            <Typography className="text-center text-red-400">
+              {error}
+            </Typography>
+          </Card>
+        ) : logs.length === 0 ? (
+          <Card className="mb-4">
+            <Typography className="text-center text-red-400">
+              No logs found.
+            </Typography>
+          </Card>
+        ) : (
+          displayLogs.map((log) => {
             const hasValidTimestamp =
               !!log.execution_timestamp &&
               log.execution_timestamp !== "0001-01-01T00:00:00Z";
@@ -114,9 +123,9 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                 </div>
               </Card>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
     </div>
   );
 };
@@ -161,134 +170,148 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   return (
     <>
       {/* Desktop/tablet view */}
-
-      <Typography variant="h2" color="white" align="left" className=" m-4">
-        Job Logs
-      </Typography>
-      <div
-        className={`hidden md:block w-full overflow-x-auto ${shouldScroll ? " max-h-[600px] overflow-y-auto" : ""}`}
-        style={shouldScroll ? { maxHeight: 700 } : {}}
-      >
-        <Table className={``}>
-          <TableHeader className="sticky">
-            <TableRow className="whitespace-nowrap">
-              <TableHead>Task Number</TableHead>
-              <TableHead>Tx Hash</TableHead>
-              <TableHead
-                className="cursor-pointer select-none"
-                onClick={() =>
-                  setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
-                }
-              >
-                <div className="flex items-center gap-1">
-                  <span>Timestamp</span>
-                  <ChevronDownIcon
-                    className={`h-4 w-4 transition-transform ${
-                      sortDirection === "asc" ? "rotate-180" : ""
-                    }`}
-                  />
-                </div>
-              </TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Operation Cost</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {error ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-red-400">
-                  {error}
-                </TableCell>
-              </TableRow>
-            ) : logs.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center">
-                  No logs found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              displayLogs.map((log) => {
-                const hasValidTimestamp =
-                  !!log.execution_timestamp &&
-                  log.execution_timestamp !== "0001-01-01T00:00:00Z";
-
-                const hasStatusText = !!(
-                  log.task_status && log.task_status.trim() !== ""
-                );
-
-                return (
-                  <TableRow
-                    key={`${log.task_id}-${log.task_number}`}
-                    className="group"
-                  >
-                    <TableCell
-                      className={`border-l-4 px-6 py-4 ${
-                        log.is_successful
-                          ? "border-green-500"
-                          : "border-red-500"
+      <div className="hidden md:block w-full">
+        <div className="flex justify-between items-center mb-4">
+          <Typography variant="h3" color="primary">
+            Job Logs
+          </Typography>
+        </div>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="sticky top-0 z-10 bg-[#1A1A1A] border-b border-[#2A2A2A]">
+              <TableRow className="whitespace-nowrap">
+                <TableHead>Task Number</TableHead>
+                <TableHead>Tx Hash</TableHead>
+                <TableHead
+                  className="cursor-pointer select-none"
+                  onClick={() =>
+                    setSortDirection((prev) =>
+                      prev === "asc" ? "desc" : "asc",
+                    )
+                  }
+                >
+                  <div className="flex items-center gap-1">
+                    <span>Timestamp</span>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 transition-transform ${
+                        sortDirection === "asc" ? "rotate-180" : ""
                       }`}
+                    />
+                  </div>
+                </TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Operation Cost</TableHead>
+              </TableRow>
+            </TableHeader>
+          </Table>
+        </div>
+
+        <div
+          className={`overflow-x-auto ${shouldScroll ? `max-h-[500px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
+          style={shouldScroll ? { maxHeight: 500 } : {}}
+        >
+          <Table>
+            <TableBody>
+              {error ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center text-red-400">
+                    {error}
+                  </TableCell>
+                </TableRow>
+              ) : logs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center">
+                    No logs found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                displayLogs.map((log) => {
+                  const hasValidTimestamp =
+                    !!log.execution_timestamp &&
+                    log.execution_timestamp !== "0001-01-01T00:00:00Z";
+
+                  const hasStatusText = !!(
+                    log.task_status && log.task_status.trim() !== ""
+                  );
+
+                  return (
+                    <TableRow
+                      key={`${log.task_id}-${log.task_number}`}
+                      className="group"
                     >
-                      <Typography variant="body" color="primary" align="left">
-                        {log.task_number}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {log.tx_url && log.execution_tx_hash ? (
-                        <div className="flex items-center gap-2">
+                      <TableCell
+                        className={`border-l-4 px-6 py-4 ${
+                          log.is_successful
+                            ? "border-green-500"
+                            : "border-red-500"
+                        }`}
+                      >
+                        <Typography variant="body" color="primary" align="left">
+                          {log.task_number}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {log.tx_url && log.execution_tx_hash ? (
+                          <div className="flex items-center gap-2">
+                            <Typography
+                              variant="body"
+                              color="primary"
+                              align="left"
+                            >
+                              <a
+                                href={log.tx_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline-offset-2 pt-1 hover:text-[#F8ff7c]/80 group-hover:text-[#F8ff7c] transition-colors"
+                              >
+                                {log.execution_tx_hash.slice(0, 8)}...
+                                {log.execution_tx_hash.slice(-6)}
+                              </a>
+                            </Typography>
+                            <ExternalLink className="inline w-4 h-4 align-middle group-hover:text-[#F8ff7c] transition-colors" />
+                          </div>
+                        ) : (
+                          <Typography variant="body" color="gray" align="left">
+                            -
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body" color="primary" align="left">
+                          {hasValidTimestamp
+                            ? new Date(log.execution_timestamp).toLocaleString()
+                            : "-"}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {log.is_successful ? (
+                          <span className="border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
+                            {hasStatusText ? log.task_status : "Success"}
+                          </span>
+                        ) : (
+                          <span className="border border-red-400/10 bg-red-500/10 text-red-300 py-2 px-3 rounded-full">
+                            {hasStatusText ? log.task_status : "Failed"}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="border border-[#C07AF6] bg-[#976fb93e] text-[#C07AF6]  py-1  text-center rounded-full ">
                           <Typography
                             variant="body"
-                            color="primary"
-                            align="left"
+                            color="blue"
+                            align="center"
                           >
-                            <a
-                              href={log.tx_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="underline-offset-2 pt-1 hover:text-[#F8ff7c]/80 group-hover:text-[#F8ff7c] transition-colors"
-                            >
-                              {log.execution_tx_hash.slice(0, 8)}...
-                              {log.execution_tx_hash.slice(-6)}
-                            </a>
+                            {Number(log.task_opx_cost).toFixed(2)}
                           </Typography>
-                          <ExternalLink className="inline w-4 h-4 align-middle group-hover:text-[#F8ff7c] transition-colors" />
                         </div>
-                      ) : (
-                        <Typography variant="body" color="gray" align="left">
-                          -
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body" color="primary" align="left">
-                        {hasValidTimestamp
-                          ? new Date(log.execution_timestamp).toLocaleString()
-                          : "-"}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      {log.is_successful ? (
-                        <span className="border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
-                          {hasStatusText ? log.task_status : "Success"}
-                        </span>
-                      ) : (
-                        <span className="border border-red-400/10 bg-red-500/10 text-red-300 py-2 px-3 rounded-full">
-                          {hasStatusText ? log.task_status : "Failed"}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="border border-[#C07AF6] bg-[#976fb93e] text-[#C07AF6]  py-1  text-center rounded-full ">
-                        <Typography variant="body" color="blue" align="center">
-                          {Number(log.task_opx_cost).toFixed(2)}
-                        </Typography>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       {/* Mobile/card view */}
       <JobLogsMobileView logs={sortedLogs} error={error} />
