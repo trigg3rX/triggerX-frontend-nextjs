@@ -613,7 +613,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 flex flex-col items-center justify-center">
+            <div className="text-center py-8 flex flex-col items-center justify-center text-[#A2A2A2]">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="48"
