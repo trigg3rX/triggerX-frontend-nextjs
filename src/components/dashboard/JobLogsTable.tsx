@@ -25,7 +25,7 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   const shouldScroll = logs.length > 10;
 
   return (
-    <div className="md:hidden w-full">
+    <div className="xl:hidden w-full">
       <div className="flex justify-between items-center mb-4">
         <Typography variant="h3" color="primary">
           Job Logs
@@ -33,7 +33,7 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
       </div>
 
       <div
-        className={`grid grid-cols-1 gap-4 ${shouldScroll ? `max-h-[600px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
+        className={`grid grid-cols-1 md:grid-cols-2  gap-4 ${shouldScroll ? `max-h-[600px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
         style={shouldScroll ? { maxHeight: 600 } : {}}
       >
         {error ? (
@@ -82,7 +82,9 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                       Status
                     </Typography>
                     <Typography color="gray">
-                      {log.is_successful ? (
+                      {!log.task_status ? (
+                        <span className="text-yellow-400">Processing</span>
+                      ) : log.is_successful ? (
                         <span className="text-green-400">Success</span>
                       ) : (
                         <span className="text-red-400">Failed</span>
@@ -170,15 +172,18 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   return (
     <>
       {/* Desktop/tablet view */}
-      <div className="hidden md:block w-full">
-        <div className="flex justify-between items-center mb-4">
+      <div className="hidden xl:block w-full">
+        <div className="flex justify-between items-center mb-4 ">
           <Typography variant="h3" color="primary">
             Job Logs
           </Typography>
         </div>
-        <div className="overflow-x-auto">
+        <div
+          className={`overflow-x-auto ${shouldScroll ? `max-h-[500px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
+          style={shouldScroll ? { maxHeight: 500 } : {}}
+        >
           <Table>
-            <TableHeader className="sticky top-0 z-10 bg-[#1A1A1A] border-b border-[#2A2A2A]">
+            <TableHeader className="sticky top-0 z-10 bg-[#1A1A1A] border-b border-[#2A2A2A] ">
               <TableRow className="whitespace-nowrap">
                 <TableHead>Task Number</TableHead>
                 <TableHead>Tx Hash</TableHead>
@@ -203,24 +208,16 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                 <TableHead>Operation Cost</TableHead>
               </TableRow>
             </TableHeader>
-          </Table>
-        </div>
-
-        <div
-          className={`overflow-x-auto ${shouldScroll ? `max-h-[500px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
-          style={shouldScroll ? { maxHeight: 500 } : {}}
-        >
-          <Table>
             <TableBody>
               {error ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-red-400">
+                  <TableCell colSpan={5} className="text-center text-red-400">
                     {error}
                   </TableCell>
                 </TableRow>
               ) : logs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center">
+                  <TableCell colSpan={5} className="text-center">
                     No logs found.
                   </TableCell>
                 </TableRow>
@@ -241,9 +238,11 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     >
                       <TableCell
                         className={`border-l-4 px-6 py-4 ${
-                          log.is_successful
-                            ? "border-green-500"
-                            : "border-red-500"
+                          !log.task_status
+                            ? "border-yellow-500"
+                            : log.is_successful
+                              ? "border-green-500"
+                              : "border-red-500"
                         }`}
                       >
                         <Typography variant="body" color="primary" align="left">
@@ -284,7 +283,11 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {log.is_successful ? (
+                        {!log.task_status ? (
+                          <span className="border border-yellow-400/10 bg-yellow-500/10 text-yellow-300 py-2 px-3 rounded-full">
+                            Processing
+                          </span>
+                        ) : log.is_successful ? (
                           <span className="border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
                             {hasStatusText ? log.task_status : "Success"}
                           </span>
