@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import JobCard from "./JobCard";
+import JobDetailsView from "./JobDetailsView";
 import { Typography } from "../ui/Typography";
 import EmptyState from "../common/EmptyState";
 import DeleteDialog from "../common/DeleteDialog";
@@ -35,18 +36,14 @@ const MainJobs = ({
   const [expandedJobs, setExpandedJobs] = useState<{ [key: number]: boolean }>(
     {},
   );
-  const [expandedJobDetails, setExpandedJobDetails] = useState<{
-    [key: number]: boolean;
-  }>({});
-  const [expandedLinkedJobDetails, setExpandedLinkedJobDetails] = useState<{
-    [key: number]: boolean;
-  }>({});
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [jobIdToDelete, setJobIdToDelete] = useState<number | null>(null);
   const [jobLogsOpenId, setJobLogsOpenId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [jobsPerPage, setJobsPerPage] = useState(6); // Allow dynamic change
   const [groupSize, setGroupSize] = useState(2); // Add state for group size
+  const [selectedJob, setSelectedJob] = useState<JobType | null>(null);
 
   // Refs for Linked Jobs sections and Job Logs section
   const linkedJobsRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
@@ -85,61 +82,15 @@ const MainJobs = ({
   // Close all expanded states and logs when filter changes
   useEffect(() => {
     setExpandedJobs({});
-    setExpandedJobDetails({});
-    setExpandedLinkedJobDetails({});
     setJobLogsOpenId(null);
+    setSelectedJob(null); // Reset selected job when filter changes
   }, [selectedType]);
 
   // Reset page to 1 when selectedType changes
   useEffect(() => {
     setCurrentPage(1);
+    setSelectedJob(null); // Reset selected job when page changes
   }, [selectedType, jobsPerPage]);
-
-  const toggleJobExpand = (jobId: number) => {
-    setExpandedJobs((prev) => {
-      const newState = { ...prev, [jobId]: !prev[jobId] };
-      // Only scroll when expanding (not collapsing)
-      if (!prev[jobId]) {
-        setTimeout(() => {
-          if (linkedJobsRefs.current[jobId]) {
-            const headerOffset = 200;
-            const elementPosition =
-              linkedJobsRefs.current[jobId]!.getBoundingClientRect().top;
-            const offsetPosition =
-              elementPosition + window.pageYOffset - headerOffset;
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: "smooth",
-            });
-          }
-        }, 500);
-      }
-      // Close all expanded job details when a linked job is expanded
-      setExpandedJobDetails({});
-      // Close job logs if open
-      setJobLogsOpenId(null);
-      return newState;
-    });
-  };
-
-  const toggleJobDetails = (jobId: number) => {
-    setExpandedJobDetails((prev) => ({
-      ...prev,
-      [jobId]: !prev[jobId],
-    }));
-  };
-
-  const toggleLinkedJobDetails = (jobId: number) => {
-    setExpandedLinkedJobDetails((prev) => ({
-      ...prev,
-      [jobId]: !prev[jobId],
-    }));
-  };
-
-  const showDeleteConfirmation = (jobId: number) => {
-    setJobIdToDelete(jobId);
-    setDeleteDialogOpen(true);
-  };
 
   const handleDelete = async () => {
     if (jobIdToDelete == null) return;
@@ -149,8 +100,11 @@ const MainJobs = ({
     if (jobLogsOpenId === jobIdToDelete) {
       setJobLogsOpenId(null);
     }
+    // Clear selected job if it's the one being deleted
+    if (selectedJob?.id === jobIdToDelete) {
+      setSelectedJob(null);
+    }
     setDeleteDialogOpen(false);
-    setExpandedLinkedJobDetails({});
     setJobIdToDelete(null);
   };
 
@@ -159,29 +113,17 @@ const MainJobs = ({
     setJobIdToDelete(null);
   };
 
-  const handleJobCardClick = (jobId: number) => {
-    setExpandedJobs({}); // Close all linked jobs
-    setJobLogsOpenId((prev) => {
-      const newId = prev === jobId ? null : jobId;
+  const handleBackToJobs = () => {
+    setSelectedJob(null);
+  };
 
-      // Only scroll when opening logs (not closing)
-      if (newId !== null) {
-        setTimeout(() => {
-          if (logsRef.current) {
-            const headerOffset = 100;
-            const elementPosition = logsRef.current.getBoundingClientRect().top;
-            const offsetPosition =
-              elementPosition + window.pageYOffset - headerOffset;
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: "smooth",
-            });
-          }
-        }, 500);
-      }
-      // console.log("clicked job", jobId, newId);
-      return newId;
-    });
+  const handleJobCardClick = (jobId: number) => {
+    const job = jobs.find((j) => j.id === jobId);
+    if (job) {
+      setSelectedJob(job);
+      setExpandedJobs({}); // Close all linked jobs
+      setJobLogsOpenId(null); // Close logs
+    }
   };
 
   const getFilteredJobs = () => {
@@ -232,21 +174,14 @@ const MainJobs = ({
             <div
               key={job.id}
               className=""
-              onClick={() => handleJobCardClick(job.id)}
-              style={{ cursor: "pointer" }}
               ref={(el) => {
                 linkedJobsRefs.current[job.id] = el;
               }}
             >
               <JobCard
                 job={job}
-                expanded={!!expandedJobs[job.id]}
-                expandedDetails={!!expandedJobDetails[job.id]}
-                onToggleExpand={toggleJobExpand}
-                onToggleDetails={toggleJobDetails}
-                onDelete={showDeleteConfirmation}
-                isLogOpen={jobLogsOpenId === job.id}
                 isLoading={loading}
+                onCardClick={handleJobCardClick}
               />
             </div>
           ))}
@@ -296,6 +231,8 @@ const MainJobs = ({
         </div>
       ) : !isConnected ? (
         <WalletConnectionCard className="border-0" />
+      ) : selectedJob ? (
+        <JobDetailsView job={selectedJob} onBack={handleBackToJobs} />
       ) : (
         <>
           {getFilteredJobs().length === 0 && !error && (
@@ -311,7 +248,7 @@ const MainJobs = ({
           {!error && getFilteredJobs().length > 0 && (
             <>
               <div
-                className={`px-5 py-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
+                className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 xl:grid-cols-3  ${styles.customScrollbar}`}
               >
                 {renderJobsWithLogs()}
               </div>
@@ -361,11 +298,7 @@ const MainJobs = ({
                   <JobCard
                     key={linkedJob.id}
                     job={linkedJob}
-                    expanded={false}
-                    expandedDetails={!!expandedLinkedJobDetails[linkedJob.id]}
-                    onToggleExpand={() => {}}
-                    onToggleDetails={toggleLinkedJobDetails}
-                    onDelete={showDeleteConfirmation}
+                    onCardClick={handleJobCardClick}
                   />
                 ))}
               </div>
