@@ -32,7 +32,7 @@ export function LucideCopyButton({ text, onCopy }: LucideCopyButtonProps) {
       onClick={handleCopy}
       variant="ghost"
       size="sm"
-      className="!py-0 !pl-2 !pr-0"
+      className="!py-0 !p-2 !pr-2"
       icon={
         copied ? (
           <CheckIcon className="h-4 w-4 text-gray-500" />

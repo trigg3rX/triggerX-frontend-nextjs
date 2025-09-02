@@ -319,7 +319,12 @@ export interface JobFormContextType {
     address: string,
     abiString: string,
   ) => void;
+  hasConfirmedPermission: boolean;
+  setHasConfirmedPermission: React.Dispatch<React.SetStateAction<boolean>>;
+  permissionError: string | null;
+  setPermissionError: React.Dispatch<React.SetStateAction<string | null>>;
   resetContractInteractionState: () => void;
+  reset: () => void;
 }
 
 export const JobFormContext = createContext<JobFormContextType | undefined>(
@@ -409,6 +414,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const [contractInteractionSuccessful, setContractInteractionSuccessful] =
     useState<boolean>(false);
   const [lastJobId, setLastJobId] = useState<string | undefined>(undefined);
+  const [hasConfirmedPermission, setHasConfirmedPermission] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   // Error refs (must be stable, not recreated on every render)
   const jobTitleErrorRef = React.useRef<HTMLDivElement | null>(null);
@@ -1769,6 +1776,80 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     devLog("[JobForm] Reset contract interaction state");
   }, []);
 
+  const reset = () => {
+    setJobType(0); // Default trigger type
+    setJobTitle("");
+    setJobTitleError(null);
+    setTimeframe({ days: 0, hours: 0, minutes: 0 });
+    setErrorFrame(null);
+    setTimeInterval({ hours: 0, minutes: 0, seconds: 0 });
+    setRecurring(true);
+    setErrorInterval(null);
+    setContractInteractions({
+      eventContract: {
+        address: "",
+        abi: null,
+        isCheckingABI: false,
+        manualABI: "",
+        events: [],
+        targetEvent: "",
+        functions: [],
+        targetFunction: "",
+        argumentType: "static",
+        argumentValues: [],
+        ipfsCodeUrl: "",
+        ipfsCodeUrlError: "",
+        sourceType: "api",
+        sourceUrl: "",
+        sourceUrlError: "",
+        conditionType: "",
+        upperLimit: "",
+        lowerLimit: "",
+        apiKeys: [],
+        selectedApiKey: "",
+        selectedApiKeyValue: "",
+        isFetchingApiKeys: false,
+        apiKeysError: "",
+      },
+      contract: {
+        address: "",
+        abi: null,
+        isCheckingABI: false,
+        manualABI: "",
+        events: [],
+        targetEvent: "",
+        functions: [],
+        targetFunction: "",
+        argumentType: "",
+        argumentValues: [],
+        ipfsCodeUrl: "",
+        ipfsCodeUrlError: "",
+        sourceType: "api",
+        sourceUrl: "",
+        sourceUrlError: "",
+        conditionType: "",
+        upperLimit: "",
+        lowerLimit: "",
+        apiKeys: [],
+        selectedApiKey: "",
+        selectedApiKeyValue: "",
+        isFetchingApiKeys: false,
+        apiKeysError: "",
+      },
+    });
+    setLinkedJobs({});
+    setEstimatedFee(0);
+    setEstimatedFeeInGwei(null);
+    setContractErrors({});
+    setIsModalOpen(false);
+    setIsJobCreated(false);
+    setContractInteractionSuccessful(false);
+    setLastJobId(undefined);
+    setIsSubmitting(false);
+    setHasConfirmedPermission(false);
+    setPermissionError(null);
+  };
+
   return (
     <JobFormContext.Provider
       value={{
@@ -1844,7 +1925,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         handleCreateJob,
         handleSetABI,
         handleSetContractDetails,
+        hasConfirmedPermission,
+        setHasConfirmedPermission,
+        permissionError,
+        setPermissionError,
         resetContractInteractionState,
+        reset,
       }}
     >
       {children}

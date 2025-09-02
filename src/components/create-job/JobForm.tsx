@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { useFormKeyboardNavigation } from "@/hooks/useFormKeyboardNavigation";
 import { Card } from "../ui/Card";
 import { TriggerTypeSelector } from "./form/TriggerTypeSelector";
@@ -117,6 +117,10 @@ export const JobForm: React.FC = () => {
     isModalOpen,
     setIsModalOpen,
     setEstimatedFee,
+    hasConfirmedPermission,
+    setHasConfirmedPermission,
+    permissionError,
+    setPermissionError,
   } = useJobFormContext();
 
   const { isConnected } = useWalletConnectionContext();
@@ -197,10 +201,6 @@ export const JobForm: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId, jobs]);
-
-  // Add state for the permission checkbox and error
-  const [hasConfirmedPermission, setHasConfirmedPermission] = useState(false);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
 
   const handleFormSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
