@@ -7,7 +7,7 @@ import {
   TableHead,
   TableCell,
 } from "../leaderboard/Table";
-import type { JobLog } from "@/hooks/useJobLogs";
+import type { JobLog } from "@/hooks/useJobLogsHybrid";
 import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
 import { ExternalLink, ChevronDownIcon } from "lucide-react";
@@ -16,6 +16,9 @@ import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 interface JobLogsTableProps {
   logs: JobLog[];
   error?: string;
+  isConnected?: boolean;
+  isConnecting?: boolean;
+  useWebSocketMode?: boolean;
 }
 
 const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
@@ -33,7 +36,7 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
       </div>
 
       <div
-        className={`grid grid-cols-1 md:grid-cols-2  gap-4 ${shouldScroll ? `max-h-[600px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
+        className={`grid grid-cols-1   gap-4 ${shouldScroll ? `max-h-[600px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
         style={shouldScroll ? { maxHeight: 600 } : {}}
       >
         {error ? (
@@ -53,10 +56,6 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
             const hasValidTimestamp =
               !!log.execution_timestamp &&
               log.execution_timestamp !== "0001-01-01T00:00:00Z";
-
-            const hasStatusText = !!(
-              log.task_status && log.task_status.trim() !== ""
-            );
 
             return (
               <Card key={`${log.task_id}-${log.task_number}`} className="mb-2">
@@ -82,17 +81,12 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                       Status
                     </Typography>
                     <Typography color="gray">
-                      {!log.task_status ? (
+                      {log.task_status === "Unknown" ? (
                         <span className="text-yellow-400">Processing</span>
                       ) : log.is_successful ? (
                         <span className="text-green-400">Success</span>
                       ) : (
                         <span className="text-red-400">Failed</span>
-                      )}
-                      {hasStatusText && (
-                        <span className="ml-2 text-gray-400">
-                          ({log.task_status})
-                        </span>
                       )}
                     </Typography>
                   </div>
@@ -132,7 +126,23 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   );
 };
 
-const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
+const JobLogsTable: React.FC<JobLogsTableProps> = ({
+  logs,
+  error,
+  isConnected,
+  isConnecting,
+  useWebSocketMode,
+}) => {
+  // Debug logging
+  console.log("JobLogsTable props:", {
+    logs,
+    error,
+    isConnected,
+    isConnecting,
+    useWebSocketMode,
+    logsLength: logs?.length || 0,
+  });
+
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
     "desc",
   );
@@ -227,10 +237,6 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     !!log.execution_timestamp &&
                     log.execution_timestamp !== "0001-01-01T00:00:00Z";
 
-                  const hasStatusText = !!(
-                    log.task_status && log.task_status.trim() !== ""
-                  );
-
                   return (
                     <TableRow
                       key={`${log.task_id}-${log.task_number}`}
@@ -238,7 +244,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     >
                       <TableCell
                         className={`border-l-4 px-6 py-4 ${
-                          !log.task_status
+                          log.task_status === "Unknown"
                             ? "border-yellow-500"
                             : log.is_successful
                               ? "border-green-500"
@@ -283,17 +289,17 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {!log.task_status ? (
+                        {log.task_status === "Unknown" ? (
                           <span className="border border-yellow-400/10 bg-yellow-500/10 text-yellow-300 py-2 px-3 rounded-full">
                             Processing
                           </span>
                         ) : log.is_successful ? (
                           <span className="border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
-                            {hasStatusText ? log.task_status : "Success"}
+                            Success
                           </span>
                         ) : (
                           <span className="border border-red-400/10 bg-red-500/10 text-red-300 py-2 px-3 rounded-full">
-                            {hasStatusText ? log.task_status : "Failed"}
+                            Failed
                           </span>
                         )}
                       </TableCell>
