@@ -56,9 +56,9 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     selectedNetwork,
     jobTitle,
     resetContractInteractionState,
+    reset,
   } = useJobForm();
   const router = useRouter();
-
   const { address, chain } = useAccount();
   const prevAddress = useRef<string | undefined>(address);
   const [topUpFailed, setTopUpFailed] = useState(false);
@@ -470,17 +470,22 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               ? "Job Updated Successfully!"
               : "Job Created Successfully!"}
           </Typography>
-          <Typography
-            variant="body"
-            className="text-gray-400 text-center text-sm sm:text-base"
-          >
-            {isUpdateMode
-              ? "Your job has been updated."
-              : "Your job has been created and is now active."}
-          </Typography>
-          <Button onClick={handleDashboardClick} className="mb-5">
-            Go to Dashboard
-          </Button>
+          <div className="flex items-center justify-center gap-2">
+            <Button onClick={handleDashboardClick} className="mb-5">
+              Go to Dashboard
+            </Button>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                reset();
+                handleClose();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="mb-5"
+            >
+              Create New Job
+            </Button>
+          </div>
         </div>
       )}
     </Modal>
