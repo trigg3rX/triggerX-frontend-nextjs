@@ -12,7 +12,7 @@ import {
   Edit,
 } from "lucide-react";
 import { JobType } from "@/hooks/useJobs";
-import { useJobLogs } from "@/hooks/useJobLogs";
+import { useJobLogsHybrid } from "@/hooks/useJobLogsHybrid";
 import JobLogsTable from "./JobLogsTable";
 import JobLogsSkeleton from "./JobLogsSkeleton";
 import { LucideCopyButton } from "../ui/CopyButton";
@@ -136,7 +136,11 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
     logs: jobLogs,
     loading: logsLoading,
     error: logsError,
-  } = useJobLogs(job.id);
+    isConnected,
+    isConnecting,
+    useWebSocketMode,
+    connectWebSocket,
+  } = useJobLogsHybrid(job.id, false); // Don't auto-connect initially
 
   const isNetworkMismatch =
     chainId !== undefined && Number(job.created_chain_id) !== Number(chainId);
@@ -194,6 +198,13 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
     const linkedJob = job.linkedJobs?.find((j) => j.id === jobId);
     if (linkedJob) {
       setSelectedLinkedJob(linkedJob);
+    }
+  };
+
+  const handleTabClick = (tabId: TabType) => {
+    setActiveTab(tabId);
+    if (tabId === "logs" && !useWebSocketMode) {
+      connectWebSocket();
     }
   };
 
@@ -342,7 +353,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 onMouseEnter={handleTabMouseEnter}
                 className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-md transition-all duration-200 relative z-10 text-sm sm:text-base flex-1 sm:flex-none justify-center sm:justify-start ${
                   isActive
@@ -587,9 +598,20 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
           {logsLoading ? (
             <JobLogsSkeleton />
           ) : logsError ? (
-            <JobLogsTable logs={[]} error={logsError} />
+            <JobLogsTable
+              logs={[]}
+              error={logsError}
+              isConnected={isConnected}
+              isConnecting={isConnecting}
+              useWebSocketMode={useWebSocketMode}
+            />
           ) : (
-            <JobLogsTable logs={jobLogs} />
+            <JobLogsTable
+              logs={jobLogs}
+              isConnected={isConnected}
+              isConnecting={isConnecting}
+              useWebSocketMode={useWebSocketMode}
+            />
           )}
         </Card>
       )}

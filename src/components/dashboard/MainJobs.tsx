@@ -14,7 +14,7 @@ import { WalletConnectionCard } from "../common/WalletConnectionCard";
 import { useDeleteJob } from "@/hooks/useDeleteJob";
 import { ErrorMessage } from "../common/ErrorMessage";
 import JobLogsTable from "./JobLogsTable";
-import { useJobLogs } from "@/hooks/useJobLogs";
+import { useJobLogsHybrid } from "@/hooks/useJobLogsHybrid";
 import styles from "@/app/styles/scrollbar.module.css";
 import { Pagination } from "../ui/Pagination";
 
@@ -50,13 +50,16 @@ const MainJobs = ({
   const logsRef = useRef<HTMLDivElement | null>(null);
 
   const { error } = { error: null };
-  const { isConnected } = useWalletConnectionContext();
+  const { isConnected: walletConnected } = useWalletConnectionContext();
   const { deleteJob, loading: deleteLoading } = useDeleteJob();
   const {
     logs: jobLogs,
     loading: logsLoading,
     error: logsError,
-  } = useJobLogs(jobLogsOpenId ?? undefined);
+    isConnected,
+    isConnecting,
+    useWebSocketMode,
+  } = useJobLogsHybrid(jobLogsOpenId ?? undefined);
 
   // Add resize effect to update group size
   useEffect(() => {
@@ -200,9 +203,20 @@ const MainJobs = ({
             {logsLoading ? (
               <JobLogsSkeleton />
             ) : logsError ? (
-              <JobLogsTable logs={[]} error={logsError} />
+              <JobLogsTable
+                logs={[]}
+                error={logsError}
+                isConnected={isConnected}
+                isConnecting={isConnecting}
+                useWebSocketMode={useWebSocketMode}
+              />
             ) : (
-              <JobLogsTable logs={jobLogs} />
+              <JobLogsTable
+                logs={jobLogs}
+                isConnected={isConnected}
+                isConnecting={isConnecting}
+                useWebSocketMode={useWebSocketMode}
+              />
             )}
           </div>,
         );
@@ -229,7 +243,7 @@ const MainJobs = ({
         <div className="text-white text-center py-10">
           <JobCardSkeleton />
         </div>
-      ) : !isConnected ? (
+      ) : !walletConnected ? (
         <WalletConnectionCard className="border-0" />
       ) : selectedJob ? (
         <JobDetailsView job={selectedJob} onBack={handleBackToJobs} />

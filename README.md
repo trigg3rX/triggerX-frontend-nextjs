@@ -59,6 +59,14 @@ NEXT_PUBLIC_SANITY_PROJECT_ID=your_sanity_project_id
 NEXT_PUBLIC_SANITY_DATASET=production
 NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 
+# API Configuration
+NEXT_PUBLIC_API_BASE_URL=http://192.168.1.38:9002
+NEXT_PUBLIC_API_KEY=your_api_key_here
+NEXT_PUBLIC_USER=your_user_here
+
+# WebSocket Configuration
+NEXT_PUBLIC_WEBSOCKET_URL=ws://192.168.1.38:9002/api/ws/tasks
+
 # Web3 Configuration (if needed)
 NEXT_PUBLIC_CHAIN_ID=1
 NEXT_PUBLIC_RPC_URL=your_rpc_url
