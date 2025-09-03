@@ -9,7 +9,10 @@ import React, {
 import { ethers } from "ethers";
 import { useAccount, useChainId } from "wagmi";
 import { devLog } from "@/lib/devLog";
-import { getTriggerGasRegistryAddress } from "@/utils/contractAddresses";
+import {
+  getTriggerGasRegistryAddress,
+  getRpcUrl,
+} from "@/utils/contractAddresses";
 
 interface TGBalanceContextType {
   userBalance: string;
@@ -27,34 +30,6 @@ export const TGBalanceProvider: React.FC<{
   const [userBalance, setUserBalance] = useState<string>("0");
   const { address } = useAccount();
   const chainId = useChainId();
-
-  // Function to get RPC URL based on chain ID
-  const getRpcUrl = useCallback((chainId: number): string => {
-    const isBaseSepolia = chainId === 84532 || chainId === 8453;
-    const isArbitrumSepolia = chainId === 421614;
-    if (isBaseSepolia) {
-      if (!process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL) {
-        throw new Error(
-          "NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL environment variable is not set",
-        );
-      }
-      return process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL;
-    } else if (isArbitrumSepolia) {
-      if (!process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL) {
-        throw new Error(
-          "NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL environment variable is not set",
-        );
-      }
-      return process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL;
-    } else {
-      if (!process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL) {
-        throw new Error(
-          "NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL environment variable is not set",
-        );
-      }
-      return process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL;
-    }
-  }, []);
 
   const fetchTGBalance = useCallback(async () => {
     devLog("fetchhh");
@@ -112,7 +87,7 @@ export const TGBalanceProvider: React.FC<{
     } catch (error) {
       console.error("Error fetching TG balance:", error);
     }
-  }, [chainId, getRpcUrl]);
+  }, [chainId]);
 
   useEffect(() => {
     const currentStakeRegistryAddress = getTriggerGasRegistryAddress(chainId);

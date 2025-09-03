@@ -29,6 +29,7 @@ import {
   TableCell,
 } from "@/components/leaderboard/Table";
 import { devLog } from "@/lib/devLog";
+import { getExplorerUrl } from "@/utils/contractAddresses";
 
 // Implementation address for BalanceMaintainer
 const BALANCEMAINTAINER_IMPLEMENTATION =
@@ -67,9 +68,16 @@ const BalanceMaintainer = () => {
       minimumBalance: string;
     }[]
   >([]);
+  const [explorerBaseUrl, setExplorerBaseUrl] = useState("");
 
   const [error, setError] = useState<string | null>(null);
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
+
+  useEffect(() => {
+    if (chainId) {
+      setExplorerBaseUrl(getExplorerUrl(Number(chainId)));
+    }
+  }, [chainId]);
 
   useEffect(() => {
     const initProvider = async () => {
@@ -520,13 +528,7 @@ const BalanceMaintainer = () => {
             <Typography variant="body" className="py-2" align="left">
               Contract Address :
               <Link
-                href={`${
-                  chainId === BigInt(11155420)
-                    ? "https://sepolia-optimism.etherscan.io/address/"
-                    : chainId === BigInt(421614)
-                      ? "https://sepolia.arbiscan.io/address/"
-                      : "https://sepolia.basescan.org/address/"
-                }${contractAddress}`}
+                href={`${explorerBaseUrl}${contractAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#77E8A3] underline pl-2 break-all"

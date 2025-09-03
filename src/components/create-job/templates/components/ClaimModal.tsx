@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/Button";
 import ShortAddress from "@/components/ui/ShortAddress";
 import { LucideCopyButton } from "@/components/ui/CopyButton";
 import { devLog } from "@/lib/devLog";
+import {
+  getApiNetworkName,
+  getDisplayNetworkName,
+} from "@/utils/contractAddresses";
 
 interface ClaimModalProps {
   isOpen: boolean;
@@ -32,17 +36,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
 
   // Function to get network name based on chain ID
   const getNetworkName = (): string => {
-    if (!chainId) return "Unknown Network";
-    switch (chainId) {
-      case 11155420:
-        return "Optimism Sepolia";
-      case 84532:
-        return "Base Sepolia";
-      case 421614:
-        return "Arbitrum Sepolia";
-      default:
-        return `Chain ${chainId}`;
-    }
+    return getDisplayNetworkName(chainId) || `Chain ${chainId}`;
   };
 
   // Reset states when modal closes
@@ -86,23 +80,23 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
         throw new Error("Wallet not connected");
       }
 
-      const chainIdHex = await window.ethereum.request({
-        method: "eth_chainId",
-      });
+      // Get the network name for the API directly from our centralized config
+      const networkNameForApi = getApiNetworkName(chainId);
 
-      let networkName = "op_sepolia";
-      if (chainIdHex === "0x14a34") {
-        networkName = "base_sepolia";
-      } else if (chainIdHex === "0x66eeb" || "0x66eee") {
-        networkName = "arbitrum_sepolia";
+      if (!networkNameForApi) {
+        toast.error(`Claiming not supported on chain ID: ${chainId}`);
+        throw new Error(
+          `API network name not configured for chain ID: ${chainId}`,
+        );
       }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/claim-fund`,
         {
           method: "POST",
           body: JSON.stringify({
             wallet_address: address,
-            network: networkName,
+            network: networkNameForApi,
           }),
           headers: {
             "Content-Type": "application/json",

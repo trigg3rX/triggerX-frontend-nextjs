@@ -1,12 +1,10 @@
 import { devLog } from "@/lib/devLog";
+import {
+  getBlockscoutApiUrl,
+  getEtherScanApiKey,
+  getEtherScanApiUrl,
+} from "@/utils/contractAddresses";
 import { NextRequest, NextResponse } from "next/server";
-
-const ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY =
-  process.env.NEXT_PUBLIC_ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY;
-const ETHERSCAN_BASE_SEPOLIA_API_KEY =
-  process.env.NEXT_PUBLIC_ETHERSCAN_BASE_SEPOLIA_API_KEY;
-const ETHERSCAN_ARBITRUM_SEPOLIA_API_KEY =
-  process.env.NEXT_PUBLIC_ETHERSCAN_ARBITRUM_SEPOLIA_API_KEY;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,52 +13,56 @@ export async function GET(req: NextRequest) {
   if (!address) {
     return NextResponse.json({ error: "Missing address" }, { status: 400 });
   }
-  const chainIdNum = chainId ? Number(chainId) : undefined;
-  const isBaseSepolia = chainIdNum === 84532 || chainIdNum === 8453;
-  const isArbitrumSepolia = chainIdNum === 421614;
+  if (!chainId) {
+    return NextResponse.json({ error: "Missing chainId" }, { status: 400 });
+  }
+
+  const chainIdNum = Number(chainId);
+  const blockscoutBaseUrl = getBlockscoutApiUrl(chainIdNum);
+  const etherscanBaseUrl = getEtherScanApiUrl(chainIdNum);
+  const etherscanApiKey = getEtherScanApiKey(chainIdNum);
+
+  if (!blockscoutBaseUrl && !etherscanBaseUrl) {
+    return NextResponse.json(
+      { error: `Chain ID ${chainIdNum} is not supported for ABI fetching.` },
+      { status: 400 },
+    );
+  }
 
   // 1. Try Blockscout
-  let blockscoutUrl = "";
-  if (isBaseSepolia) {
-    blockscoutUrl = `https://base-sepolia.blockscout.com/api?module=contract&action=getabi&address=${address}`;
-    devLog("base", blockscoutUrl);
-  } else if (isArbitrumSepolia) {
-    blockscoutUrl = `https://sepolia.arbiscan.io/api?module=contract&action=getabi&address=${address}`;
-    devLog("arbitrum", blockscoutUrl);
-  } else {
-    blockscoutUrl = `https://optimism-sepolia.blockscout.com/api?module=contract&action=getabi&address=${address}`;
-    devLog("op", blockscoutUrl);
-  }
-  try {
-    const response = await fetch(blockscoutUrl);
-    const data = await response.json();
-    if (
-      data.status === "1" &&
-      data.result &&
-      typeof data.result === "string" &&
-      data.result.startsWith("[")
-    ) {
-      return NextResponse.json({ abi: data.result, source: "blockscout" });
+  if (blockscoutBaseUrl) {
+    const blockscoutUrl = `${blockscoutBaseUrl}?module=contract&action=getabi&address=${address}`;
+    devLog(
+      `Fetching ABI from Blockscout-like API for chain ${chainIdNum}:`,
+      blockscoutUrl,
+    );
+    try {
+      const response = await fetch(blockscoutUrl);
+      const data = await response.json();
+      if (
+        data.status === "1" &&
+        data.result &&
+        typeof data.result === "string" &&
+        data.result.startsWith("[")
+      ) {
+        return NextResponse.json({ abi: data.result, source: "blockscout" });
+      }
+    } catch (e) {
+      devLog(
+        `Error fetching ABI from Blockscout-like API for chain ${chainIdNum}:`,
+        e,
+      );
+      // Ignore, try Etherscan next
     }
-  } catch (e) {
-    devLog("blockscout", e);
-    // Ignore, try Etherscan next
   }
 
   // 2. Try Etherscan
-  let etherscanUrl = "";
-  if (isBaseSepolia && ETHERSCAN_BASE_SEPOLIA_API_KEY) {
-    etherscanUrl = `https://api.etherscan.io/v2/api?chainid=84532&module=contract&action=getabi&address=${address}&apikey=${ETHERSCAN_BASE_SEPOLIA_API_KEY}`;
-    devLog("base", etherscanUrl);
-  } else if (isArbitrumSepolia && ETHERSCAN_ARBITRUM_SEPOLIA_API_KEY) {
-    etherscanUrl = `https://api.etherscan.io/v2/api?chainid=421614&module=contract&action=getabi&address=${address}&apikey=${ETHERSCAN_ARBITRUM_SEPOLIA_API_KEY}`;
-    devLog("arbitrum", etherscanUrl);
-  } else if (ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY) {
-    etherscanUrl = `https://api-sepolia-optimism.etherscan.io/api?module=contract&action=getabi&address=${address}&apikey=${ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY}`;
-    devLog("op", etherscanUrl);
-  }
-
-  if (etherscanUrl) {
+  if (etherscanBaseUrl && etherscanApiKey) {
+    const etherscanUrl = `${etherscanBaseUrl}module=contract&action=getabi&address=${address}&apikey=${etherscanApiKey}`;
+    devLog(
+      `Fetching ABI from Etherscan-like API for chain ${chainIdNum}:`,
+      etherscanUrl,
+    );
     try {
       const response = await fetch(etherscanUrl);
       const data = await response.json();
@@ -73,12 +75,16 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ abi: data.result, source: "etherscan" });
       }
     } catch (e) {
-      devLog("Etherscan", e);
+      devLog(
+        `Error fetching ABI from Etherscan-like API for chain ${chainIdNum}:`,
+        e,
+      );
       // Ignore
     }
   }
+
   return NextResponse.json(
-    { error: "ABI not found on Blockscout or Etherscan" },
+    { error: "ABI not found on any configured explorer for this chain." },
     { status: 404 },
   );
 }
