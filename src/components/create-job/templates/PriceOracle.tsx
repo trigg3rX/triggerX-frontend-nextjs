@@ -18,6 +18,7 @@ import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { useJob } from "@/contexts/JobContext";
 import { devLog } from "@/lib/devLog";
 import ClaimEth from "./components/ClaimEth";
+import { getExplorerUrl } from "@/utils/contractAddresses";
 
 // Minimal EIP-1193 type for ethereum provider
 interface EthereumProvider {
@@ -43,7 +44,7 @@ const PriceOracle = () => {
   const [hasSufficientBalance, setHasSufficientBalance] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
-
+  const [explorerBaseUrl, setExplorerBaseUrl] = useState("");
   const [modalData, setModalData] = useState({
     // amount: "0.00",
     networkFee: "$0.00",
@@ -51,6 +52,12 @@ const PriceOracle = () => {
     contractAddress: "",
     contractMethod: "",
   });
+
+  useEffect(() => {
+    if (chainId) {
+      setExplorerBaseUrl(getExplorerUrl(Number(chainId)));
+    }
+  }, [chainId]);
 
   useEffect(() => {
     const initProvider = async () => {
@@ -310,13 +317,7 @@ const PriceOracle = () => {
             <Typography variant="body" className="py-2" align="left">
               Contract Address :
               <Link
-                href={`${
-                  chainId === BigInt(11155420)
-                    ? "https://sepolia-optimism.etherscan.io/address/"
-                    : chainId === BigInt(421614)
-                      ? "https://sepolia.arbiscan.io/address/"
-                      : "https://sepolia.basescan.org/address/"
-                }${contractAddress}`}
+                href={`${explorerBaseUrl}${contractAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#77E8A3] underline pl-2 break-all"
