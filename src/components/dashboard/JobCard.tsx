@@ -42,11 +42,12 @@ const formatTimeframe = (secondsString: string) => {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
 
   if (days > 0) return `${days} day${days > 1 ? "s" : ""}`;
   if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
   if (mins > 0) return `${mins} min${mins > 1 ? "s" : ""}`;
-  return "0 min";
+  return `${secs} sec${secs !== 1 ? "s" : ""}`;
 };
 
 const JobCard: React.FC<JobCardProps> = ({

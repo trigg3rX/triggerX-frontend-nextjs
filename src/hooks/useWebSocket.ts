@@ -163,7 +163,7 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
     }
 
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.close(1000, "User requested close"); // 1000 = Normal Closure
       wsRef.current = null;
     }
 

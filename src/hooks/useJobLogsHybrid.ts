@@ -62,6 +62,13 @@ export function useJobLogsHybrid(
 
   const logsRef = useRef<JobLog[]>([]);
   const initialLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if we're in production mode
+  const isProduction = useCallback(() => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    return API_BASE_URL === "https://data.triggerx.network";
+  }, []);
 
   // Build WebSocket URL
   const getWebSocketUrl = useCallback(() => {
@@ -80,6 +87,67 @@ export function useJobLogsHybrid(
     // Append API key as query parameter
     const separator = wsUrl.includes("?") ? "&" : "?";
     return `${wsUrl}${separator}api_key=${API_KEY}`;
+  }, []);
+
+  // Fetch logs via API
+  const fetchLogs = useCallback(async () => {
+    if (!jobId) return;
+
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+
+      if (!API_BASE_URL) {
+        setError("API base URL not set. Please contact support.");
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks/job/${jobId}`, {
+        headers: {
+          "X-Api-Key": API_KEY || "",
+        },
+      });
+
+      if (!response.ok) {
+        setError(`Failed to fetch job logs. Status: ${response.status}`);
+        return;
+      }
+
+      const data = await response.json();
+      setLogs(data);
+      setInitialLoadComplete(true);
+      setLoading(false);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      setError("Failed to fetch job logs. Please try again.");
+      setLoading(false);
+    }
+  }, [jobId]);
+
+  // Start polling for production mode
+  const startPolling = useCallback(() => {
+    if (!isProduction() || !jobId) return;
+
+    // Clear any existing polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    // Initial fetch
+    fetchLogs();
+
+    // Set up polling every 10 seconds
+    pollingIntervalRef.current = setInterval(() => {
+      fetchLogs();
+    }, 10000);
+  }, [isProduction, jobId, fetchLogs]);
+
+  // Stop polling
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
   }, []);
 
   // Handle WebSocket messages
@@ -275,9 +343,9 @@ export function useJobLogsHybrid(
     [initialLoadComplete],
   );
 
-  // Subscribe to job room when connected and jobId is available
+  // Subscribe to job room when connected and jobId is available (WebSocket mode only)
   useEffect(() => {
-    if (isConnected && jobId && useWebSocketMode) {
+    if (isConnected && jobId && useWebSocketMode && !isProduction()) {
       const roomName = `job:${jobId}`;
       subscribe(roomName, { job_id: jobId.toString() });
 
@@ -285,25 +353,43 @@ export function useJobLogsHybrid(
         unsubscribe(roomName);
       };
     }
-  }, [isConnected, jobId, useWebSocketMode, subscribe, unsubscribe]);
+  }, [
+    isConnected,
+    jobId,
+    useWebSocketMode,
+    subscribe,
+    unsubscribe,
+    isProduction,
+  ]);
 
-  // Initialize loading state when jobId changes
+  // Initialize based on environment
   useEffect(() => {
     if (jobId) {
-      setLoading(false); // Don't show loading since we're not fetching API data
+      setLoading(true);
       setError(null);
       setInitialLoadComplete(false);
       setLogs([]);
       logsRef.current = [];
-      setUseWebSocketMode(autoConnect);
 
       // Clear any existing timeouts
       if (initialLoadTimeoutRef.current) {
         clearTimeout(initialLoadTimeoutRef.current);
         initialLoadTimeoutRef.current = null;
       }
+
+      // Stop any existing polling
+      stopPolling();
+
+      if (isProduction()) {
+        // Use API mode for production
+        setUseWebSocketMode(false);
+        startPolling();
+      } else {
+        // Use WebSocket mode for local development
+        setUseWebSocketMode(autoConnect);
+      }
     }
-  }, [jobId, autoConnect]);
+  }, [jobId, autoConnect, isProduction, startPolling, stopPolling]);
 
   // Update ref when logs change
   useEffect(() => {
@@ -312,10 +398,10 @@ export function useJobLogsHybrid(
 
   // Handle WebSocket connection errors
   useEffect(() => {
-    if (wsError && useWebSocketMode) {
+    if (wsError && useWebSocketMode && !isProduction()) {
       setError(`WebSocket error: ${wsError.message}`);
     }
-  }, [wsError, useWebSocketMode]);
+  }, [wsError, useWebSocketMode, isProduction]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -323,19 +409,25 @@ export function useJobLogsHybrid(
       if (initialLoadTimeoutRef.current) {
         clearTimeout(initialLoadTimeoutRef.current);
       }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
     };
   }, []);
 
   const connectWebSocket = useCallback(() => {
-    setUseWebSocketMode(true);
-    setLoading(true);
-    setError(null);
-    setInitialLoadComplete(false);
-    setLogs([]);
-
-    // Force WebSocket connection by updating the mode
-    // The useWebSocket hook will automatically connect when useWebSocketMode becomes true
-  }, []);
+    if (isProduction()) {
+      // For production, restart polling
+      startPolling();
+    } else {
+      // For local development, connect WebSocket
+      setUseWebSocketMode(true);
+      setLoading(true);
+      setError(null);
+      setInitialLoadComplete(false);
+      setLogs([]);
+    }
+  }, [isProduction, startPolling]);
 
   // Debug logging for state changes
   useEffect(() => {
@@ -346,15 +438,24 @@ export function useJobLogsHybrid(
     //   isConnecting,
     //   logsCount: logs.length,
     //   error,
+    //   isProduction: isProduction(),
     // });
-  }, [jobId, useWebSocketMode, isConnected, isConnecting, logs.length, error]);
+  }, [
+    jobId,
+    useWebSocketMode,
+    isConnected,
+    isConnecting,
+    logs.length,
+    error,
+    isProduction,
+  ]);
 
   return {
     logs,
-    loading: loading || isConnecting,
-    error: error || (wsError ? wsError.message : null),
-    isConnected,
-    isConnecting,
+    loading: loading || (isConnecting && !isProduction()),
+    error: error || (wsError && !isProduction() ? wsError.message : null),
+    isConnected: isProduction() ? true : isConnected,
+    isConnecting: isProduction() ? false : isConnecting,
     useWebSocketMode,
     connectWebSocket,
   };
