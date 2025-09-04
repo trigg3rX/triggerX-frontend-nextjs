@@ -41,12 +41,22 @@ const formatTimeframe = (secondsString: string) => {
   if (isNaN(seconds)) return secondsString;
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
+  const totalMinutes = (seconds % 3600) / 60;
+  const mins = Math.floor(totalMinutes);
   const secs = seconds % 60;
 
   if (days > 0) return `${days} day${days > 1 ? "s" : ""}`;
   if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
-  if (mins > 0) return `${mins} min${mins > 1 ? "s" : ""}`;
+  if (totalMinutes >= 10) return `${mins} min${mins !== 1 ? "s" : ""}`;
+  if (totalMinutes >= 1) {
+    // Show 1 decimal place for minutes under 10
+    const formattedMins = totalMinutes.toFixed(1);
+    // Remove .0 if it's a whole number
+    const displayMins = formattedMins.endsWith(".0")
+      ? formattedMins.slice(0, -2)
+      : formattedMins;
+    return `${displayMins} min${totalMinutes !== 1 ? "s" : ""}`;
+  }
   return `${secs} sec${secs !== 1 ? "s" : ""}`;
 };
 
