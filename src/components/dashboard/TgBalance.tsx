@@ -24,7 +24,7 @@ const TgBalance = () => {
           align="left"
           className="  truncate"
         >
-          {balance ? animatedBalance.toFixed(2) : "0.00"}
+          {balance ? animatedBalance.toFixed(6) : "0.000000"}
         </Typography>
       </div>
     </Card>
