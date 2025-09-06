@@ -164,7 +164,7 @@ const JobCard: React.FC<JobCardProps> = ({
               align="right"
               className={`${job.is_active ? "text-[#4caf50]" : "text-[#ff4444]"}`}
             >
-              {job.is_active ? "Active" : "Inactive"}
+              {job.is_active ? "Running" : "Completed"}
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
@@ -174,7 +174,7 @@ const JobCard: React.FC<JobCardProps> = ({
             <Typography variant="body" color="gray" align="right">
               {isNaN(parseFloat(job.job_cost_actual))
                 ? "N/A"
-                : parseFloat(job.job_cost_actual).toFixed(2)}
+                : parseFloat(job.job_cost_actual).toFixed(6)}
             </Typography>
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">

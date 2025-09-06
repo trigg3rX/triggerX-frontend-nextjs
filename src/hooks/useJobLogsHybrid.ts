@@ -9,7 +9,7 @@ export interface JobLog {
   execution_tx_hash: string;
   task_performer_id: number;
   task_attester_ids: number[] | null;
-  is_successful: boolean;
+  is_accepted: boolean;
   task_status: string;
   tx_url: string;
 }
@@ -43,7 +43,7 @@ interface WebSocketTaskData {
     execution_tx_hash?: string;
     task_performer_id?: number;
     task_attester_ids?: number[] | null;
-    is_successful?: boolean;
+    is_accepted?: boolean;
     task_status?: string;
     tx_url?: string;
   };
@@ -212,7 +212,7 @@ export function useJobLogsHybrid(
               performer_id?: number;
               task_attester_ids?: number[] | null;
               attester_ids?: number[] | null;
-              is_successful?: boolean;
+              is_accepted?: boolean;
               success?: boolean;
               task_status?: string;
               status?: string;
@@ -234,8 +234,8 @@ export function useJobLogsHybrid(
                 task.task_performer_id || task.performer_id || 0,
               task_attester_ids:
                 task.task_attester_ids || task.attester_ids || null,
-              is_successful: task.is_successful || task.success || false,
-              task_status: task.task_status || task.status || "Unknown",
+              is_accepted: task.is_accepted|| false,
+              task_status: task.task_status || task.status || "processing",
               tx_url: task.tx_url || task.transaction_url || "",
             }));
 
@@ -321,8 +321,8 @@ export function useJobLogsHybrid(
             execution_tx_hash: data.changes.execution_tx_hash || "",
             task_performer_id: data.changes.task_performer_id || 0,
             task_attester_ids: data.changes.task_attester_ids || null,
-            is_successful: data.changes.is_successful || false,
-            task_status: data.changes.task_status || "Created", // Default status for new tasks
+            is_accepted: data.changes.is_accepted || false,
+            task_status: data.changes.task_status || "processing", // Default status for new tasks
             tx_url: data.changes.tx_url || "",
           };
 

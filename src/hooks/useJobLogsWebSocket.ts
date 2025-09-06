@@ -10,7 +10,7 @@ export interface JobLog {
   execution_tx_hash: string;
   task_performer_id: number;
   task_attester_ids: number[] | null;
-  is_successful: boolean;
+  is_accepted: boolean;
   task_status: string;
   tx_url: string;
 }

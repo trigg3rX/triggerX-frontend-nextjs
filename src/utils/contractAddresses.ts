@@ -34,9 +34,9 @@ export const CONTRACT_ADDRESSES = {
   // Arbitrum Sepolia (chainId: 421614)
   421614: {
     TRIGGER_GAS_REGISTRY_ADDRESS:
-      process.env.NEXT_PUBLIC_ARBITRUM_TRIGGER_GAS_REGISTRY_ADDRESS || "",
+      process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS || "",
     JOB_REGISTRY_ADDRESS:
-      process.env.NEXT_PUBLIC_ARBITRUM_JOB_CREATION_CONTRACT_ADDRESS || "",
+      process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum Sepolia", // Add this for display
