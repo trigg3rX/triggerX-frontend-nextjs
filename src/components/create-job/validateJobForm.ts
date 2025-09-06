@@ -56,6 +56,25 @@ export function validateJobForm({
       scrollToId: "time-interval-inputs",
     };
   }
+  // Ensure time interval does not exceed timeframe for time-based jobs
+  if (jobType === 1) {
+    const timeframeInSeconds =
+      (Number(timeframe.days) || 0) * 86400 +
+      (Number(timeframe.hours) || 0) * 3600 +
+      (Number(timeframe.minutes) || 0) * 60;
+    const intervalInSeconds =
+      (Number(timeInterval.hours) || 0) * 3600 +
+      (Number(timeInterval.minutes) || 0) * 60 +
+      (Number(timeInterval.seconds) || 0);
+
+    if (intervalInSeconds > timeframeInSeconds) {
+      return {
+        errorKey: "timeInterval",
+        errorValue: "Time interval cannot exceed the timeframe.",
+        scrollToId: "time-interval-inputs",
+      };
+    }
+  }
   // Event contract (jobType 3)
   if (jobType === 3) {
     const eventContract = contractInteractions.eventContract;
