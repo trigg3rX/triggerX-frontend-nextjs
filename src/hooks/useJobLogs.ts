@@ -9,7 +9,7 @@ interface ApiJobLog {
   execution_tx_hash: string;
   task_performer_id: number;
   task_attester_ids: number[] | null;
-  is_successful: boolean;
+  is_accepted: boolean;
   task_status: string;
   tx_url: string;
 }
@@ -22,7 +22,7 @@ export interface JobLog {
   execution_tx_hash: string;
   task_performer_id: number;
   task_attester_ids: number[] | null;
-  is_successful: boolean;
+  is_accepted: boolean;
   task_status: string;
   tx_url: string;
 }
@@ -67,7 +67,7 @@ export function useJobLogs(jobId: string | number | undefined) {
           execution_tx_hash: log.execution_tx_hash,
           task_performer_id: log.task_performer_id,
           task_attester_ids: log.task_attester_ids,
-          is_successful: log.is_successful,
+          is_accepted: log.is_accepted,
           task_status: log.task_status,
           tx_url: log.tx_url,
         }));

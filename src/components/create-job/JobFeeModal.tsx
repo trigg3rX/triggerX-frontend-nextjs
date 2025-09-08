@@ -57,6 +57,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     jobTitle,
     resetContractInteractionState,
     reset,
+    estimatedFeeInWei,
   } = useJobForm();
   const router = useRouter();
   const { address, chain } = useAccount();
@@ -207,12 +208,18 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     return result;
   }, [estimatedFee, userBalance]);
 
-  const requiredEth = useMemo(
-    () => (0.001 * estimatedFee).toFixed(4),
-    [estimatedFee],
-  );
-  const hasEnoughEthToStake =
-    ethBalance && ethBalance.value >= parseEther(requiredEth);
+  const requiredEth = useMemo(() => {
+    if (estimatedFeeInWei) {
+      // Convert Wei to ETH for display
+      return (Number(estimatedFeeInWei) / 1e18).toFixed(6);
+    }
+    return (0.001 * estimatedFee).toFixed(6);
+  }, [estimatedFee, estimatedFeeInWei]);
+  
+  const hasEnoughEthToStake = useMemo(() => {
+    if (!ethBalance || !estimatedFeeInWei) return false;
+    return ethBalance.value >= estimatedFeeInWei;
+  }, [ethBalance, estimatedFeeInWei]);
   const isDisabled = false;
 
   const handleStake = async (e: React.MouseEvent) => {
@@ -323,7 +330,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               </div>
               <Typography variant="body" color="secondary">
                 {estimatedFee && estimatedFee > 0
-                  ? ` ${estimatedFee.toFixed(2)} TG`
+                  ? ` ${estimatedFee.toFixed(6)} TG`
                   : "Something went wrong"}
               </Typography>
             </div>
@@ -331,7 +338,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
             <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center">
               <Typography variant="body">Your TG Balance</Typography>
               <Typography variant="body" color="secondary">
-                {userBalance ? Number(userBalance).toFixed(2) : "0.0000"}
+                {userBalance ? Number(userBalance).toFixed(6) : "0.000000"}
               </Typography>
             </div>
 

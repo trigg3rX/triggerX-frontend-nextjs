@@ -417,7 +417,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                   >
                     {isNaN(parseFloat(job.job_cost_actual))
                       ? "N/A"
-                      : parseFloat(job.job_cost_actual).toFixed(2)}
+                      : parseFloat(job.job_cost_actual).toFixed(6)}
                   </Typography>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">

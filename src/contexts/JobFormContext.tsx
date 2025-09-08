@@ -289,8 +289,8 @@ export interface JobFormContextType {
   getArgType: typeof getArgType;
   estimatedFee: number;
   setEstimatedFee: React.Dispatch<React.SetStateAction<number>>;
-  estimatedFeeInGwei: bigint | null;
-  setEstimatedFeeInGwei: React.Dispatch<React.SetStateAction<bigint | null>>;
+  estimatedFeeInWei: bigint | null;
+  setEstimatedFeeInWei: React.Dispatch<React.SetStateAction<bigint | null>>;
   isModalOpen: boolean;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   estimateFee: (
@@ -405,7 +405,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   const [linkedJobs, setLinkedJobs] = useState<{ [key: number]: number[] }>({});
   const [estimatedFee, setEstimatedFee] = useState<number>(0);
-  const [estimatedFeeInGwei, setEstimatedFeeInGwei] = useState<bigint | null>(
+  const [estimatedFeeInWei, setEstimatedFeeInWei] = useState<bigint | null>(
     null,
   );
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -1058,7 +1058,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         executionCount = recurring ? 10 : 1;
       }
 
-      let totalFeeTG = 0;
+      let totalFeeWei: bigint = BigInt(0);
       if (argType === 2) {
         if (codeUrls) {
           try {
@@ -1079,28 +1079,36 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             if (!response.ok) throw new Error("Failed to get fees");
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            totalFeeTG = Number(data.total_fee) * executionCount;
-            const stakeAmountEth = totalFeeTG * 0.001;
+            
+            // Backend now returns big.Int in Wei, so we multiply by execution count
+            const feePerExecutionWei = BigInt(data.total_fee);
+            totalFeeWei = feePerExecutionWei * BigInt(executionCount);
+            
             devLog(
-              "Total TG fee required for Dynamic:",
-              totalFeeTG.toFixed(18),
-              "TG",
+              "Total fee required for Dynamic (Wei):",
+              totalFeeWei.toString(),
+              "Wei",
             );
 
-            const stakeAmountGwei = BigInt(Math.floor(stakeAmountEth * 1e9));
-            setEstimatedFeeInGwei(stakeAmountGwei);
+            setEstimatedFeeInWei(totalFeeWei);
           } catch (error) {
             console.error("Error getting task fees:", error);
           }
         }
       } else {
-        totalFeeTG = 0.1 * executionCount;
+        // For static jobs, calculate the fee in Wei (0.001 TG * executionCount * 1e15)
+        const staticFeeTG = 0.001 * executionCount;
+        totalFeeWei = BigInt(Math.floor(staticFeeTG * 1e15));
         devLog(
-          "Total TG fee required for static:",
-          totalFeeTG.toFixed(18),
-          "TG",
+          "Total fee required for static (Wei):",
+          totalFeeWei.toString(),
+          "Wei",
         );
+        setEstimatedFeeInWei(totalFeeWei);
       }
+      
+      // Convert Wei to TG for display purposes (divide by 1e15)
+      const totalFeeTG = Number(totalFeeWei) / 1e15;
       setEstimatedFee(totalFeeTG);
       setIsModalOpen(true);
     } catch (error) {
@@ -1119,11 +1127,16 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      const requiredEth = (0.001 * estimatedFee).toFixed(18);
-
       if (!stakeRegistryAddress) {
         throw new Error("Stake registry address not configured");
       }
+
+      if (!estimatedFeeInWei) {
+        throw new Error("No estimated fee available");
+      }
+
+      // Convert Wei to ETH for the stake amount (divide by 1e18)
+      const requiredEth = Number(estimatedFeeInWei) / 1e18;
 
       const contract = new ethers.Contract(
         stakeRegistryAddress,
@@ -1133,11 +1146,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         signer,
       );
 
-      devLog("Staking ETH amount:", requiredEth);
+      devLog("Staking ETH amount:", requiredEth.toString());
+      devLog("Staking Wei amount:", estimatedFeeInWei.toString());
 
       const tx = await contract.purchaseTG(
-        ethers.parseEther(requiredEth.toString()),
-        { value: ethers.parseEther(requiredEth.toString()) },
+        estimatedFeeInWei,
+        { value: estimatedFeeInWei },
       );
       await tx.wait();
       devLog("Stake transaction confirmed: ", tx.hash);
@@ -1839,7 +1853,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     });
     setLinkedJobs({});
     setEstimatedFee(0);
-    setEstimatedFeeInGwei(null);
+    setEstimatedFeeInWei(null);
     setContractErrors({});
     setIsModalOpen(false);
     setIsJobCreated(false);
@@ -1908,8 +1922,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         getArgType,
         estimatedFee,
         setEstimatedFee,
-        estimatedFeeInGwei,
-        setEstimatedFeeInGwei,
+        estimatedFeeInWei,
+        setEstimatedFeeInWei,
         isModalOpen,
         setIsModalOpen,
         estimateFee,
