@@ -246,7 +246,15 @@ const MainJobs = ({
       ) : !walletConnected ? (
         <WalletConnectionCard className="border-0" />
       ) : selectedJob ? (
-        <JobDetailsView job={selectedJob} onBack={handleBackToJobs} />
+        <JobDetailsView
+          job={selectedJob}
+          onBack={handleBackToJobs}
+          onJobDeleted={() => {
+            const deletedId = selectedJob.id;
+            setJobs((prev) => prev.filter((j) => j.id !== deletedId));
+            setSelectedJob(null);
+          }}
+        />
       ) : (
         <>
           {getFilteredJobs().length === 0 && !error && (
