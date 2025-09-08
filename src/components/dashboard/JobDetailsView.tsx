@@ -224,10 +224,18 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
   };
 
   const handleDeleteJob = async () => {
-    await deleteJob(job.id);
-    setDeleteDialogOpen(false);
-    if (onJobDeleted) {
-      onJobDeleted();
+    try {
+      await deleteJob(job.id);
+      setDeleteDialogOpen(false);
+      if (onJobDeleted) {
+        onJobDeleted();
+      }
+      // Return to the previous view and refresh to reflect updated state
+      onBack();
+      router.refresh();
+    } catch (err) {
+      // If deletion fails, keep dialog state as-is; optionally log error
+      console.error("Failed to delete job:", err);
     }
   };
 
@@ -304,7 +312,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
               color={job.is_active ? "success" : "error"}
               className="text-xs sm:text-base"
             >
-              {job.is_active ? "Active" : "Inactive"}
+              {job.is_active ? "Running" : "Completed"}
             </Typography>
           </div>
         </div>
