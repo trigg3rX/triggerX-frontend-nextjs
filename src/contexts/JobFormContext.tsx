@@ -1048,10 +1048,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       let executionCount;
       if (jobType === 1) {
         executionCount = Math.floor(timeframeInSeconds / intervalInSeconds);
-        devLog(
+        console.log(
           "execution count",
           executionCount,
+          "timeframe in seconds",
           timeframeInSeconds,
+          "interval in seconds",
           intervalInSeconds,
         );
       } else {
@@ -1059,6 +1061,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       let totalFeeWei: bigint = BigInt(0);
+      console.log("argType", argType);
       if (argType === 2) {
         if (codeUrls) {
           try {
@@ -1079,11 +1082,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             if (!response.ok) throw new Error("Failed to get fees");
             const data = await response.json();
             if (data.error) throw new Error(data.error);
-            
+
             // Backend now returns big.Int in Wei, so we multiply by execution count
             const feePerExecutionWei = BigInt(data.total_fee);
             totalFeeWei = feePerExecutionWei * BigInt(executionCount);
-            
+
             devLog(
               "Total fee required for Dynamic (Wei):",
               totalFeeWei.toString(),
@@ -1098,15 +1101,16 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         // For static jobs, calculate the fee in Wei (0.001 TG * executionCount * 1e15)
         const staticFeeTG = 0.001 * executionCount;
+        console.log("staticFeeTG", staticFeeTG);
         totalFeeWei = BigInt(Math.floor(staticFeeTG * 1e15));
-        devLog(
+        console.log(
           "Total fee required for static (Wei):",
           totalFeeWei.toString(),
           "Wei",
         );
         setEstimatedFeeInWei(totalFeeWei);
       }
-      
+
       // Convert Wei to TG for display purposes (divide by 1e15)
       const totalFeeTG = Number(totalFeeWei) / 1e15;
       setEstimatedFee(totalFeeTG);
@@ -1149,10 +1153,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       devLog("Staking ETH amount:", requiredEth.toString());
       devLog("Staking Wei amount:", estimatedFeeInWei.toString());
 
-      const tx = await contract.purchaseTG(
-        estimatedFeeInWei,
-        { value: estimatedFeeInWei },
-      );
+      const tx = await contract.purchaseTG(estimatedFeeInWei, {
+        value: estimatedFeeInWei,
+      });
       await tx.wait();
       devLog("Stake transaction confirmed: ", tx.hash);
 

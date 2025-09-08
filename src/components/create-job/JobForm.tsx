@@ -386,10 +386,22 @@ export const JobForm: React.FC = () => {
                     certain address for calling the function, then make sure
                     that this
                     <span className="ml-2 text-white break-all">
-                      0x2469e89386947535A350EEBccC5F2754fd35F474
+                      {
+                        networksData.supportedNetworks.find(
+                          (n) => n.name === selectedNetwork,
+                        )?.type === "mainnet"
+                          ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33" // Mainnet
+                          : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54" // Testnet
+                      }
                     </span>
                     <LucideCopyButton
-                      text="0xd2B4F73FE4c747716F20839c37C451f241226b03"
+                      text={
+                        networksData.supportedNetworks.find(
+                          (n) => n.name === selectedNetwork,
+                        )?.type === "mainnet"
+                          ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33" // Mainnet
+                          : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54" // Testnet
+                      }
                       className="align-middle inline-block !px-2"
                     />
                     address have role/permission to call that function.
