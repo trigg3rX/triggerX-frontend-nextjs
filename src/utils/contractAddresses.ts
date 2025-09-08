@@ -47,6 +47,21 @@ export const CONTRACT_ADDRESSES = {
     BLOCKSCOUT_API_URL: "https://sepolia.arbiscan.io/api",
     ETHERSCAN_API_URL: "https://api.etherscan.io/v2/api?chainid=421614&",
   },
+  // Arbitrum mainnet (chainId: 42161)
+  42161: {
+    TRIGGER_GAS_REGISTRY_ADDRESS:
+      process.env.NEXT_PUBLIC_MAINNET_TRIGGER_GAS_REGISTRY_ADDRESS || "",
+    JOB_REGISTRY_ADDRESS:
+      process.env.NEXT_PUBLIC_MAINNET_JOB_CREATION_CONTRACT_ADDRESS || "",
+    RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || "",
+    API_NETWORK_NAME: "arbitrum", // Add this for the API call
+    DISPLAY_NETWORK_NAME: "Arbitrum", // Add this for display
+    EXPLORER_URL: "https://arbiscan.io/address/",
+
+    ETHERSCAN_API_KEY: process.env.NEXT_PUBLIC_ETHERSCAN_ARBITRUM_API_KEY || "",
+    BLOCKSCOUT_API_URL: "https://arbiscan.io/api",
+    ETHERSCAN_API_URL: "https://api.etherscan.io/v2/api?chainid=42161&",
+  },
 } as const;
 
 export type SupportedChainId = keyof typeof CONTRACT_ADDRESSES;

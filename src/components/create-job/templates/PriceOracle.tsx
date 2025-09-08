@@ -340,9 +340,11 @@ const PriceOracle = () => {
 
       {isConnected && !isDeployed && (
         <div className="flex flex-wrap gap-3 sm:gap-4">
-          {!hasSufficientBalance && !isCheckingBalance && (
-            <ClaimEth onClaimSuccess={handleClaimSuccess} />
-          )}
+          {!hasSufficientBalance &&
+            !isCheckingBalance &&
+            chainId !== BigInt(42161) && (
+              <ClaimEth onClaimSuccess={handleClaimSuccess} />
+            )}
 
           {isCheckingBalance && (
             <div className="flex items-center gap-2 px-4 py-2 bg-[#FFFFFF] rounded-full">
