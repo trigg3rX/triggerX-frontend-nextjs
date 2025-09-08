@@ -14,7 +14,6 @@ import { useTGBalance } from "@/contexts/TGBalanceContext";
 import { useJobForm } from "@/contexts/JobFormContext";
 import { useRouter } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
-import { parseEther } from "viem";
 import JobProcessing from "./JobProcessing";
 import { useSearchParams } from "next/navigation";
 import GameCanvas from "./GameCanvas";
@@ -215,7 +214,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     }
     return (0.001 * estimatedFee).toFixed(6);
   }, [estimatedFee, estimatedFeeInWei]);
-  
+
   const hasEnoughEthToStake = useMemo(() => {
     if (!ethBalance || !estimatedFeeInWei) return false;
     return ethBalance.value >= estimatedFeeInWei;

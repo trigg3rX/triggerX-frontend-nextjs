@@ -9,6 +9,7 @@ declare module "@/utils/networks.json" {
   interface Network {
     id: number;
     name: string;
+    type: "mainnet" | "testnet";
   }
 
   interface NetworksData {
