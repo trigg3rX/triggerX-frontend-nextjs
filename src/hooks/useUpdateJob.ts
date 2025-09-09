@@ -6,6 +6,12 @@ export function useUpdateJob() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   *
+   * @param jobId Numeric identifier of the job to update
+   * @param payload Serializable payload to send as the update body
+   * @param refetch Optional callback to run on success (e.g., to refresh UI)
+   */
   const updateJob = async (
     jobId: number,
     payload: unknown,

@@ -3,8 +3,7 @@ import { devLog } from "@/lib/devLog";
 
 export interface WebSocketMessage {
   type: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any;
+  data: unknown;
   timestamp: string;
 }
 
@@ -51,6 +50,10 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
   const reconnectAttemptsRef = useRef(0);
   const shouldReconnectRef = useRef(autoReconnect);
 
+  /**
+   * Open a WebSocket connection if not already open.
+   * Handles setting state, wiring event listeners, and scheduling reconnects.
+   */
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       return;
@@ -91,7 +94,7 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
       ws.onerror = (event) => {
         const error: WebSocketError = {
           code: "WEBSOCKET_ERROR",
-          message: `WebSocket connection error: ${event.type || "Unknown error"}`,
+          message: `WebSocket connection error`,
         };
         devLog("WebSocket error:", error);
         devLog("WebSocket error event:", event);
@@ -149,11 +152,14 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
     onError,
     onConnect,
     onDisconnect,
-    autoReconnect,
     reconnectInterval,
     maxReconnectAttempts,
   ]);
 
+  /**
+   * Cleanly close the WebSocket connection and cancel any pending reconnect.
+   * Disables further auto-reconnect attempts for this hook instance.
+   */
   const disconnect = useCallback(() => {
     shouldReconnectRef.current = false;
 
@@ -174,8 +180,13 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
     });
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const send = useCallback((message: any) => {
+  /**
+   * Send a message over the active WebSocket connection.
+   * If the socket is not open, the message is not sent.
+   *
+   * @param message Message object or string to be serialized and sent
+   */
+  const send = useCallback((message: unknown) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       const messageStr =
         typeof message === "string" ? message : JSON.stringify(message);
@@ -186,9 +197,15 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
     }
   }, []);
 
+  /**
+   * Convenience helper to publish a SUBSCRIBE message for a logical room/topic.
+   * Additional data can be included and will be spread into the payload.
+   *
+   * @param room Logical topic identifier to subscribe to
+   * @param data Optional payload to include with the subscription
+   */
   const subscribe = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (room: string, data?: any) => {
+    (room: string, data?: Record<string, unknown>) => {
       send({
         type: "SUBSCRIBE",
         data: {
@@ -200,6 +217,11 @@ export function useWebSocket(url: string, options: UseWebSocketOptions = {}) {
     [send],
   );
 
+  /**
+   * Convenience helper to publish an UNSUBSCRIBE message for a logical room/topic.
+   *
+   * @param room Logical topic identifier to unsubscribe from
+   */
   const unsubscribe = useCallback(
     (room: string) => {
       send({

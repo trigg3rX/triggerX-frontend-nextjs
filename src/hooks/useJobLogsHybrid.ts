@@ -190,7 +190,8 @@ export function useJobLogsHybrid(
         break;
 
       case "ERROR":
-        setError(message.data?.message || "WebSocket error occurred");
+        // Cast message.data to a type that includes an optional 'message' property
+        setError("WebSocket error occurred");
         break;
 
       case "JOB_TASKS_SNAPSHOT":
@@ -234,7 +235,7 @@ export function useJobLogsHybrid(
                 task.task_performer_id || task.performer_id || 0,
               task_attester_ids:
                 task.task_attester_ids || task.attester_ids || null,
-              is_accepted: task.is_accepted|| false,
+              is_accepted: task.is_accepted || false,
               task_status: task.task_status || task.status || "processing",
               tx_url: task.tx_url || task.transaction_url || "",
             }));
@@ -254,7 +255,7 @@ export function useJobLogsHybrid(
   // Handle WebSocket errors
   const handleWebSocketError = useCallback(
     (error: { code: string; message: string }) => {
-      setError(`WebSocket connection error: ${error.message}`);
+      setError(` ${error.message}`);
     },
     [],
   );

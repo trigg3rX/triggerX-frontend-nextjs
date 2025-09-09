@@ -415,7 +415,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                  <Typography variant="body" color="primary">
+                  <Typography variant="body" color="primary" align="left">
                     TG Used:
                   </Typography>
                   <Typography
@@ -429,7 +429,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                   </Typography>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                  <Typography variant="body" color="primary">
+                  <Typography variant="body" color="primary" align="left">
                     Time Frame:
                   </Typography>
                   <Typography
@@ -441,7 +441,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                   </Typography>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                  <Typography variant="body" color="primary">
+                  <Typography variant="body" color="primary" align="left">
                     Created At:
                   </Typography>
                   <Typography
@@ -456,7 +456,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
 
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                  <Typography variant="body" color="primary">
+                  <Typography variant="body" color="primary" align="left">
                     Target Contract:
                   </Typography>
                   <div className="flex items-center gap-2">
@@ -471,7 +471,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                  <Typography variant="body" color="primary">
+                  <Typography variant="body" color="primary" align="left">
                     Function:
                   </Typography>
                   <Tooltip>
@@ -489,10 +489,8 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                 </div>
                 {job.next_execution_timestamp && (
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                    <Typography variant="body" color="primary">
-                      {job.is_active
-                        ? "Next Execution Time:"
-                        : "Last Execution Time:"}
+                    <Typography variant="body" color="primary" align="left">
+                      {job.is_active ? "Next Execution:" : "Last Execution:"}
                     </Typography>
                     <Typography
                       variant="body"
@@ -518,7 +516,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                 </Typography>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                    <Typography variant="body" color="primary">
+                    <Typography variant="body" color="primary" align="left">
                       Time Interval:
                     </Typography>
                     <Typography
@@ -545,7 +543,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                 </Typography>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                    <Typography variant="body" color="primary">
+                    <Typography variant="body" color="primary" align="left">
                       Condition Type:
                     </Typography>
                     <Typography
@@ -562,7 +560,11 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                     <>
                       {job.lower_limit !== undefined && (
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                          <Typography variant="body" color="primary">
+                          <Typography
+                            variant="body"
+                            color="primary"
+                            align="left"
+                          >
                             Lower Limit:
                           </Typography>
                           <Typography
@@ -576,7 +578,11 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                       )}
                       {job.upper_limit !== undefined && (
                         <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                          <Typography variant="body" color="primary">
+                          <Typography
+                            variant="body"
+                            color="primary"
+                            align="left"
+                          >
                             Upper Limit:
                           </Typography>
                           <Typography
@@ -592,7 +598,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
                   ) : (
                     job.upper_limit !== undefined && (
                       <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
-                        <Typography variant="body" color="primary">
+                        <Typography variant="body" color="primary" align="left">
                           Upper Limit:
                         </Typography>
                         <Typography
