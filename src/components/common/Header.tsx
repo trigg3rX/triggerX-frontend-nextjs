@@ -20,7 +20,7 @@ const navItems = [
 
 const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [bannerVisible, setBannerVisible] = useState(false); // Lifted state for banner visibility
+  const [bannerVisible, setBannerVisible] = useState(true); // Lifted state for banner visibility
 
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
