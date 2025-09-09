@@ -37,6 +37,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
+  // Clear input when dialog closes
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setWithdrawAmount("");
@@ -44,6 +45,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
     onOpenChange(open);
   };
 
+  // Initiate on-chain redemption of TG to ETH; guard on zero/insufficient balance
   const handleWithdraw = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {

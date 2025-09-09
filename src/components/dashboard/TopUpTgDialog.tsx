@@ -46,6 +46,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
     onOpenChange(open);
   };
 
+  // Initiate on-chain purchase of TG using ETH; refresh balances on success
   const handleStake = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

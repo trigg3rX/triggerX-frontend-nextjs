@@ -18,6 +18,12 @@ const tabs = [
   { id: "contributor", label: "Contributor" },
 ];
 
+/**
+ * Top-level leaderboard page composition and data wiring.
+ * - Manages active tab and search term.
+ * - Fetches tab-specific data via useLeaderboardData.
+ * - Filters by address and renders MainTable.
+ */
 function MainLeaderboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>("keeper");

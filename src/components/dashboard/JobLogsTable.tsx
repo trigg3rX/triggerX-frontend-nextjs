@@ -21,6 +21,7 @@ interface JobLogsTableProps {
   useWebSocketMode?: boolean;
 }
 
+/** Mobile-friendly card view of logs with the same error/empty states as the table. */
 const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   // Show all logs if 11 or more, otherwise limit to 10
   const shouldShowAll = logs.length >= 11;
@@ -133,7 +134,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
   isConnecting,
   useWebSocketMode,
 }) => {
-  // Debug logging
+  // Debug logging for visibility into data flow; safe to keep as low-noise
   console.log("JobLogsTable props:", {
     logs,
     error,

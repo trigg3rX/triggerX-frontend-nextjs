@@ -1,7 +1,7 @@
 "use client";
 import { Typography } from "../ui/Typography";
 import { Dropdown, DropdownOption } from "../ui/Dropdown";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import MainJobs from "./MainJobs";
 import { Card } from "../ui/Card";
 import { useJobs, JobType } from "@/hooks/useJobs";
@@ -22,8 +22,8 @@ const ActiveJobs = () => {
   const [jobs, setJobs] = useState<JobType[]>([]);
   const chainId = useChainId();
 
-  // Sync local jobs state with fetched jobs
-  React.useEffect(() => {
+  // Filter fetched jobs to the currently selected chain
+  useEffect(() => {
     const currentChainId = Number(chainId);
     const filtered = fetchedJobs.filter((job) => {
       const createdId = Number(job.created_chain_id);
@@ -32,6 +32,7 @@ const ActiveJobs = () => {
     setJobs(filtered);
   }, [fetchedJobs, chainId]);
 
+  // Aggregate counts for header badges
   const totalJobs = jobs.length;
   const totalLinkedJobs = jobs.reduce(
     (total, job) => total + (job.linkedJobs?.length || 0),
@@ -80,6 +81,7 @@ const ActiveJobs = () => {
         </div>
       </div>
       <div className={`mb-10   `}>
+        {/* Delegates rendering, filtering, and in-list interactions to `MainJobs` */}
         <MainJobs
           selectedType={selectedType}
           jobs={jobs}

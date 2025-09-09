@@ -26,6 +26,7 @@ interface LinkedJobDetailsViewProps {
 }
 
 // Helper functions (same as JobDetailsView)
+/** Maps internal job type identifiers to human-readable labels. */
 const mapJobType = (type: string) => {
   const types: { [key: string]: string } = {
     PRICE_MONITOR: "Price Monitor",
@@ -34,10 +35,12 @@ const mapJobType = (type: string) => {
   return types[type] || type;
 };
 
+/** Slices an address to a short display form. */
 const sliceAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
+/** Formats ISO date strings to localized display, with invalid fallback. */
 const formatDate = (date: string) => {
   const parsedDate = new Date(date);
   return isNaN(parsedDate.getTime())
@@ -45,10 +48,12 @@ const formatDate = (date: string) => {
     : parsedDate.toLocaleString();
 };
 
+/** Truncates long text for compact UI areas. */
 const truncateText = (text: string) => {
   return text.length > 50 ? `${text.slice(0, 50)}...` : text;
 };
 
+/** Formats timeframe seconds to a friendly duration. */
 const formatTimeframe = (secondsString: string) => {
   const seconds = parseInt(secondsString, 10);
   if (isNaN(seconds)) return secondsString;
@@ -73,6 +78,7 @@ const formatTimeframe = (secondsString: string) => {
   return `${secs} sec${secs !== 1 ? "s" : ""}`;
 };
 
+/** Formats interval seconds to hh/mm/ss for time-based jobs. */
 const formatInterval = (secondsString: string) => {
   const seconds = parseInt(secondsString, 10);
   if (isNaN(seconds)) return secondsString;
@@ -87,6 +93,7 @@ const formatInterval = (secondsString: string) => {
   return "0 sec";
 };
 
+/** Humanizes condition type keys to readable labels. */
 const formatConditionType = (conditionType: string) => {
   switch (conditionType) {
     case "greater_than":
@@ -164,6 +171,7 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
     },
   ];
 
+  // Animate hover highlight under tab item
   const handleTabMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
     const target = e.currentTarget;
     const rect = target.getBoundingClientRect();
@@ -179,6 +187,7 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
     }
   };
 
+  // Hide hover highlight when pointer leaves tabs area
   const handleTabMouseLeave = () => {
     setHighlightStyle({
       width: "0px",
@@ -188,6 +197,7 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
     });
   };
 
+  // Delete linked job and notify parent if provided
   const handleDeleteJob = async () => {
     await deleteJob(job.id);
     setDeleteDialogOpen(false);
@@ -196,6 +206,7 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
     }
   };
 
+  // Navigate to pre-filled update route; require correct network
   const handleUpdateJob = () => {
     const query = new URLSearchParams({
       jobId: String(job.id),
@@ -221,10 +232,12 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
     }
   };
 
+  // Close the network mismatch modal
   const handleCloseUpdateWarning = () => {
     setShowUpdateWarning(false);
   };
 
+  // Change active tab; connect websocket lazily when opening Logs
   const handleTabClick = (tabId: TabType) => {
     setActiveTab(tabId);
     if (tabId === "logs" && !useWebSocketMode) {
@@ -254,18 +267,17 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
 
             <Typography
               variant="h3"
-              className="text-xs sm:text-base"
-              color={job.is_active ? "success" : "error"}
+              color="gray"
+              align="right"
+              className={`${job.is_active ? "text-[#4caf50]" : "text-[#ff4444]"}`}
             >
-              {job.is_active ? "Active" : "Inactive"}
+              {job.is_active ? "Running" : "Completed"}
             </Typography>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 self-end sm:self-auto">
-          {/* View Main Job Button */}
-
           <Tooltip>
             <TooltipTrigger asChild>
               <button

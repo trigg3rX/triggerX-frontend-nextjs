@@ -61,7 +61,7 @@ const MainJobs = ({
     useWebSocketMode,
   } = useJobLogsHybrid(jobLogsOpenId ?? undefined);
 
-  // Add resize effect to update group size
+  // Update grid group size responsively (3 on xl+, 2 otherwise)
   useEffect(() => {
     const updateGroupSize = () => {
       const newGroupSize = window.innerWidth >= 1280 ? 3 : 2;
@@ -89,12 +89,13 @@ const MainJobs = ({
     setSelectedJob(null); // Reset selected job when filter changes
   }, [selectedType]);
 
-  // Reset page to 1 when selectedType changes
+  // Reset page to 1 when filter or page size changes
   useEffect(() => {
     setCurrentPage(1);
     setSelectedJob(null); // Reset selected job when page changes
   }, [selectedType, jobsPerPage]);
 
+  // Execute deletion and clean up related UI state
   const handleDelete = async () => {
     if (jobIdToDelete == null) return;
     await deleteJob(jobIdToDelete);
@@ -120,6 +121,7 @@ const MainJobs = ({
     setSelectedJob(null);
   };
 
+  // When a card is clicked, navigate to details view and close expansions/logs
   const handleJobCardClick = (jobId: number) => {
     const job = jobs.find((j) => j.id === jobId);
     if (job) {
@@ -129,6 +131,7 @@ const MainJobs = ({
     }
   };
 
+  // Filter jobs against the selected type
   const getFilteredJobs = () => {
     if (selectedType !== "All Types") {
       return jobs.filter((job) => job.taskDefinitionId === selectedType);
@@ -136,7 +139,7 @@ const MainJobs = ({
     return jobs;
   };
 
-  // Update getFilteredJobs to support pagination
+  // Slice filtered jobs to the current page window
   const getPaginatedJobs = () => {
     const filtered = getFilteredJobs();
     const startIdx = (currentPage - 1) * jobsPerPage;
@@ -158,7 +161,7 @@ const MainJobs = ({
     return "All Types";
   };
 
-  // Function to render jobs with logs table insertion
+  // Render job cards in responsive groups and insert logs table after a group's job if open
   const renderJobsWithLogs = () => {
     const paginatedJobs = getPaginatedJobs();
     const elements = [];

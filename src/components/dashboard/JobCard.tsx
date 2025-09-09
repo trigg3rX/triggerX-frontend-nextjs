@@ -5,7 +5,6 @@ import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
 import networksData from "@/utils/networks.json";
 import { useChainId, useSwitchChain } from "wagmi";
 import Modal from "../ui/Modal";
@@ -15,15 +14,13 @@ import { JobType } from "@/hooks/useJobs";
 
 type JobCardProps = {
   job: JobType;
-
   className?: string;
   onClick?: () => void;
-
   isLoading?: boolean;
   onCardClick?: (jobId: number) => void;
 };
 
-// Helper functions
+/** Maps internal job type identifiers to human-readable labels. */
 const mapJobType = (type: string) => {
   const types: { [key: string]: string } = {
     PRICE_MONITOR: "Price Monitor",
@@ -32,10 +29,12 @@ const mapJobType = (type: string) => {
   return types[type] || type;
 };
 
+/** Truncates long text to keep the header single-line on small widths. */
 const truncateText = (text: string) => {
   return text.length > 20 ? `${text.slice(0, 20)}...` : text;
 };
 
+/** Formats a seconds string to a friendly duration (days/hours/minutes/seconds). */
 const formatTimeframe = (secondsString: string) => {
   const seconds = parseInt(secondsString, 10);
   if (isNaN(seconds)) return secondsString;
@@ -74,16 +73,19 @@ const JobCard: React.FC<JobCardProps> = ({
   const [showUpdateWarning, setShowUpdateWarning] = useState(false);
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
+  // Whether the user's current chain differs from the job's origin chain
   const isNetworkMismatch =
     chainId !== undefined && Number(job.created_chain_id) !== Number(chainId);
 
   useEffect(() => {
+    // If chain is corrected while a navigation is pending, resume navigation
     if (!isNetworkMismatch && pendingRoute) {
       router.push(pendingRoute);
       setPendingRoute(null);
     }
   }, [isNetworkMismatch, pendingRoute, router]);
 
+  // Close the network switch modal
   const handleClose = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
     setShowUpdateWarning(false);
@@ -226,4 +228,4 @@ const JobCard: React.FC<JobCardProps> = ({
   );
 };
 
-export default React.memo(JobCard);
+export default JobCard;
