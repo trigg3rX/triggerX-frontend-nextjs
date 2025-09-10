@@ -11,6 +11,10 @@ const truncateAddress = (address: string): string => {
   return `${address.slice(0, 5)}...${address.slice(-4)}`;
 };
 
+/**
+ * Card-based mobile rendering of leaderboard rows.
+ * Shows core fields per tab and includes pagination node when provided.
+ */
 interface MobileTableGridProps {
   data: TableData[];
   activeTab: TabType;

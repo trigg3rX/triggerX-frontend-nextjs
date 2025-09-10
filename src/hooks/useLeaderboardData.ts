@@ -30,6 +30,14 @@ export default function useLeaderboardData(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetch leaderboard data when the active tab or refresh key changes.
+   *
+   * - For the "keeper" tab, calls `/api/leaderboard/keepers` and transforms into `KeeperData[]`.
+   * - For the "developer" tab, calls `/api/leaderboard/users` and transforms into `DeveloperData[]`.
+   *
+   * The API base URL and API key are read from `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_API_KEY` env vars.
+   */
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);

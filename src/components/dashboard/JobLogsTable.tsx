@@ -21,6 +21,7 @@ interface JobLogsTableProps {
   useWebSocketMode?: boolean;
 }
 
+/** Mobile-friendly card view of logs with the same error/empty states as the table. */
 const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
   // Show all logs if 11 or more, otherwise limit to 10
   const shouldShowAll = logs.length >= 11;
@@ -61,13 +62,13 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
               <Card key={`${log.task_id}-${log.task_number}`} className="mb-2">
                 <div className="flex flex-col gap-2 ">
                   <div className="flex justify-between  py-1">
-                    <Typography variant="body" color="primary">
+                    <Typography variant="body" color="primary" align="left">
                       Task Number
                     </Typography>
                     <Typography color="gray">{log.task_number}</Typography>
                   </div>
                   <div className="flex justify-between  py-1">
-                    <Typography color="primary" variant="body">
+                    <Typography color="primary" variant="body" align="left">
                       Timestamp
                     </Typography>
                     <Typography color="gray">
@@ -77,29 +78,27 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                     </Typography>
                   </div>
                   <div className="flex justify-between  py-1">
-                    <Typography color="primary" variant="body">
+                    <Typography color="primary" variant="body" align="left">
                       Status
                     </Typography>
                     <Typography color="gray">
-                      {log.task_status === "processing" ? (
-                        <span className="text-yellow-400">Processing</span>
-                      ) : log.task_status === "completed" ? (
-                        <span className="text-green-400">Success</span>
-                      ) : log.task_status === "failed" ? (
+                      {log.task_status === "failed" ? (
                         <span className="text-red-400">Failed</span>
+                      ) : log.task_status === "completed" ? (
+                        <span className="text-green-400">Completed</span>
                       ) : (
                         <span className="text-yellow-400">Processing</span>
                       )}
                     </Typography>
                   </div>
                   <div className="flex justify-between   py-1">
-                    <Typography color="primary" variant="body">
+                    <Typography color="primary" variant="body" align="left">
                       Operation Cost
                     </Typography>
                     <Typography color="gray">{log.task_opx_cost}</Typography>
                   </div>
                   <div className="flex justify-between  py-1">
-                    <Typography color="primary" variant="body">
+                    <Typography color="primary" variant="body" align="left">
                       Tx Hash
                     </Typography>
                     <Typography color="gray">
@@ -135,7 +134,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
   isConnecting,
   useWebSocketMode,
 }) => {
-  // Debug logging
+  // Debug logging for visibility into data flow; safe to keep as low-noise
   console.log("JobLogsTable props:", {
     logs,
     error,
@@ -186,7 +185,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
       {/* Desktop/tablet view */}
       <div className="hidden xl:block w-full">
         <div className="flex justify-between items-center mb-4 ">
-          <Typography variant="h3" color="primary">
+          <Typography variant="h3" color="primary" align="left">
             Job Logs
           </Typography>
         </div>
@@ -246,11 +245,11 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
                     >
                       <TableCell
                         className={`border-l-4 px-6 py-4 ${
-                          log.task_status === "processing"
-                            ? "border-yellow-500"
-                            : log.is_accepted
-                              ? "border-green-500"
-                              : "border-red-500"
+                          log.task_status === "completed"
+                            ? "border-green-500"
+                            : log.task_status === "failed"
+                              ? "border-red-500"
+                              : "border-yellow-500"
                         }`}
                       >
                         <Typography variant="body" color="primary" align="left">
@@ -291,25 +290,17 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {log.task_status === "processing" ? (
-                          <span className="border border-yellow-400/10 bg-yellow-500/10 text-yellow-300 py-2 px-3 rounded-full">
-                            Processing
-                          </span>
-                        ) : log.task_status === "completed" && log.is_accepted ? (
-                          <span className="border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
-                            Success
-                          </span>
-                        ) : log.task_status === "completed" && !log.is_accepted ? (
-                          <span className="border border-orange-400/10 bg-orange-500/10 text-orange-300 py-2 px-3 rounded-full">
-                            Rejected
-                          </span>
-                        ): log.task_status === "failed" ? (
+                        {log.task_status === "failed" ? (
                           <span className="border border-red-400/10 bg-red-500/10 text-red-300 py-2 px-3 rounded-full">
                             Failed
                           </span>
+                        ) : log.task_status === "completed" ? (
+                          <span className="border border-green-400/10 bg-green-500/10 text-green-300 py-2 px-3 rounded-full">
+                            Completed
+                          </span>
                         ) : (
-                          <span className="border border-gray-400/10 bg-gray-500/10 text-gray-300 py-2 px-3 rounded-full">
-                            Unknown
+                          <span className="border border-yellow-400/10 bg-yellow-500/10 text-yellow-300 py-2 px-3 rounded-full">
+                            Processing
                           </span>
                         )}
                       </TableCell>

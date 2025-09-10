@@ -22,13 +22,15 @@ const LinkedJobCard: React.FC<LinkedJobCardProps> = ({ job, onClick }) => {
         </Typography>
         <div className="flex items-center justify-between">
           <Typography variant="body" color="gray">
-            Status:
+            Job Status :
           </Typography>
           <Typography
             variant="body"
-            color={job.is_active ? "success" : "error"}
+            color="gray"
+            align="right"
+            className={`${job.is_active ? "text-[#4caf50]" : "text-[#ff4444]"}`}
           >
-            {job.is_active ? "Active" : "Inactive"}
+            {job.is_active ? "Running" : "Completed"}
           </Typography>
         </div>
         <div className="flex items-center justify-between">
