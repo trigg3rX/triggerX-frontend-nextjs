@@ -1174,6 +1174,52 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  function trimObjectStrings<T>(obj: T): T {
+    if (obj === null) {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => {
+        if (typeof item === "string") {
+          return item.trim();
+        } else if (typeof item === "object" && item !== null) {
+          return trimObjectStrings(item);
+        }
+        return item;
+      }) as T;
+    }
+
+    // Handle primitive strings that are not part of an array or object
+    if (typeof obj === "string") {
+      return (obj as string).trim() as T;
+    }
+
+    // If it's an object (and not an array or primitive string)
+    if (typeof obj === "object") {
+      // We can safely assert it's a Record<string, unknown> to iterate its keys
+      const castObj = obj as Record<string, unknown>;
+      const trimmedObj: Record<string, unknown> = {};
+
+      for (const key in castObj) {
+        if (Object.prototype.hasOwnProperty.call(castObj, key)) {
+          const value = castObj[key];
+          if (typeof value === "string") {
+            trimmedObj[key] = value.trim();
+          } else if (typeof value === "object" && value !== null) {
+            trimmedObj[key] = trimObjectStrings(value);
+          } else {
+            trimmedObj[key] = value;
+          }
+        }
+      }
+      return trimmedObj as T;
+    }
+
+    // For any other primitive types (number, boolean, undefined, symbol, bigint)
+    return obj;
+  }
+
   const handleCreateJob = async (jobId?: string): Promise<boolean> => {
     setIsSubmitting(true);
     try {
@@ -1184,6 +1230,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
+
       // Get network ID
       const networkId = getNetworkIdByName(selectedNetwork);
       if (!networkId) {
@@ -1649,7 +1696,10 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         ...updatedJobDetails,
         ...updatedLinkedJobDetails,
       ];
-      // console.log("Submitting job details:", allJobsForSubmission);
+
+      console.log("before trim", allJobsForSubmission);
+      const trimmedJobsForSubmission = trimObjectStrings(allJobsForSubmission);
+      console.log("Submitting job details:", trimmedJobsForSubmission);
 
       // Create or update job via API
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -1679,7 +1729,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           method: "POST",
           mode: "cors",
           headers,
-          body: JSON.stringify(allJobsForSubmission), // send array for create
+          body: JSON.stringify(trimmedJobsForSubmission), // send array for create
         });
       }
 
