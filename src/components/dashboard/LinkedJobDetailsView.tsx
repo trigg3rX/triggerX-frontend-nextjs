@@ -146,6 +146,7 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
     isConnected,
     isConnecting,
     useWebSocketMode,
+    connectWebSocket,
   } = useJobLogsHybrid(job.id, false); // Don't auto-connect initially
 
   const isNetworkMismatch =
@@ -587,7 +588,6 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
               isConnected={isConnected}
               isConnecting={isConnecting}
               useWebSocketMode={useWebSocketMode}
-              taskDefinitionId={job.raw_task_definition_id}
             />
           ) : (
             <JobLogsTable
@@ -595,7 +595,6 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
               isConnected={isConnected}
               isConnecting={isConnecting}
               useWebSocketMode={useWebSocketMode}
-              taskDefinitionId={job.raw_task_definition_id}
             />
           )}
         </Card>
@@ -653,6 +652,3 @@ const LinkedJobDetailsView: React.FC<LinkedJobDetailsViewProps> = ({
 };
 
 export default LinkedJobDetailsView;
-function connectWebSocket() {
-  throw new Error("Function not implemented.");
-}

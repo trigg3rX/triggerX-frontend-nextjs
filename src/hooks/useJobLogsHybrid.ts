@@ -12,7 +12,6 @@ export interface JobLog {
   is_accepted: boolean;
   task_status: string;
   tx_url: string;
-  converted_arguments?: string; // For task_definition_id 2, 4, 6
 }
 
 interface TaskUpdateData {
@@ -47,7 +46,6 @@ interface WebSocketTaskData {
     is_accepted?: boolean;
     task_status?: string;
     tx_url?: string;
-    converted_arguments?: string; // For task_definition_id 2, 4, 6
   };
   timestamp: string;
 }
@@ -66,6 +64,12 @@ export function useJobLogsHybrid(
   const initialLoadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Check if we're in production mode
+  const isProduction = useCallback(() => {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    return API_BASE_URL === "https://data.triggerx.network";
+  }, []);
+
   // Build WebSocket URL
   const getWebSocketUrl = useCallback(() => {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -83,6 +87,67 @@ export function useJobLogsHybrid(
     // Append API key as query parameter
     const separator = wsUrl.includes("?") ? "&" : "?";
     return `${wsUrl}${separator}api_key=${API_KEY}`;
+  }, []);
+
+  // Fetch logs via API
+  const fetchLogs = useCallback(async () => {
+    if (!jobId) return;
+
+    try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+
+      if (!API_BASE_URL) {
+        setError("API base URL not set. Please contact support.");
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks/job/${jobId}`, {
+        headers: {
+          "X-Api-Key": API_KEY || "",
+        },
+      });
+
+      if (!response.ok) {
+        setError(`Failed to fetch job logs. Status: ${response.status}`);
+        return;
+      }
+
+      const data = await response.json();
+      setLogs(data);
+      setInitialLoadComplete(true);
+      setLoading(false);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
+      setError("Failed to fetch job logs. Please try again.");
+      setLoading(false);
+    }
+  }, [jobId]);
+
+  // Start polling for production mode
+  const startPolling = useCallback(() => {
+    if (!isProduction() || !jobId) return;
+
+    // Clear any existing polling
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    // Initial fetch
+    fetchLogs();
+
+    // Set up polling every 10 seconds
+    pollingIntervalRef.current = setInterval(() => {
+      fetchLogs();
+    }, 10000);
+  }, [isProduction, jobId, fetchLogs]);
+
+  // Stop polling
+  const stopPolling = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
   }, []);
 
   // Handle WebSocket messages
@@ -154,7 +219,6 @@ export function useJobLogsHybrid(
               status?: string;
               tx_url?: string;
               transaction_url?: string;
-              converted_arguments?: string; // For task_definition_id 2, 4, 6
             }>;
           };
 
@@ -174,7 +238,6 @@ export function useJobLogsHybrid(
               is_accepted: task.is_accepted || false,
               task_status: task.task_status || task.status || "processing",
               tx_url: task.tx_url || task.transaction_url || "",
-              converted_arguments: task.converted_arguments,
             }));
 
             setLogs(snapshotLogs);
@@ -262,7 +325,6 @@ export function useJobLogsHybrid(
             is_accepted: data.changes.is_accepted || false,
             task_status: data.changes.task_status || "processing", // Default status for new tasks
             tx_url: data.changes.tx_url || "",
-            converted_arguments: data.changes.converted_arguments,
           };
 
           return [...prevLogs, newLog];
@@ -284,7 +346,7 @@ export function useJobLogsHybrid(
 
   // Subscribe to job room when connected and jobId is available (WebSocket mode only)
   useEffect(() => {
-    if (isConnected && jobId && useWebSocketMode) {
+    if (isConnected && jobId && useWebSocketMode && !isProduction()) {
       const roomName = `job:${jobId}`;
       subscribe(roomName, { job_id: jobId.toString() });
 
@@ -292,7 +354,14 @@ export function useJobLogsHybrid(
         unsubscribe(roomName);
       };
     }
-  }, [isConnected, jobId, useWebSocketMode, subscribe, unsubscribe]);
+  }, [
+    isConnected,
+    jobId,
+    useWebSocketMode,
+    subscribe,
+    unsubscribe,
+    isProduction,
+  ]);
 
   // Initialize based on environment
   useEffect(() => {
@@ -308,8 +377,20 @@ export function useJobLogsHybrid(
         clearTimeout(initialLoadTimeoutRef.current);
         initialLoadTimeoutRef.current = null;
       }
+
+      // Stop any existing polling
+      stopPolling();
+
+      if (isProduction()) {
+        // Use API mode for production
+        setUseWebSocketMode(false);
+        startPolling();
+      } else {
+        // Use WebSocket mode for local development
+        setUseWebSocketMode(autoConnect);
+      }
     }
-  }, [jobId, autoConnect]);
+  }, [jobId, autoConnect, isProduction, startPolling, stopPolling]);
 
   // Update ref when logs change
   useEffect(() => {
@@ -318,10 +399,10 @@ export function useJobLogsHybrid(
 
   // Handle WebSocket connection errors
   useEffect(() => {
-    if (wsError && useWebSocketMode) {
+    if (wsError && useWebSocketMode && !isProduction()) {
       setError(`WebSocket error: ${wsError.message}`);
     }
-  }, [wsError, useWebSocketMode]);
+  }, [wsError, useWebSocketMode, isProduction]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -335,22 +416,48 @@ export function useJobLogsHybrid(
     };
   }, []);
 
+  const connectWebSocket = useCallback(() => {
+    if (isProduction()) {
+      // For production, restart polling
+      startPolling();
+    } else {
+      // For local development, connect WebSocket
+      setUseWebSocketMode(true);
+      setLoading(true);
+      setError(null);
+      setInitialLoadComplete(false);
+      setLogs([]);
+    }
+  }, [isProduction, startPolling]);
+
   // Debug logging for state changes
-  useEffect(() => {}, [
+  useEffect(() => {
+    // devLog("useJobLogsHybrid state update:", { // Removed devLog
+    //   jobId,
+    //   useWebSocketMode,
+    //   isConnected,
+    //   isConnecting,
+    //   logsCount: logs.length,
+    //   error,
+    //   isProduction: isProduction(),
+    // });
+  }, [
     jobId,
     useWebSocketMode,
     isConnected,
     isConnecting,
     logs.length,
     error,
+    isProduction,
   ]);
 
   return {
     logs,
-    loading: loading || isConnecting,
-    error: error || (wsError ? wsError.message : null),
-    isConnected,
-    isConnecting,
+    loading: loading || (isConnecting && !isProduction()),
+    error: error || (wsError && !isProduction() ? wsError.message : null),
+    isConnected: isProduction() ? true : isConnected,
+    isConnecting: isProduction() ? false : isConnecting,
     useWebSocketMode,
+    connectWebSocket,
   };
 }

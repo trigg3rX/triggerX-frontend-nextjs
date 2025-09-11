@@ -155,6 +155,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
     isConnected,
     isConnecting,
     useWebSocketMode,
+    connectWebSocket,
   } = useJobLogsHybrid(job.id, false); // Don't auto-connect initially
 
   const isNetworkMismatch =
@@ -222,6 +223,9 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
   // Change active tab; connect websocket lazily when opening Logs
   const handleTabClick = (tabId: TabType) => {
     setActiveTab(tabId);
+    if (tabId === "logs" && !useWebSocketMode) {
+      connectWebSocket();
+    }
   };
 
   const handleBackToLinkedJobs = () => {
@@ -321,7 +325,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
               align="right"
               className={`${job.is_active ? "text-[#4caf50]" : "text-[#ff4444]"}`}
             >
-              {job.is_active ? "Running" : "Completed"}
+              Job Status :{job.is_active ? "Running" : "Completed"}
             </Typography>
           </div>
         </div>
@@ -638,7 +642,6 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
               isConnected={isConnected}
               isConnecting={isConnecting}
               useWebSocketMode={useWebSocketMode}
-              taskDefinitionId={job.raw_task_definition_id}
             />
           ) : (
             <JobLogsTable
@@ -646,7 +649,6 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
               isConnected={isConnected}
               isConnecting={isConnecting}
               useWebSocketMode={useWebSocketMode}
-              taskDefinitionId={job.raw_task_definition_id}
             />
           )}
         </Card>
