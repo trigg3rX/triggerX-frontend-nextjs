@@ -6,6 +6,7 @@ export type JobType = {
   id: number;
   jobTitle: string;
   taskDefinitionId: string;
+  raw_task_definition_id: string; // Raw numeric task definition ID for conditional logic
   is_active: boolean;
   job_cost_actual: string;
   timeFrame: string;
@@ -152,6 +153,9 @@ export function useJobs() {
                 taskDefinitionId: mapJobType(
                   nextJob.job_data.task_definition_id,
                 ),
+                raw_task_definition_id: String(
+                  nextJob.job_data.task_definition_id,
+                ),
                 is_active: typeSpecificData.is_active === true,
                 next_execution_timestamp:
                   mapJobType(nextJob.job_data.task_definition_id) ===
@@ -240,6 +244,9 @@ export function useJobs() {
               id: jobDetail.job_data.job_id,
               jobTitle: jobDetail.job_data.job_title,
               taskDefinitionId: mapJobType(
+                jobDetail.job_data.task_definition_id,
+              ),
+              raw_task_definition_id: String(
                 jobDetail.job_data.task_definition_id,
               ),
               is_active: typeSpecificData.is_active === true,
