@@ -325,7 +325,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
               align="right"
               className={`${job.is_active ? "text-[#4caf50]" : "text-[#ff4444]"}`}
             >
-              Job Status :{job.is_active ? "Running" : "Completed"}
+              {job.is_active ? "Running" : "Completed"}
             </Typography>
           </div>
         </div>
