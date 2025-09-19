@@ -782,15 +782,35 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
           const apiKeys = await fetchApiKeys(value);
 
-          setContractInteractions((prev) => ({
-            ...prev,
-            [contractKey]: {
-              ...prev[contractKey],
-              apiKeys,
-              isFetchingApiKeys: false,
-              apiKeysError: "",
-            },
-          }));
+          setContractInteractions((prev) => {
+            const firstKey =
+              apiKeys && apiKeys.length > 0 ? apiKeys[0] : undefined;
+            const defaultSelectedValue = firstKey ? String(firstKey.value) : "";
+            const defaultActualValue = firstKey
+              ? String(firstKey.originalValue || firstKey.value)
+              : "";
+
+            return {
+              ...prev,
+              [contractKey]: {
+                ...prev[contractKey],
+                apiKeys,
+                isFetchingApiKeys: false,
+                apiKeysError: "",
+                // Initialize selection so downstream submission has a value even if user doesn't click
+                selectedApiKey:
+                  prev[contractKey].selectedApiKey &&
+                  prev[contractKey].selectedApiKey !== ""
+                    ? prev[contractKey].selectedApiKey
+                    : defaultSelectedValue,
+                selectedApiKeyValue:
+                  prev[contractKey].selectedApiKeyValue &&
+                  prev[contractKey].selectedApiKeyValue !== ""
+                    ? prev[contractKey].selectedApiKeyValue
+                    : defaultActualValue,
+              },
+            };
+          });
         } catch (fetchError) {
           setContractInteractions((prev) => ({
             ...prev,
@@ -816,6 +836,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         const selectedApiKey = contract.apiKeys?.find(
           (key) => String(key.value) === apiKeyValue,
         );
+
+        console.log("in handle", selectedApiKey);
 
         // Get the actual value from the selected API key
         let actualValue = "";
