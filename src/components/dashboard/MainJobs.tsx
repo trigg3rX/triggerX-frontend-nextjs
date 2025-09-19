@@ -212,6 +212,7 @@ const MainJobs = ({
                 isConnected={isConnected}
                 isConnecting={isConnecting}
                 useWebSocketMode={useWebSocketMode}
+                taskDefinitionId={jobWithLogsOpen.raw_task_definition_id}
               />
             ) : (
               <JobLogsTable
@@ -219,6 +220,7 @@ const MainJobs = ({
                 isConnected={isConnected}
                 isConnecting={isConnecting}
                 useWebSocketMode={useWebSocketMode}
+                taskDefinitionId={jobWithLogsOpen.raw_task_definition_id}
               />
             )}
           </div>,

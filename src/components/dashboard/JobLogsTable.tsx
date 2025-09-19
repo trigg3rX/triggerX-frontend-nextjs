@@ -19,10 +19,15 @@ interface JobLogsTableProps {
   isConnected?: boolean;
   isConnecting?: boolean;
   useWebSocketMode?: boolean;
+  taskDefinitionId?: string; // For determining if converted_arguments should be shown
 }
 
 /** Mobile-friendly card view of logs with the same error/empty states as the table. */
-const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
+const JobLogsMobileView: React.FC<JobLogsTableProps> = ({
+  logs,
+  error,
+  taskDefinitionId,
+}) => {
   // Show all logs if 11 or more, otherwise limit to 10
   const shouldShowAll = logs.length >= 11;
   const displayLogs = shouldShowAll ? logs : logs.slice(0, 10);
@@ -117,6 +122,19 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({ logs, error }) => {
                       )}
                     </Typography>
                   </div>
+                  {/* Show converted_arguments for task_definition_id 2, 4, 6 */}
+                  {(taskDefinitionId === "2" ||
+                    taskDefinitionId === "4" ||
+                    taskDefinitionId === "6") && (
+                    <div className="flex justify-between py-1">
+                      <Typography color="primary" variant="body" align="left">
+                        Converted Arguments
+                      </Typography>
+                      <Typography color="gray" className="break-all">
+                        {log.converted_arguments || "-"}
+                      </Typography>
+                    </div>
+                  )}
                 </div>
               </Card>
             );
@@ -133,6 +151,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
   isConnected,
   isConnecting,
   useWebSocketMode,
+  taskDefinitionId,
 }) => {
   // Debug logging for visibility into data flow; safe to keep as low-noise
   console.log("JobLogsTable props:", {
@@ -190,7 +209,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
           </Typography>
         </div>
         <div
-          className={`overflow-x-auto ${shouldScroll ? `max-h-[500px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
+          className={`overflow-auto max-h-[500px] ${scrollbarStyles.customScrollbar}`}
           style={shouldScroll ? { maxHeight: 500 } : {}}
         >
           <Table>
@@ -217,18 +236,42 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
                 </TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Operation Cost</TableHead>
+                {/* Show converted_arguments column for task_definition_id 2, 4, 6 */}
+                {(taskDefinitionId === "2" ||
+                  taskDefinitionId === "4" ||
+                  taskDefinitionId === "6") && (
+                  <TableHead>Converted Arguments</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {error ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-red-400">
+                  <TableCell
+                    colSpan={
+                      taskDefinitionId === "2" ||
+                      taskDefinitionId === "4" ||
+                      taskDefinitionId === "6"
+                        ? 6
+                        : 5
+                    }
+                    className="text-center text-red-400"
+                  >
                     {error}
                   </TableCell>
                 </TableRow>
               ) : logs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
+                  <TableCell
+                    colSpan={
+                      taskDefinitionId === "2" ||
+                      taskDefinitionId === "4" ||
+                      taskDefinitionId === "6"
+                        ? 6
+                        : 5
+                    }
+                    className="text-center"
+                  >
                     No logs found.
                   </TableCell>
                 </TableRow>
@@ -315,6 +358,21 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
                           </Typography>
                         </div>
                       </TableCell>
+                      {/* Show converted_arguments cell for task_definition_id 2, 4, 6 */}
+                      {(taskDefinitionId === "2" ||
+                        taskDefinitionId === "4" ||
+                        taskDefinitionId === "6") && (
+                        <TableCell>
+                          <Typography
+                            variant="body"
+                            color="primary"
+                            align="left"
+                            className="break-all"
+                          >
+                            {log.converted_arguments || "-"}
+                          </Typography>
+                        </TableCell>
+                      )}
                     </TableRow>
                   );
                 })
@@ -324,7 +382,11 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
         </div>
       </div>
       {/* Mobile/card view */}
-      <JobLogsMobileView logs={sortedLogs} error={error} />
+      <JobLogsMobileView
+        logs={sortedLogs}
+        error={error}
+        taskDefinitionId={taskDefinitionId}
+      />
     </>
   );
 };
