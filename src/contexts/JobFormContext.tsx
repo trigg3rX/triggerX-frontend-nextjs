@@ -391,6 +391,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedApiKeyValue: "",
         isFetchingApiKeys: false,
         apiKeysError: "",
+        isProxy: false,
+        implementationAddress: undefined,
+        proxyType: undefined,
       },
       contract: {
         address: "",
@@ -416,6 +419,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedApiKeyValue: "",
         isFetchingApiKeys: false,
         apiKeysError: "",
+        isProxy: false,
+        implementationAddress: undefined,
+        proxyType: undefined,
       },
     });
   const [linkedJobs, setLinkedJobs] = useState<{ [key: number]: number[] }>({});
@@ -555,16 +561,67 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           targetFunction: "",
           targetEvent: "",
           manualABI: "",
+          // Reset proxy-related fields
+          isProxy: false,
+          implementationAddress: undefined,
+          proxyType: undefined,
         },
       }));
 
       if (ethers.isAddress(value)) {
-        // Use the shared ABI fetch utility
+        // First, try to detect if it's a proxy contract
+        let proxyInfo: {
+          isProxy: boolean;
+          implementationAddress?: string;
+          proxyType?: string;
+        } = {
+          isProxy: false,
+          implementationAddress: undefined,
+          proxyType: undefined,
+        };
+
         try {
-          const abiString = await fetchContractABI(
-            value,
-            getNetworkIdByName(selectedNetwork),
+          const { detectProxyAndGetImplementation, getProviderForChain } =
+            await import("@/utils/proxyDetection");
+          const provider = getProviderForChain(
+            getNetworkIdByName(selectedNetwork) || 1,
           );
+          const detectedProxy = await detectProxyAndGetImplementation(
+            value,
+            provider,
+          );
+          proxyInfo = {
+            isProxy: detectedProxy.isProxy,
+            implementationAddress: detectedProxy.implementationAddress,
+            proxyType: detectedProxy.proxyType,
+          };
+        } catch (proxyError) {
+          devLog(`Error detecting proxy: ${proxyError}`);
+        }
+
+        // Fetch ABI - if it's a proxy, fetch from implementation address
+        try {
+          let abiString: string | null = null;
+
+          if (proxyInfo.isProxy && proxyInfo.implementationAddress) {
+            // For proxy contracts, fetch ABI from implementation address
+            devLog(
+              `Fetching ABI for proxy implementation: ${proxyInfo.implementationAddress}`,
+            );
+            abiString = await fetchContractABI(
+              proxyInfo.implementationAddress,
+              getNetworkIdByName(selectedNetwork),
+              true, // Skip proxy detection since we already know this is the implementation
+            );
+          } else {
+            // For regular contracts, fetch ABI from original address
+            abiString = await fetchContractABI(
+              value,
+              getNetworkIdByName(selectedNetwork),
+              false, // Allow proxy detection for regular contracts
+            );
+          }
+
           if (abiString) {
             JSON.parse(abiString); // Validate JSON
             const functions = extractFunctions(abiString).filter(
@@ -573,6 +630,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 func.stateMutability === "payable",
             );
             const events = extractEvents(abiString);
+
             setContractInteractions((prev) => ({
               ...prev,
               [contractKey]: {
@@ -581,6 +639,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 events,
                 functions,
                 isCheckingABI: false,
+                isProxy: proxyInfo.isProxy,
+                implementationAddress: proxyInfo.implementationAddress,
+                proxyType: proxyInfo.proxyType,
               },
             }));
           } else {
@@ -592,6 +653,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 events: [],
                 functions: [],
                 isCheckingABI: false,
+                isProxy: proxyInfo.isProxy,
+                implementationAddress: proxyInfo.implementationAddress,
+                proxyType: proxyInfo.proxyType,
               },
             }));
           }
@@ -604,6 +668,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               events: [],
               functions: [],
               isCheckingABI: false,
+              isProxy: proxyInfo.isProxy,
+              implementationAddress: proxyInfo.implementationAddress,
+              proxyType: proxyInfo.proxyType,
             },
           }));
         }
@@ -616,6 +683,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
             events: [],
             functions: [],
             isCheckingABI: false,
+            isProxy: false,
+            implementationAddress: undefined,
+            proxyType: undefined,
           },
         }));
       }
@@ -956,6 +1026,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               selectedApiKeyValue: "",
               isFetchingApiKeys: false,
               apiKeysError: "",
+              isProxy: false,
+              implementationAddress: undefined,
+              proxyType: undefined,
             },
           };
           return newDetails;
@@ -1916,6 +1989,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedApiKeyValue: "",
         isFetchingApiKeys: false,
         apiKeysError: "",
+        isProxy: false,
+        implementationAddress: undefined,
+        proxyType: undefined,
       },
       contract: {
         address: "",
@@ -1941,6 +2017,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         selectedApiKeyValue: "",
         isFetchingApiKeys: false,
         apiKeysError: "",
+        isProxy: false,
+        implementationAddress: undefined,
+        proxyType: undefined,
       },
     });
     setLinkedJobs({});

@@ -78,6 +78,10 @@ export interface ContractDetails {
   selectedApiKeyValue?: string;
   isFetchingApiKeys?: boolean;
   apiKeysError?: string;
+  // Proxy-related fields
+  isProxy?: boolean;
+  implementationAddress?: string;
+  proxyType?: string;
 }
 
 export interface ContractInteraction {
