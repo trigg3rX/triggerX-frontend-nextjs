@@ -33,7 +33,7 @@ export interface JobContextType {
 
 export interface ContractEvent {
   name: string;
-  inputs: { type: string }[];
+  inputs: { name?: string; type: string }[];
 }
 
 export interface ContractFunction {
@@ -59,6 +59,8 @@ export interface ContractDetails {
   manualABI: string;
   events: ContractEvent[];
   targetEvent: string;
+  selectedEventArgument?: string;
+  eventArgumentValue?: string;
   functions: ContractFunction[];
   targetFunction: string;
   argumentType?: "static" | "dynamic" | "";

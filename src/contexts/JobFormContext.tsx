@@ -38,6 +38,8 @@ export type JobDetails = {
   trigger_chain_id: string;
   trigger_contract_address: string;
   trigger_event: string;
+  event_filter_para_name?: string;
+  event_filter_value?: string;
   target_chain_id: string;
   target_contract_address: string;
   target_function: string;
@@ -67,11 +69,17 @@ function extractJobDetails(
 ): JobDetails {
   let triggerContractAddress = "0x0000000000000000000000000000000000000000";
   let triggerEvent = "NULL";
+  let eventFilterParaName = "";
+  let eventFilterValue = "";
   if (jobType === 3 && contractInteractions.eventContract) {
     triggerContractAddress =
       contractInteractions.eventContract.address || triggerContractAddress;
     triggerEvent =
       contractInteractions.eventContract.targetEvent || triggerEvent;
+    eventFilterParaName =
+      contractInteractions.eventContract.selectedEventArgument || "";
+    eventFilterValue =
+      contractInteractions.eventContract.eventArgumentValue || "";
   } else {
     const c = contractInteractions[contractKey];
     if (c && c.address) {
@@ -113,6 +121,8 @@ function extractJobDetails(
     trigger_chain_id: triggerChainId,
     trigger_contract_address: triggerContractAddress,
     trigger_event: triggerEvent,
+    event_filter_para_name: eventFilterParaName || "",
+    event_filter_value: eventFilterValue || "",
     target_chain_id: triggerChainId,
     target_contract_address: contractAddress,
     target_function: targetFunction,
@@ -241,6 +251,9 @@ export interface JobFormContextType {
   handleTimeframeChange: (field: keyof Timeframe, value: string) => void;
   handleTimeIntervalChange: (field: keyof TimeInterval, value: string) => void;
   contractInteractions: ContractInteraction;
+  setContractInteractions: React.Dispatch<
+    React.SetStateAction<ContractInteraction>
+  >;
   handleContractAddressChange: (contractKey: string, value: string) => void;
   handleManualABIChange: (contractKey: string, value: string) => void;
   handleEventChange: (contractKey: string, value: string) => void;
@@ -359,6 +372,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         manualABI: "",
         events: [],
         targetEvent: "",
+        selectedEventArgument: "",
+        eventArgumentValue: "",
         functions: [],
         targetFunction: "",
         argumentType: "static",
@@ -1882,6 +1897,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         manualABI: "",
         events: [],
         targetEvent: "",
+        selectedEventArgument: "",
+        eventArgumentValue: "",
         functions: [],
         targetFunction: "",
         argumentType: "static",
@@ -1958,6 +1975,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         handleTimeframeChange,
         handleTimeIntervalChange,
         contractInteractions,
+        setContractInteractions,
         handleContractAddressChange,
         handleManualABIChange,
         handleEventChange,

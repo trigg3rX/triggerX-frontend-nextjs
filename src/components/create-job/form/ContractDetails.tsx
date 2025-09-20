@@ -38,6 +38,7 @@ export const ContractDetails = ({
     jobType,
     setContractErrors,
     contractInteractions,
+    setContractInteractions,
     handleContractAddressChange,
     handleManualABIChange,
     handleEventChange,
@@ -260,6 +261,92 @@ export const ContractDetails = ({
                 error={targetError ?? null}
                 className="mt-1 w-full md:w-[70%] ml-auto"
               />
+
+              {/* Event Arguments Radio Buttons */}
+              {contract.targetEvent && (
+                <div className="my-6">
+                  <RadioGroup
+                    label="Filter Parameters"
+                    options={(() => {
+                      const selectedEvent = contract.events.find(
+                        (event) =>
+                          formatSignature(event.name, event.inputs) ===
+                          contract.targetEvent,
+                      );
+                      if (
+                        !selectedEvent ||
+                        !selectedEvent.inputs ||
+                        selectedEvent.inputs.length === 0
+                      ) {
+                        return [
+                          {
+                            label: "No arguments available",
+                            value: "none",
+                            disabled: true,
+                          },
+                        ];
+                      }
+                      return [
+                        { label: "No filter", value: "" },
+                        ...selectedEvent.inputs.map((input, index) => ({
+                          label: input.name || `Argument ${index + 1}`,
+                          value: input.name || `arg${index}`,
+                        })),
+                      ];
+                    })()}
+                    value={contract.selectedEventArgument || ""}
+                    onChange={
+                      readOnly
+                        ? () => {}
+                        : (value) => {
+                            // Handle event argument selection
+                            setContractInteractions((prev) => ({
+                              ...prev,
+                              [contractKey]: {
+                                ...prev[contractKey],
+                                selectedEventArgument: String(value),
+                                // Clear value when no filter is selected
+                                eventArgumentValue:
+                                  String(value) === ""
+                                    ? ""
+                                    : prev[contractKey].eventArgumentValue,
+                              },
+                            }));
+                          }
+                    }
+                    name={`event-args-${contractKey}`}
+                    disabled={readOnly}
+                  />
+
+                  {/* Value input for selected argument */}
+                  {contract.selectedEventArgument &&
+                    contract.selectedEventArgument !== "" &&
+                    contract.selectedEventArgument !== "none" && (
+                      <div className="mt-4">
+                        <TextInput
+                          label={`Parameter Value`}
+                          value={contract.eventArgumentValue || ""}
+                          onChange={
+                            readOnly
+                              ? () => {}
+                              : (value) => {
+                                  setContractInteractions((prev) => ({
+                                    ...prev,
+                                    [contractKey]: {
+                                      ...prev[contractKey],
+                                      eventArgumentValue: value,
+                                    },
+                                  }));
+                                }
+                          }
+                          placeholder={`Enter value for ${contract.selectedEventArgument}`}
+                          type="text"
+                          disabled={readOnly}
+                        />
+                      </div>
+                    )}
+                </div>
+              )}
             </div>
           ) : (
             <div id={targetDropdownId}>
