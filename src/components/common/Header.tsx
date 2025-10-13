@@ -27,6 +27,8 @@ const Header: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
+  const isBlocklyDemoPage = pathname === "/blockly-demo";
+
   useEffect(() => {
     setIsMounted(true);
 
@@ -62,8 +64,7 @@ const Header: React.FC = () => {
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
       <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
-
-      {isDesktop ? (
+      {isDesktop && !isBlocklyDemoPage ? (
         /* Desktop Header */
         <div
           className={`w-[90%] mx-auto ${bannerVisible ? "my-6 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
@@ -122,44 +123,46 @@ const Header: React.FC = () => {
         /* Mobile Header */
         <>
           <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
-          <div
-            className={`w-[90%] mx-auto ${bannerVisible ? "my-8 sm:my-12 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
-          >
-            <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
-              <LogoLink
-                width={130}
-                height={30}
-                className="w-[170px] h-auto"
-                priority={true}
-              />
-            </div>
+          {!isBlocklyDemoPage && (
+            <div
+              className={`w-[90%] mx-auto ${bannerVisible ? "my-8 sm:my-12 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
+            >
+              <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
+                <LogoLink
+                  width={130}
+                  height={30}
+                  className="w-[170px] h-auto"
+                  priority={true}
+                />
+              </div>
 
-            <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
-              <LandingImage
-                alt="Mobile Navigation Background"
-                width={256}
-                height={100}
-                priority={true}
-              />
-            </div>
+              <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
+                <LandingImage
+                  alt="Mobile Navigation Background"
+                  width={256}
+                  height={100}
+                  priority={true}
+                />
+              </div>
 
-            <div className="relative flex items-center gap-2 md:gap-4 z-10">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
-                aria-label="Toggle menu"
-                aria-expanded={menuOpen}
-              >
-                {menuOpen ? "✖" : "☰"}
-              </button>
-              <MobileMenu
-                isOpen={menuOpen}
-                onClose={() => setMenuOpen(false)}
-                navItems={navItems}
-                currentPath={pathname}
-              />
+              <div className="relative flex items-center gap-2 md:gap-4 z-10">
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
+                  aria-label="Toggle menu"
+                  aria-expanded={menuOpen}
+                >
+                  {menuOpen ? "✖" : "☰"}
+                </button>
+                <MobileMenu
+                  isOpen={menuOpen}
+                  onClose={() => setMenuOpen(false)}
+                  navItems={navItems}
+                  currentPath={pathname}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </>
       )}
     </header>
