@@ -3,6 +3,7 @@ import { useFormKeyboardNavigation } from "@/hooks/useFormKeyboardNavigation";
 import { Card } from "../ui/Card";
 import { TriggerTypeSelector } from "./form/TriggerTypeSelector";
 import { NetworkSelector } from "./form/NetworkSelector";
+import { SafeWalletSelector } from "./form/SafeWalletSelector";
 import { JobTitleInput } from "./form/JobTitleInput";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { TimeframeInputs } from "./form/TimeframeInputs";
@@ -121,6 +122,8 @@ export const JobForm: React.FC = () => {
     setHasConfirmedPermission,
     permissionError,
     setPermissionError,
+    executionMode,
+    selectedSafeWallet,
   } = useJobFormContext();
 
   const { isConnected } = useWalletConnectionContext();
@@ -210,8 +213,8 @@ export const JobForm: React.FC = () => {
     setContractErrors({});
     setPermissionError(null);
 
-    // Check if the permission checkbox is checked
-    if (!hasConfirmedPermission) {
+    // Check if the permission checkbox is checked (only for contract mode)
+    if (executionMode === "contract" && !hasConfirmedPermission) {
       setPermissionError(
         "Please confirm that the address 0x2469...F474 has the required role/permission.",
       );
@@ -229,6 +232,8 @@ export const JobForm: React.FC = () => {
       validateTimeframe,
       validateTimeInterval,
       validateABI,
+      executionMode,
+      selectedSafeWallet,
     });
     if (validationResult) {
       const { errorKey, errorValue, scrollToId } = validationResult;
@@ -271,6 +276,7 @@ export const JobForm: React.FC = () => {
                 />
                 {/* <NetworkSelector disabled={isUpdateMode} /> */}
                 <NetworkSelector />
+                <SafeWalletSelector disabled={isUpdateMode} />
                 <TimeframeInputs
                   timeframe={timeframe}
                   onTimeframeChange={handleTimeframeChange}
@@ -365,54 +371,56 @@ export const JobForm: React.FC = () => {
                 </div>
               )}
 
-              {/* Permission Checkbox */}
-              <Card className="flex flex-col items-start gap-2">
-                <div className="flex items-start gap-2">
-                  <input
-                    id="permission-checkbox"
-                    type="checkbox"
-                    checked={hasConfirmedPermission}
-                    onChange={(e) => {
-                      setHasConfirmedPermission(e.target.checked);
-                      if (e.target.checked) setPermissionError(null);
-                    }}
-                    className="w-4 h-4"
-                  />
-                  <label
-                    htmlFor="permission-checkbox"
-                    className="text-sm select-none text-gray-400"
-                  >
-                    If your target function contains a modifier or requires
-                    certain address for calling the function, then make sure
-                    that this
-                    <span className="ml-2 text-white break-all">
-                      {
-                        networksData.supportedNetworks.find(
-                          (n) => n.name === selectedNetwork,
-                        )?.type === "mainnet"
-                          ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33" // Mainnet
-                          : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54" // Testnet
-                      }
-                    </span>
-                    <LucideCopyButton
-                      text={
-                        networksData.supportedNetworks.find(
-                          (n) => n.name === selectedNetwork,
-                        )?.type === "mainnet"
-                          ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33" // Mainnet
-                          : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54" // Testnet
-                      }
-                      className="align-middle inline-block !px-2"
+              {/* Permission Checkbox - Only show for contract mode */}
+              {executionMode === "contract" && (
+                <Card className="flex flex-col items-start gap-2">
+                  <div className="flex items-start gap-2">
+                    <input
+                      id="permission-checkbox"
+                      type="checkbox"
+                      checked={hasConfirmedPermission}
+                      onChange={(e) => {
+                        setHasConfirmedPermission(e.target.checked);
+                        if (e.target.checked) setPermissionError(null);
+                      }}
+                      className="w-4 h-4"
                     />
-                    address have role/permission to call that function.
-                  </label>
-                </div>
-                {permissionError && (
-                  <div className="text-red-500 text-xs mt-1 ml-1">
-                    {permissionError}
+                    <label
+                      htmlFor="permission-checkbox"
+                      className="text-sm select-none text-gray-400"
+                    >
+                      If your target function contains a modifier or requires
+                      certain address for calling the function, then make sure
+                      that this
+                      <span className="ml-2 text-white break-all">
+                        {
+                          networksData.supportedNetworks.find(
+                            (n) => n.name === selectedNetwork,
+                          )?.type === "mainnet"
+                            ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33" // Mainnet
+                            : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54" // Testnet
+                        }
+                      </span>
+                      <LucideCopyButton
+                        text={
+                          networksData.supportedNetworks.find(
+                            (n) => n.name === selectedNetwork,
+                          )?.type === "mainnet"
+                            ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33" // Mainnet
+                            : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54" // Testnet
+                        }
+                        className="align-middle inline-block !px-2"
+                      />
+                      address have role/permission to call that function.
+                    </label>
                   </div>
-                )}
-              </Card>
+                  {permissionError && (
+                    <div className="text-red-500 text-xs mt-1 ml-1">
+                      {permissionError}
+                    </div>
+                  )}
+                </Card>
+              )}
 
               <div className="flex gap-4 justify-center items-center relative z-10 mt-8">
                 <Button

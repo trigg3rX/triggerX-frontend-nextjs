@@ -5,6 +5,10 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS || "",
     JOB_REGISTRY_ADDRESS:
       process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS || "",
+    SAFE_WALLET_FACTORY_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
+    SAFE_MODULE_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "op_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Optimism Sepolia", // Add this for display
@@ -21,6 +25,10 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS || "",
     JOB_REGISTRY_ADDRESS:
       process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS || "",
+    SAFE_WALLET_FACTORY_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
+    SAFE_MODULE_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "base_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Base Sepolia", // Add this for display
@@ -37,6 +45,10 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_TRIGGER_GAS_REGISTRY_ADDRESS || "",
     JOB_REGISTRY_ADDRESS:
       process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS || "",
+    SAFE_WALLET_FACTORY_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
+    SAFE_MODULE_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum Sepolia", // Add this for display
@@ -53,6 +65,10 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_MAINNET_TRIGGER_GAS_REGISTRY_ADDRESS || "",
     JOB_REGISTRY_ADDRESS:
       process.env.NEXT_PUBLIC_MAINNET_JOB_CREATION_CONTRACT_ADDRESS || "",
+    SAFE_WALLET_FACTORY_ADDRESS:
+      process.env.NEXT_PUBLIC_MAINNET_SAFE_WALLET_FACTORY_ADDRESS || "",
+    SAFE_MODULE_ADDRESS:
+      process.env.NEXT_PUBLIC_MAINNET_SAFE_MODULE_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum", // Add this for display
@@ -115,4 +131,12 @@ export function getBlockscoutApiUrl(chainId: number): string {
 
 export function getEtherScanApiUrl(chainId: number): string {
   return getContractAddress(chainId, "ETHERSCAN_API_URL");
+}
+
+export function getSafeWalletFactoryAddress(chainId: number): string {
+  return getContractAddress(chainId, "SAFE_WALLET_FACTORY_ADDRESS");
+}
+
+export function getSafeModuleAddress(chainId: number): string {
+  return getContractAddress(chainId, "SAFE_MODULE_ADDRESS");
 }
