@@ -11,6 +11,8 @@ interface ValidateJobFormArgs {
   validateTimeframe: (tf?: Timeframe) => string | null;
   validateTimeInterval: (ti?: TimeInterval, jt?: number) => string | null;
   validateABI: (contractKey: string) => string | null;
+  executionMode?: "contract" | "safe";
+  selectedSafeWallet?: string | null;
 }
 
 export function validateJobForm({
@@ -24,11 +26,22 @@ export function validateJobForm({
   validateTimeframe,
   validateTimeInterval,
   validateABI,
+  executionMode = "contract",
+  selectedSafeWallet = null,
 }: ValidateJobFormArgs): null | {
   errorKey: string;
   errorValue: string;
   scrollToId: string;
 } {
+  // Safe wallet validation
+  if (executionMode === "safe" && !selectedSafeWallet) {
+    return {
+      errorKey: "safeWallet",
+      errorValue: "Please select or create a Safe wallet to continue.",
+      scrollToId: "contract-address-input-contract",
+    };
+  }
+
   // Job title
   const jobTitleErrorMsg = validateJobTitle(jobTitle);
   if (jobTitleErrorMsg) {
@@ -123,6 +136,14 @@ export function validateJobForm({
       errorKey: "contractTarget",
       errorValue: "Target function must be selected.",
       scrollToId: "contract-target-dropdown",
+    };
+  }
+  // Safe mode requires dynamic arguments
+  if (executionMode === "safe" && contract.argumentType !== "dynamic") {
+    return {
+      errorKey: "contractIpfs",
+      errorValue: "Safe wallet execution requires dynamic arguments from IPFS.",
+      scrollToId: "contract-ipfs-code-url-contract",
     };
   }
   if (contract.argumentType === "dynamic") {

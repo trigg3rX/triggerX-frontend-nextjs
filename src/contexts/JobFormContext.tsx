@@ -244,6 +244,12 @@ export interface JobFormContextType {
   setTimeInterval: React.Dispatch<React.SetStateAction<TimeInterval>>;
   recurring: boolean;
   setRecurring: React.Dispatch<React.SetStateAction<boolean>>;
+  executionMode: "contract" | "safe";
+  setExecutionMode: React.Dispatch<React.SetStateAction<"contract" | "safe">>;
+  selectedSafeWallet: string | null;
+  setSelectedSafeWallet: React.Dispatch<React.SetStateAction<string | null>>;
+  userSafeWallets: string[];
+  setUserSafeWallets: React.Dispatch<React.SetStateAction<string[]>>;
   handleJobTypeChange: (
     e: React.MouseEvent<HTMLButtonElement>,
     type: number,
@@ -437,6 +443,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const [lastJobId, setLastJobId] = useState<string | undefined>(undefined);
   const [hasConfirmedPermission, setHasConfirmedPermission] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [executionMode, setExecutionMode] = useState<"contract" | "safe">("contract");
+  const [selectedSafeWallet, setSelectedSafeWallet] = useState<string | null>(null);
+  const [userSafeWallets, setUserSafeWallets] = useState<string[]>([]);
 
   // Error refs (must be stable, not recreated on every render)
   const jobTitleErrorRef = React.useRef<HTMLDivElement | null>(null);
@@ -2033,6 +2042,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsSubmitting(false);
     setHasConfirmedPermission(false);
     setPermissionError(null);
+    setExecutionMode("contract");
+    setSelectedSafeWallet(null);
+    setUserSafeWallets([]);
   };
 
   return (
@@ -2115,6 +2127,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setHasConfirmedPermission,
         permissionError,
         setPermissionError,
+        executionMode,
+        setExecutionMode,
+        selectedSafeWallet,
+        setSelectedSafeWallet,
+        userSafeWallets,
+        setUserSafeWallets,
         resetContractInteractionState,
         reset,
       }}
