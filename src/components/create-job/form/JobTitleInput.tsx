@@ -23,12 +23,12 @@ export const JobTitleInput = forwardRef<
   return (
     <div ref={ref}>
       <TextInput
-        placeholder="Untitled Job"
+        label="Job Title"
+        placeholder="Enter job title"
         value={jobTitle}
         onChange={handleChange}
         error={error ?? null}
         disabled={readOnly}
-        className="w-[260px] !py-2"
       />
     </div>
   );

@@ -163,41 +163,11 @@ body {
   stroke: transparent !important;
 }
 
-.blocklyTreeRow.custom-toolbox-category-header {
-  color: #fff; /* White text for headers */
-  font-weight: bold;
-  padding-top: 15px; /* More space above category headers */
-  padding-bottom: 5px;
-  margin-top: 15px; /* Space between categories */
-  cursor: default !important; /* Prevent header from acting like a clickable item */
-  pointer-events: none; /* Make headers non-clickable */
-  background-color: transparent !important; /* No background highlight on hover */
-}
-
-/* Style for the blocks within the flyout */
-.blocklyFlyout .blocklyBlockBackground {
-  border-radius: 8px; /* Rounded corners for blocks */
-  stroke-width: 0; /* Remove block borders if desired */
-}
-
-/* Adjust block text color in the flyout */
-.blocklyFlyout .blocklyText {
-  fill: #fff; /* White text for block labels */
-  font-size: 14px;
-}
-
-/* Specific block colors (example, you'll set these in the block definitions) */
-.blocklyDraggable.blocklySvg.blocklyBlocklyBlock[type="time_trigger_block"]
-  > .blocklyPath {
-  fill: #3498db; /* Example blue color */
-}
-.blocklyDraggable.blocklySvg.blocklyBlocklyBlock[type="event_trigger_block"]
-  > .blocklyPath {
-  fill: #9b59b6; /* Example purple color */
-}
-/* ... and so on for other block types */
-
-/* If you want the icons to be part of the block's main appearance */
-.blocklyIconGroup {
-  /* You might need to adjust positioning or visibility of default icons */
+.blocklyToolbox {
+  left: 10px !important;
+  height: 97% !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  border-radius: 17px !important;
+  padding: 10px !important;
 }
