@@ -19,6 +19,7 @@ interface TextInputProps {
   max?: number;
   disabled?: boolean;
   readOnly?: boolean;
+  endAdornment?: React.ReactNode;
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -37,6 +38,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   max,
   disabled = false,
   readOnly = false,
+  endAdornment,
 }) => {
   const inputWidthClass = label ? "w-full md:w-[70%]" : "w-full";
   const [isFocused, setIsFocused] = useState(false);
@@ -78,6 +80,7 @@ export const TextInput: React.FC<TextInputProps> = ({
             "[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]",
             error ? "border-red-500" : "",
             disabled || readOnly ? "opacity-50 cursor-not-allowed" : "",
+            endAdornment && type !== "number" ? "pr-10" : "",
             className,
           )}
           value={value}
@@ -125,6 +128,11 @@ export const TextInput: React.FC<TextInputProps> = ({
             >
               <IoIosArrowDown className="w-2 sm:w-3 h-2 sm:h-3 text-gray-400 hover:text-white text-base" />
             </button>
+          </div>
+        )}
+        {endAdornment && type !== "number" && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 z-10">
+            {endAdornment}
           </div>
         )}
         {error && (
