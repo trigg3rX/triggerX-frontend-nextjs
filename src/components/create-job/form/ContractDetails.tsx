@@ -2,10 +2,13 @@ import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { TextInput } from "../../ui/TextInput";
 import { Typography } from "../../ui/Typography";
 import { Dropdown, DropdownOption } from "../../ui/Dropdown";
-import React from "react";
+import React, { useState } from "react";
+import { IpfsScriptWizard } from "./IpfsScriptWizard";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
 import { FormErrorMessage } from "@/components/common/FormErrorMessage";
+import { ExternalLinkIcon } from "lucide-react";
+import Link from "next/link";
 
 interface ContractDetailsProps {
   contractKey: string;
@@ -78,19 +81,19 @@ export const ContractDetails = ({
     (event, index) => ({
       id: index,
       name: formatSignature(event.name, event.inputs),
-    }),
+    })
   );
 
   const functionOptions: DropdownOption[] = (contract.functions || []).map(
     (func, index) => ({
       id: index,
       name: formatSignature(func.name, func.inputs),
-    }),
+    })
   );
 
   const selectedFunction = contract.functions.find(
     (func) =>
-      formatSignature(func.name, func.inputs) === contract.targetFunction,
+      formatSignature(func.name, func.inputs) === contract.targetFunction
   );
   const hasArguments =
     selectedFunction &&
@@ -114,7 +117,7 @@ export const ContractDetails = ({
   // Ensure 'Static' is selected by default if argumentType is empty
   const selectedArgumentType =
     argumentTypeOptions.find(
-      (opt) => opt.id === (contract.argumentType || "static"),
+      (opt) => opt.id === (contract.argumentType || "static")
     )?.name || "Static";
 
   const conditionTypeOptions: DropdownOption[] = [
@@ -136,6 +139,7 @@ export const ContractDetails = ({
   };
 
   const targetDropdownId = `${contractKey}-target-dropdown`;
+  const [isIpfsWizardOpen, setIsIpfsWizardOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -271,7 +275,7 @@ export const ContractDetails = ({
                       const selectedEvent = contract.events.find(
                         (event) =>
                           formatSignature(event.name, event.inputs) ===
-                          contract.targetEvent,
+                          contract.targetEvent
                       );
                       if (
                         !selectedEvent ||
@@ -401,11 +405,15 @@ export const ContractDetails = ({
               onChange={
                 readOnly
                   ? () => {}
-                  : (option) =>
-                      handleArgumentTypeChange(
-                        contractKey,
-                        option.name.toLowerCase() as "static" | "dynamic",
-                      )
+                  : (option) => {
+                      const type = option.name.toLowerCase() as
+                        | "static"
+                        | "dynamic";
+                      handleArgumentTypeChange(contractKey, type);
+                      if (type === "dynamic") {
+                        setIsIpfsWizardOpen(true);
+                      }
+                    }
               }
               disabled={readOnly}
             />
@@ -454,7 +462,7 @@ export const ContractDetails = ({
                                 handleArgumentValueChange(
                                   contractKey,
                                   index,
-                                  value,
+                                  value
                                 );
                                 setContractErrors((prev) => ({
                                   ...prev,
@@ -479,22 +487,32 @@ export const ContractDetails = ({
           <TextInput
             label="IPFS Code URL"
             value={contract.ipfsCodeUrl || ""}
-            onChange={
-              readOnly
-                ? () => {}
-                : (value) => {
-                    handleIpfsCodeUrlChange(contractKey, value);
-                    setContractErrors((prev) => ({
-                      ...prev,
-                      [`${contractKey}Ipfs`]: null,
-                    }));
-                  }
-            }
+            onChange={() => {}}
             placeholder="Enter IPFS URL or CID (e.g., ipfs://... or https://ipfs.io/ipfs/...)"
             error={ipfsError ?? null}
             type="text"
             id={`contract-ipfs-code-url-${contractKey}`}
-            disabled={readOnly}
+            disabled
+            endAdornment={
+              contract.ipfsCodeUrl ? (
+                <Link
+                  href={(() => {
+                    const url = contract.ipfsCodeUrl;
+                    if (url.startsWith("ipfs://")) {
+                      const cid = url.replace("ipfs://", "");
+                      return `https://ipfs.io/ipfs/${cid}`;
+                    }
+                    return url;
+                  })()}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-white/70 hover:text-white"
+                  aria-label="Open IPFS URL"
+                >
+                  <ExternalLinkIcon className="w-4 h-4" />
+                </Link>
+              ) : null
+            }
           />
           <div className="w-full md:w-[70%] ml-auto pl-3 mt-3 flex flex-wrap gap-2">
             <FormErrorMessage error={ipfsError ?? null} className="mb-1" />
@@ -503,9 +521,6 @@ export const ContractDetails = ({
                 {contract.ipfsCodeUrlError}
               </Typography>
             )}
-            <Typography variant="caption" color="secondary" align="left">
-              Provide an IPFS URL or CID, where your code is stored.
-            </Typography>
           </div>
         </div>
       )}
@@ -672,7 +687,7 @@ export const ContractDetails = ({
               selectedOption={
                 contract.conditionType
                   ? conditionTypeOptions.find(
-                      (opt) => opt.id === contract.conditionType,
+                      (opt) => opt.id === contract.conditionType
                     )?.name || "Select a condition type"
                   : "Select a condition type"
               }
@@ -682,7 +697,7 @@ export const ContractDetails = ({
                   : (option) => {
                       handleConditionTypeChange(
                         contractKey,
-                        option.id as string,
+                        option.id as string
                       );
                       if (option.id !== "between") {
                         handleLowerLimitChange(contractKey, "0");
@@ -798,6 +813,22 @@ export const ContractDetails = ({
             </>
           )}
         </>
+      )}
+
+      {/* IPFS Script Wizard */}
+      {contract.argumentType === "dynamic" && (
+        <IpfsScriptWizard
+          isOpen={isIpfsWizardOpen}
+          onClose={() => setIsIpfsWizardOpen(false)}
+          onComplete={(url) => {
+            handleIpfsCodeUrlChange(contractKey, url);
+            setContractErrors((prev) => ({
+              ...prev,
+              [`${contractKey}Ipfs`]: null,
+            }));
+            setIsIpfsWizardOpen(false);
+          }}
+        />
       )}
     </div>
   );
