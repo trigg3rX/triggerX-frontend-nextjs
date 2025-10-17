@@ -168,6 +168,21 @@ body {
   height: 97% !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  border-radius: 17px !important;
+  border-radius: 17px 0px 0px 17px !important;
   padding: 10px !important;
+}
+
+.blocklyFlyout {
+  left: 208px !important;
+  height: 97% !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  border-radius: 20px !important;
+  border: 10px solid #1c1c1c;
+}
+
+.blocklyFlyout > .blocklyFlyoutBackground {
+  border-radius: 17px !important; /* inner curve */
+  overflow: hidden;
+  width: 250px !important;
 }

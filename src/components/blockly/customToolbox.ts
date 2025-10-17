@@ -20,25 +20,30 @@ type BlocklyExports = {
 
 const B = Blockly as unknown as BlocklyExports;
 
-// Custom toolbox category with rounded pill design
+// Set your universal toolbox category background color here
+const CATEGORY_BG = "#313334"; // dark mode example — change to what suits your UI
+const ICON_BG_SIZE = "22px"; // circular icon size
+
+// Custom toolbox category class
 class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
   /** @override */
   createDom_() {
     // @ts-expect-error - calling parent method
     super.createDom_?.call(this);
-
     const self = this as unknown as ToolboxCategoryInstance;
 
-    // Style the row container for pill shape
-    self.rowDiv_.style.borderRadius = "10px";
-    self.rowDiv_.style.margin = "10px 0px";
-    self.rowDiv_.style.padding = "18px 10px";
+    // Style category container (pill-like)
+    self.rowDiv_.style.borderRadius = "50px";
+    self.rowDiv_.style.margin = "4px 0";
+    self.rowDiv_.style.padding = "22px 40px";
     self.rowDiv_.style.transition = "all 0.2s ease";
     self.rowDiv_.style.display = "flex";
     self.rowDiv_.style.alignItems = "center";
-    self.rowDiv_.style.gap = "0px";
+    self.rowDiv_.style.gap = "10px";
+    self.rowDiv_.style.backgroundColor = CATEGORY_BG;
+    self.rowDiv_.style.cursor = "pointer";
 
-    // Style the label
+    // Style label
     const labelDom = self.rowDiv_.getElementsByClassName(
       "blocklyToolboxCategoryLabel",
     )[0] as HTMLElement | undefined;
@@ -46,41 +51,58 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
     if (labelDom) {
       labelDom.style.fontWeight = "500";
       labelDom.style.fontSize = "14px";
+      labelDom.style.color = "white";
     }
+
+    // Style icon background as a colored circle
+    if (self.iconDom_) {
+      const iconContainer = document.createElement("div");
+      iconContainer.style.width = ICON_BG_SIZE;
+      iconContainer.style.height = ICON_BG_SIZE;
+      iconContainer.style.borderRadius = "50%";
+      iconContainer.style.backgroundColor = self.colour_ || "#888";
+      iconContainer.style.display = "flex";
+      iconContainer.style.alignItems = "center";
+      iconContainer.style.justifyContent = "center";
+
+      // Move the existing icon inside the colored circle
+      self.iconDom_.style.color = "white";
+      self.iconDom_.style.fontSize = "12px";
+      iconContainer.appendChild(self.iconDom_);
+
+      // Replace icon in rowDiv with the new container
+      self.rowDiv_.insertBefore(iconContainer, self.rowDiv_.firstChild);
+    }
+
+    // Hover effect
+    self.rowDiv_.addEventListener("mouseenter", () => {
+      self.rowDiv_.style.transform = "scale(1.03)";
+      // self.rowDiv_.style.boxShadow = "0 3px 8px rgba(0, 0, 0, 0.25)";
+    });
+    self.rowDiv_.addEventListener("mouseleave", () => {
+      self.rowDiv_.style.transform = "scale(1)";
+      // self.rowDiv_.style.boxShadow = "none";
+    });
 
     return self.rowDiv_;
   }
 
   /** @override */
-  addColourBorder_(colour: string) {
-    // Fill entire row with the category colour
-    const self = this as unknown as ToolboxCategoryInstance;
-    self.rowDiv_.style.backgroundColor = colour;
+  addColourBorder_() {
+    // No dynamic background per category — keep uniform color
   }
 
   /** @override */
   setSelected(isSelected: boolean) {
     const self = this as unknown as ToolboxCategoryInstance;
-    const labelDom = self.rowDiv_.getElementsByClassName(
-      "blocklyToolboxCategoryLabel",
-    )[0] as HTMLElement | undefined;
 
     if (isSelected) {
-      // Selected state: white background, colored text/icon
-      self.rowDiv_.style.backgroundColor = "white";
-      self.rowDiv_.style.transform = "scale(1.02)";
-      self.rowDiv_.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
-
-      if (labelDom) labelDom.style.color = self.colour_;
-      if (self.iconDom_) self.iconDom_.style.color = self.colour_;
+      // Selected state
+      // self.rowDiv_.style.boxShadow = "0 4px 12px rgba(255, 255, 255, 0.1)";
+      self.rowDiv_.style.transform = "scale(1.05)";
     } else {
-      // Default state: colored background, white text/icon
-      self.rowDiv_.style.backgroundColor = self.colour_;
+      // self.rowDiv_.style.boxShadow = "none";
       self.rowDiv_.style.transform = "scale(1)";
-      self.rowDiv_.style.boxShadow = "none";
-
-      if (labelDom) labelDom.style.color = "white";
-      if (self.iconDom_) self.iconDom_.style.color = "white";
     }
 
     B.utils.aria.setState(
@@ -91,7 +113,7 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
   }
 }
 
-// Register and override default ToolboxCategory
+// Register and override the default ToolboxCategory globally
 B.registry.register(
   B.registry.Type.TOOLBOX_ITEM,
   (Blockly as unknown as { ToolboxCategory: { registrationName: string } })
