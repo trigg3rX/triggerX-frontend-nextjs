@@ -36,7 +36,9 @@ const getWalletDisplayName = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
-export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled = false }) => {
+export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
+  disabled = false,
+}) => {
   const { address } = useAccount();
   const chainId = useChainId();
   const {
@@ -79,7 +81,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
         handleSetContractDetails(
           "contract",
           moduleAddress,
-          JSON.stringify(TriggerXSafeModuleArtifact.abi)
+          JSON.stringify(TriggerXSafeModuleArtifact.abi),
         );
       }
     }
@@ -93,7 +95,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
       handleSetContractDetails(
         "contract",
         moduleAddress,
-        JSON.stringify(TriggerXSafeModuleArtifact.abi)
+        JSON.stringify(TriggerXSafeModuleArtifact.abi),
       );
     }
   };
@@ -106,10 +108,12 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
       // Enable module on the newly created Safe
       const moduleEnabled = await enableModule(safeAddress);
       if (moduleEnabled) {
-        // Refetch Safe wallets to include the new one
-        await refetch();
-        // Auto-select the newly created Safe
-        await handleSafeWalletSelect(safeAddress);
+        // Wait a bit for blockchain state to update, then refetch
+        setTimeout(async () => {
+          await refetch();
+          // Auto-select the newly created Safe
+          await handleSafeWalletSelect(safeAddress);
+        }, 3000);
       }
     }
   };
@@ -119,9 +123,22 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
       await handleCreateNewSafe();
     } else {
       const walletAddress = option.id as string;
-      // Enable module first
-      const moduleEnabled = await enableModule(walletAddress);
-      if (moduleEnabled) {
+      try {
+        // Enable module first
+        const moduleEnabled = await enableModule(walletAddress);
+        if (moduleEnabled) {
+          await handleSafeWalletSelect(walletAddress);
+        } else {
+          // Even if module enabling reports failure, try to select the wallet
+          // The user reported that it works on second attempt
+          console.warn(
+            "Module enabling reported failure, but attempting to select wallet anyway",
+          );
+          await handleSafeWalletSelect(walletAddress);
+        }
+      } catch (error) {
+        console.error("Error in handleDropdownChange:", error);
+        // Still try to select the wallet as the user mentioned it works on retry
         await handleSafeWalletSelect(walletAddress);
       }
     }
@@ -149,7 +166,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
     },
   ];
 
-  const selectedOption = selectedSafeWallet 
+  const selectedOption = selectedSafeWallet
     ? getWalletDisplayName(selectedSafeWallet)
     : "Select a Safe Wallet";
 
@@ -162,7 +179,9 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
           { label: "Safe Wallet", value: "safe" },
         ]}
         value={executionMode}
-        onChange={(value) => handleExecutionModeChange(value as "contract" | "safe")}
+        onChange={(value) =>
+          handleExecutionModeChange(value as "contract" | "safe")
+        }
         name="execution-mode"
         disabled={disabled}
       />
@@ -187,8 +206,14 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
               />
 
               {(isCreating || isEnablingModule) && (
-                <Typography variant="caption" color="secondary" className="ml-auto w-full md:w-[70%]">
-                  {isCreating ? "Creating Safe wallet..." : "Enabling module..."}
+                <Typography
+                  variant="caption"
+                  color="secondary"
+                  className="ml-auto w-full md:w-[70%]"
+                >
+                  {isCreating
+                    ? "Creating Safe wallet..."
+                    : "Enabling module..."}
                 </Typography>
               )}
 
@@ -206,7 +231,8 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
                             value={editingName}
                             onChange={(e) => setEditingName(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveWalletName(selectedSafeWallet);
+                              if (e.key === "Enter")
+                                handleSaveWalletName(selectedSafeWallet);
                               if (e.key === "Escape") {
                                 setEditingWallet(null);
                                 setEditingName("");
@@ -217,7 +243,9 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
                             autoFocus
                           />
                           <button
-                            onClick={() => handleSaveWalletName(selectedSafeWallet)}
+                            onClick={() =>
+                              handleSaveWalletName(selectedSafeWallet)
+                            }
                             className="text-green-500 hover:text-green-400 text-sm"
                           >
                             ✓
@@ -234,13 +262,19 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
                         </>
                       ) : (
                         <>
-                          <Typography variant="body" color="primary" className="font-mono">
+                          <Typography
+                            variant="body"
+                            color="primary"
+                            className="font-mono"
+                          >
                             {selectedSafeWallet}
                           </Typography>
                           <button
                             onClick={() => {
                               setEditingWallet(selectedSafeWallet);
-                              setEditingName(getWalletDisplayName(selectedSafeWallet));
+                              setEditingName(
+                                getWalletDisplayName(selectedSafeWallet),
+                              );
                             }}
                             className="text-blue-500 hover:text-blue-400 text-sm"
                             title="Edit wallet name"
@@ -257,10 +291,17 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
           )}
 
           <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <Typography variant="caption" color="secondary" className="text-blue-400">
+            <Typography
+              variant="caption"
+              color="secondary"
+              className="text-blue-400"
+            >
               <strong>Note:</strong> When using Safe wallet execution:
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>The contract address will be automatically set to the Safe Module</li>
+                <li>
+                  The contract address will be automatically set to the Safe
+                  Module
+                </li>
                 <li>Only dynamic parameters from IPFS are supported</li>
                 <li>The Safe wallet will execute actions on your behalf</li>
               </ul>
@@ -271,4 +312,3 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
     </div>
   );
 };
-
