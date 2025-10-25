@@ -3,7 +3,8 @@ import { Order } from "blockly/javascript";
 
 const intervalTimeJobJson = {
   type: "interval_time_job",
-  message0: "Run every %1 %2",
+  message0: "Interval Time Job: Run every %1 %2",
+  message1: "Execute: %1",
   args0: [
     {
       type: "field_number",
@@ -22,10 +23,18 @@ const intervalTimeJobJson = {
       ],
     },
   ],
+  args1: [
+    {
+      type: "input_statement",
+      name: "STATEMENT",
+      check: null, // Allow any block type inside
+    },
+  ],
   previousStatement: null,
   nextStatement: null,
   colour: 210,
-  tooltip: "Schedule a job to run repeatedly after a specified time interval.",
+  tooltip:
+    "Schedule a job to run repeatedly after a specified time interval. Drag other blocks inside to define what the job should do.",
   helpUrl: "",
 };
 

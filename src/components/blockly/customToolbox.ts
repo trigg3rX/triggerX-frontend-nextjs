@@ -1,6 +1,9 @@
 "use client";
 
 import * as Blockly from "blockly/core";
+import { FaWallet, FaLink } from "react-icons/fa";
+import { createRoot } from "react-dom/client";
+import React from "react";
 
 // Minimal typings to avoid `any` while accessing private fields
 type ToolboxCategoryInstance = {
@@ -22,7 +25,7 @@ const B = Blockly as unknown as BlocklyExports;
 
 // Set your universal toolbox category background color here
 const CATEGORY_BG = "#313334"; // dark mode example — change to what suits your UI
-const ICON_BG_SIZE = "22px"; // circular icon size
+const ICON_BG_SIZE = "30px"; // circular icon size
 
 // Custom toolbox category class
 class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
@@ -35,13 +38,17 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
     // Style category container (pill-like)
     self.rowDiv_.style.borderRadius = "50px";
     self.rowDiv_.style.margin = "4px 0";
-    self.rowDiv_.style.padding = "22px 40px";
+    self.rowDiv_.style.padding = "22px 10px";
     self.rowDiv_.style.transition = "all 0.2s ease";
     self.rowDiv_.style.display = "flex";
     self.rowDiv_.style.alignItems = "center";
+    self.rowDiv_.style.justifyContent = "start";
     self.rowDiv_.style.gap = "10px";
     self.rowDiv_.style.backgroundColor = CATEGORY_BG;
     self.rowDiv_.style.cursor = "pointer";
+    self.rowDiv_.style.width = "200px";
+    self.rowDiv_.style.minWidth = "200px";
+    self.rowDiv_.style.maxWidth = "200px";
 
     // Style label
     const labelDom = self.rowDiv_.getElementsByClassName(
@@ -65,10 +72,40 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
       iconContainer.style.alignItems = "center";
       iconContainer.style.justifyContent = "center";
 
-      // Move the existing icon inside the colored circle
-      self.iconDom_.style.color = "white";
-      self.iconDom_.style.fontSize = "12px";
-      iconContainer.appendChild(self.iconDom_);
+      // Get category name to determine which icon to use
+      const categoryName = self.labelDom_?.textContent?.toLowerCase() || "";
+
+      // Create custom icon based on category
+      let customIcon: HTMLElement;
+
+      if (categoryName.includes("wallet")) {
+        // Wallet icon using React Icons
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaWallet, {
+            size: 12,
+            color: "white",
+          }),
+        );
+      } else if (categoryName.includes("chain")) {
+        // Chain icon using React Icons
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaLink, {
+            size: 12,
+            color: "white",
+          }),
+        );
+      } else {
+        // Use existing icon for other categories
+        customIcon = self.iconDom_;
+        customIcon.style.color = "white";
+        customIcon.style.fontSize = "12px";
+      }
+
+      iconContainer.appendChild(customIcon);
 
       // Replace icon in rowDiv with the new container
       self.rowDiv_.insertBefore(iconContainer, self.rowDiv_.firstChild);
@@ -76,7 +113,7 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
 
     // Hover effect
     self.rowDiv_.addEventListener("mouseenter", () => {
-      self.rowDiv_.style.transform = "scale(1.03)";
+      self.rowDiv_.style.transform = "scale(1.01)";
       // self.rowDiv_.style.boxShadow = "0 3px 8px rgba(0, 0, 0, 0.25)";
     });
     self.rowDiv_.addEventListener("mouseleave", () => {
@@ -99,10 +136,15 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
     if (isSelected) {
       // Selected state
       // self.rowDiv_.style.boxShadow = "0 4px 12px rgba(255, 255, 255, 0.1)";
-      self.rowDiv_.style.transform = "scale(1.05)";
+      self.rowDiv_.style.transform = "scale(1)";
+
+      // Add connecting square using ::after pseudo-element
+      self.rowDiv_.style.position = "relative";
+      self.rowDiv_.setAttribute("data-selected", "true");
     } else {
       // self.rowDiv_.style.boxShadow = "none";
       self.rowDiv_.style.transform = "scale(1)";
+      self.rowDiv_.removeAttribute("data-selected");
     }
 
     B.utils.aria.setState(

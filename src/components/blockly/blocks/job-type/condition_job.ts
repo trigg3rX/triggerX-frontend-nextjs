@@ -12,7 +12,8 @@ interface ConditionJobData {
 
 const conditionJobJson = {
   type: "condition_job",
-  message0: "Run when value from API %1 (key: %2) %3 %4 %5",
+  message0: "Condition Job: Run when value from API %1 (key: %2) %3 %4 %5",
+  message1: "Execute: %1",
   args0: [
     {
       type: "field_input",
@@ -47,12 +48,19 @@ const conditionJobJson = {
       precision: 0.01,
     },
   ],
+  args1: [
+    {
+      type: "input_statement",
+      name: "STATEMENT",
+      check: null, // Allow any block type inside
+    },
+  ],
   inputsInline: false, // Keep inputs stacked for readability
   previousStatement: null,
   nextStatement: null,
   colour: 210,
   tooltip:
-    "Trigger a job when a condition based on API data is met. Use LOWER_LIMIT for 'greater than', 'equal to', and 'between' (start). Use UPPER_LIMIT for 'less than' and 'between' (end).",
+    "Trigger a job when a condition based on API data is met. Drag other blocks inside to define what the job should do.",
   helpUrl: "",
 };
 

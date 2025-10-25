@@ -49,6 +49,7 @@ import { operatorEqualsGenerator } from "./blocks/operators/operator_equals_bloc
 import { operatorGtGenerator } from "./blocks/operators/operator_gt_block";
 import { Card } from "../ui/Card";
 import "./customToolbox";
+import networksData from "@/utils/networks.json";
 
 // react-blockly uses window, so ensure client-only dynamic import
 const BlocklyWorkspace = dynamic(
@@ -75,10 +76,10 @@ const triggerxTheme = Blockly.Theme.defineTheme("triggerx_theme", {
     flyoutForegroundColour: "#ffffff",
     flyoutOpacity: 1,
     scrollbarColour: "transparent",
-    insertionMarkerColour: "#ffffff0d",
+    insertionMarkerColour: "#ffffff",
     insertionMarkerOpacity: 0.3,
-    cursorColour: "#ffffff0d",
-    markerColour: "#ffffff0d",
+    cursorColour: "#ffffff",
+    markerColour: "#ffffff",
   },
 });
 
@@ -170,12 +171,12 @@ export default function BlocklyDemo() {
     () => ({
       kind: "categoryToolbox",
       contents: [
-        // --- DEFAULT BLOCKS CATEGORY ---
-        // These are required for validation and define the core context (Chain, Wallet)
+        // --- WALLET CATEGORY ---
+        // Required for job configuration - defines the wallet address
         {
           kind: "category",
-          name: "Default",
-          colour: "65",
+          name: "Wallet",
+          colour: "#F57F17",
           contents: [
             {
               kind: "block",
@@ -184,11 +185,20 @@ export default function BlocklyDemo() {
                 WALLET_ADDRESS: "0x...",
               },
             },
+          ],
+        },
+        // --- CHAIN CATEGORY ---
+        // Required for job configuration - defines the target blockchain
+        {
+          kind: "category",
+          name: "Chain",
+          colour: "#1CD35F",
+          contents: [
             {
               kind: "block",
               type: "chain_selection",
               fields: {
-                CHAIN_ID: "1",
+                CHAIN_ID: "11155420", // OP Sepolia chain ID as default (first in networks.json)
               },
             },
           ],
@@ -317,19 +327,13 @@ export default function BlocklyDemo() {
   }, []);
 
   const generateJson = useCallback(() => {
-    // For demo: convert XML to a very naive JSON structure (counts blocks)
+    // Generate JSON with target_chain_id and user_address
     try {
       const parser = new DOMParser();
       const doc = parser.parseFromString(xml, "text/xml");
       const blockNodes = Array.from(doc.getElementsByTagName("block"));
-      const summary = blockNodes.reduce<Record<string, number>>((acc, node) => {
-        const type = node.getAttribute("type") || "unknown";
-        acc[type] = (acc[type] || 0) + 1;
-        return acc;
-      }, {});
-      setJsonPreview(JSON.stringify({ blockCounts: summary }, null, 2));
 
-      // Build human-readable preview from XML fields
+      // Helper function to get field value from a block
       const getField = (blockEl: Element, name: string): string | null => {
         const fields = Array.from(blockEl.getElementsByTagName("field"));
         const match = fields.find((f) => f.getAttribute("name") === name);
@@ -339,7 +343,51 @@ export default function BlocklyDemo() {
       const findFirstBlockByType = (type: string): Element | undefined =>
         blockNodes.find((b) => (b.getAttribute("type") || "") === type);
 
+      // Find chain and wallet blocks for JSON generation
+      const chainBlockForJson = findFirstBlockByType("chain_selection");
+      const walletBlockForJson = findFirstBlockByType("wallet_selection");
+
+      const jsonData: { target_chain_id?: string; user_address?: string } = {};
+
+      if (chainBlockForJson) {
+        const chainId = getField(chainBlockForJson, "CHAIN_ID");
+        if (chainId) {
+          jsonData.target_chain_id = chainId;
+        }
+      }
+
+      if (walletBlockForJson) {
+        const walletAddress = getField(walletBlockForJson, "WALLET_ADDRESS");
+        if (walletAddress) {
+          jsonData.user_address = walletAddress;
+        }
+      }
+
+      setJsonPreview(JSON.stringify(jsonData, null, 2));
+
+      // Build human-readable preview from XML fields
       const parts: string[] = [];
+
+      // Extract chain and wallet information for human preview
+      const chainBlock = findFirstBlockByType("chain_selection");
+      const walletBlock = findFirstBlockByType("wallet_selection");
+
+      if (chainBlock) {
+        const chainId = getField(chainBlock, "CHAIN_ID") || "(unspecified)";
+        // Find the network name from the chain ID
+        const network = networksData.supportedNetworks.find(
+          (n: { id: number; name: string; type: string }) =>
+            n.id.toString() === chainId,
+        );
+        const chainName = network ? network.name : `Chain ID ${chainId}`;
+        parts.push(`This job will run on the ${chainName} blockchain.`);
+      }
+
+      if (walletBlock) {
+        const walletAddress =
+          getField(walletBlock, "WALLET_ADDRESS") || "(unspecified)";
+        parts.push(`The job will use wallet address ${walletAddress}.`);
+      }
 
       const cronBlock = findFirstBlockByType("cron_time_job");
       const fixedBlock = findFirstBlockByType("fixed_time_job");
@@ -394,10 +442,10 @@ export default function BlocklyDemo() {
   }, [xml, generateJson]);
 
   return (
-    <div className="flex flex-col gap-2 -mt-[10px] lg:-mt-[200px]">
+    <div className="flex flex-col gap-2 -mt-[10px] lg:-my-[200px] pt-[100px] pb-[400px]">
       <Typography variant="h1">Create Automation Job</Typography>
 
-      <Card className="flex items-center justify-between gap-4 !border-0 !p-3 mt-5">
+      <Card className="flex items-center justify-between gap-4 !border-0 !p-3 mt-10">
         <div
           className="flex items-center gap-6 w-full md:w-auto"
           ref={jobTitleErrorRef}
@@ -472,7 +520,7 @@ export default function BlocklyDemo() {
                 controls: false,
                 wheel: false,
                 pinch: false,
-                startScale: 0.8,
+                startScale: 0.6,
                 maxScale: 1,
                 minScale: 1,
                 scaleSpeed: 1,

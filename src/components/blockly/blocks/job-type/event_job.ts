@@ -12,7 +12,8 @@ interface EventJobData {
 const eventJobJson = {
   type: "event_job",
   message0:
-    "On chain ID %1 event %2 from contract %3 %4 with parameter %5 value %6",
+    "Event Job: On chain ID %1 event %2 from contract %3 %4 with parameter %5 value %6",
+  message1: "Execute: %1",
   args0: [
     {
       type: "field_number",
@@ -46,12 +47,19 @@ const eventJobJson = {
       text: "optional_param_value", // Default optional
     },
   ],
+  args1: [
+    {
+      type: "input_statement",
+      name: "STATEMENT",
+      check: null, // Allow any block type inside
+    },
+  ],
   inputsInline: false, // Keep inputs stacked for readability
   previousStatement: null,
   nextStatement: null,
   colour: 210,
   tooltip:
-    "Trigger a job when a specific event is emitted from a smart contract on a given chain, with optional parameter filtering.",
+    "Trigger a job when a specific event is emitted from a smart contract. Drag other blocks inside to define what the job should do.",
   helpUrl: "",
 };
 

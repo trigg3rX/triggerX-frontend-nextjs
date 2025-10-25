@@ -3,7 +3,8 @@ import { Order } from "blockly/javascript";
 
 const cronTimeJobJson = {
   type: "cron_time_job",
-  message0: "Run on cron schedule %1",
+  message0: "Cron Time Job: Run on cron schedule %1",
+  message1: "Execute: %1",
   args0: [
     {
       type: "field_input",
@@ -11,11 +12,18 @@ const cronTimeJobJson = {
       text: "0 0 * * *", // Default: midnight every day
     },
   ],
+  args1: [
+    {
+      type: "input_statement",
+      name: "STATEMENT",
+      check: null, // Allow any block type inside
+    },
+  ],
   previousStatement: null,
   nextStatement: null,
   colour: 210,
   tooltip:
-    "Schedule a job using a standard cron expression (e.g., '0 0 * * *' for daily at midnight UTC).",
+    "Schedule a job using a standard cron expression. Drag other blocks inside to define what the job should do.",
   helpUrl: "https://crontab.guru/",
 };
 
