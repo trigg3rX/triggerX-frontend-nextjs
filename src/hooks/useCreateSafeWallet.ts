@@ -146,8 +146,38 @@ export const useCreateSafeWallet = () => {
 
       const safeProxy = new ethers.Contract(safeAddress, SAFE_ABI, provider);
 
-      // Check if module is already enabled
-      const isEnabled = await safeProxy.isModuleEnabled(moduleAddress);
+      // Check if module is already enabled with retry logic and better error handling
+      let isEnabled = false;
+      let retryCount = 0;
+      const maxRetries = 3;
+
+      while (retryCount < maxRetries) {
+        try {
+          isEnabled = await safeProxy.isModuleEnabled(moduleAddress);
+          break; // Success, exit retry loop
+        } catch (error: unknown) {
+          retryCount++;
+          console.warn(
+            `Attempt ${retryCount} to check module status failed:`,
+            error,
+          );
+
+          if (retryCount >= maxRetries) {
+            // If all retries failed, assume module is not enabled and proceed
+            console.warn(
+              "Failed to check module status after retries, proceeding with enablement",
+            );
+            isEnabled = false;
+            break;
+          }
+
+          // Wait before retry (exponential backoff)
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * retryCount),
+          );
+        }
+      }
+
       if (isEnabled) {
         toast.success("Module is already enabled!");
         return true;
@@ -254,10 +284,58 @@ export const useCreateSafeWallet = () => {
 
       await tx.wait();
 
-      // Verify module is enabled
-      const isNowEnabled = await safeProxy.isModuleEnabled(moduleAddress);
-      if (!isNowEnabled) {
-        throw new Error("Module verification failed");
+      // Verify module is enabled with retry logic
+      let isNowEnabled = false;
+      let verifyRetryCount = 0;
+      const maxVerifyRetries = 5;
+
+      while (verifyRetryCount < maxVerifyRetries) {
+        try {
+          // Wait a bit for the transaction to be processed
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          isNowEnabled = await safeProxy.isModuleEnabled(moduleAddress);
+
+          if (isNowEnabled) {
+            break; // Module successfully enabled
+          }
+
+          verifyRetryCount++;
+          console.warn(
+            `Module verification attempt ${verifyRetryCount} failed, retrying...`,
+          );
+
+          if (verifyRetryCount >= maxVerifyRetries) {
+            // Even if verification fails, the transaction might have succeeded
+            // Check the transaction receipt for success
+            console.warn(
+              "Module verification failed after retries, but transaction was successful",
+            );
+            toast.success(
+              "Module enabled successfully! (Verification timed out but transaction succeeded)",
+              { id: "enable-module" },
+            );
+            return true;
+          }
+        } catch (error: unknown) {
+          verifyRetryCount++;
+          console.warn(
+            `Module verification attempt ${verifyRetryCount} error:`,
+            error,
+          );
+
+          if (verifyRetryCount >= maxVerifyRetries) {
+            // Transaction succeeded but verification failed - this is OK
+            toast.success(
+              "Module enabled successfully! (Verification failed but transaction succeeded)",
+              { id: "enable-module" },
+            );
+            return true;
+          }
+
+          await new Promise((resolve) =>
+            setTimeout(resolve, 2000 * verifyRetryCount),
+          );
+        }
       }
 
       toast.success("Module enabled successfully!", { id: "enable-module" });

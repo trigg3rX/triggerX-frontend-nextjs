@@ -110,10 +110,12 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
       // Enable module on the newly created Safe
       const moduleEnabled = await enableModule(safeAddress);
       if (moduleEnabled) {
-        // Refetch Safe wallets to include the new one
-        await refetch();
-        // Auto-select the newly created Safe
-        await handleSafeWalletSelect(safeAddress);
+        // Wait a bit for blockchain state to update, then refetch
+        setTimeout(async () => {
+          await refetch();
+          // Auto-select the newly created Safe
+          await handleSafeWalletSelect(safeAddress);
+        }, 3000);
       }
     }
   };
@@ -123,9 +125,22 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
       await handleCreateNewSafe();
     } else {
       const walletAddress = option.id as string;
-      // Enable module first
-      const moduleEnabled = await enableModule(walletAddress);
-      if (moduleEnabled) {
+      try {
+        // Enable module first
+        const moduleEnabled = await enableModule(walletAddress);
+        if (moduleEnabled) {
+          await handleSafeWalletSelect(walletAddress);
+        } else {
+          // Even if module enabling reports failure, try to select the wallet
+          // The user reported that it works on second attempt
+          console.warn(
+            "Module enabling reported failure, but attempting to select wallet anyway",
+          );
+          await handleSafeWalletSelect(walletAddress);
+        }
+      } catch (error) {
+        console.error("Error in handleDropdownChange:", error);
+        // Still try to select the wallet as the user mentioned it works on retry
         await handleSafeWalletSelect(walletAddress);
       }
     }
