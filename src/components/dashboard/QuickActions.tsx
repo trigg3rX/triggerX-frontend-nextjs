@@ -4,6 +4,7 @@ import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
 import TopUpTgDialog from "./TopUpTgDialog";
 import WithdrawTgDialog from "./WithdrawTgDialog";
+import ManageSafeWalletsDialog from "./ManageSafeWalletsDialog";
 import { Card } from "../ui/Card";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,8 @@ export const QuickActions = () => {
   const [stakeAmount, setStakeAmount] = React.useState("");
   const [isWithdrawDialogOpen, setIsWithdrawDialogOpen] = React.useState(false);
   const [withdrawAmount, setWithdrawAmount] = React.useState("");
+  const [isManageSafeDialogOpen, setIsManageSafeDialogOpen] =
+    React.useState(false);
   const { isConnected } = useWalletConnectionContext();
   const { address } = useAccount();
 
@@ -45,6 +48,13 @@ export const QuickActions = () => {
           <Button className="w-full" onClick={() => router.push("/")}>
             Create New Job
           </Button>
+          <Button
+            className="w-full"
+            onClick={() => setIsManageSafeDialogOpen(true)}
+            disabled={!isConnected}
+          >
+            Manage Safe Wallets
+          </Button>
         </div>
 
         <TopUpTgDialog
@@ -62,6 +72,10 @@ export const QuickActions = () => {
           setWithdrawAmount={setWithdrawAmount}
           // tgBalance={userBalance}
           // fetchTGBalance={fetchTGBalance}
+        />
+        <ManageSafeWalletsDialog
+          open={isManageSafeDialogOpen}
+          onOpenChange={setIsManageSafeDialogOpen}
         />
       </Card>
       <AlertEmail user_address={address || ""} />
