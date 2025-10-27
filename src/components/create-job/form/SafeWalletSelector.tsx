@@ -6,8 +6,10 @@ import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
 import { Typography } from "@/components/ui/Typography";
 import { Dropdown, DropdownOption } from "@/components/ui/Dropdown";
 import { RadioGroup } from "@/components/ui/RadioGroup";
+import Skeleton from "@/components/ui/Skeleton";
 import { getSafeModuleAddress } from "@/utils/contractAddresses";
 import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
+import { MdEdit, MdCheck, MdClose } from "react-icons/md";
 
 interface SafeWalletSelectorProps {
   disabled?: boolean;
@@ -36,7 +38,9 @@ const getWalletDisplayName = (address: string): string => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
-export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled = false }) => {
+export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
+  disabled = false,
+}) => {
   const { address } = useAccount();
   const chainId = useChainId();
   const {
@@ -79,7 +83,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
         handleSetContractDetails(
           "contract",
           moduleAddress,
-          JSON.stringify(TriggerXSafeModuleArtifact.abi)
+          JSON.stringify(TriggerXSafeModuleArtifact.abi),
         );
       }
     }
@@ -93,7 +97,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
       handleSetContractDetails(
         "contract",
         moduleAddress,
-        JSON.stringify(TriggerXSafeModuleArtifact.abi)
+        JSON.stringify(TriggerXSafeModuleArtifact.abi),
       );
     }
   };
@@ -149,7 +153,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
     },
   ];
 
-  const selectedOption = selectedSafeWallet 
+  const selectedOption = selectedSafeWallet
     ? getWalletDisplayName(selectedSafeWallet)
     : "Select a Safe Wallet";
 
@@ -162,20 +166,17 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
           { label: "Safe Wallet", value: "safe" },
         ]}
         value={executionMode}
-        onChange={(value) => handleExecutionModeChange(value as "contract" | "safe")}
+        onChange={(value) =>
+          handleExecutionModeChange(value as "contract" | "safe")
+        }
         name="execution-mode"
         disabled={disabled}
       />
 
       {executionMode === "safe" && (
-        <div className="space-y-4">
+        <div className="space-y-auto">
           {isLoading ? (
-            <div className="flex items-center">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
-              <Typography variant="body" color="secondary" className="pl-2">
-                Loading Safe wallets...
-              </Typography>
-            </div>
+            <Skeleton height={50} borderRadius={12} />
           ) : (
             <>
               <Dropdown
@@ -187,80 +188,118 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
               />
 
               {(isCreating || isEnablingModule) && (
-                <Typography variant="caption" color="secondary" className="ml-auto w-full md:w-[70%]">
-                  {isCreating ? "Creating Safe wallet..." : "Enabling module..."}
+                <Typography
+                  variant="caption"
+                  color="secondary"
+                  align="left"
+                  className="ml-auto w-full md:w-[70%] mt-2 pl-3"
+                >
+                  {isCreating
+                    ? "Creating Safe wallet..."
+                    : "Enabling module..."}
                 </Typography>
               )}
 
               {selectedSafeWallet && (
-                <div className="space-y-3">
-                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6 p-4 bg-white/5 border border-white/10 rounded-lg">
-                    <Typography variant="body" color="secondary">
-                      Selected Safe:
+                <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-2 bg-white/5 border border-white/10 rounded-lg p-3 my-6">
+                  <div className="flex gap-2 flex-col items-start">
+                    <Typography
+                      variant="caption"
+                      color="secondary"
+                      className="text-[#A2A2A2]"
+                    >
+                      Selected Safe Wallet:
                     </Typography>
-                    <div className="flex items-center gap-2">
-                      {editingWallet === selectedSafeWallet ? (
-                        <>
-                          <input
-                            type="text"
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveWalletName(selectedSafeWallet);
-                              if (e.key === "Escape") {
-                                setEditingWallet(null);
-                                setEditingName("");
-                              }
-                            }}
-                            className="bg-white/5 border border-white/10 rounded px-2 py-1 text-sm"
-                            placeholder="Enter wallet name"
-                            autoFocus
-                          />
-                          <button
-                            onClick={() => handleSaveWalletName(selectedSafeWallet)}
-                            className="text-green-500 hover:text-green-400 text-sm"
-                          >
-                            ✓
-                          </button>
-                          <button
-                            onClick={() => {
+
+                    <Typography
+                      variant="caption"
+                      color="secondary"
+                      className="text-[#A2A2A2]"
+                    >
+                      {selectedSafeWallet}
+                    </Typography>
+                  </div>
+                  <div className="flex items-center gap-0.5">
+                    {editingWallet === selectedSafeWallet ? (
+                      <>
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter")
+                              handleSaveWalletName(selectedSafeWallet);
+                            if (e.key === "Escape") {
                               setEditingWallet(null);
                               setEditingName("");
-                            }}
-                            className="text-red-500 hover:text-red-400 text-sm"
-                          >
-                            ✕
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <Typography variant="body" color="primary" className="font-mono">
-                            {selectedSafeWallet}
-                          </Typography>
-                          <button
-                            onClick={() => {
-                              setEditingWallet(selectedSafeWallet);
-                              setEditingName(getWalletDisplayName(selectedSafeWallet));
-                            }}
-                            className="text-blue-500 hover:text-blue-400 text-sm"
-                            title="Edit wallet name"
-                          >
-                            ✏️
-                          </button>
-                        </>
-                      )}
-                    </div>
+                            }
+                          }}
+                          className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-white/30 transition-colors"
+                          placeholder="Enter wallet name"
+                          autoFocus
+                        />
+                        <button
+                          onClick={() =>
+                            handleSaveWalletName(selectedSafeWallet)
+                          }
+                          className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
+                          title="Save"
+                        >
+                          <MdCheck size={14} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingWallet(null);
+                            setEditingName("");
+                          }}
+                          className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
+                          title="Cancel"
+                        >
+                          <MdClose size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Typography
+                          variant="caption"
+                          color="primary"
+                          className="text-sm"
+                        >
+                          {getWalletDisplayName(selectedSafeWallet)}
+                        </Typography>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setEditingWallet(selectedSafeWallet);
+                            setEditingName(
+                              getWalletDisplayName(selectedSafeWallet),
+                            );
+                          }}
+                          className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-1 ml-1"
+                          title="Edit wallet name"
+                        >
+                          <MdEdit size={14} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
             </>
           )}
 
-          <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <Typography variant="caption" color="secondary" className="text-blue-400">
-              <strong>Note:</strong> When using Safe wallet execution:
+          <div className="text-xs bg-yellow-100 text-yellow-800 p-4 rounded-lg my-6">
+            <Typography
+              variant="caption"
+              className="text-yellow-800"
+              align="left"
+            >
+              When using Safe wallet execution:
               <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>The contract address will be automatically set to the Safe Module</li>
+                <li>
+                  The contract address will be automatically set to the Safe
+                  Module
+                </li>
                 <li>Only dynamic parameters from IPFS are supported</li>
                 <li>The Safe wallet will execute actions on your behalf</li>
               </ul>
@@ -271,4 +310,3 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({ disabled
     </div>
   );
 };
-

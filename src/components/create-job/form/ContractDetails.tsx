@@ -78,20 +78,34 @@ export const ContractDetails = ({
     if (isSafeMode && contract.argumentType !== "dynamic") {
       handleArgumentTypeChange(contractKey, "dynamic");
     }
-  }, [isSafeMode, contract.argumentType, contractKey, handleArgumentTypeChange]);
+  }, [
+    isSafeMode,
+    contract.argumentType,
+    contractKey,
+    handleArgumentTypeChange,
+  ]);
 
   // Auto-select execJobFromHub function in Safe mode
   React.useEffect(() => {
     if (isSafeMode && contract.functions.length > 0) {
       const execJobFromHub = contract.functions.find(
-        (func) => func.name === "execJobFromHub"
+        (func) => func.name === "execJobFromHub",
       );
       if (execJobFromHub && !contract.targetFunction) {
-        const signature = formatSignature(execJobFromHub.name, execJobFromHub.inputs);
+        const signature = formatSignature(
+          execJobFromHub.name,
+          execJobFromHub.inputs,
+        );
         handleFunctionChange(contractKey, signature);
       }
     }
-  }, [isSafeMode, contract.functions, contract.targetFunction, contractKey, handleFunctionChange]);
+  }, [
+    isSafeMode,
+    contract.functions,
+    contract.targetFunction,
+    contractKey,
+    handleFunctionChange,
+  ]);
 
   const formatSignature = (name: string, inputs: { type: string }[]) =>
     `${name}(${inputs.map((input) => input.type).join(",")})`;
@@ -137,7 +151,8 @@ export const ContractDetails = ({
   // Force 'Dynamic' if Safe mode
   const selectedArgumentType =
     argumentTypeOptions.find(
-      (opt) => opt.id === (isSafeMode ? "dynamic" : contract.argumentType || "static"),
+      (opt) =>
+        opt.id === (isSafeMode ? "dynamic" : contract.argumentType || "static"),
     )?.name || "Static";
 
   const conditionTypeOptions: DropdownOption[] = [
@@ -163,7 +178,7 @@ export const ContractDetails = ({
   return (
     <div className="space-y-6">
       <TextInput
-        label={isSafeMode ? "Safe Module Address (Auto-set)" : label}
+        label={isSafeMode ? "Safe Module Address" : label}
         value={contract.address}
         onChange={handleChange}
         placeholder={isSafeMode ? "Safe Module Address" : "Contract address"}
@@ -214,25 +229,28 @@ export const ContractDetails = ({
         </div>
       )}
 
-      {contract.address && !contract.abi && !contract.isCheckingABI && !isSafeMode && (
-        <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
-          <Typography
-            variant="h4"
-            color="secondary"
-            className="text-nowrap h-[50px] flex items-center"
-          >
-            Manual ABI Input
-          </Typography>
-          <div className="w-full md:w-[70%]">
-            <textarea
-              id={`manualEventABI-${contractKey}`}
-              value={contract.manualABI}
-              onChange={
-                readOnly
-                  ? undefined
-                  : (e) => handleManualABIChange(contractKey, e.target.value)
-              }
-              placeholder={`[
+      {contract.address &&
+        !contract.abi &&
+        !contract.isCheckingABI &&
+        !isSafeMode && (
+          <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
+            <Typography
+              variant="h4"
+              color="secondary"
+              className="text-nowrap h-[50px] flex items-center"
+            >
+              Manual ABI Input
+            </Typography>
+            <div className="w-full md:w-[70%]">
+              <textarea
+                id={`manualEventABI-${contractKey}`}
+                value={contract.manualABI}
+                onChange={
+                  readOnly
+                    ? undefined
+                    : (e) => handleManualABIChange(contractKey, e.target.value)
+                }
+                placeholder={`[
 {
     "inputs": [],
     "name": "functionName",
@@ -240,23 +258,23 @@ export const ContractDetails = ({
     "stateMutability": "nonpayable"
   }
 ]`}
-              className="text-xs xs:text-sm sm:text-base w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[230px]"
-              readOnly={readOnly}
-              disabled={readOnly}
-            />
-            <FormErrorMessage error={abiError ?? null} className="mt-1" />
-            <Typography
-              variant="caption"
-              align="left"
-              color="secondary"
-              className="mt-1"
-            >
-              Automatic fetch failed. To continue, please enter the contract ABI
-              in JSON format.
-            </Typography>
+                className="text-xs xs:text-sm sm:text-base w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[230px]"
+                readOnly={readOnly}
+                disabled={readOnly}
+              />
+              <FormErrorMessage error={abiError ?? null} className="mt-1" />
+              <Typography
+                variant="caption"
+                align="left"
+                color="secondary"
+                className="mt-1"
+              >
+                Automatic fetch failed. To continue, please enter the contract
+                ABI in JSON format.
+              </Typography>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {contract.address && contract.abi && (
         <div className="space-y-auto">

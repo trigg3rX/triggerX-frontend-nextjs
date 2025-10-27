@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useChainId } from "wagmi";
 import { ethers } from "ethers";
-import { getSafeWalletFactoryAddress, getSafeModuleAddress } from "@/utils/contractAddresses";
+import {
+  getSafeWalletFactoryAddress,
+  getSafeModuleAddress,
+} from "@/utils/contractAddresses";
 import toast from "react-hot-toast";
 import TriggerXSafeFactoryArtifact from "@/artifacts/TriggerXSafeFactory.json";
 
@@ -16,7 +19,11 @@ const SAFE_ABI = [
       { internalType: "uint256", name: "baseGas", type: "uint256" },
       { internalType: "uint256", name: "gasPrice", type: "uint256" },
       { internalType: "address", name: "gasToken", type: "address" },
-      { internalType: "address payable", name: "refundReceiver", type: "address" },
+      {
+        internalType: "address payable",
+        name: "refundReceiver",
+        type: "address",
+      },
       { internalType: "bytes", name: "signatures", type: "bytes" },
     ],
     name: "execTransaction",
@@ -55,19 +62,24 @@ const SAFE_ABI = [
 ];
 
 // EIP-712 TypeHash for Safe transactions
-const SAFE_TX_TYPEHASH = "0xbb8310d486368db6bd6f849402fdd73ad53d316b5a4b2644ad6efe0f941286d8";
+const SAFE_TX_TYPEHASH =
+  "0xbb8310d486368db6bd6f849402fdd73ad53d316b5a4b2644ad6efe0f941286d8";
 
 export const useCreateSafeWallet = () => {
   const chainId = useChainId();
   const [isCreating, setIsCreating] = useState(false);
   const [isEnablingModule, setIsEnablingModule] = useState(false);
 
-  const createSafeWallet = async (userAddress: string): Promise<string | null> => {
+  const createSafeWallet = async (
+    userAddress: string,
+  ): Promise<string | null> => {
     setIsCreating(true);
     try {
       const factoryAddress = getSafeWalletFactoryAddress(chainId);
       if (!factoryAddress) {
-        throw new Error("Safe Wallet Factory address not configured for this network");
+        throw new Error(
+          "Safe Wallet Factory address not configured for this network",
+        );
       }
 
       if (typeof window.ethereum === "undefined") {
@@ -80,7 +92,7 @@ export const useCreateSafeWallet = () => {
       const factory = new ethers.Contract(
         factoryAddress,
         TriggerXSafeFactoryArtifact.abi,
-        signer
+        signer,
       );
 
       toast.loading("Creating Safe wallet...", { id: "create-safe" });
@@ -88,29 +100,36 @@ export const useCreateSafeWallet = () => {
       const receipt = await tx.wait();
 
       // Get the Safe address from the event logs
-      const safeCreatedEvent = receipt.logs.find((log: { topics: string[] }) =>
-        log.topics[0] === ethers.id("SafeWalletCreated(address,address,uint256)")
+      const safeCreatedEvent = receipt.logs.find(
+        (log: { topics: string[] }) =>
+          log.topics[0] ===
+          ethers.id("SafeWalletCreated(address,address,uint256)"),
       );
 
       let safeAddress: string | null = null;
       if (safeCreatedEvent) {
-        safeAddress = ethers.getAddress("0x" + safeCreatedEvent.topics[2].slice(-40));
+        safeAddress = ethers.getAddress(
+          "0x" + safeCreatedEvent.topics[2].slice(-40),
+        );
       }
 
       toast.success("Safe wallet created successfully!", { id: "create-safe" });
       return safeAddress;
     } catch (err) {
       console.error("Error creating Safe wallet:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to create Safe wallet", {
-        id: "create-safe",
-      });
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create Safe wallet",
+        {
+          id: "create-safe",
+        },
+      );
       return null;
     } finally {
       setIsCreating(false);
     }
   };
 
-  const enableModule = async (safeAddress: string, userPrivateKey?: string): Promise<boolean> => {
+  const enableModule = async (safeAddress: string): Promise<boolean> => {
     setIsEnablingModule(true);
     try {
       const moduleAddress = getSafeModuleAddress(chainId);
@@ -138,9 +157,10 @@ export const useCreateSafeWallet = () => {
       const safeNonce = await safeProxy.nonce();
 
       // Encode the enableModule call data
-      const data = new ethers.Interface(SAFE_ABI).encodeFunctionData("enableModule", [
-        moduleAddress,
-      ]);
+      const data = new ethers.Interface(SAFE_ABI).encodeFunctionData(
+        "enableModule",
+        [moduleAddress],
+      );
 
       // Build Safe transaction parameters
       const to = safeAddress; // self-call to enable module
@@ -155,9 +175,33 @@ export const useCreateSafeWallet = () => {
       // Calculate Safe transaction hash using EIP-712
       const safeTxHash = ethers.keccak256(
         ethers.AbiCoder.defaultAbiCoder().encode(
-          ["bytes32", "address", "uint256", "bytes32", "uint8", "uint256", "uint256", "uint256", "address", "address", "uint256"],
-          [SAFE_TX_TYPEHASH, to, value, ethers.keccak256(data), operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, safeNonce]
-        )
+          [
+            "bytes32",
+            "address",
+            "uint256",
+            "bytes32",
+            "uint8",
+            "uint256",
+            "uint256",
+            "uint256",
+            "address",
+            "address",
+            "uint256",
+          ],
+          [
+            SAFE_TX_TYPEHASH,
+            to,
+            value,
+            ethers.keccak256(data),
+            operation,
+            safeTxGas,
+            baseGas,
+            gasPrice,
+            gasToken,
+            refundReceiver,
+            safeNonce,
+          ],
+        ),
       );
 
       // Get domain separator from Safe
@@ -167,13 +211,15 @@ export const useCreateSafeWallet = () => {
       const txHash = ethers.keccak256(
         ethers.solidityPacked(
           ["bytes1", "bytes1", "bytes32", "bytes32"],
-          ["0x19", "0x01", domainSeparator, safeTxHash]
-        )
+          ["0x19", "0x01", domainSeparator, safeTxHash],
+        ),
       );
 
       // Sign the transaction hash using the connected wallet (personal_sign)
       // For Gnosis Safe, personal_sign signatures must have v adjusted by +4 to mark EthSign
-      toast.loading("Please sign the transaction to enable module...", { id: "enable-module" });
+      toast.loading("Please sign the transaction to enable module...", {
+        id: "enable-module",
+      });
       const rawSignature = await signer.signMessage(ethers.getBytes(txHash));
 
       // Normalize signature to r, s, v and adjust v for Safe's EthSign type
@@ -186,8 +232,12 @@ export const useCreateSafeWallet = () => {
       ]);
 
       // Execute the transaction through Safe's execTransaction
-      const safeProxyWithSigner = new ethers.Contract(safeAddress, SAFE_ABI, signer);
-      
+      const safeProxyWithSigner = new ethers.Contract(
+        safeAddress,
+        SAFE_ABI,
+        signer,
+      );
+
       toast.loading("Enabling module...", { id: "enable-module" });
       const tx = await safeProxyWithSigner.execTransaction(
         to,
@@ -199,7 +249,7 @@ export const useCreateSafeWallet = () => {
         gasPrice,
         gasToken,
         refundReceiver,
-        signature
+        signature,
       );
 
       await tx.wait();
@@ -214,9 +264,12 @@ export const useCreateSafeWallet = () => {
       return true;
     } catch (err) {
       console.error("Error enabling module:", err);
-      toast.error(err instanceof Error ? err.message : "Failed to enable module", {
-        id: "enable-module",
-      });
+      toast.error(
+        err instanceof Error ? err.message : "Failed to enable module",
+        {
+          id: "enable-module",
+        },
+      );
       return false;
     } finally {
       setIsEnablingModule(false);
@@ -230,4 +283,3 @@ export const useCreateSafeWallet = () => {
     isEnablingModule,
   };
 };
-
