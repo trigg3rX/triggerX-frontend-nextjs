@@ -117,8 +117,36 @@ export const useCreateSafeWallet = () => {
       return safeAddress;
     } catch (err) {
       console.error("Error creating Safe wallet:", err);
+      const getShortErrorMessage = (error: Error): string => {
+        const message = error.message.toLowerCase();
+
+        if (
+          message.includes("user rejected") ||
+          message.includes("user denied")
+        ) {
+          return "Transaction rejected";
+        }
+        if (message.includes("insufficient funds")) {
+          return "Insufficient funds";
+        }
+        if (message.includes("network")) {
+          return "Network error";
+        }
+        if (message.includes("gas")) {
+          return "Gas estimation failed";
+        }
+        if (message.includes("metamask")) {
+          return "MetaMask error";
+        }
+
+        // Fallback: take first few words
+        return error.message.split(" ").slice(0, 3).join(" ");
+      };
+
       toast.error(
-        err instanceof Error ? err.message : "Failed to create Safe wallet",
+        err instanceof Error
+          ? `Safe creation failed: ${getShortErrorMessage(err)}`
+          : "Safe creation failed",
         {
           id: "create-safe",
         },

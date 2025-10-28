@@ -177,8 +177,8 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
       <RadioGroup
         label="Execution Mode"
         options={[
-          { label: "Regular Contract", value: "contract" },
-          { label: "Safe Wallet", value: "safe" },
+          { label: "Smart Contract", value: "contract" },
+          { label: "Smart Contract Wallet", value: "safe" },
         ]}
         value={executionMode}
         onChange={(value) =>
