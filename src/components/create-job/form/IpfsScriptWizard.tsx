@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import { Typography } from "@/components/ui/Typography";
 import { TextInput } from "@/components/ui/TextInput";
@@ -80,26 +74,33 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     setIsUrlValidated(false);
   }, [manualUrl]);
 
-  const validateScript = useCallback(async () => {
-    const code = script.trim();
-    if (!code) {
-      setScriptError("Please paste your Go code");
-      return false;
-    }
-    setIsValidating(true);
-    try {
-      // Prepare request body based on Safe mode
-      const requestBody =
-        isSafeMode && selectedSafeWallet && targetFunction
-          ? {
-              code,
-              language: "go",
-              IsSafe: true,
-              selected_safe: selectedSafeWallet,
-              target_function: targetFunction,
-            }
-          : { code, language: "go", IsSafe: false };
+  // ---- Validation helpers ----
+  type ApiResponse = {
+    error?: string;
+    message?: string;
+    executable?: boolean;
+    output?: string;
+    safe_match?: boolean;
+  };
 
+  const buildValidationRequestBody = useCallback(
+    (code: string) => {
+      const base = { code, language: "go" } as Record<string, unknown>;
+      if (isSafeMode && selectedSafeWallet && targetFunction) {
+        return {
+          ...base,
+          IsSafe: true,
+          selected_safe: selectedSafeWallet,
+          target_function: targetFunction,
+        };
+      }
+      return { ...base, IsSafe: false, target_function: targetFunction };
+    },
+    [isSafeMode, selectedSafeWallet, targetFunction],
+  );
+
+  const callValidationApi = useCallback(
+    async (requestBody: Record<string, unknown>) => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
         {
@@ -108,7 +109,6 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
           body: JSON.stringify(requestBody),
         },
       );
-      console.log(res);
 
       if (!res.ok) {
         const text = await res.text();
@@ -117,48 +117,48 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
         );
       }
 
-      // Parse response JSON
-      type ApiResponse = {
-        error?: string;
-        message?: string;
-        executable?: boolean;
-        output?: string;
-        safe_match?: boolean;
-      };
       let data: ApiResponse | null = null;
       try {
         data = (await res.json()) as ApiResponse;
       } catch {
         throw new Error("Invalid response format from validation API");
       }
-
-      // Check for errors
       if (data?.error) {
         throw new Error(data.error);
       }
+      return data;
+    },
+    [],
+  );
 
-      console.log("Validation API response data", data);
-      // For Safe mode, check if executable and safe_match
+  const assertValidationResult = useCallback(
+    (data: ApiResponse) => {
       if (isSafeMode) {
-        if (data.executable === false) {
+        if (data.executable === false)
           throw new Error("Script is not executable");
-        }
-        if (data.safe_match === false) {
+        if (data.safe_match === false)
           throw new Error("Script does not match Safe wallet requirements");
-        }
-        // Success - show output if available
-        if (data.output) {
-          console.log("Validation successful. Output:", data.output);
-        }
       } else {
-        // Regular mode - just check if executable
-        if (data.executable === false) {
+        if (data.executable === false)
           throw new Error("Script is not executable");
-        }
-        if (data.output) {
-          console.log("Validation successful. Output:", data.output);
-        }
       }
+    },
+    [isSafeMode],
+  );
+
+  const validateScript = useCallback(async () => {
+    const code = script.trim();
+    if (!code) {
+      setScriptError("Please paste your Go code");
+      return false;
+    }
+    setIsValidating(true);
+    try {
+      const requestBody = buildValidationRequestBody(code);
+      const data = await callValidationApi(requestBody);
+      assertValidationResult(data);
+      if (data.output)
+        console.log("Validation successful. Output:", data.output);
 
       setScriptError("");
       setIsScriptValidated(true);
@@ -171,7 +171,12 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     } finally {
       setIsValidating(false);
     }
-  }, [script, isSafeMode, selectedSafeWallet, targetFunction]);
+  }, [
+    script,
+    assertValidationResult,
+    buildValidationRequestBody,
+    callValidationApi,
+  ]);
 
   const handleNextFromStep1 = async () => {
     if (!script.trim()) return;
@@ -218,66 +223,11 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       // Fetch the code from IPFS
       const code = await fetchCodeFromIpfs(url);
 
-      // Prepare request body for validation based on Safe mode
-      const requestBody =
-        isSafeMode && selectedSafeWallet && targetFunction
-          ? {
-              code,
-              language: "go",
-              IsSafe: true,
-              selected_safe: selectedSafeWallet,
-              target_function: targetFunction,
-            }
-          : { code, language: "go", IsSafe: false };
-
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(requestBody),
-        },
-      );
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(
-          text?.trim() ? text : `Validation failed (${res.status})`,
-        );
-      }
-
-      // Parse response JSON
-      type ApiResponse = {
-        error?: string;
-        message?: string;
-        executable?: boolean;
-        output?: string;
-        safe_match?: boolean;
-      };
-
-      const data = (await res.json()) as ApiResponse;
-
-      // Check for errors
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      // For Safe mode, check executable and safe_match
-      if (isSafeMode && data.executable === false) {
-        throw new Error("Script is not executable");
-      }
-      if (isSafeMode && data.safe_match === false) {
-        throw new Error("Script does not match Safe wallet requirements");
-      }
-
-      // For regular mode, just check if executable
-      if (!isSafeMode && data.executable === false) {
-        throw new Error("Script is not executable");
-      }
-
-      if (data.output) {
+      const requestBody = buildValidationRequestBody(code);
+      const data = await callValidationApi(requestBody);
+      assertValidationResult(data);
+      if (data.output)
         console.log("Validation successful. Output:", data.output);
-      }
 
       setManualUrlError("");
       setIsValidating(false);
@@ -290,7 +240,12 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       setIsUrlValidated(false);
       return false;
     }
-  }, [manualUrl, isSafeMode, selectedSafeWallet, targetFunction]);
+  }, [
+    manualUrl,
+    assertValidationResult,
+    buildValidationRequestBody,
+    callValidationApi,
+  ]);
 
   // Close Pinata help when clicking outside
   useEffect(() => {
