@@ -2,10 +2,13 @@ import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { TextInput } from "../../ui/TextInput";
 import { Typography } from "../../ui/Typography";
 import { Dropdown, DropdownOption } from "../../ui/Dropdown";
-import React from "react";
+import React, { useState } from "react";
+import { IpfsScriptWizard } from "./IpfsScriptWizard";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
 import { FormErrorMessage } from "@/components/common/FormErrorMessage";
+import { ExternalLinkIcon, CircleCheckIcon } from "lucide-react";
+import Link from "next/link";
 
 interface ContractDetailsProps {
   contractKey: string;
@@ -53,6 +56,7 @@ export const ContractDetails = ({
     handleLowerLimitChange,
     handleUpperLimitChange,
     executionMode,
+    selectedSafeWallet,
   } = useJobFormContext();
 
   const contract = contractInteractions[contractKey] || {
@@ -174,6 +178,7 @@ export const ContractDetails = ({
   };
 
   const targetDropdownId = `${contractKey}-target-dropdown`;
+  const [isIpfsWizardOpen, setIsIpfsWizardOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -442,11 +447,12 @@ export const ContractDetails = ({
               onChange={
                 readOnly || isSafeMode
                   ? () => {}
-                  : (option) =>
-                      handleArgumentTypeChange(
-                        contractKey,
-                        option.name.toLowerCase() as "static" | "dynamic",
-                      )
+                  : (option) => {
+                      const type = option.name.toLowerCase() as
+                        | "static"
+                        | "dynamic";
+                      handleArgumentTypeChange(contractKey, type);
+                    }
               }
               disabled={readOnly || isSafeMode}
             />
@@ -519,26 +525,61 @@ export const ContractDetails = ({
       {/* IPFS Code URL Field */}
       {contract.argumentType === "dynamic" && (
         <div className="space-y-auto">
-          <TextInput
-            label="IPFS Code URL"
-            value={contract.ipfsCodeUrl || ""}
-            onChange={
-              readOnly
-                ? () => {}
-                : (value) => {
-                    handleIpfsCodeUrlChange(contractKey, value);
-                    setContractErrors((prev) => ({
-                      ...prev,
-                      [`${contractKey}Ipfs`]: null,
-                    }));
-                  }
-            }
-            placeholder="Enter IPFS URL or CID (e.g., ipfs://... or https://ipfs.io/ipfs/...)"
-            error={ipfsError ?? null}
-            type="text"
-            id={`contract-ipfs-code-url-${contractKey}`}
-            disabled={readOnly}
-          />
+          {contract.ipfsCodeUrl ? (
+            <TextInput
+              label="IPFS Code URL"
+              value={contract.ipfsCodeUrl || ""}
+              onChange={() => {}}
+              placeholder="IPFS URL"
+              error={ipfsError ?? null}
+              type="text"
+              id={`contract-ipfs-code-url-${contractKey}`}
+              disabled
+              endAdornment={
+                <Link
+                  href={(() => {
+                    const url = contract.ipfsCodeUrl;
+                    if (url.startsWith("ipfs://")) {
+                      const cid = url.replace("ipfs://", "");
+                      return `https://ipfs.io/ipfs/${cid}`;
+                    }
+                    return url;
+                  })()}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-white/70 hover:text-white"
+                  aria-label="Open IPFS URL"
+                >
+                  <ExternalLinkIcon className="w-4 h-4" />
+                </Link>
+              }
+            />
+          ) : (
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
+              <Typography
+                variant="h4"
+                color="secondary"
+                className="text-nowrap"
+              >
+                IPFS Code URL
+              </Typography>
+              <div className="w-full md:w-[70%]">
+                <button
+                  type="button"
+                  onClick={() => !readOnly && setIsIpfsWizardOpen(true)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={readOnly}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm sm:text-base">
+                      Upload or Validate Script
+                    </span>
+                    <CircleCheckIcon className="w-5 h-5 text-white/50" />
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
           <div className="w-full md:w-[70%] ml-auto pl-3 mt-3 flex flex-wrap gap-2">
             <FormErrorMessage error={ipfsError ?? null} className="mb-1" />
             {contract.ipfsCodeUrlError && (
@@ -546,9 +587,6 @@ export const ContractDetails = ({
                 {contract.ipfsCodeUrlError}
               </Typography>
             )}
-            <Typography variant="caption" color="secondary" align="left">
-              Provide an IPFS URL or CID, where your code is stored.
-            </Typography>
           </div>
         </div>
       )}
@@ -841,6 +879,25 @@ export const ContractDetails = ({
             </>
           )}
         </>
+      )}
+
+      {/* IPFS Script Wizard */}
+      {contract.argumentType === "dynamic" && (
+        <IpfsScriptWizard
+          isOpen={isIpfsWizardOpen}
+          onClose={() => setIsIpfsWizardOpen(false)}
+          onComplete={(url) => {
+            handleIpfsCodeUrlChange(contractKey, url);
+            setContractErrors((prev) => ({
+              ...prev,
+              [`${contractKey}Ipfs`]: null,
+            }));
+            setIsIpfsWizardOpen(false);
+          }}
+          isSafeMode={isSafeMode}
+          selectedSafeWallet={selectedSafeWallet}
+          targetFunction={contract.targetFunction || ""}
+        />
       )}
     </div>
   );
