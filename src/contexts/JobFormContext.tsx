@@ -443,9 +443,24 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const [lastJobId, setLastJobId] = useState<string | undefined>(undefined);
   const [hasConfirmedPermission, setHasConfirmedPermission] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
-  const [executionMode, setExecutionMode] = useState<"contract" | "safe">("contract");
-  const [selectedSafeWallet, setSelectedSafeWallet] = useState<string | null>(null);
+  const [executionMode, setExecutionMode] = useState<"contract" | "safe">(
+    "contract",
+  );
+  const [selectedSafeWallet, setSelectedSafeWallet] = useState<string | null>(
+    null,
+  );
   const [userSafeWallets, setUserSafeWallets] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    setContractInteractions((prev) => ({
+      ...prev,
+      contract: {
+        ...prev.contract,
+        ipfsCodeUrl: "",
+        ipfsCodeUrlError: "",
+      },
+    }));
+  }, [executionMode]);
 
   // Error refs (must be stable, not recreated on every render)
   const jobTitleErrorRef = React.useRef<HTMLDivElement | null>(null);
@@ -768,6 +783,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         [contractKey]: {
           ...prev[contractKey],
           targetFunction: value,
+          ipfsCodeUrl: "",
+          ipfsCodeUrlError: "",
         },
       }));
     },
@@ -781,6 +798,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         [contractKey]: {
           ...prev[contractKey],
           argumentType: value,
+          ipfsCodeUrl: "",
+          ipfsCodeUrlError: "",
         },
       }));
     },
