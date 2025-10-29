@@ -22,6 +22,7 @@ import { ethers } from "ethers";
 import Skeleton from "../ui/Skeleton";
 import { IoMdRefresh } from "react-icons/io";
 import { IoArrowBack } from "react-icons/io5";
+import { getSafeWebAppUrl } from "@/utils/safeChains";
 
 interface ManageSafeWalletsDialogProps {
   open: boolean;
@@ -35,6 +36,7 @@ const ManageSafeWalletsDialog: React.FC<ManageSafeWalletsDialogProps> = ({
   const chainId = useChainId();
   const { safeWallets, isLoading } = useSafeWallets();
   const [selectedSafe, setSelectedSafe] = useState<string>("");
+  const [safeWebUrl, setSafeWebUrl] = useState<string | null>(null);
 
   // Asset balances
   const {
@@ -162,15 +164,17 @@ const ManageSafeWalletsDialog: React.FC<ManageSafeWalletsDialogProps> = ({
     setSendError("");
   };
 
-  const getSafeWebUrl = (safeAddress: string) => {
-    // Only Arbitrum mainnet is supported by Safe web app for now
-    if (chainId === 42161) {
-      return `https://app.safe.global/home?safe=arb1:${safeAddress}`;
+  // Update Safe web URL when selected safe or chain changes
+  useEffect(() => {
+    if (!selectedSafe) {
+      setSafeWebUrl(null);
+      return;
     }
-    return null;
-  };
 
-  const safeWebUrl = selectedSafe ? getSafeWebUrl(selectedSafe) : null;
+    getSafeWebAppUrl(chainId, selectedSafe)
+      .then(setSafeWebUrl)
+      .catch(() => setSafeWebUrl(null));
+  }, [chainId, selectedSafe]);
 
   // Render main view
   const renderMainView = () => (
