@@ -6,14 +6,16 @@ import { Suspense } from "react";
 export default function Safe() {
   return (
     <Suspense fallback={<LeaderboardSkeleton />}>
-      <Typography variant="h1" color="primary">
-        Safe Wallet
-      </Typography>
-      <Typography variant="h4" color="secondary" className="my-6">
-        View and Manage your safe wallets, its associated jobs, create
-        automation task via templates from one place.
-      </Typography>
-      <MainSafeWallet />
+      <div>
+        <Typography variant="h1" color="primary">
+          Safe Wallet
+        </Typography>
+        <Typography variant="h4" color="secondary" className="my-6">
+          Manage your Safe wallets, view balances and templates, and run jobs on
+          a single page.
+        </Typography>
+        <MainSafeWallet />
+      </div>
     </Suspense>
   );
 }

@@ -12,17 +12,32 @@ export const saveWalletName = (address: string, name: string) => {
   localStorage.setItem(WALLET_NAMES_KEY, JSON.stringify(names));
 };
 
-export const deleteWalletName = (address: string) => {
-  const names = getWalletNames();
-  delete names[address.toLowerCase()];
-  localStorage.setItem(WALLET_NAMES_KEY, JSON.stringify(names));
-};
+/**
+ * Returns a user-friendly display name for a Safe wallet addresses like most wallet providers provide.
+ * Priority:
+ * 1) User-defined custom name (from localStorage)
+ * 2) Default sequential name based on its index in the provided list ("Account N")
+ * 3) Truncated address (0x1234...abcd)
+ */
+export const getWalletDisplayName = (
+  address: string,
+  orderedWalletAddresses?: string[],
+): string => {
+  const lower = address.toLowerCase();
 
-export const getWalletDisplayName = (address: string): string => {
-  const names = getWalletNames();
-  const customName = names[address.toLowerCase()];
-  if (customName) return customName;
-  const prefix = address.slice(0, 6);
-  const suffix = address.slice(-4);
-  return `${prefix}...${suffix}`;
+  // 1) Custom name, if present
+  const customNames = getWalletNames();
+  const custom = customNames[lower];
+  if (custom && custom.trim()) return custom.trim();
+
+  // 2) If an ordered list is provided, use its index for a default label
+  if (orderedWalletAddresses && orderedWalletAddresses.length > 0) {
+    const idx = orderedWalletAddresses.findIndex(
+      (w) => w.toLowerCase() === lower,
+    );
+    if (idx >= 0) return `Account ${idx + 1}`;
+  }
+
+  // 3) Fallback to truncated address
+  return getWalletDisplayName(address);
 };
