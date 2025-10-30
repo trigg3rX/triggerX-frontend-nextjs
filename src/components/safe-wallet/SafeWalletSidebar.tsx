@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Typography } from "@/components/ui/Typography";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -13,9 +13,13 @@ import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
 import { getWalletDisplayName, saveWalletName } from "@/utils/safeWalletNames";
 import { Save, ChevronDown, ChevronUp, Edit, CheckCircle2 } from "lucide-react";
 import { LucideCopyButton } from "@/components/ui/CopyButton";
-import SafeArtifact from "@/artifacts/Safe.json";
-import { BrowserProvider, Contract } from "ethers";
-import type { Eip1193Provider, InterfaceAbi } from "ethers";
+import SafeCreationProgressModal, {
+  SafeCreationStepStatus,
+} from "@/components/safe-wallet/SafeWalletCreationDialog";
+import {
+  useSafeModuleStatus,
+  setModuleStatus,
+} from "@/hooks/useSafeModuleStatus";
 
 interface SafeWalletSidebarProps {
   selectedSafe: string | null;
@@ -37,51 +41,12 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   const [importAddress, setImportAddress] = useState("");
   const [importError, setImportError] = useState("");
   const [showList, setShowList] = useState(false);
-  const [moduleEnabled, setModuleEnabled] = useState<boolean | null>(null);
-  const [checkingModule, setCheckingModule] = useState<boolean>(false);
-
-  const moduleAddress = process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS as
-    | string
-    | undefined;
-
-  const getBrowserProvider = (): BrowserProvider | null => {
-    if (typeof window === "undefined") return null;
-    const eth = (window as unknown as { ethereum?: Eip1193Provider }).ethereum;
-    return eth ? new BrowserProvider(eth) : null;
-  };
-
-  const checkModuleEnabled = useCallback(
-    async (safeAddress?: string) => {
-      const safe = safeAddress ?? selectedSafe ?? undefined;
-      if (!safe || !moduleAddress) {
-        setModuleEnabled(null);
-        return;
-      }
-      try {
-        setCheckingModule(true);
-        const provider = getBrowserProvider();
-        if (!provider) {
-          setModuleEnabled(null);
-          setCheckingModule(false);
-          return;
-        }
-        const abi = (SafeArtifact as { abi: InterfaceAbi }).abi;
-        const contract = new Contract(safe, abi, await provider.getSigner());
-        const enabled: boolean = await contract.isModuleEnabled(moduleAddress);
-        setModuleEnabled(Boolean(enabled));
-      } catch {
-        setModuleEnabled(null);
-      } finally {
-        setCheckingModule(false);
-      }
-    },
-    [selectedSafe, moduleAddress],
-  );
-
-  useEffect(() => {
-    // re-check whenever selection or enabling state changes
-    void checkModuleEnabled();
-  }, [selectedSafe, isEnablingModule, moduleAddress, checkModuleEnabled]);
+  const [moduleEnabled, refreshModuleStatus, checkingModule] =
+    useSafeModuleStatus(selectedSafe || undefined);
+  const [showCreateFlow, setShowCreateFlow] = useState(false);
+  const [createStep, setCreateStep] = useState<SafeCreationStepStatus>("idle");
+  const [signStep, setSignStep] = useState<SafeCreationStepStatus>("idle");
+  const [enableStep, setEnableStep] = useState<SafeCreationStepStatus>("idle");
 
   const dropdownOptions: DropdownOption[] = [
     ...safeWallets.map((w) => ({
@@ -97,14 +62,21 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   const handleSelect = async (opt: DropdownOption) => {
     const addr = String(opt.id);
     onSafeSelect(addr);
-    // proactively check against the selected address immediately
-    await checkModuleEnabled(addr);
+    refreshModuleStatus();
   };
 
+  // Create new Safe wallet
   const handleCreateNewSafe = async () => {
     if (!address) return;
+    setShowCreateFlow(true);
+    setCreateStep("pending");
+    setSignStep("idle");
+    setEnableStep("idle");
     const newSafe = await createSafeWallet(address);
     if (newSafe) {
+      setCreateStep("success");
+      setSignStep("pending");
+      setEnableStep("pending");
       const moduleEnabled = await enableModule(newSafe);
       // Wait a bit for blockchain state to update, then refetch
       setTimeout(async () => {
@@ -115,7 +87,14 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
         console.warn(
           "Module enabling reported failure, but attempting to select wallet anyway",
         );
+        setSignStep("error");
+        setEnableStep("error");
+      } else {
+        setSignStep("success");
+        setEnableStep("success");
       }
+    } else {
+      setCreateStep("error");
     }
   };
 
@@ -153,26 +132,8 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   const handleEnableModule = async () => {
     if (!selectedSafe) return;
     await enableModule(selectedSafe);
-    // After enabling, re-check status
-    if (moduleAddress) {
-      try {
-        setCheckingModule(true);
-        const provider = getBrowserProvider();
-        if (provider) {
-          const abi = (SafeArtifact as { abi: InterfaceAbi }).abi;
-          const contract = new Contract(
-            selectedSafe,
-            abi,
-            await provider.getSigner(),
-          );
-          const enabled: boolean =
-            await contract.isModuleEnabled(moduleAddress);
-          setModuleEnabled(Boolean(enabled));
-        }
-      } finally {
-        setCheckingModule(false);
-      }
-    }
+    setModuleStatus(selectedSafe, true); // update localStorage
+    await refreshModuleStatus();
   };
 
   return (
@@ -438,6 +399,13 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
           </Card>
         </div>
       )}
+      <SafeCreationProgressModal
+        open={showCreateFlow}
+        onClose={() => setShowCreateFlow(false)}
+        createStep={createStep}
+        signStep={signStep}
+        enableStep={enableStep}
+      />
     </div>
   );
 };
