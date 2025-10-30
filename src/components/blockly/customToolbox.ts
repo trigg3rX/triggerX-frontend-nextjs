@@ -1,7 +1,7 @@
 "use client";
 
 import * as Blockly from "blockly/core";
-import { FaWallet, FaLink } from "react-icons/fa";
+import { FaWallet, FaLink, FaBriefcase } from "react-icons/fa";
 import { createRoot } from "react-dom/client";
 import React from "react";
 
@@ -23,9 +23,9 @@ type BlocklyExports = {
 
 const B = Blockly as unknown as BlocklyExports;
 
-// Set your universal toolbox category background color here
-const CATEGORY_BG = "#313334"; // dark mode example — change to what suits your UI
+// Icon size for the circular category glyph
 const ICON_BG_SIZE = "30px"; // circular icon size
+const CATEGORY_WIDTH_PX = 72; // compact vertical category width
 
 // Custom toolbox category class
 class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
@@ -35,20 +35,21 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
     super.createDom_?.call(this);
     const self = this as unknown as ToolboxCategoryInstance;
 
-    // Style category container (pill-like)
-    self.rowDiv_.style.borderRadius = "50px";
-    self.rowDiv_.style.margin = "4px 0";
-    self.rowDiv_.style.padding = "22px 10px";
+    // Style category container (compact vertical, no background pill)
+    self.rowDiv_.style.borderRadius = "0";
+    self.rowDiv_.style.margin = "0px 0";
+    self.rowDiv_.style.padding = "0px 0px";
     self.rowDiv_.style.transition = "all 0.2s ease";
     self.rowDiv_.style.display = "flex";
+    self.rowDiv_.style.flexDirection = "column";
     self.rowDiv_.style.alignItems = "center";
-    self.rowDiv_.style.justifyContent = "start";
-    self.rowDiv_.style.gap = "10px";
-    self.rowDiv_.style.backgroundColor = CATEGORY_BG;
+    self.rowDiv_.style.justifyContent = "center";
+    self.rowDiv_.style.gap = "2px";
+    self.rowDiv_.style.backgroundColor = "transparent";
     self.rowDiv_.style.cursor = "pointer";
-    self.rowDiv_.style.width = "200px";
-    self.rowDiv_.style.minWidth = "200px";
-    self.rowDiv_.style.maxWidth = "200px";
+    self.rowDiv_.style.width = `${CATEGORY_WIDTH_PX}px`;
+    self.rowDiv_.style.minWidth = `${CATEGORY_WIDTH_PX}px`;
+    self.rowDiv_.style.maxWidth = `${CATEGORY_WIDTH_PX}px`;
 
     // Style label
     const labelDom = self.rowDiv_.getElementsByClassName(
@@ -57,16 +58,46 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
 
     if (labelDom) {
       labelDom.style.fontWeight = "500";
-      labelDom.style.fontSize = "14px";
+      labelDom.style.fontSize = "11px";
       labelDom.style.color = "white";
+      labelDom.style.textAlign = "center";
+      labelDom.style.lineHeight = "1.1";
+      labelDom.style.wordBreak = "break-word";
+      labelDom.style.whiteSpace = "normal";
+      labelDom.style.display = "block";
+      labelDom.style.width = "100%";
+      labelDom.style.margin = "4px 0px";
     }
 
     // Style icon background as a colored circle
+    // Helper to trigger native selection/open behavior on the underlying toolbox element
+    const activateCategory = () => {
+      try {
+        const click = new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+        });
+        const mousedown = new MouseEvent("mousedown", {
+          bubbles: true,
+          cancelable: true,
+        });
+        // Dispatch on htmlDiv_ which is what Blockly wires up internally
+        (self.htmlDiv_ as HTMLElement).dispatchEvent(mousedown);
+        (self.htmlDiv_ as HTMLElement).dispatchEvent(click);
+      } catch {
+        // no-op
+      }
+    };
     if (self.iconDom_) {
       const iconContainer = document.createElement("div");
       iconContainer.style.width = ICON_BG_SIZE;
       iconContainer.style.height = ICON_BG_SIZE;
-      iconContainer.style.borderRadius = "50%";
+      iconContainer.style.minWidth = ICON_BG_SIZE;
+      iconContainer.style.minHeight = ICON_BG_SIZE;
+      iconContainer.style.borderRadius = "9999px"; // ensure perfect circle
+      iconContainer.style.aspectRatio = "1 / 1";
+      iconContainer.style.overflow = "hidden";
+      iconContainer.style.flex = "0 0 auto";
       iconContainer.style.backgroundColor = self.colour_ || "#888";
       iconContainer.style.display = "flex";
       iconContainer.style.alignItems = "center";
@@ -98,27 +129,52 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
             color: "white",
           }),
         );
+      } else if (
+        categoryName.includes("job type") ||
+        categoryName.includes("jobtype") ||
+        categoryName.includes("job")
+      ) {
+        // Job Type icon using React Icons
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaBriefcase, {
+            size: 12,
+            color: "white",
+          }),
+        );
       } else {
         // Use existing icon for other categories
         customIcon = self.iconDom_;
         customIcon.style.color = "white";
-        customIcon.style.fontSize = "12px";
+        customIcon.style.fontSize = "14px";
       }
 
       iconContainer.appendChild(customIcon);
 
-      // Replace icon in rowDiv with the new container
+      // Replace/move icon to the top of the vertical stack
       self.rowDiv_.insertBefore(iconContainer, self.rowDiv_.firstChild);
+      // Allow clicking anywhere on the row to open; let events pass through icon
+      iconContainer.style.pointerEvents = "none";
+
+      // Hide any default icon element that Blockly injected to avoid layout offset
+      try {
+        self.iconDom_.style.display = "none";
+      } catch {}
     }
+
+    // Make entire category row clickable (icon + label area)
+    self.rowDiv_.style.userSelect = "none";
+    self.rowDiv_.addEventListener("click", activateCategory);
+    self.rowDiv_.addEventListener("mousedown", activateCategory);
+    self.rowDiv_.addEventListener("pointerdown", activateCategory);
 
     // Hover effect
     self.rowDiv_.addEventListener("mouseenter", () => {
-      self.rowDiv_.style.transform = "scale(1.01)";
-      // self.rowDiv_.style.boxShadow = "0 3px 8px rgba(0, 0, 0, 0.25)";
+      self.rowDiv_.style.transform = "translateY(-1px)";
     });
     self.rowDiv_.addEventListener("mouseleave", () => {
-      self.rowDiv_.style.transform = "scale(1)";
-      // self.rowDiv_.style.boxShadow = "none";
+      self.rowDiv_.style.transform = "translateY(0)";
     });
 
     return self.rowDiv_;
@@ -134,17 +190,10 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
     const self = this as unknown as ToolboxCategoryInstance;
 
     if (isSelected) {
-      // Selected state
-      // self.rowDiv_.style.boxShadow = "0 4px 12px rgba(255, 255, 255, 0.1)";
+      // Keep selected state subtle — no extra square or marker
       self.rowDiv_.style.transform = "scale(1)";
-
-      // Add connecting square using ::after pseudo-element
-      self.rowDiv_.style.position = "relative";
-      self.rowDiv_.setAttribute("data-selected", "true");
     } else {
-      // self.rowDiv_.style.boxShadow = "none";
       self.rowDiv_.style.transform = "scale(1)";
-      self.rowDiv_.removeAttribute("data-selected");
     }
 
     B.utils.aria.setState(

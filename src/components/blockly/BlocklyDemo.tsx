@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import dynamic from "next/dynamic";
 import { Typography } from "../ui/Typography";
 import * as Blockly from "blockly/core";
@@ -50,6 +56,7 @@ import { operatorGtGenerator } from "./blocks/operators/operator_gt_block";
 import { Card } from "../ui/Card";
 import "./customToolbox";
 import networksData from "@/utils/networks.json";
+import DisableInteractions from "@/app/DisableInteractions";
 
 // react-blockly uses window, so ensure client-only dynamic import
 const BlocklyWorkspace = dynamic(
@@ -84,6 +91,7 @@ const triggerxTheme = Blockly.Theme.defineTheme("triggerx_theme", {
 });
 
 export default function BlocklyDemo() {
+  const workspaceScopeRef = useRef<HTMLDivElement | null>(null);
   const [xml, setXml] = useState<string>(
     '<xml xmlns="https://developers.google.com/blockly/xml"></xml>',
   );
@@ -269,30 +277,30 @@ export default function BlocklyDemo() {
         },
         // --- MATH CATEGORY ---
         // For numerical operations and constants.
-        {
-          kind: "category",
-          name: "Math",
-          colour: "230",
-          contents: [
-            { kind: "block", type: "math_round" },
-            { kind: "block", type: "math_number" },
-          ],
-        },
+        // {
+        //   kind: "category",
+        //   name: "Math",
+        //   colour: "230",
+        //   contents: [
+        //     { kind: "block", type: "math_round" },
+        //     { kind: "block", type: "math_number" },
+        //   ],
+        // },
         // --- OPERATORS CATEGORY ---
-        {
-          kind: "category",
-          name: "Operators",
-          colour: "230",
-          contents: [
-            { kind: "block", type: "operator_add" },
-            { kind: "block", type: "operator_subtract" },
-            { kind: "block", type: "operator_multiply" },
-            { kind: "block", type: "operator_divide" },
-            { kind: "block", type: "operator_lt" },
-            { kind: "block", type: "operator_equals" },
-            { kind: "block", type: "operator_gt" },
-          ],
-        },
+        // {
+        //   kind: "category",
+        //   name: "Operators",
+        //   colour: "230",
+        //   contents: [
+        //     { kind: "block", type: "operator_add" },
+        //     { kind: "block", type: "operator_subtract" },
+        //     { kind: "block", type: "operator_multiply" },
+        //     { kind: "block", type: "operator_divide" },
+        //     { kind: "block", type: "operator_lt" },
+        //     { kind: "block", type: "operator_equals" },
+        //     { kind: "block", type: "operator_gt" },
+        //   ],
+        // },
         // --- DATA INPUTS CATEGORY ---
         // Blocks that fetch or provide values for other blocks.
         {
@@ -410,8 +418,16 @@ export default function BlocklyDemo() {
       } else if (intervalBlock) {
         const val = getField(intervalBlock, "TIME_INTERVAL_VALUE") || "0";
         const unit = getField(intervalBlock, "TIME_INTERVAL_UNIT") || "second";
+        const untilDate = getField(intervalBlock, "UNTIL_DATE");
+        const untilTime = getField(intervalBlock, "UNTIL_TIME");
         const unitLabel = pluralize(val, unit);
-        parts.push(`Time-based job runs every ${val} ${unitLabel}.`);
+        if (untilDate && untilTime) {
+          parts.push(
+            `Time-based job runs every ${val} ${unitLabel} until ${untilDate} ${untilTime}.`,
+          );
+        } else {
+          parts.push(`Time-based job runs every ${val} ${unitLabel}.`);
+        }
       }
 
       if (timeframeBlock) {
@@ -508,7 +524,15 @@ export default function BlocklyDemo() {
       </Card>
 
       <div className="flex gap-2 h-[80vh]">
-        <div className="h-full overflow-hidden w-[75%] rounded-2xl">
+        <div
+          className="h-full overflow-hidden w-[75%] rounded-2xl"
+          ref={workspaceScopeRef}
+        >
+          <DisableInteractions
+            scopeRef={
+              workspaceScopeRef as unknown as React.MutableRefObject<HTMLElement | null>
+            }
+          />
           <BlocklyWorkspace
             className="w-full h-full bg-[#141414]"
             toolboxConfiguration={toolboxJson}

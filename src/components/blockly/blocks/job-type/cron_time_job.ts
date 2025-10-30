@@ -3,13 +3,14 @@ import { Order } from "blockly/javascript";
 
 const cronTimeJobJson = {
   type: "cron_time_job",
-  message0: "Cron Time Job: Run on cron schedule %1",
+  // Short label to minimize width; keep statements on separate row
+  message0: "On cron schedule %1",
   message1: "Execute: %1",
   args0: [
     {
       type: "field_input",
       name: "CRON_EXPRESSION",
-      text: "0 0 * * *", // Default: midnight every day
+      text: "*/5 * * * *", // Example: every 5 minutes
     },
   ],
   args1: [

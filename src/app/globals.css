@@ -164,17 +164,29 @@ body {
 }
 
 .blocklyToolbox {
-  left: 10px !important;
+  left: 8px !important;
   height: 97% !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
   border-radius: 17px !important;
-  padding: 15px 8px !important;
+  padding: 27px 8px !important;
   overflow: hidden !important;
 }
 
+.blocklyToolboxCategoryGroup {
+  gap: 10px !important;
+}
+
+.blocklyToolboxCategory {
+  height: max-content !important;
+  line-height: auto !important;
+  margin-bottom: 0px !important;
+  padding-right: 0px !important;
+  white-space: nowrap !important;
+}
+
 .blocklyFlyout {
-  left: 215px !important;
+  left: 100px !important;
   height: 97% !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
