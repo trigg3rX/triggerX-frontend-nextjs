@@ -1,37 +1,22 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useChainId } from "wagmi";
 import { ethers } from "ethers";
 import {
   getSafeWalletFactoryAddress,
   getSafeModuleAddress,
 } from "@/utils/contractAddresses";
-import toast from "react-hot-toast";
 import TriggerXSafeFactoryArtifact from "@/artifacts/TriggerXSafeFactory.json";
 import { getSafeChainInfo, getSafeQueueUrl } from "@/utils/safeChains";
 import Safe from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
 import SafeArtifact from "@/artifacts/Safe.json";
-
-export type EnableModuleResult =
-  | {
-      status: "already_enabled";
-      threshold: number;
-      owners: string[];
-    }
-  | {
-      status: "executed";
-      threshold: number;
-      owners: string[];
-      transactionHash: string;
-    }
-  | {
-      status: "multisig";
-      threshold: number;
-      owners: string[];
-      safeTxHash: string;
-      queueUrl: string | null;
-      fallbackUrl: string | null;
-    };
+import type { SafeTransaction } from "@safe-global/safe-core-sdk-types";
+import type {
+  CreateSafeResult,
+  SignResult,
+  SubmitResult,
+  EnableModuleResult,
+} from "@/types/safe";
 
 export const useCreateSafeWallet = () => {
   const chainId = useChainId();
@@ -41,20 +26,95 @@ export const useCreateSafeWallet = () => {
   const [isExecutingEnableModule, setIsExecutingEnableModule] = useState(false);
   const [isProposingEnableModule, setIsProposingEnableModule] = useState(false);
 
+  // Store signed transaction data for the two-step flow
+  const signedTxRef = useRef<{
+    safeSdk: Safe;
+    signedSafeTx: SafeTransaction;
+    safeTxHash: string;
+    safeAddress: string;
+    threshold: number;
+    owners: string[];
+    signerAddress: string;
+  } | null>(null);
+
+  // Helper: Read Safe info with retry logic
+  const readSafeInfo = async (
+    safeAddress: string,
+    moduleAddress: string,
+    provider: ethers.BrowserProvider,
+  ): Promise<{
+    threshold: number;
+    owners: string[];
+    isEnabled: boolean;
+  }> => {
+    const safeProxy = new ethers.Contract(
+      safeAddress,
+      SafeArtifact.abi,
+      provider,
+    );
+    let thresholdBig: bigint | undefined;
+    let owners: string[] | undefined;
+    let isEnabled: boolean | undefined;
+    let retryCount = 0;
+    const maxRetries = 5;
+
+    while (retryCount < maxRetries) {
+      try {
+        const results = await Promise.all([
+          safeProxy.getThreshold(),
+          safeProxy.getOwners(),
+          safeProxy.isModuleEnabled(moduleAddress),
+        ]);
+        thresholdBig = results[0];
+        owners = results[1];
+        isEnabled = results[2];
+        break;
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          throw error;
+        }
+        console.warn(
+          `Attempt ${retryCount} to read Safe info failed, retrying...`,
+        );
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1000 * Math.pow(2, retryCount)),
+        );
+      }
+    }
+
+    if (!thresholdBig || !owners || isEnabled === undefined) {
+      throw new Error("Failed to read Safe information after retries");
+    }
+
+    return {
+      threshold: Number(thresholdBig),
+      owners,
+      isEnabled,
+    };
+  };
+
+  // Create Safe wallet (Step 1)
   const createSafeWallet = async (
     userAddress: string,
-  ): Promise<string | null> => {
+  ): Promise<CreateSafeResult> => {
     setIsCreating(true);
     try {
       const factoryAddress = getSafeWalletFactoryAddress(chainId);
       if (!factoryAddress) {
-        throw new Error(
-          "Safe Wallet Factory address not configured for this network",
-        );
+        return {
+          success: false,
+          safeAddress: null,
+          error: "Safe Wallet Factory address not configured for this network",
+        };
       }
 
       if (typeof window.ethereum === "undefined") {
-        throw new Error("Please install MetaMask");
+        return {
+          success: false,
+          safeAddress: null,
+          error: "Please connect your wallet",
+        };
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -66,7 +126,6 @@ export const useCreateSafeWallet = () => {
         signer,
       );
 
-      toast.loading("Creating Safe wallet...", { id: "create-safe" });
       const tx = await factory.createSafeWallet(userAddress);
       const receipt = await tx.wait();
 
@@ -84,8 +143,18 @@ export const useCreateSafeWallet = () => {
         );
       }
 
-      toast.success("Safe wallet created successfully!", { id: "create-safe" });
-      return safeAddress;
+      if (!safeAddress) {
+        return {
+          success: false,
+          safeAddress: null,
+          error: "Failed to retrieve Safe address from transaction",
+        };
+      }
+
+      return {
+        success: true,
+        safeAddress,
+      };
     } catch (err) {
       console.error("Error creating Safe wallet:", err);
       const getShortErrorMessage = (error: Error): string => {
@@ -95,13 +164,13 @@ export const useCreateSafeWallet = () => {
           message.includes("user rejected") ||
           message.includes("user denied")
         ) {
-          return "Transaction rejected";
+          return "Transaction rejected by user";
         }
         if (message.includes("insufficient funds")) {
-          return "Insufficient funds";
+          return "Insufficient funds for transaction";
         }
         if (message.includes("network")) {
-          return "Network error";
+          return "Network error occurred";
         }
         if (message.includes("gas")) {
           return "Gas estimation failed";
@@ -110,103 +179,76 @@ export const useCreateSafeWallet = () => {
           return "MetaMask error";
         }
 
-        // Fallback: take first few words
-        return error.message.split(" ").slice(0, 3).join(" ");
+        // Fallback: take first sentence or 50 chars
+        const msg = error.message.split(".")[0];
+        return msg.length > 50 ? msg.substring(0, 50) + "..." : msg;
       };
 
-      toast.error(
-        err instanceof Error
-          ? `Safe creation failed: ${getShortErrorMessage(err)}`
-          : "Safe creation failed",
-        {
-          id: "create-safe",
-        },
-      );
-      return null;
+      return {
+        success: false,
+        safeAddress: null,
+        error:
+          err instanceof Error
+            ? getShortErrorMessage(err)
+            : "Failed to create Safe wallet",
+      };
     } finally {
       setIsCreating(false);
     }
   };
 
-  const enableModule = async (
-    safeAddress: string,
-  ): Promise<EnableModuleResult | null> => {
-    setIsEnablingModule(true);
-    setIsSigningEnableModule(false);
-    setIsExecutingEnableModule(false);
-    setIsProposingEnableModule(false);
+  // Sign enable module transaction (Step 2)
+  const signEnableModule = async (safeAddress: string): Promise<SignResult> => {
+    setIsSigningEnableModule(true);
 
     try {
       const moduleAddress = getSafeModuleAddress(chainId);
       if (!moduleAddress) {
-        throw new Error("Safe Module address not configured for this network");
+        return {
+          success: false,
+          error: "Safe Module address not configured for this network",
+        };
       }
 
       if (typeof window.ethereum === "undefined") {
-        throw new Error("Please install MetaMask");
+        return {
+          success: false,
+          error: "Please connect your wallet",
+        };
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const signerAddress = await signer.getAddress();
 
-      // Retry logic for newly created Safes
-      const safeProxy = new ethers.Contract(
+      // Read Safe info with retry logic
+      const { threshold, owners, isEnabled } = await readSafeInfo(
         safeAddress,
-        SafeArtifact.abi,
+        moduleAddress,
         provider,
       );
-      let thresholdBig: bigint | undefined;
-      let owners: string[] | undefined;
-      let isEnabled: boolean | undefined;
-      let retryCount = 0;
-      const maxRetries = 5;
-
-      while (retryCount < maxRetries) {
-        try {
-          const results = await Promise.all([
-            safeProxy.getThreshold(),
-            safeProxy.getOwners(),
-            safeProxy.isModuleEnabled(moduleAddress),
-          ]);
-          thresholdBig = results[0];
-          owners = results[1];
-          isEnabled = results[2];
-          break;
-        } catch (error) {
-          retryCount++;
-          if (retryCount >= maxRetries) {
-            throw error;
-          }
-          console.warn(
-            `Attempt ${retryCount} to read Safe info failed, retrying...`,
-          );
-          await new Promise((resolve) =>
-            setTimeout(resolve, 1000 * Math.pow(2, retryCount)),
-          );
-        }
-      }
-
-      if (!thresholdBig || !owners || isEnabled === undefined) {
-        throw new Error("Failed to read Safe information after retries");
-      }
 
       const normalizedOwners = owners.map((owner: string) =>
         owner.toLowerCase(),
       );
 
       if (!normalizedOwners.includes(signerAddress.toLowerCase())) {
-        throw new Error("Connected wallet is not an owner of this Safe");
+        return {
+          success: false,
+          error: "Connected wallet is not an owner of this Safe",
+        };
       }
 
-      const threshold = Number(thresholdBig);
-
       if (isEnabled) {
-        toast.success("Module is already enabled!");
+        // Module already enabled - this is actually a success state
+        signedTxRef.current = null;
         return {
-          status: "already_enabled",
-          threshold,
-          owners,
+          success: true,
+          data: {
+            threshold,
+            owners,
+            safeTxHash: "", // No transaction needed
+          },
         };
       }
 
@@ -219,22 +261,93 @@ export const useCreateSafeWallet = () => {
       // Create enable module transaction
       const safeTransaction = await safeSdk.createEnableModuleTx(moduleAddress);
 
-      setIsSigningEnableModule(true);
-      toast.loading("Please sign the transaction to enable the module...", {
-        id: "enable-module",
-      });
-
       // Sign the transaction using Safe SDK (this triggers the EIP-712 signature)
       const signedSafeTx = await safeSdk.signTransaction(safeTransaction);
       const safeTxHash = await safeSdk.getTransactionHash(signedSafeTx);
 
+      // Store signed transaction for submitEnableModule
+      signedTxRef.current = {
+        safeSdk,
+        signedSafeTx,
+        safeTxHash,
+        safeAddress,
+        threshold,
+        owners,
+        signerAddress,
+      };
+
+      return {
+        success: true,
+        data: {
+          threshold,
+          owners,
+          safeTxHash,
+        },
+      };
+    } catch (err) {
+      console.error("Error signing enable module transaction:", err);
+      signedTxRef.current = null;
+
+      const getErrorMessage = (error: Error): string => {
+        const message = error.message.toLowerCase();
+
+        if (
+          message.includes("user rejected") ||
+          message.includes("user denied")
+        ) {
+          return "Signature rejected by user";
+        }
+        if (message.includes("network")) {
+          return "Network error occurred";
+        }
+
+        // Fallback: take first sentence or 50 chars
+        const msg = error.message.split(".")[0];
+        return msg.length > 50 ? msg.substring(0, 50) + "..." : msg;
+      };
+
+      return {
+        success: false,
+        error:
+          err instanceof Error
+            ? getErrorMessage(err)
+            : "Failed to sign transaction",
+      };
+    } finally {
       setIsSigningEnableModule(false);
+    }
+  };
+
+  // Submit (execute or propose) the signed enable module transaction (Step 3)
+  const submitEnableModule = async (): Promise<SubmitResult> => {
+    if (!signedTxRef.current) {
+      return {
+        success: false,
+        error: "No signed transaction found. Please sign first.",
+      };
+    }
+
+    const {
+      safeSdk,
+      signedSafeTx,
+      safeTxHash,
+      safeAddress,
+      threshold,
+      owners,
+      signerAddress,
+    } = signedTxRef.current;
+
+    try {
+      const moduleAddress = getSafeModuleAddress(chainId);
+      if (!moduleAddress) {
+        return {
+          success: false,
+          error: "Safe Module address not configured for this network",
+        };
+      }
 
       if (threshold <= 1) {
         setIsExecutingEnableModule(true);
-        toast.loading("Executing module enable transaction...", {
-          id: "enable-module",
-        });
 
         const executeTxResponse =
           await safeSdk.executeTransaction(signedSafeTx);
@@ -249,23 +362,17 @@ export const useCreateSafeWallet = () => {
           await txResponse.wait();
         }
 
-        const isNowEnabled = await safeProxy.isModuleEnabled(moduleAddress);
-        if (isNowEnabled) {
-          toast.success("Module enabled successfully!", {
-            id: "enable-module",
-          });
-        } else {
-          toast.success(
-            "Module enable transaction submitted. It may take a moment to reflect.",
-            { id: "enable-module" },
-          );
-        }
+        // Clear signed tx after execution
+        signedTxRef.current = null;
 
         return {
-          status: "executed",
-          threshold,
-          owners,
-          transactionHash: executeTxResponse.hash,
+          success: true,
+          data: {
+            status: "executed",
+            threshold,
+            owners,
+            transactionHash: executeTxResponse.hash,
+          },
         };
       }
 
@@ -275,12 +382,6 @@ export const useCreateSafeWallet = () => {
 
       if (chainInfo.transactionService) {
         setIsProposingEnableModule(true);
-        toast.loading(
-          "Proposing the transaction to Safe Transaction Service...",
-          {
-            id: "enable-module",
-          },
-        );
         try {
           const safeApiKey = process.env.NEXT_PUBLIC_SAFE_API_KEY;
           const safeApiKit = new SafeApiKit({
@@ -299,59 +400,140 @@ export const useCreateSafeWallet = () => {
           });
 
           queueUrl = await getSafeQueueUrl(chainId, safeAddress);
-
-          toast.success(
-            "Transaction proposed successfully! Other owners can sign in Safe.",
-            { id: "enable-module" },
-          );
         } catch (error) {
           console.warn(
             "Failed to propose enable-module transaction to Safe service:",
             error,
           );
-          toast.success(
-            "Module transaction signed. Open in Safe to collect remaining signatures.",
-            { id: "enable-module" },
-          );
+          // Don't fail completely if proposal fails
         } finally {
           setIsProposingEnableModule(false);
         }
-      } else {
-        toast.success(
-          "Module transaction signed. Open in Safe to collect remaining signatures.",
-          { id: "enable-module" },
-        );
       }
 
       const fallbackUrl = await getSafeQueueUrl(chainId, safeAddress);
 
+      // Clear signed tx after proposing
+      signedTxRef.current = null;
+
       return {
-        status: "multisig",
-        threshold,
-        owners,
-        safeTxHash,
-        queueUrl: queueUrl || fallbackUrl,
-        fallbackUrl,
+        success: true,
+        data: {
+          status: "multisig",
+          threshold,
+          owners,
+          safeTxHash,
+          queueUrl: queueUrl || fallbackUrl,
+          fallbackUrl,
+        },
       };
     } catch (err) {
-      console.error("Error enabling module:", err);
-      toast.error(
-        err instanceof Error ? err.message : "Failed to enable module",
-        {
-          id: "enable-module",
-        },
-      );
-      return null;
+      console.error("Error submitting enable module transaction:", err);
+
+      const getErrorMessage = (error: Error): string => {
+        const message = error.message.toLowerCase();
+
+        if (
+          message.includes("user rejected") ||
+          message.includes("user denied")
+        ) {
+          return "Transaction rejected by user";
+        }
+        if (message.includes("insufficient funds")) {
+          return "Insufficient funds for transaction";
+        }
+        if (message.includes("network")) {
+          return "Network error occurred";
+        }
+        if (message.includes("gas")) {
+          return "Gas estimation failed";
+        }
+
+        // Fallback: take first sentence or 50 chars
+        const msg = error.message.split(".")[0];
+        return msg.length > 50 ? msg.substring(0, 50) + "..." : msg;
+      };
+
+      return {
+        success: false,
+        error:
+          err instanceof Error
+            ? getErrorMessage(err)
+            : "Failed to submit transaction",
+      };
     } finally {
-      setIsSigningEnableModule(false);
       setIsExecutingEnableModule(false);
       setIsProposingEnableModule(false);
+    }
+  };
+
+  // Keep existing enableModule for backward compatibility - now uses the two-step flow
+  const enableModule = async (
+    safeAddress: string,
+  ): Promise<EnableModuleResult | null> => {
+    setIsEnablingModule(true);
+
+    try {
+      const moduleAddress = getSafeModuleAddress(chainId);
+      if (!moduleAddress) {
+        throw new Error("Safe Module address not configured for this network");
+      }
+
+      if (typeof window.ethereum === "undefined") {
+        throw new Error("Please install MetaMask");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const signerAddress = await signer.getAddress();
+
+      // Read Safe info with retry logic
+      const { threshold, owners, isEnabled } = await readSafeInfo(
+        safeAddress,
+        moduleAddress,
+        provider,
+      );
+
+      const normalizedOwners = owners.map((owner: string) =>
+        owner.toLowerCase(),
+      );
+
+      if (!normalizedOwners.includes(signerAddress.toLowerCase())) {
+        throw new Error("Connected wallet is not an owner of this Safe");
+      }
+
+      if (isEnabled) {
+        return {
+          status: "already_enabled",
+          threshold,
+          owners,
+        };
+      }
+
+      // Use the two-step flow
+      const signResult = await signEnableModule(safeAddress);
+      if (!signResult.success || !signResult.data) {
+        return null;
+      }
+
+      const submitResult = await submitEnableModule();
+      if (!submitResult.success || !submitResult.data) {
+        return null;
+      }
+
+      return submitResult.data;
+    } catch (err) {
+      console.error("Error enabling module:", err);
+      return null;
+    } finally {
       setIsEnablingModule(false);
     }
   };
 
   return {
     createSafeWallet,
+    signEnableModule,
+    submitEnableModule,
     enableModule,
     isCreating,
     isEnablingModule,
