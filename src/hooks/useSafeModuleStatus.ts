@@ -70,6 +70,14 @@ export function setModuleStatus(safeAddress: string, enabled: boolean) {
   setAllStoredStatuses(data);
 }
 
+// To clear the cached status and force a fresh check from blockchain
+export function clearModuleStatusCache(safeAddress: string) {
+  const key = toChecksum(safeAddress);
+  const data = getAllStoredStatuses();
+  delete data[key];
+  setAllStoredStatuses(data);
+}
+
 // Hook to get the status of the Safe module for a given safe address
 export function useSafeModuleStatus(
   safeAddress?: string,
