@@ -13,14 +13,13 @@ import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
 import { getWalletDisplayName, saveWalletName } from "@/utils/safeWalletNames";
 import { Save, ChevronDown, ChevronUp, Edit, CheckCircle2 } from "lucide-react";
 import { LucideCopyButton } from "@/components/ui/CopyButton";
-import SafeCreationProgressModal, {
-  SafeCreationStepStatus,
-} from "@/components/safe-wallet/SafeWalletCreationDialog";
+import SafeCreationProgressModal from "@/components/safe-wallet/SafeWalletCreationDialog";
+import type { SafeCreationStepStatus } from "@/types/safe";
 import {
   useSafeModuleStatus,
   setModuleStatus,
+  clearModuleStatusCache,
 } from "@/hooks/useSafeModuleStatus";
-
 interface SafeWalletSidebarProps {
   selectedSafe: string | null;
   onSafeSelect: (safe: string | null) => void;
@@ -32,9 +31,15 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 }) => {
   const { address } = useAccount();
   const { safeWallets, isLoading, error, refetch } = useSafeWallets();
-  const { createSafeWallet, enableModule, isCreating, isEnablingModule } =
-    useCreateSafeWallet();
-
+  const {
+    createSafeWallet,
+    signEnableModule,
+    submitEnableModule,
+    isCreating,
+    isSigningEnableModule,
+    isExecutingEnableModule,
+    isProposingEnableModule,
+  } = useCreateSafeWallet();
   const [editingName, setEditingName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -47,7 +52,14 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   const [createStep, setCreateStep] = useState<SafeCreationStepStatus>("idle");
   const [signStep, setSignStep] = useState<SafeCreationStepStatus>("idle");
   const [enableStep, setEnableStep] = useState<SafeCreationStepStatus>("idle");
+  const [createError, setCreateError] = useState<string | undefined>(undefined);
+  const [signError, setSignError] = useState<string | undefined>(undefined);
+  const [enableError, setEnableError] = useState<string | undefined>(undefined);
+  const [currentSafeAddress, setCurrentSafeAddress] = useState<string | null>(
+    null,
+  );
 
+  // Dropdown options for the safe wallets
   const dropdownOptions: DropdownOption[] = [
     ...safeWallets.map((w) => ({
       id: w,
@@ -55,47 +67,154 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     })),
   ];
 
+  // Selected option for the safe wallet
   const selectedOption = selectedSafe
     ? getWalletDisplayName(selectedSafe, safeWallets)
-    : "Select a Safe Wallet";
+    : "Select a wallet";
 
+  // Handle select of a safe wallet from the dropdown
   const handleSelect = async (opt: DropdownOption) => {
     const addr = String(opt.id);
     onSafeSelect(addr);
+    // Refresh the module status
     refreshModuleStatus();
   };
 
   // Create new Safe wallet
   const handleCreateNewSafe = async () => {
     if (!address) return;
+    // Show the create flow
     setShowCreateFlow(true);
     setCreateStep("pending");
     setSignStep("idle");
     setEnableStep("idle");
-    const newSafe = await createSafeWallet(address);
-    if (newSafe) {
-      setCreateStep("success");
-      setSignStep("pending");
-      setEnableStep("pending");
-      const moduleEnabled = await enableModule(newSafe);
-      // Wait a bit for blockchain state to update, then refetch
+    setCreateError(undefined);
+    setSignError(undefined);
+    setEnableError(undefined);
+    setCurrentSafeAddress(null);
+
+    // Step 1: Create Safe wallet
+    const createResult = await createSafeWallet(address);
+
+    // If the creation fails, set the error and return
+    if (!createResult.success || !createResult.safeAddress) {
+      setCreateStep("error");
+      setCreateError(createResult.error || "Failed to create Safe wallet");
+      return;
+    }
+
+    // Set the current safe address
+    const newSafe = createResult.safeAddress;
+    setCurrentSafeAddress(newSafe);
+    setCreateStep("success");
+
+    // Continue to sign step
+    await handleSignStep(newSafe);
+  };
+
+  // Handle sign step - can be called independently for retry
+  const handleSignStep = async (safeAddress: string) => {
+    setSignStep("pending");
+    setSignError(undefined);
+
+    // Step 2: Sign enable module transaction
+    const signResult = await signEnableModule(safeAddress);
+
+    // If the signing fails, set the error and return
+    if (!signResult.success) {
+      setSignStep("error");
+      setSignError(signResult.error || "Failed to sign transaction");
+      // Still try to select the wallet even if module enabling fails
       setTimeout(async () => {
         await refetch();
-        onSafeSelect(newSafe);
+        onSafeSelect(safeAddress);
       }, 3000);
-      if (!moduleEnabled) {
-        console.warn(
-          "Module enabling reported failure, but attempting to select wallet anyway",
-        );
-        setSignStep("error");
-        setEnableStep("error");
-      } else {
-        setSignStep("success");
-        setEnableStep("success");
-      }
-    } else {
-      setCreateStep("error");
+      return;
     }
+
+    setSignStep("success");
+
+    // Continue to enable step
+    await handleEnableStep(safeAddress);
+  };
+
+  // Handle enable step - can be called independently for retry
+  const handleEnableStep = async (safeAddress: string) => {
+    setEnableStep("pending");
+    setEnableError(undefined);
+
+    // Step 3: Submit (execute or propose) the transaction
+    const submitResult = await submitEnableModule();
+
+    // If the submission fails, set the error and return
+    if (!submitResult.success) {
+      setEnableStep("error");
+      setEnableError(submitResult.error || "Failed to submit transaction");
+    } else {
+      // If the submission succeeds, set the success step
+      setEnableStep("success");
+      if (submitResult.data?.status === "executed") {
+        // Clear cache and update module status in localStorage for executed transactions (module is enabled)
+        clearModuleStatusCache(safeAddress);
+        setModuleStatus(safeAddress, true);
+      } else if (submitResult.data?.status === "multisig") {
+        // For multisig, module is not enabled yet - don't set status (will be enabled when approved)
+      }
+
+      // Auto-close dialog after successful completion of all steps
+      setTimeout(() => {
+        setShowCreateFlow(false);
+      }, 2000);
+    }
+
+    // Wait for blockchain state to update, then select wallet and refresh module status
+    setTimeout(async () => {
+      // First select the safe wallet
+      onSafeSelect(safeAddress);
+
+      // Refetch the safe wallets list
+      await refetch();
+
+      // Wait a bit more for the selection to take effect, then force refresh module status from blockchain
+      setTimeout(async () => {
+        // Clear cache again to ensure fresh check (to show as enabled)
+        clearModuleStatusCache(safeAddress);
+        await refreshModuleStatus();
+      }, 500);
+    }, 3000);
+  };
+
+  // Retry handlers for create safe wallet
+  const handleRetryCreate = async () => {
+    if (!address) return;
+    setCreateStep("pending");
+    setCreateError(undefined);
+
+    const createResult = await createSafeWallet(address);
+    if (!createResult.success || !createResult.safeAddress) {
+      setCreateStep("error");
+      setCreateError(createResult.error || "Failed to create Safe wallet");
+      return;
+    }
+
+    const newSafe = createResult.safeAddress;
+    setCurrentSafeAddress(newSafe);
+    setCreateStep("success");
+
+    // Continue to sign step
+    await handleSignStep(newSafe);
+  };
+
+  // Retry handler for sign step
+  const handleRetrySign = async () => {
+    if (!currentSafeAddress) return;
+    await handleSignStep(currentSafeAddress);
+  };
+
+  // Retry handler for enable step
+  const handleRetryEnable = async () => {
+    if (!currentSafeAddress) return;
+    await handleEnableStep(currentSafeAddress);
   };
 
   const openImportModal = () => {
@@ -117,9 +236,19 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       onSafeSelect(importAddress);
       setShowImportModal(false);
 
-      // Try to enable module on imported safe
+      // Try to enable module on imported safe (two-step flow)
       try {
-        await enableModule(importAddress);
+        const signResult = await signEnableModule(importAddress);
+        if (signResult.success) {
+          const submitResult = await submitEnableModule();
+          if (submitResult.success) {
+            if (submitResult.data?.status === "executed") {
+            } else if (submitResult.data?.status === "multisig") {
+            }
+          } else {
+          }
+        } else {
+        }
       } catch (moduleError) {
         console.warn("Failed to enable module on imported safe:", moduleError);
       }
@@ -129,11 +258,24 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     }
   };
 
+  // Handle enable module on created safe wallet
   const handleEnableModule = async () => {
     if (!selectedSafe) return;
-    await enableModule(selectedSafe);
-    setModuleStatus(selectedSafe, true); // update localStorage
-    await refreshModuleStatus();
+
+    // Use two-step flow for enabling module on existing Safe
+    const signResult = await signEnableModule(selectedSafe);
+    if (signResult.success) {
+      const submitResult = await submitEnableModule();
+      if (submitResult.success) {
+        setModuleStatus(selectedSafe, true); // update localStorage
+        await refreshModuleStatus();
+        if (submitResult.data?.status === "executed") {
+        } else if (submitResult.data?.status === "multisig") {
+        }
+      } else {
+      }
+    } else {
+    }
   };
 
   return (
@@ -341,12 +483,30 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
               <Button
                 onClick={handleCreateNewSafe}
                 className="w-full text-sm sm:text-base"
+                disabled={
+                  isCreating ||
+                  isSigningEnableModule ||
+                  isExecutingEnableModule ||
+                  isProposingEnableModule
+                }
               >
-                {isCreating ? "Creating Safe..." : "Create New Safe Wallet"}
+                {isCreating
+                  ? "Creating Safe..."
+                  : isSigningEnableModule
+                    ? "Signing..."
+                    : isExecutingEnableModule || isProposingEnableModule
+                      ? "Enabling Module..."
+                      : "Create New Safe Wallet"}
               </Button>
               <Button
                 onClick={openImportModal}
                 className="w-full text-sm sm:text-base"
+                disabled={
+                  isCreating ||
+                  isSigningEnableModule ||
+                  isExecutingEnableModule ||
+                  isProposingEnableModule
+                }
               >
                 Import Safe Wallet
               </Button>
@@ -378,10 +538,19 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
               <div className="flex gap-3">
                 <Button
                   onClick={handleImportSafe}
-                  disabled={!importAddress || isEnablingModule}
+                  disabled={
+                    !importAddress ||
+                    isSigningEnableModule ||
+                    isExecutingEnableModule ||
+                    isProposingEnableModule
+                  }
                   className="flex-1"
                 >
-                  {isEnablingModule ? "Importing..." : "Import Safe"}
+                  {isSigningEnableModule
+                    ? "Signing..."
+                    : isExecutingEnableModule || isProposingEnableModule
+                      ? "Enabling..."
+                      : "Import Safe"}
                 </Button>
                 <Button
                   onClick={() => {
@@ -405,6 +574,12 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
         createStep={createStep}
         signStep={signStep}
         enableStep={enableStep}
+        createError={createError}
+        signError={signError}
+        enableError={enableError}
+        onRetryCreate={handleRetryCreate}
+        onRetrySign={handleRetrySign}
+        onRetryEnable={handleRetryEnable}
       />
     </div>
   );
