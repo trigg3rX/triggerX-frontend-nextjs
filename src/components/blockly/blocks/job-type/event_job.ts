@@ -58,6 +58,32 @@ Blockly.Blocks["event_job"] = {
     if (e.type !== Blockly.Events.CHANGE) return;
     const change = e as unknown as { blockId?: string; name?: string };
     if (change.blockId !== this.id) return;
+    // Ensure dropdowns are positioned within the workspace container
+    try {
+      const ws = this.workspace as unknown as Blockly.WorkspaceSvg & {
+        __dropdownBoundsSet?: boolean;
+      };
+      if (ws && !ws.__dropdownBoundsSet) {
+        const inj = ws.getInjectionDiv?.();
+        const svg = ws.getParentSvg?.();
+        const boundsEl = (inj || svg?.parentElement || svg) as unknown as
+          | Element
+          | undefined;
+        const B = Blockly as unknown as {
+          DropDownDiv?: { setBoundsElement?: (el: Element) => void };
+          WidgetDiv?: { setBoundsElement?: (el: Element) => void };
+        };
+        if (boundsEl) {
+          try {
+            B.DropDownDiv?.setBoundsElement?.(boundsEl);
+          } catch {}
+          try {
+            B.WidgetDiv?.setBoundsElement?.(boundsEl);
+          } catch {}
+          ws.__dropdownBoundsSet = true;
+        }
+      }
+    } catch {}
     // If contract address changed, refetch events
     if (change.name === "TRIGGER_CONTRACT_ADDRESS") {
       const addressField = this.getField("TRIGGER_CONTRACT_ADDRESS");
@@ -92,6 +118,9 @@ Blockly.Blocks["event_job"] = {
             this.appendDummyInput("EVENT_INPUT")
               .appendField("event ")
               .appendField(dd as unknown as Blockly.Field, "TRIGGER_EVENT");
+            try {
+              this.moveInputBefore("EVENT_INPUT", "STATEMENT");
+            } catch {}
           } else {
             const eventField = this.getField(
               "TRIGGER_EVENT",
@@ -142,6 +171,9 @@ Blockly.Blocks["event_job"] = {
             this.appendDummyInput("EVENT_INPUT")
               .appendField("event ")
               .appendField(dd as unknown as Blockly.Field, "TRIGGER_EVENT");
+            try {
+              this.moveInputBefore("EVENT_INPUT", "STATEMENT");
+            } catch {}
           } else {
             const eventFieldForPre = this.getField(
               "TRIGGER_EVENT",
@@ -183,6 +215,9 @@ Blockly.Blocks["event_job"] = {
             this.appendDummyInput("EVENT_INPUT")
               .appendField("event ")
               .appendField(dd as unknown as Blockly.Field, "TRIGGER_EVENT");
+            try {
+              this.moveInputBefore("EVENT_INPUT", "STATEMENT");
+            } catch {}
             eventField = this.getField(
               "TRIGGER_EVENT",
             ) as unknown as FieldDropdownLike | null;
@@ -299,6 +334,9 @@ Blockly.Blocks["event_job"] = {
               this.appendDummyInput("EVENT_INPUT")
                 .appendField("event ")
                 .appendField(dd as unknown as Blockly.Field, "TRIGGER_EVENT");
+              try {
+                this.moveInputBefore("EVENT_INPUT", "STATEMENT");
+              } catch {}
               eventField = this.getField(
                 "TRIGGER_EVENT",
               ) as unknown as FieldDropdownLike | null;
@@ -349,83 +387,54 @@ Blockly.Blocks["event_job"] = {
           FieldDropdown: new (o: [string, string][]) => unknown;
         }
       ).FieldDropdown(opts);
-      const input = this.appendDummyInput("FILTER_INPUT")
-        .appendField("filter ")
+      this.appendDummyInput("FILTER_INPUT")
+        .appendField("filter parameter ")
         .appendField(
           dd as unknown as Blockly.Field,
           "EVENT_FILTER_PARA_NAME",
         ) as Blockly.Input;
-      const current = String(
-        this.getFieldValue("EVENT_FILTER_PARA_NAME") || "",
-      );
-      if (current) {
-        input.appendField(" = ");
-        input.appendField(new Blockly.FieldTextInput(""), "EVENT_FILTER_VALUE");
-        // Open the editor immediately so the wider HTML input is used
-        try {
-          (
-            this.getField("EVENT_FILTER_VALUE") as unknown as {
-              showEditor_: () => void;
-            }
-          ).showEditor_();
-        } catch {}
-      }
+      try {
+        this.moveInputBefore("FILTER_INPUT", "STATEMENT");
+      } catch {}
+      try {
+        const fp = this.getField("EVENT_FILTER_PARA_NAME") as unknown as {
+          forceRerender?: () => void;
+        } | null;
+        fp?.forceRerender?.();
+      } catch {}
+      // No value input; only parameter selection
     }
 
-    // When filter parameter dropdown changes, rebuild same-line filter with or without value
+    // When filter parameter dropdown changes, toggle the value input inline
     if (change.name === "EVENT_FILTER_PARA_NAME") {
       const selectedParam = String(
         this.getFieldValue("EVENT_FILTER_PARA_NAME") || "",
       );
-      // Recreate filter row to ensure parameter and value are on the same line
-      // Preserve current value if present
-      const prevValue = String(this.getFieldValue("EVENT_FILTER_VALUE") || "");
+      // Remove any existing value input first
       try {
-        if (this.getInput("FILTER_INPUT"))
-          this.removeInput("FILTER_INPUT", true);
+        if (this.getInput("FILTER_VALUE_INPUT"))
+          this.removeInput("FILTER_VALUE_INPUT", true);
       } catch {}
-      // Rebuild dropdown options from cached map
-      const selectedEvent = String(this.getFieldValue("TRIGGER_EVENT") || "");
-      const mapHolder = this as unknown as {
-        __eventInputsMap?: Record<string, { name?: string; type: string }[]>;
-      };
-      const inputsForEvent = mapHolder.__eventInputsMap?.[selectedEvent] || [];
-      const opts: [string, string][] = [["No filter", ""]];
-      inputsForEvent.forEach((inp, idx) => {
-        const label =
-          inp.name && inp.name.length > 0 ? inp.name : `arg${idx + 1}`;
-        opts.push([label, label]);
-      });
-      const dd = new (
+      if (!selectedParam) {
+        // No filter chosen -> no value editor
+        return;
+      }
+      // Add a simple text input for the value with a label
+      const valueField = new (
         Blockly as unknown as {
-          FieldDropdown: new (o: [string, string][]) => unknown;
+          FieldTextInput: new (text?: string) => unknown;
         }
-      ).FieldDropdown(opts);
-      const input = this.appendDummyInput("FILTER_INPUT")
-        .appendField("filter ")
+      ).FieldTextInput("");
+      this.appendDummyInput("FILTER_VALUE_INPUT")
+        .appendField("is same as ")
         .appendField(
-          dd as unknown as Blockly.Field,
-          "EVENT_FILTER_PARA_NAME",
-        ) as Blockly.Input;
-      // Set the dropdown to the selected value
-      (this.getField("EVENT_FILTER_PARA_NAME") as Blockly.Field).setValue(
-        selectedParam,
-      );
-      if (selectedParam) {
-        input.appendField(" = ");
-        input.appendField(
-          new Blockly.FieldTextInput(prevValue),
+          valueField as unknown as Blockly.Field,
           "EVENT_FILTER_VALUE",
         );
-        // Focus editor immediately to avoid tiny on-block field
-        try {
-          (
-            this.getField("EVENT_FILTER_VALUE") as unknown as {
-              showEditor_: () => void;
-            }
-          ).showEditor_();
-        } catch {}
-      }
+      try {
+        this.moveInputBefore("FILTER_VALUE_INPUT", "STATEMENT");
+      } catch {}
+      return;
     }
   },
 };
@@ -448,9 +457,11 @@ export const eventJobGenerator = function (
     trigger_event: triggerEvent,
   };
 
-  // Only include when both provided
-  if (eventFilterParaName && eventFilterValue) {
+  // Only include parameter name; value input removed from UI
+  if (eventFilterParaName) {
     jobData.event_filter_para_name = eventFilterParaName;
+  }
+  if (eventFilterParaName && eventFilterValue) {
     jobData.event_filter_value = eventFilterValue;
   }
 
