@@ -23,6 +23,7 @@ import type {
 
 type StepKind = "create" | "sign" | "enable";
 
+// StatusIcon is a component that displays the status of the step.
 const StatusIcon: React.FC<{
   status: SafeCreationStepStatus;
   kind: StepKind;
@@ -44,6 +45,7 @@ const StatusIcon: React.FC<{
  * It also displays the error message if the step fails.
  * It also displays the button to retry the step if it fails.
  * @note We are not using the Button component here because we want to use the button as a link.
+ * @note We want to prevent the dialog from closing when clicking outside the dialog as important to see the steps.
  */
 
 export const SafeWalletCreationDialog: React.FC<
@@ -66,16 +68,53 @@ export const SafeWalletCreationDialog: React.FC<
   return (
     <Dialog
       open={open}
-      onOpenChange={(value) => {
-        if (!value) onClose();
+      onOpenChange={(isOpen) => {
+        // Only allow closing dialog via the X button
+        if (!isOpen) {
+          onClose();
+        }
       }}
     >
-      <DialogContent>
+      <DialogContent
+        onPointerDownOutside={(e) => {
+          // Prevent closing when clicking outside the dialog
+          e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing with Escape key
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          // Prevent any interaction outside from closing the dialog
+          e.preventDefault();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{subtitle}</DialogDescription>
         </DialogHeader>
+
+        <hr className="border-white/30" />
+
+        {/* About TriggerX Safe Module */}
+        <Typography variant="h4" color="yellow">
+          About TriggerX Safe Module
+        </Typography>
+        <Typography variant="caption" color="gray" align="left">
+          The TriggerX module enables automated job execution through your Safe
+          wallet. It operates with{" "}
+          <span className="text-purple-400">limited permissions</span> - only
+          executing the tasks you define in the jobs.
+        </Typography>
+        <Typography variant="caption" color="gray" align="left">
+          <li>You maintain full ownership and control of your Safe</li>
+          <li>Module only executes jobs you create and approve</li>
+          <li>You can disable the module anytime</li>
+        </Typography>
+
+        {/* Steps */}
         <div className="space-y-6">
+          {/* Deploy Safe contract */}
           <Card className="flex items-start gap-2 p-4 sm:px-5">
             <div className="mt-0.5 shrink-0">
               <StatusIcon status={createStep} kind="create" />
@@ -105,6 +144,8 @@ export const SafeWalletCreationDialog: React.FC<
               )}
             </div>
           </Card>
+
+          {/* Sign module enable message */}
           <Card className="flex items-start gap-2 p-4 sm:px-5">
             <div className="mt-0.5 shrink-0">
               <StatusIcon status={signStep} kind="sign" />
@@ -135,6 +176,8 @@ export const SafeWalletCreationDialog: React.FC<
               )}
             </div>
           </Card>
+
+          {/* Enable module */}
           <Card className="flex items-start gap-2 p-4 sm:px-5">
             <div className="mt-0.5 shrink-0">
               <StatusIcon status={enableStep} kind="enable" />
