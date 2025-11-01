@@ -5,8 +5,9 @@ import { Network, Shield } from "lucide-react";
 
 /**
  * @description
- * ImportWalletRequirements component displays the requirements for importing a wallet into the TriggerX module.
+ * ImportWalletRequirements component displays the requirements for importing a wallet into the TriggerX.
  * @note Used tailwind classes in typography component to style the text for custom styling.
+ * @note Added styling in typography component to style the text for custom styling.
  */
 export const ImportWalletRequirements: React.FC = () => {
   return (
@@ -24,7 +25,7 @@ export const ImportWalletRequirements: React.FC = () => {
         {/* Requirement 1: Network */}
         <Card>
           <div className="flex items-start">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-400 flex items-center justify-center transition-colors">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#C07AF6] flex items-center justify-center transition-colors">
               <Network size={16} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
@@ -45,7 +46,7 @@ export const ImportWalletRequirements: React.FC = () => {
         {/* Requirement 2: Ownership */}
         <Card>
           <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-400 flex items-center justify-center transition-colors">
+            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#C07AF6] flex items-center justify-center transition-colors">
               <Shield size={16} className="text-white" />
             </div>
             <div className="flex-1 min-w-0">
