@@ -8,6 +8,9 @@ import {
   BadgeCheck,
   Plus,
   RefreshCw,
+  Ban,
+  ExternalLink,
+  Lightbulb,
 } from "lucide-react";
 import {
   Dialog,
@@ -20,6 +23,12 @@ import type {
   SafeCreationStepStatus,
   SafeWalletCreationDialogProps,
 } from "@/types/safe";
+import { useChainId } from "wagmi";
+import {
+  getSafeModuleAddress,
+  getExplorerUrl,
+} from "@/utils/contractAddresses";
+import Link from "next/link";
 
 type StepKind = "create" | "sign" | "enable";
 
@@ -54,7 +63,7 @@ export const SafeWalletCreationDialog: React.FC<
   open,
   onClose,
   title = "Creating Safe Wallet",
-  subtitle = "Please follow the instructions below to complete the safe wallet creation process.",
+  subtitle = "Follow the steps below to set up your Safe Wallet.",
   createStep,
   signStep,
   enableStep,
@@ -65,6 +74,15 @@ export const SafeWalletCreationDialog: React.FC<
   onRetrySign,
   onRetryEnable,
 }) => {
+  const chainId = useChainId();
+  const safeModuleAddress = getSafeModuleAddress(chainId);
+  const explorerUrl = getExplorerUrl(chainId);
+
+  // To view the code of the TriggerX module on the explorer
+  const safeModuleExplorerUrl = safeModuleAddress
+    ? `${explorerUrl}${safeModuleAddress}#code`
+    : "#";
+
   return (
     <Dialog
       open={open}
@@ -94,24 +112,6 @@ export const SafeWalletCreationDialog: React.FC<
           <DialogDescription>{subtitle}</DialogDescription>
         </DialogHeader>
 
-        <hr className="border-white/30" />
-
-        {/* About TriggerX Safe Module */}
-        <Typography variant="h4" color="yellow">
-          About TriggerX Safe Module
-        </Typography>
-        <Typography variant="caption" color="gray" align="left">
-          The TriggerX module enables automated job execution through your Safe
-          wallet. It operates with{" "}
-          <span className="text-purple-400">limited permissions</span> - only
-          executing the tasks you define in the jobs.
-        </Typography>
-        <Typography variant="caption" color="gray" align="left">
-          <li>You maintain full ownership and control of your Safe</li>
-          <li>Module only executes jobs you create and approve</li>
-          <li>You can disable the module anytime</li>
-        </Typography>
-
         {/* Steps */}
         <div className="space-y-6">
           {/* Deploy Safe contract */}
@@ -121,15 +121,17 @@ export const SafeWalletCreationDialog: React.FC<
             </div>
             <div className="min-w-0 text-left px-2">
               <Typography variant="body" align="left">
-                Deploy Safe contract
+                Deploy Safe Contract
               </Typography>
-              <Typography variant="caption" color="secondary" align="left">
-                This creates your Safe wallet. You will confirm a transaction.
+              <Typography variant="caption" color="secondary" align="justify">
+                This step creates your Safe Wallet. You&apos;ll need to confirm
+                a transaction in your connected wallet.
               </Typography>
               {createStep === "error" && createError && (
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <Typography variant="caption" color="error" align="left">
-                    Error: {createError}
+                    <Ban size={12} className="inline-block mr-1" />{" "}
+                    {createError}
                   </Typography>
                   {onRetryCreate && (
                     <button
@@ -152,16 +154,24 @@ export const SafeWalletCreationDialog: React.FC<
             </div>
             <div className="min-w-0 text-left px-2">
               <Typography variant="body" align="left">
-                Sign module enable message
+                Sign Message
               </Typography>
               <Typography variant="caption" color="secondary" align="left">
-                We request your signature to authorize enabling the TriggerX
-                module for seamless automation.
+                Sign a simple, gasless authorization message to approve the{" "}
+                <Link
+                  href={safeModuleExplorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#C07AF6] underline inline-flex items-center gap-1 transition-colors"
+                >
+                  TriggerX module
+                  <ExternalLink size={12} className="inline-block" />
+                </Link>
               </Typography>
               {signStep === "error" && signError && (
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <Typography variant="caption" color="error" align="left">
-                    Error: {signError}
+                    <Ban size={12} className="inline-block mr-1" /> {signError}
                   </Typography>
                   {onRetrySign && (
                     <button
@@ -184,15 +194,17 @@ export const SafeWalletCreationDialog: React.FC<
             </div>
             <div className="min-w-0 text-left px-2">
               <Typography variant="body" align="left">
-                Enable module
+                Enable Module
               </Typography>
-              <Typography variant="caption" color="secondary" align="left">
-                Executes a Safe transaction to enable the TriggerX module.
+              <Typography variant="caption" color="secondary" align="justify">
+                Execute the transaction to activate the module. You&apos;ll need
+                to confirm the transaction in your connected wallet.
               </Typography>
               {enableStep === "error" && enableError && (
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <Typography variant="caption" color="error" align="left">
-                    Error: {enableError}
+                    <Ban size={12} className="inline-block mr-1" />{" "}
+                    {enableError}
                   </Typography>
                   {onRetryEnable && (
                     <button
@@ -207,6 +219,19 @@ export const SafeWalletCreationDialog: React.FC<
               )}
             </div>
           </Card>
+          <Typography variant="caption" color="gray" align="left">
+            <Lightbulb size={16} className="inline-block mr-2 text-[#F8FF7C]" />
+            Refer to the{" "}
+            <Link
+              href="https://triggerx.gitbook.io/triggerx-docs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#C07AF6] underline inline-flex items-center gap-1 transition-colors"
+            >
+              documentation
+            </Link>{" "}
+            to learn more about the TriggerX Module.
+          </Typography>
         </div>
       </DialogContent>
     </Dialog>
