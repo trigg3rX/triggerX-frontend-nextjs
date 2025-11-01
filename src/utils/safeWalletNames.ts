@@ -39,5 +39,5 @@ export const getWalletDisplayName = (
   }
 
   // 3) Fallback to truncated address
-  return getWalletDisplayName(address);
+  return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
 };
