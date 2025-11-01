@@ -60,3 +60,34 @@ export interface SafeWalletCreationDialogProps {
   onRetrySign?: () => void;
   onRetryEnable?: () => void;
 }
+
+export type StepId = "validate" | "sign" | "execute";
+
+export interface MultisigInfo {
+  safeAddress: string;
+  threshold: number;
+  safeTxHash: string;
+  queueUrl: string | null;
+  fallbackUrl: string | null;
+  owners: string[];
+}
+
+export interface ImportWalletStatusProps {
+  currentStep: StepId | null;
+  completedSteps: Set<StepId>;
+  isValidating: boolean;
+  isEnablingModule: boolean;
+  isSigningEnableModule: boolean;
+  isExecutingEnableModule: boolean;
+  isProposingEnableModule: boolean;
+  multisigInfo: MultisigInfo | null;
+  isCheckingModuleStatus: boolean;
+  onManualRefresh?: () => void;
+}
+
+export interface SafeWalletImportDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onImported?: (safeAddress: string, moduleActive: boolean) => void;
+  onHasOngoingProcessChange?: (hasOngoing: boolean) => void;
+}
