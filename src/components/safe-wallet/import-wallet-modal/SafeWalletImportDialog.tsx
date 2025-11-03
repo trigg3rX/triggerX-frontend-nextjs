@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
 import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import { addExtraSafe } from "@/utils/safeWalletLocal";
 import { validateSafeWallet } from "@/utils/validateSafeWallet";
-import type { EnableModuleResult } from "@/types/safe";
 import { ethers } from "ethers";
 import {
   useSafeModuleStatus,
@@ -43,8 +42,8 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
   const { address } = useAccount();
   const chainId = useChainId();
   const {
-    enableModule,
-    isEnablingModule,
+    signEnableModule,
+    submitEnableModule,
     isSigningEnableModule,
     isExecutingEnableModule,
     isProposingEnableModule,
@@ -58,6 +57,9 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
   const [completedSteps, setCompletedSteps] = useState<Set<StepId>>(new Set());
   const [hasOngoingProcess, setHasOngoingProcess] = useState(false);
 
+  // Ref to track if we've already processed module completion
+  const completionProcessedRef = useRef(false);
+
   // Use hook to check module status for multisig Safe
   const [moduleStatus, refreshModuleStatus, isCheckingModuleStatus] =
     useSafeModuleStatus(multisigInfo?.safeAddress);
@@ -69,49 +71,74 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
     }
   }, [hasOngoingProcess, onHasOngoingProcessChange]);
 
+  // Helper: Check if error is a user rejection
+  const isUserRejection = (errorMessage: string): boolean => {
+    const msg = errorMessage.toLowerCase();
+    return msg.includes("rejected") || msg.includes("denied");
+  };
+
+  // Helper: Reset all state to initial values
+  const resetAllState = useCallback(() => {
+    setExistingSafeAddress("");
+    setAddExistingError("");
+    setIsValidating(false);
+    setMultisigInfo(null);
+    setCurrentStep(null);
+    setCompletedSteps(new Set());
+    setHasOngoingProcess(false);
+    completionProcessedRef.current = false; // Reset completion flag
+  }, []);
+
+  // Helper: Reset and close the dialog
+  const resetAndClose = useCallback(() => {
+    resetAllState();
+    onClose();
+  }, [resetAllState, onClose]);
+
   const handleClose = useCallback(() => {
     // Only reset state if there's no ongoing process
     // If there's an ongoing process, keep the state so it can be restored when reopened
     if (!hasOngoingProcess) {
-      // Reset all state
-      setExistingSafeAddress("");
-      setAddExistingError("");
-      setIsValidating(false);
-      setMultisigInfo(null);
-      setCurrentStep(null);
-      setCompletedSteps(new Set());
+      resetAllState();
     }
 
     // Always allow closing the dialog
     onClose();
-  }, [hasOngoingProcess, onClose]);
+  }, [hasOngoingProcess, onClose, resetAllState]);
 
   // Watch for module status becoming enabled (for multisig scenarios)
   useEffect(() => {
     if (
       moduleStatus === true &&
       multisigInfo?.safeAddress &&
-      hasOngoingProcess
+      hasOngoingProcess &&
+      !completionProcessedRef.current // Guard against duplicate processing
     ) {
-      // Module has been enabled!
-      toast.success("Module enabled successfully!");
-      setMultisigInfo(null);
-      setCompletedSteps(new Set(STEP_ORDER));
-      setCurrentStep(null);
-      setHasOngoingProcess(false);
+      // Mark as processed immediately
+      completionProcessedRef.current = true;
+
+      const safeAddr = multisigInfo.safeAddress;
 
       // Persist to localStorage
-      addExtraSafe(chainId, multisigInfo.safeAddress);
+      addExtraSafe(chainId, safeAddr);
 
       // Notify parent
       if (onImported) {
-        onImported(multisigInfo.safeAddress, true);
+        onImported(safeAddr, true);
       }
 
-      // Auto-close
+      // Mark as complete and reset
+      setCompletedSteps(new Set(STEP_ORDER));
+      setCurrentStep(null);
+
+      // Close modal first, then show success toast
       setTimeout(() => {
-        handleClose();
-      }, 2000);
+        resetAndClose();
+        // Show toast after modal closes
+        setTimeout(() => {
+          toast.success("TriggerX module enabled successfully!");
+        }, 300);
+      }, 1500);
     }
   }, [
     moduleStatus,
@@ -119,34 +146,8 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
     hasOngoingProcess,
     chainId,
     onImported,
-    handleClose,
+    resetAndClose,
   ]);
-
-  // Apply the enable module result to the state.
-  const applyEnableModuleResult = (
-    result: EnableModuleResult | null,
-    safeAddr: string,
-  ): { moduleActive: boolean; status: EnableModuleResult["status"] | null } => {
-    if (!result) {
-      return { moduleActive: false, status: null };
-    }
-
-    if (result.status === "multisig") {
-      setMultisigInfo({
-        safeAddress: safeAddr,
-        threshold: result.threshold,
-        safeTxHash: result.safeTxHash,
-        queueUrl: result.queueUrl,
-        fallbackUrl: result.fallbackUrl,
-        owners: result.owners,
-      });
-      setHasOngoingProcess(true);
-      return { moduleActive: false, status: result.status };
-    }
-
-    setMultisigInfo(null);
-    return { moduleActive: true, status: result.status };
-  };
 
   // Handle manual refresh of the module status for multisig Safe.
   const handleManualRefresh = async () => {
@@ -160,18 +161,16 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
       await refreshModuleStatus();
     } catch (error) {
       console.error("Error checking module status:", error);
-      toast.error("Failed to check status");
+      toast.error("Failed to check module status");
     }
   };
 
   /**
    * @description
-   * Handles the submission of the import safe wallet process.
-   * @note Validates the safe wallet address using the validateSafeWallet helper function.
-   * @note Enables the module using the enableModule function.
-   * @note Applies the enable module result using the applyEnableModuleResult function.
-   * @note Persists the safe wallet address to localStorage using the addExtraSafe function.
-   * @note Notifies the parent component using the onImported function.
+   * Handles the submission of the import safe wallet process with robust error handling.
+   * @note Uses two-step flow: signEnableModule then submitEnableModule for granular error handling.
+   * @note Auto-closes on user rejection; shows inline error for other failures.
+   * @note Preserves multisig progress across dialog close/reopen.
    */
   const handleSubmitImport = async () => {
     if (!existingSafeAddress.trim()) {
@@ -185,13 +184,13 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
     setHasOngoingProcess(true);
 
     try {
+      // Step 1: Validate Safe wallet
       if (typeof window.ethereum === "undefined") {
         throw new Error("Please connect your wallet");
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
 
-      // Validate Safe wallet using helper function
       const validationResult = await validateSafeWallet(
         existingSafeAddress,
         provider,
@@ -206,43 +205,121 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
 
       // Validation complete
       setCompletedSteps(new Set(["validate"]));
+      setIsValidating(false);
       setCurrentStep("sign");
 
-      // Enable module
-      const enableResult = await enableModule(safeAddr);
-      const { moduleActive } = applyEnableModuleResult(enableResult, safeAddr);
+      // Step 2: Sign enable module transaction
+      const signResult = await signEnableModule(safeAddr);
 
-      if (enableResult) {
-        // Persist to localStorage
-        addExtraSafe(chainId, safeAddr);
+      if (!signResult.success) {
+        const errorMsg = signResult.error || "Failed to sign transaction";
 
-        if (moduleActive) {
-          // All steps complete
-          setCompletedSteps(new Set(STEP_ORDER));
-          setCurrentStep(null);
-          setHasOngoingProcess(false);
-
-          // Notify parent
-          if (onImported) {
-            onImported(safeAddr, true);
-          }
-
-          // Auto-close after success
+        // Check if user rejected the signature
+        if (isUserRejection(errorMsg)) {
+          console.log("User rejected signature, closing dialog");
+          resetAndClose();
+          // Show error toast after modal closes
           setTimeout(() => {
-            handleClose();
-          }, 2000);
-        } else if (enableResult.status === "multisig") {
-          // Multisig flow - keep dialog open with minimize option
-          setCompletedSteps(new Set(["validate", "sign"]));
-          setCurrentStep("execute");
+            toast.error("Sign message rejected by user");
+          }, 300);
+          return;
         }
+
+        // Non-rejection error: show inline and allow retry
+        throw new Error(errorMsg);
+      }
+
+      // Check if module was already enabled (empty safeTxHash)
+      if (signResult.data && !signResult.data.safeTxHash) {
+        // Module already enabled
+        addExtraSafe(chainId, safeAddr);
+        setCompletedSteps(new Set(STEP_ORDER));
+        setCurrentStep(null);
+        setHasOngoingProcess(false);
+
+        if (onImported) {
+          onImported(safeAddr, true);
+        }
+
+        // Close modal first, then show success toast
+        setTimeout(() => {
+          resetAndClose();
+          setTimeout(() => {
+            toast.success("Safe wallet imported successfully!");
+          }, 300);
+        }, 1500);
+        return;
+      }
+
+      // Sign complete
+      setCompletedSteps(new Set(["validate", "sign"]));
+      setCurrentStep("execute");
+
+      // Step 3: Submit (execute or propose) the transaction
+      const submitResult = await submitEnableModule();
+
+      if (!submitResult.success) {
+        const errorMsg = submitResult.error || "Failed to submit transaction";
+
+        // Check if user rejected the transaction
+        if (isUserRejection(errorMsg)) {
+          console.log("User rejected transaction, closing dialog");
+          resetAndClose();
+          // Show error toast after modal closes
+          setTimeout(() => {
+            toast.error("Transaction rejected by user");
+          }, 300);
+          return;
+        }
+
+        // Non-rejection error: show inline and allow retry
+        throw new Error(errorMsg);
+      }
+
+      // Persist to localStorage
+      addExtraSafe(chainId, safeAddr);
+
+      if (submitResult.data?.status === "executed") {
+        // Single-sig: module enabled immediately
+        setCompletedSteps(new Set(STEP_ORDER));
+        setCurrentStep(null);
+        setHasOngoingProcess(false);
+
+        if (onImported) {
+          onImported(safeAddr, true);
+        }
+
+        // Close modal first, then show success toast
+        setTimeout(() => {
+          resetAndClose();
+          setTimeout(() => {
+            toast.success("Safe wallet imported successfully!");
+          }, 300);
+        }, 1500);
+      } else if (submitResult.data?.status === "multisig") {
+        // Multisig: keep dialog state, allow close/reopen
+        setMultisigInfo({
+          safeAddress: safeAddr,
+          threshold: submitResult.data.threshold,
+          safeTxHash: submitResult.data.safeTxHash || "",
+          queueUrl: submitResult.data.queueUrl || null,
+          fallbackUrl: submitResult.data.fallbackUrl || null,
+          owners: submitResult.data.owners,
+        });
+        setCompletedSteps(new Set(["validate", "sign"]));
+        setCurrentStep("execute");
+        setHasOngoingProcess(true);
       }
     } catch (err) {
       console.error("Import Safe failed:", err);
       const msg = err instanceof Error ? err.message : "Failed to import Safe";
+
+      // Show inline error and reset progress UI (but keep address input)
       setAddExistingError(msg);
       setCurrentStep(null);
+      setCompletedSteps(new Set());
       setHasOngoingProcess(false);
+      setMultisigInfo(null);
     } finally {
       setIsValidating(false);
     }
@@ -251,7 +328,6 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
   // Determine if the status should be shown based on the current state.
   const shouldShowStatus =
     isValidating ||
-    isEnablingModule ||
     isSigningEnableModule ||
     isExecutingEnableModule ||
     isProposingEnableModule ||
@@ -309,7 +385,7 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
               currentStep={currentStep}
               completedSteps={completedSteps}
               isValidating={isValidating}
-              isEnablingModule={isEnablingModule}
+              isEnablingModule={false}
               isSigningEnableModule={isSigningEnableModule}
               isExecutingEnableModule={isExecutingEnableModule}
               isProposingEnableModule={isProposingEnableModule}

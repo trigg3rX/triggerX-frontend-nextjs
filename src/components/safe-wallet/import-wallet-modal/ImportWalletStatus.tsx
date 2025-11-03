@@ -19,7 +19,7 @@ const STEP_ORDER: StepId[] = ["validate", "sign", "execute"];
 const STEP_LABELS: Record<StepId, string> = {
   validate: "Validating Safe wallet requirements",
   sign: "Signing the enableModule message",
-  execute: "Waiting for other signers to sign enableModule transaction",
+  execute: "Executing the enableModule transaction",
 };
 
 const STEP_ICONS: Record<
@@ -53,21 +53,21 @@ export const ImportWalletStatus: React.FC<ImportWalletStatusProps> = ({
 }) => {
   const [expandedSteps, setExpandedSteps] = useState<Set<StepId>>(new Set());
 
-  // Determine if we need to show third step (only for multisig scenarios)
-  const isMultisigNeeded =
+  // Determine if this is a multisig scenario
+  const isMultisigScenario =
     multisigInfo &&
     (multisigInfo.threshold > 1 || multisigInfo.owners.length > 1);
 
-  // Auto-expand third step when transitioning to it (only if multisig is needed)
+  // Auto-expand third step when transitioning to it (only for multisig)
   useEffect(() => {
-    if (currentStep === "execute" && isMultisigNeeded) {
+    if (currentStep === "execute" && isMultisigScenario) {
       setExpandedSteps((prev) => {
         const next = new Set(prev);
         next.add("execute");
         return next;
       });
     }
-  }, [currentStep, isMultisigNeeded]);
+  }, [currentStep, isMultisigScenario]);
 
   // Get the state of the step based on the current step and completed steps.
   const getStepState = (step: StepId): "pending" | "current" | "completed" => {
@@ -95,10 +95,10 @@ export const ImportWalletStatus: React.FC<ImportWalletStatusProps> = ({
     execute: isExecutingEnableModule
       ? "Executing the enableModule transaction in your connected wallet to activate the TriggerX module."
       : isProposingEnableModule
-        ? "Publishing the enableModule transaction to the Safe Transaction Service to activate the TriggerX module."
-        : multisigInfo
-          ? `Waiting for ${multisigInfo.threshold - 1} more signatures to complete the process to enable the TriggerX module.`
-          : "Ready",
+        ? "Publishing the enableModule transaction to the Safe Transaction Service."
+        : isMultisigScenario
+          ? `Waiting for ${multisigInfo!.threshold - 1} more signatures to complete the process.`
+          : "Activating the TriggerX module on-chain.",
   };
 
   // Toggle the step to expand or collapse the details section.
@@ -128,10 +128,8 @@ export const ImportWalletStatus: React.FC<ImportWalletStatusProps> = ({
     return <StepIcon size={16} className="text-white" />;
   };
 
-  // Filter steps - exclude execute step if not multisig
-  const visibleSteps = STEP_ORDER.filter(
-    (step) => step !== "execute" || isMultisigNeeded,
-  );
+  // Show all steps including execute
+  const visibleSteps = STEP_ORDER;
 
   return (
     <>
@@ -142,10 +140,9 @@ export const ImportWalletStatus: React.FC<ImportWalletStatusProps> = ({
           const isCurrent = state === "current";
           const isExpanded = expandedSteps.has(step);
 
-          // Only execute step should have expandable section
-          const shouldShowExpand = step === "execute" && multisigInfo;
-          const hasDescription =
-            isCurrent || (step === "execute" && multisigInfo);
+          // Only execute step with multisig has expandable section
+          const shouldShowExpand = step === "execute" && isMultisigScenario;
+          const hasDescription = isCurrent || step === "execute";
 
           return (
             <div
