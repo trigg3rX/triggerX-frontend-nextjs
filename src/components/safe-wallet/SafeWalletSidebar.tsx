@@ -11,9 +11,17 @@ import { useAccount } from "wagmi";
 import { useSafeWallets } from "@/hooks/useSafeWallets";
 import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
 import { getWalletDisplayName, saveWalletName } from "@/utils/safeWalletNames";
-import { Save, ChevronDown, ChevronUp, Edit, CheckCircle2 } from "lucide-react";
-import { LucideCopyButton } from "@/components/ui/CopyButton";
+import {
+  Save,
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  CheckCircle2,
+  Import,
+} from "lucide-react";
+import { SafeWalletCopyButton } from "@/components/ui/CopyButton";
 import SafeCreationProgressModal from "@/components/safe-wallet/SafeWalletCreationDialog";
+import SafeWalletImportDialog from "@/components/safe-wallet/import-wallet-modal/SafeWalletImportDialog";
 import type { SafeCreationStepStatus } from "@/types/safe";
 import {
   useSafeModuleStatus,
@@ -42,9 +50,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   } = useCreateSafeWallet();
   const [editingName, setEditingName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importAddress, setImportAddress] = useState("");
-  const [importError, setImportError] = useState("");
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [showList, setShowList] = useState(false);
   const [moduleEnabled, refreshModuleStatus, checkingModule] =
     useSafeModuleStatus(selectedSafe || undefined);
@@ -58,6 +64,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   const [currentSafeAddress, setCurrentSafeAddress] = useState<string | null>(
     null,
   );
+  const [hasImportOngoingProcess, setHasImportOngoingProcess] = useState(false);
 
   // Dropdown options for the safe wallets
   const dropdownOptions: DropdownOption[] = [
@@ -158,7 +165,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
         clearModuleStatusCache(safeAddress);
         setModuleStatus(safeAddress, true);
       } else if (submitResult.data?.status === "multisig") {
-        // For multisig, module is not enabled yet - don't set status (will be enabled when approved)
+        // For multisig, module is not enabled yet - don't set status (will be enabled when approved or on manual refresh)
       }
 
       // Auto-close dialog after successful completion of all steps
@@ -217,45 +224,24 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     await handleEnableStep(currentSafeAddress);
   };
 
-  const openImportModal = () => {
-    setShowImportModal(true);
-    setImportAddress("");
-    setImportError("");
-  };
+  const handleImportedSafe = async (
+    safeAddress: string,
+    moduleActive: boolean,
+  ) => {
+    // Select the imported safe
+    onSafeSelect(safeAddress);
 
-  const handleImportSafe = async () => {
-    if (!importAddress || !/^0x[a-fA-F0-9]{40}$/.test(importAddress)) {
-      setImportError("Please enter a valid Ethereum address");
-      return;
-    }
+    // Refetch the safe wallets list
+    await refetch();
 
-    try {
-      setImportError("");
-      // Store friendly name and select the imported safe
-      saveWalletName(importAddress, getWalletDisplayName(importAddress));
-      onSafeSelect(importAddress);
-      setShowImportModal(false);
-
-      // Try to enable module on imported safe (two-step flow)
-      try {
-        const signResult = await signEnableModule(importAddress);
-        if (signResult.success) {
-          const submitResult = await submitEnableModule();
-          if (submitResult.success) {
-            if (submitResult.data?.status === "executed") {
-            } else if (submitResult.data?.status === "multisig") {
-            }
-          } else {
-          }
-        } else {
-        }
-      } catch (moduleError) {
-        console.warn("Failed to enable module on imported safe:", moduleError);
+    // Refresh module status
+    setTimeout(async () => {
+      if (moduleActive) {
+        clearModuleStatusCache(safeAddress);
+        setModuleStatus(safeAddress, true);
       }
-    } catch (importErr) {
-      console.error("Import error:", importErr);
-      setImportError("Failed to import safe wallet");
-    }
+      await refreshModuleStatus();
+    }, 500);
   };
 
   // Handle enable module on created safe wallet
@@ -269,12 +255,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       if (submitResult.success) {
         setModuleStatus(selectedSafe, true); // update localStorage
         await refreshModuleStatus();
-        if (submitResult.data?.status === "executed") {
-        } else if (submitResult.data?.status === "multisig") {
-        }
-      } else {
       }
-    } else {
     }
   };
 
@@ -283,27 +264,29 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       {/* Tab-style header for alignment with main content tabs */}
       <div className="overflow-x-auto">
         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1 w-full">
-          <button
-            className="px-4 py-2 rounded-lg text-xs sm:text-sm bg-white/10 text-white w-full"
-            aria-pressed
-            disabled
+          <Typography
+            variant="body"
+            color="white"
+            align="center"
+            className="px-4 py-2 rounded-lg text-xs sm:text-sm bg-white/10 w-full"
           >
             Safe Wallet Management
-          </button>
+          </Typography>
         </div>
       </div>
 
       {/* Safe Wallet Selection */}
-      <Card className="p-3 sm:p-4">
+      <Card className="p-2 sm:p-4">
         {isLoading ? (
           <Skeleton height={50} borderRadius={12} />
         ) : (
           <>
             {/* Custom selector with inline edit and dropdown toggle */}
             <div className="mb-4">
-              <div className="relative w-full bg-[#1a1a1a] border border-white/10 rounded-lg px-2 sm:px-3 py-2.5 flex items-center gap-2 sm:gap-3 overflow-hidden">
-                {/* Left: edit/save */}
-                <div className="shrink-0">
+              <div className="relative w-full bg-background border border-white/20 rounded-lg px-2 sm:px-3 py-2.5 flex items-center gap-2 sm:gap-3 overflow-hidden">
+                {/* Not used defined button component as we have to show button like icon*/}
+                {/* Left: edit/save button */}
+                <div className="flex items-center gap-2">
                   {!isEditingName ? (
                     <button
                       onClick={() => {
@@ -317,11 +300,11 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                       }}
                       disabled={!selectedSafe}
                       aria-disabled={!selectedSafe}
-                      className={`p-1.5 sm:p-2 rounded transition-colors ${
+                      className={
                         selectedSafe
-                          ? "text-purple-300 hover:text-white hover:bg-purple-500/20"
-                          : "text-white/30 cursor-not-allowed"
-                      }`}
+                          ? "text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20 rounded p-1.5 sm:p-2"
+                          : "text-white/30 cursor-not-allowed rounded p-1.5 sm:p-2"
+                      }
                       title={
                         selectedSafe
                           ? "Edit wallet name"
@@ -341,7 +324,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                           refetch();
                         }
                       }}
-                      className="p-1.5 sm:p-2 text-purple-300 hover:text-white hover:bg-purple-500/20 rounded transition-colors"
+                      className="text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20 rounded p-1.5 sm:p-2"
                       title="Save"
                     >
                       <Save size={16} />
@@ -350,10 +333,10 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                 </div>
 
                 {/* Middle: identity */}
-                <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex-1 overflow-hidden">
                   {!isEditingName ? (
                     <div
-                      className="flex flex-col cursor-pointer select-none min-w-0"
+                      className="flex flex-col cursor-pointer select-none"
                       onClick={() => setShowList((prev) => !prev)}
                       role="button"
                       aria-label="Open wallet list"
@@ -362,32 +345,26 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                         variant="caption"
                         color="secondary"
                         align="left"
-                        className="truncate"
                       >
-                        {/* This shortens the address to 12 characters only for sufficient display space on the UI for other text */}
                         {selectedSafe ? (
                           <>
-                            {`${selectedSafe.substring(0, 7)}...${selectedSafe.substring(selectedSafe.length - 5)}`}
+                            {`${selectedSafe.substring(0, 5)}...${selectedSafe.substring(selectedSafe.length - 5)}`}
                             {moduleEnabled === true ? (
-                              <span className="inline-flex items-center gap-1 text-purple-300 px-2 py-0.5">
+                              <span className="inline-flex items-center text-[#C07AF6] px-1">
                                 <CheckCircle2 size={10} />
                               </span>
                             ) : null}
                           </>
                         ) : null}
                       </Typography>
-                      <Typography
-                        variant="body"
-                        align="left"
-                        className="truncate text-sm sm:text-base"
-                      >
+                      <Typography variant="body" align="left">
                         {selectedSafe
                           ? getWalletDisplayName(selectedSafe, safeWallets)
                           : selectedOption}
                       </Typography>
                     </div>
                   ) : (
-                    <div className="min-w-0">
+                    <div>
                       <InputField
                         label=""
                         placeholder="Wallet Nickname"
@@ -398,47 +375,52 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                   )}
                 </div>
 
-                {/* Right: copy and arrow icon to toggle dropdown list */}
-                {selectedSafe && !isEditingName && (
-                  <div
-                    className="shrink-0 mr-1 hidden sm:block"
-                    title="Copy address"
-                  >
-                    <LucideCopyButton text={selectedSafe} />
-                  </div>
-                )}
-                <button
-                  onClick={() => {
-                    if (!isEditingName) setShowList((prev) => !prev);
-                  }}
-                  className={`shrink-0 p-1 rounded ${
-                    isEditingName
-                      ? "text-white/40 cursor-not-allowed"
-                      : "text-white/80 hover:text-white"
-                  }`}
-                  aria-label="Toggle wallet list"
-                  aria-disabled={isEditingName}
-                  disabled={isEditingName}
-                >
-                  {showList ? (
-                    <ChevronUp size={16} />
-                  ) : (
-                    <ChevronDown size={16} />
+                <div className="flex items-center gap-0">
+                  {/* Right: copy and arrow icon to toggle dropdown list */}
+                  {selectedSafe && !isEditingName && (
+                    <SafeWalletCopyButton text={selectedSafe} />
                   )}
-                </button>
+
+                  {/* Toggle wallet list button */}
+                  {/* Not used defined button component as we have to show button like icon*/}
+                  <button
+                    onClick={() => {
+                      if (!isEditingName) setShowList((prev) => !prev);
+                    }}
+                    disabled={isEditingName}
+                    aria-disabled={isEditingName}
+                    className={`p-1.5 sm:p-2 rounded transition-colors ${
+                      isEditingName
+                        ? "text-white/30 cursor-not-allowed"
+                        : "text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20"
+                    }`}
+                    aria-label="Show wallet list"
+                    title={
+                      isEditingName
+                        ? "Change wallet name first"
+                        : "Show wallet list"
+                    }
+                  >
+                    {showList ? (
+                      <ChevronUp size={16} />
+                    ) : (
+                      <ChevronDown size={16} />
+                    )}
+                  </button>
+                </div>
               </div>
+
               {/* Dropdown list */}
+              {/* Custom dropdown list with custom styles*/}
               {showList && (
-                <div className="mt-2 bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
+                <div className="mt-2 text-sm text-white bg-background border border-white/20 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
                   {dropdownOptions.length === 0 ? (
-                    <div className="py-3 px-4 text-[#A2A2A2] text-sm">
-                      No wallets found
-                    </div>
+                    <div className="py-4 px-4">No wallets found</div>
                   ) : (
                     dropdownOptions.map((opt) => (
                       <div
                         key={opt.id}
-                        className="py-2.5 px-4 hover:bg-[#333] cursor-pointer text-sm"
+                        className="py-4 px-4 hover:bg-gray-500/20 cursor-pointer"
                         onClick={() => {
                           handleSelect(opt);
                           setShowList(false);
@@ -452,37 +434,34 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
               )}
             </div>
 
-            {/* Inline link to enable module when not verified */}
+            {/* Enable Module Button as inline link */}
+            {/* Not used defined button component as we have to show button like inline link*/}
             {selectedSafe && !checkingModule && moduleEnabled === false && (
               <div className="mt-0.5 flex justify-end">
                 <button
                   onClick={() => void handleEnableModule()}
-                  className="text-xs text-purple-300 hover:text-white underline underline-offset-4 cursor-pointer"
+                  className="text-xs text-[#C07AF6] underline underline-offset-4 cursor-pointer"
                 >
-                  Enable Module
+                  Enable TriggerX Module
                 </button>
               </div>
             )}
 
+            {/* Error Message Display*/}
             {error && (
-              <Typography
-                variant="caption"
-                color="error"
-                align="left"
-                className="mb-3"
-              >
+              <Typography variant="caption" color="error" align="left">
                 {error}
               </Typography>
             )}
 
             {/* Separator */}
-            <hr className="my-3 border-white/20" />
+            <hr className="my-4 border-white/20" />
 
             {/* Create / Import actions - always visible */}
-            <div className="space-y-2 sm:space-y-3 mt-3 sm:mt-2">
+            <div className="space-y-3">
               <Button
                 onClick={handleCreateNewSafe}
-                className="w-full text-sm sm:text-base"
+                className="w-full"
                 disabled={
                   isCreating ||
                   isSigningEnableModule ||
@@ -498,76 +477,50 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                       ? "Enabling Module..."
                       : "Create New Safe Wallet"}
               </Button>
-              <Button
-                onClick={openImportModal}
-                className="w-full text-sm sm:text-base"
-                disabled={
-                  isCreating ||
-                  isSigningEnableModule ||
-                  isExecutingEnableModule ||
-                  isProposingEnableModule
-                }
-              >
-                Import Safe Wallet
-              </Button>
+
+              {/* Import Safe Wallet Button and Progress Button */}
+              <div className="relative flex items-center gap-2">
+                {/* Import Safe Wallet Button */}
+                <Button
+                  onClick={() => setShowImportDialog(true)}
+                  className="w-full"
+                  disabled={
+                    isCreating ||
+                    isSigningEnableModule ||
+                    isExecutingEnableModule ||
+                    isProposingEnableModule
+                  }
+                >
+                  Import Safe Wallet
+                </Button>
+
+                {/* Show import wallet progress button when there is an ongoing process and the import dialog is not open */}
+                {hasImportOngoingProcess && (
+                  <button
+                    onClick={() => setShowImportDialog(true)}
+                    className="shrink-0 p-2 rounded-lg text-[#C07AF6] bg-[#F8FF7C] border border-white/20"
+                    title="Click to view import wallet progress"
+                  >
+                    <Import size={24} className="animate-pulse" />
+                  </button>
+                )}
+              </div>
             </div>
           </>
         )}
       </Card>
 
-      {/* Import Safe Modal */}
-      {showImportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="p-4 sm:p-6 w-full max-w-md">
-            <div className="space-y-4">
-              <Typography variant="h3" color="primary">
-                Import Existing Safe
-              </Typography>
-              <Typography variant="caption" color="secondary">
-                Enter the address of an existing Safe wallet to import it.
-              </Typography>
+      {/* Import Safe Dialog */}
+      <SafeWalletImportDialog
+        open={showImportDialog}
+        onClose={() => {
+          setShowImportDialog(false);
+        }}
+        onImported={handleImportedSafe}
+        onHasOngoingProcessChange={setHasImportOngoingProcess}
+      />
 
-              <InputField
-                label="Safe Address"
-                placeholder="0x..."
-                value={importAddress}
-                onChange={setImportAddress}
-                error={importError}
-              />
-
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleImportSafe}
-                  disabled={
-                    !importAddress ||
-                    isSigningEnableModule ||
-                    isExecutingEnableModule ||
-                    isProposingEnableModule
-                  }
-                  className="flex-1"
-                >
-                  {isSigningEnableModule
-                    ? "Signing..."
-                    : isExecutingEnableModule || isProposingEnableModule
-                      ? "Enabling..."
-                      : "Import Safe"}
-                </Button>
-                <Button
-                  onClick={() => {
-                    setShowImportModal(false);
-                    setImportAddress("");
-                    setImportError("");
-                  }}
-                  color="purple"
-                  className="px-6"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
+      {/* Safe Wallet Creation Progress Dialog */}
       <SafeCreationProgressModal
         open={showCreateFlow}
         onClose={() => setShowCreateFlow(false)}
