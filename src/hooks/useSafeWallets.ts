@@ -3,6 +3,7 @@ import { useAccount, useChainId } from "wagmi";
 import { ethers } from "ethers";
 import { getSafeWalletFactoryAddress } from "@/utils/contractAddresses";
 import TriggerXSafeFactoryArtifact from "@/artifacts/TriggerXSafeFactory.json";
+import { mergeApiAndExtraSafes } from "@/utils/safeWalletLocal";
 
 export const useSafeWallets = () => {
   const { address } = useAccount();
@@ -59,7 +60,8 @@ export const useSafeWallets = () => {
             }
             const data = (await resp.json()) as { safes?: string[] };
             if (Array.isArray(data?.safes)) {
-              setSafeWallets(data.safes);
+              const merged = mergeApiAndExtraSafes(data.safes, Number(chainId));
+              setSafeWallets(merged);
               fetchedViaApi = true;
             } else {
               throw new Error("Malformed API response: missing safes array");
@@ -93,7 +95,8 @@ export const useSafeWallets = () => {
           );
 
           const wallets = await contract.getSafeWallets(address);
-          setSafeWallets(wallets);
+          const merged = mergeApiAndExtraSafes(wallets, Number(chainId));
+          setSafeWallets(merged);
         }
       } catch (err) {
         console.error("Error fetching Safe wallets:", err);
