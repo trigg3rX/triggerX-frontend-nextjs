@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Typography } from "@/components/ui/Typography";
 import SafeJobs from "./SafeJobs";
 import SafeTokens from "./SafeTokens";
@@ -18,9 +18,9 @@ const Page: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("jobs");
   const [selectedSafe, setSelectedSafe] = useState<string | null>(null);
 
-  const handleSafeSelect = (safe: string | null) => {
+  const handleSafeSelect = useCallback((safe: string | null) => {
     setSelectedSafe(safe);
-  };
+  }, []);
 
   const renderMainContent = () => {
     switch (activeTab) {
