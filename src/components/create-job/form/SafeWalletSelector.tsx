@@ -238,8 +238,8 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
       setEnableStep("success");
       if (submitResult.data?.status === "executed") {
         // Clear cache and update module status in localStorage for executed transactions (module is enabled)
-        clearModuleStatusCache(safeAddress);
-        setModuleStatus(safeAddress, true);
+        clearModuleStatusCache(safeAddress, chainId);
+        setModuleStatus(safeAddress, chainId, true);
       } else if (submitResult.data?.status === "multisig") {
         // For multisig, module is not enabled yet - don't set status (will be enabled when approved or on manual refresh)
       }
@@ -315,8 +315,8 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
 
     // Update module status if active
     if (moduleActive) {
-      clearModuleStatusCache(safeAddress);
-      setModuleStatus(safeAddress, true);
+      clearModuleStatusCache(safeAddress, chainId);
+      setModuleStatus(safeAddress, chainId, true);
     }
   };
 

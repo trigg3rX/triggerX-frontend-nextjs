@@ -155,7 +155,7 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
 
     try {
       // Clear cache to force fresh blockchain check
-      clearModuleStatusCache(multisigInfo.safeAddress);
+      clearModuleStatusCache(multisigInfo.safeAddress, chainId);
 
       // Use hook's refresh function to check module status
       await refreshModuleStatus();

@@ -172,8 +172,8 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       setEnableStep("success");
       if (submitResult.data?.status === "executed") {
         // Clear cache and update module status in localStorage for executed transactions (module is enabled)
-        clearModuleStatusCache(safeAddress);
-        setModuleStatus(safeAddress, true);
+        clearModuleStatusCache(safeAddress, chainId);
+        setModuleStatus(safeAddress, chainId, true);
       } else if (submitResult.data?.status === "multisig") {
         // For multisig, module is not enabled yet - don't set status (will be enabled when approved or on manual refresh)
       }
@@ -195,7 +195,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       // Wait a bit more for the selection to take effect, then force refresh module status from blockchain
       setTimeout(async () => {
         // Clear cache again to ensure fresh check (to show as enabled)
-        clearModuleStatusCache(safeAddress);
+        clearModuleStatusCache(safeAddress, chainId);
         await refreshModuleStatus();
       }, 500);
     }, 3000);
@@ -247,8 +247,8 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     // Refresh module status
     setTimeout(async () => {
       if (moduleActive) {
-        clearModuleStatusCache(safeAddress);
-        setModuleStatus(safeAddress, true);
+        clearModuleStatusCache(safeAddress, chainId);
+        setModuleStatus(safeAddress, chainId, true);
       }
       await refreshModuleStatus();
     }, 500);
@@ -263,7 +263,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     if (signResult.success) {
       const submitResult = await submitEnableModule();
       if (submitResult.success) {
-        setModuleStatus(selectedSafe, true); // update localStorage
+        setModuleStatus(selectedSafe, chainId, true); // update localStorage
         await refreshModuleStatus();
       }
     }
