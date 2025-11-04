@@ -1,16 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Typography } from "@/components/ui/Typography";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { DropdownOption } from "@/components/ui/Dropdown";
 import { InputField } from "@/components/ui/InputField";
 import Skeleton from "@/components/ui/Skeleton";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { useSafeWallets } from "@/hooks/useSafeWallets";
 import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
-import { getWalletDisplayName, saveWalletName } from "@/utils/safeWalletNames";
+import {
+  getWalletDisplayName,
+  saveChainWalletName,
+} from "@/utils/safeWalletNames";
 import {
   Save,
   ChevronDown,
@@ -38,6 +41,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   onSafeSelect,
 }) => {
   const { address } = useAccount();
+  const chainId = useChainId();
   const { safeWallets, isLoading, error, refetch } = useSafeWallets();
   const {
     createSafeWallet,
@@ -50,6 +54,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   } = useCreateSafeWallet();
   const [editingName, setEditingName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [nameError, setNameError] = useState<string>("");
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showList, setShowList] = useState(false);
   const [moduleEnabled, refreshModuleStatus, checkingModule] =
@@ -66,17 +71,22 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   );
   const [hasImportOngoingProcess, setHasImportOngoingProcess] = useState(false);
 
+  // Clear selection when chain switches
+  useEffect(() => {
+    onSafeSelect(null);
+  }, [chainId, onSafeSelect]);
+
   // Dropdown options for the safe wallets
   const dropdownOptions: DropdownOption[] = [
     ...safeWallets.map((w) => ({
       id: w,
-      name: getWalletDisplayName(w, safeWallets),
+      name: getWalletDisplayName(w, chainId, safeWallets),
     })),
   ];
 
   // Selected option for the safe wallet
   const selectedOption = selectedSafe
-    ? getWalletDisplayName(selectedSafe, safeWallets)
+    ? getWalletDisplayName(selectedSafe, chainId, safeWallets)
     : "Select a wallet";
 
   // Handle select of a safe wallet from the dropdown
@@ -292,9 +302,14 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                       onClick={() => {
                         if (!selectedSafe) return;
                         setIsEditingName(true);
+                        setNameError("");
                         setEditingName(
                           selectedSafe
-                            ? getWalletDisplayName(selectedSafe, safeWallets)
+                            ? getWalletDisplayName(
+                                selectedSafe,
+                                chainId,
+                                safeWallets,
+                              )
                             : "",
                         );
                       }}
@@ -318,10 +333,19 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                       onClick={() => {
                         if (!selectedSafe) return;
                         if (editingName.trim()) {
-                          saveWalletName(selectedSafe, editingName.trim());
-                          setIsEditingName(false);
-                          setEditingName("");
-                          refetch();
+                          const result = saveChainWalletName(
+                            chainId,
+                            selectedSafe,
+                            editingName.trim(),
+                          );
+                          if (result.ok) {
+                            setIsEditingName(false);
+                            setEditingName("");
+                            setNameError("");
+                            refetch();
+                          } else {
+                            setNameError(result.error);
+                          }
                         }
                       }}
                       className="text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20 rounded p-1.5 sm:p-2"
@@ -359,7 +383,11 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                       </Typography>
                       <Typography variant="body" align="left">
                         {selectedSafe
-                          ? getWalletDisplayName(selectedSafe, safeWallets)
+                          ? getWalletDisplayName(
+                              selectedSafe,
+                              chainId,
+                              safeWallets,
+                            )
                           : selectedOption}
                       </Typography>
                     </div>
@@ -409,7 +437,16 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                   </button>
                 </div>
               </div>
-
+              {nameError && (
+                <Typography
+                  variant="caption"
+                  color="error"
+                  align="left"
+                  className="mt-1"
+                >
+                  {nameError}
+                </Typography>
+              )}
               {/* Dropdown list */}
               {/* Custom dropdown list with custom styles*/}
               {showList && (

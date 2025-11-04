@@ -13,7 +13,10 @@ import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
 import SafeCreationProgressModal from "@/components/safe-wallet/SafeWalletCreationDialog";
 import SafeWalletImportDialog from "@/components/safe-wallet/import-wallet-modal/SafeWalletImportDialog";
 import type { SafeCreationStepStatus } from "@/types/safe";
-import { getWalletDisplayName, saveWalletName } from "@/utils/safeWalletNames";
+import {
+  getWalletDisplayName,
+  saveChainWalletName,
+} from "@/utils/safeWalletNames";
 import {
   setModuleStatus,
   clearModuleStatusCache,
@@ -57,6 +60,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
 
   const [editingWallet, setEditingWallet] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [nameError, setNameError] = useState<string>("");
   const [safeChainInfo, setSafeChainInfo] = useState<{
     shortName: string | null;
     transactionService: string | null;
@@ -329,11 +333,20 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
 
   const handleSaveWalletName = (walletAddress: string) => {
     if (editingName.trim()) {
-      saveWalletName(walletAddress, editingName.trim());
-      setEditingWallet(null);
-      setEditingName("");
-      // Force re-render by refetching (this will update the display)
-      refetch();
+      const result = saveChainWalletName(
+        chainId,
+        walletAddress,
+        editingName.trim(),
+      );
+      if (result.ok) {
+        setEditingWallet(null);
+        setEditingName("");
+        setNameError("");
+        // Force re-render by refetching (this will update the display)
+        refetch();
+      } else {
+        setNameError(result.error);
+      }
     }
   };
 
@@ -341,7 +354,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     const options: DropdownOption[] = [
       ...userSafeWallets.map((wallet) => ({
         id: wallet,
-        name: getWalletDisplayName(wallet, userSafeWallets),
+        name: getWalletDisplayName(wallet, chainId, userSafeWallets),
       })),
       {
         id: "create-new",
@@ -357,10 +370,10 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     }
 
     return options;
-  }, [userSafeWallets, isSafeSupported]);
+  }, [userSafeWallets, isSafeSupported, chainId]);
 
   const selectedOption = selectedSafeWallet
-    ? getWalletDisplayName(selectedSafeWallet, userSafeWallets)
+    ? getWalletDisplayName(selectedSafeWallet, chainId, userSafeWallets)
     : "Select a Safe Wallet";
 
   return (
@@ -452,41 +465,57 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                   <div className="flex items-center gap-0.5">
                     {editingWallet === selectedSafeWallet ? (
                       <>
-                        <input
-                          type="text"
-                          value={editingName}
-                          onChange={(e) => setEditingName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter")
-                              handleSaveWalletName(selectedSafeWallet);
-                            if (e.key === "Escape") {
-                              setEditingWallet(null);
-                              setEditingName("");
-                            }
-                          }}
-                          className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-white/30 transition-colors"
-                          placeholder="Enter wallet name"
-                          autoFocus
-                        />
-                        <button
-                          onClick={() =>
-                            handleSaveWalletName(selectedSafeWallet)
-                          }
-                          className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
-                          title="Save"
-                        >
-                          <MdCheck size={14} />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingWallet(null);
-                            setEditingName("");
-                          }}
-                          className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
-                          title="Cancel"
-                        >
-                          <MdClose size={14} />
-                        </button>
+                        <div className="flex flex-col flex-1">
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  handleSaveWalletName(selectedSafeWallet);
+                                if (e.key === "Escape") {
+                                  setEditingWallet(null);
+                                  setEditingName("");
+                                  setNameError("");
+                                }
+                              }}
+                              className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-white/30 transition-colors"
+                              placeholder="Enter wallet name"
+                              autoFocus
+                            />
+                            <button
+                              onClick={() =>
+                                handleSaveWalletName(selectedSafeWallet)
+                              }
+                              className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
+                              title="Save"
+                            >
+                              <MdCheck size={14} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingWallet(null);
+                                setEditingName("");
+                                setNameError("");
+                              }}
+                              className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
+                              title="Cancel"
+                            >
+                              <MdClose size={14} />
+                            </button>
+                          </div>
+                          {nameError && (
+                            <Typography
+                              variant="caption"
+                              color="error"
+                              align="left"
+                              className="mt-1 text-xs"
+                            >
+                              {nameError}
+                            </Typography>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <>
@@ -497,6 +526,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                         >
                           {getWalletDisplayName(
                             selectedSafeWallet,
+                            chainId,
                             userSafeWallets,
                           )}
                         </Typography>
@@ -504,9 +534,11 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                           onClick={(e) => {
                             e.preventDefault();
                             setEditingWallet(selectedSafeWallet);
+                            setNameError("");
                             setEditingName(
                               getWalletDisplayName(
                                 selectedSafeWallet,
+                                chainId,
                                 userSafeWallets,
                               ),
                             );
