@@ -21,16 +21,10 @@ export function useUpdateJob() {
     setError(null);
     try {
       devLog("Updating job...", jobId, payload);
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!API_BASE_URL) {
-        setError("API base URL not set. Please contact support.");
-        setLoading(false);
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/api/jobs/update/${jobId}`, {
+      const response = await fetch(`/api/jobs/update/${jobId}`, {
         method: "PUT",
         headers: {
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
       });

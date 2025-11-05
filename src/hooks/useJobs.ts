@@ -8,6 +8,7 @@ export type JobType = {
   taskDefinitionId: string;
   raw_task_definition_id: string; // Raw numeric task definition ID for conditional logic
   is_active: boolean;
+  status: string; // Job status: "created", "running", "completed", "failed", "expired"
   job_cost_actual: string;
   timeFrame: string;
   argType: string;
@@ -39,13 +40,10 @@ interface RawJobData {
     created_at: string;
     last_executed_at?: string;
     user_id?: string;
-    priority?: string;
-    security?: string;
-    custom?: string;
+    job_type?: string; // "sdk" | "frontend" | "contract" | "template"
     task_ids?: string[];
-    fee_used?: string;
     status: string;
-    created_chain_id?: string; // <-- add this
+    created_chain_id?: string;
     is_active?: boolean;
     next_execution_timestamp?: string;
   };
@@ -93,18 +91,10 @@ export function useJobs() {
       setLoading(true);
 
       try {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-        if (!API_BASE_URL) {
-          setError("API base URL not set. Please contact support.");
-          setLoading(false);
-          return;
-        }
-
-        const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}/chain/${chainId}`;
+        const apiUrl = `/api/jobs/user/${address}/chain/${chainId}`;
         devLog("[useJobs] Fetching jobs from:", apiUrl, "chain:", chainId);
         const headers = {
           "Content-Type": "application/json",
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         };
         const response = await fetch(apiUrl, {
           headers,
@@ -157,6 +147,7 @@ export function useJobs() {
                   nextJob.job_data.task_definition_id,
                 ),
                 is_active: typeSpecificData.is_active === true,
+                status: nextJob.job_data.status || "created",
                 next_execution_timestamp:
                   mapJobType(nextJob.job_data.task_definition_id) ===
                   "Time-based"
@@ -250,6 +241,7 @@ export function useJobs() {
                 jobDetail.job_data.task_definition_id,
               ),
               is_active: typeSpecificData.is_active === true,
+              status: jobDetail.job_data.status || "created",
               next_execution_timestamp:
                 mapJobType(jobDetail.job_data.task_definition_id) ===
                 "Time-based"

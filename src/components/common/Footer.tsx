@@ -111,7 +111,7 @@ const Footer: React.FC = () => {
         {/* Left Section: Social Links & Copyright */}
         <div className="flex flex-col items-start gap-4 w-full xs:w-[88%] sm:w-auto mx-auto md:mx-0">
           <Typography className=" text-[10px] xs:text-[12px] lg:text-[14px] 2xl:text-[15px] mt-2 text-[#d1d5db]">
-            Build with ❤️ by{" "}
+            Built with ❤️ by{" "}
             <a
               href="https://lampros.tech/?utm_source=triggerx&utm_medium=footer"
               target="_blank"

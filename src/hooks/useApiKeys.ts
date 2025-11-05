@@ -50,13 +50,12 @@ export function useApiKeys(address?: string) {
         setIsFetching(false); // <-- done fetching
         return;
       }
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys/${addr}`;
+      const url = `/api/${user}/api-keys/${addr}`;
       devLog("[fetchApiKeys] GET", url);
       const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         },
       });
       devLog("[fetchApiKeys] response.ok:", response.ok);
@@ -145,12 +144,12 @@ export function useApiKeys(address?: string) {
         setIsLoading(false); // <-- done generating
         return null;
       }
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`;
+      const url = `/api/${user}/api-keys`;
       devLog("[generateNewApiKey] POST", url);
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           owner: address,
@@ -195,12 +194,12 @@ export function useApiKeys(address?: string) {
         setIsDeleting(false);
         return;
       }
-      const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys/${apiKey}?owner=${address}`;
+      const url = `/api/${user}/api-keys/${apiKey}?owner=${address}`;
       devLog("[deleteApiKey] DELETE", url);
       const response = await fetch(url, {
         method: "DELETE",
         headers: {
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          "Content-Type": "application/json",
         },
       });
       devLog("[deleteApiKey] response.ok:", response.ok);

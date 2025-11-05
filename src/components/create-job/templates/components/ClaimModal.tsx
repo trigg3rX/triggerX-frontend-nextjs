@@ -91,7 +91,7 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/claim-fund`,
+        `/api/claim-fund`,
         {
           method: "POST",
           body: JSON.stringify({
@@ -100,7 +100,6 @@ const ClaimModal: React.FC<ClaimModalProps> = ({
           }),
           headers: {
             "Content-Type": "application/json",
-            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
           },
         },
       );

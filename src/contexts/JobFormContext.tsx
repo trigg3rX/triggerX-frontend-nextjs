@@ -27,8 +27,6 @@ interface ABIItem {
 // Utility types and functions moved from JobForm.tsx
 export type JobDetails = {
   user_address: string;
-  ether_balance: number;
-  token_balance: number;
   job_title: string;
   task_definition_id: number;
   time_frame: number;
@@ -110,8 +108,6 @@ function extractJobDetails(
 
   return {
     user_address: userAddress || "",
-    ether_balance: 0,
-    token_balance: 0,
     job_title: jobTitle,
     task_definition_id: taskDefinitionId,
     time_frame: timeframeInSeconds,
@@ -1175,18 +1171,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       if (argType === 2) {
         if (codeUrls) {
           try {
-            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-            if (!API_BASE_URL) {
-              throw new Error(
-                "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
-              );
-            }
-
             const response = await fetch(
-              `${API_BASE_URL}/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
+              `/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
               {
                 method: "GET",
-                headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
+                headers: { "Content-Type": "application/json" },
               },
             );
             if (!response.ok) throw new Error("Failed to get fees");
@@ -1209,10 +1198,10 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       } else {
-        // For static jobs, calculate the fee in Wei (0.001 TG * executionCount * 1e15)
-        const staticFeeTG = 0.001 * executionCount;
-        console.log("staticFeeTG", staticFeeTG);
-        totalFeeWei = BigInt(Math.floor(staticFeeTG * 1e15));
+        // For static jobs, calculate the fee directly in Wei (0.001 TG per execution)
+        // 0.001 TG = 1e12 Wei (since 1 TG = 1e15 Wei)
+        const feePerExecutionWei = BigInt(1e12); // 0.001 TG in Wei
+        totalFeeWei = feePerExecutionWei * BigInt(executionCount);
         console.log(
           "Total fee required for static (Wei):",
           totalFeeWei.toString(),
@@ -1221,9 +1210,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setEstimatedFeeInWei(totalFeeWei);
       }
 
-      // Convert Wei to TG for display purposes (divide by 1e15)
-      const totalFeeTG = Number(totalFeeWei) / 1e15;
-      setEstimatedFee(totalFeeTG);
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error estimating fee:", error);
@@ -1387,7 +1373,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         Omit<JobDetails, "job_id"> & { job_id?: string }
       > = allJobDetails.map((jobDetail) => ({
         ...jobDetail,
-        job_cost_prediction: estimatedFee,
+        job_cost_prediction: estimatedFeeInWei?.toString() || "0",
+        job_type: "frontend", // Frontend jobs
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
         created_chain_id: networkId.toString(),
       }));
@@ -1396,7 +1383,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         Omit<JobDetails, "job_id"> & { job_id?: string }
       > = linkedJobDetails.map((jobDetail) => ({
         ...jobDetail,
-        job_cost_prediction: estimatedFee,
+        job_cost_prediction: estimatedFeeInWei?.toString() || "0",
+        job_type: "frontend", // Frontend jobs
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
         created_chain_id: networkId.toString(),
       }));
@@ -1811,33 +1799,26 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       const trimmedJobsForSubmission = trimObjectStrings(allJobsForSubmission);
       console.log("Submitting job details:", trimmedJobsForSubmission);
 
-      // Create or update job via API
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!API_BASE_URL) {
-        throw new Error("API base URL not configured in ENV");
-      }
-
+      // Create or update job via API (using Next.js proxy routes)
       const headers = {
-        "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+        "Content-Type": "application/json",
       };
       let response;
       if (jobId) {
         // Update job
         devLog(
-          `[JobForm] Calling UPDATE API: ${API_BASE_URL}/api/jobs/update/${jobId} (PUT)`,
+          `[JobForm] Calling UPDATE API: /api/jobs/update/${jobId} (PUT)`,
         );
-        response = await fetch(`${API_BASE_URL}/api/jobs/update/${jobId}`, {
+        response = await fetch(`/api/jobs/update/${jobId}`, {
           method: "PUT",
-          mode: "cors",
           headers,
           body: JSON.stringify(updatedJobDetails[0]), // send single job object for update
         });
       } else {
         // Create job
-        devLog(`[JobForm] Calling CREATE API: ${API_BASE_URL}/api/jobs (POST)`);
-        response = await fetch(`${API_BASE_URL}/api/jobs`, {
+        devLog(`[JobForm] Calling CREATE API: /api/jobs (POST)`);
+        response = await fetch(`/api/jobs`, {
           method: "POST",
-          mode: "cors",
           headers,
           body: JSON.stringify(trimmedJobsForSubmission), // send array for create
         });

@@ -44,19 +44,19 @@ const AlertEmail = ({ user_address }: AlertEmailProps) => {
     try {
       devLog(
         "Sending POST request to:",
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/email`,
+        `/api/users/email`,
         {
           user_address,
           email_id: email,
         },
       );
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/users/email`,
+        `/api/users/email`,
         {
           method: "POST",
           body: JSON.stringify({ user_address, email_id: email }),
           headers: {
-            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+            "Content-Type": "application/json",
           },
         },
       );

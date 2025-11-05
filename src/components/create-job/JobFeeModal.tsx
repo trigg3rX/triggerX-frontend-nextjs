@@ -17,11 +17,11 @@ import { useAccount, useBalance } from "wagmi";
 import JobProcessing from "./JobProcessing";
 import { useSearchParams } from "next/navigation";
 import GameCanvas from "./GameCanvas";
+import { weiToTg, formatWeiAsTg, weiToEth } from "@/utils/tgConverter";
 
 interface JobFeeModalProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  estimatedFee: number;
 }
 
 const steps = [
@@ -33,7 +33,6 @@ const steps = [
 const JobFeeModal: React.FC<JobFeeModalProps> = ({
   isOpen,
   setIsOpen,
-  estimatedFee,
 }) => {
   const { userBalance, fetchTGBalance } = useTGBalance();
   const {
@@ -192,28 +191,30 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   }, [address, chain, isOpen, fetchTGBalance, setIsJobCreated]);
 
   const hasEnoughBalance = useMemo(() => {
-    const fee = Number(estimatedFee);
-    const balance = Number(userBalance);
-    const epsilon = 1e-6;
-    const result = fee - balance <= epsilon;
+    // Compare Wei values directly - both userBalance and estimatedFeeInWei are in Wei
+    if (!estimatedFeeInWei || !userBalance) return false;
+    const balanceWei = BigInt(userBalance);
+    const result = balanceWei >= estimatedFeeInWei;
     console.log(
-      "estimatedFee:",
-      fee,
+      "estimatedFeeInWei:",
+      estimatedFeeInWei.toString(),
+      "Wei",
       "userBalance:",
-      balance,
+      userBalance,
+      "Wei",
       "hasEnoughBalance:",
       result,
     );
     return result;
-  }, [estimatedFee, userBalance]);
+  }, [estimatedFeeInWei, userBalance]);
 
   const requiredEth = useMemo(() => {
     if (estimatedFeeInWei) {
-      // Convert Wei to ETH for display
-      return (Number(estimatedFeeInWei) / 1e18).toFixed(6);
+      // Convert Wei to ETH for display (1 ETH = 1e18 Wei)
+      return weiToEth(estimatedFeeInWei).toFixed(6);
     }
-    return (0.001 * estimatedFee).toFixed(6);
-  }, [estimatedFee, estimatedFeeInWei]);
+    return "0.000000";
+  }, [estimatedFeeInWei]);
 
   const hasEnoughEthToStake = useMemo(() => {
     if (!ethBalance || !estimatedFeeInWei) return false;
@@ -328,8 +329,8 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                 </Tooltip>
               </div>
               <Typography variant="body" color="secondary">
-                {estimatedFee && estimatedFee > 0
-                  ? ` ${estimatedFee.toFixed(6)} TG`
+                {estimatedFeeInWei && estimatedFeeInWei > 0n
+                  ? formatWeiAsTg(estimatedFeeInWei, 6)
                   : "Something went wrong"}
               </Typography>
             </div>
@@ -337,7 +338,9 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
             <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center">
               <Typography variant="body">Your TG Balance</Typography>
               <Typography variant="body" color="secondary">
-                {userBalance ? Number(userBalance).toFixed(6) : "0.000000"}
+                {userBalance && BigInt(userBalance) > 0n
+                  ? formatWeiAsTg(BigInt(userBalance), 6)
+                  : "0.000000 TG"}
               </Typography>
             </div>
 
@@ -368,7 +371,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               <Button
                 color="purple"
                 onClick={handleStake}
-                disabled={isDisabled || !estimatedFee}
+                disabled={isDisabled || !estimatedFeeInWei}
                 className="flex-1"
               >
                 {isSubmitting
@@ -384,7 +387,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                   isSubmitting ||
                   isCheckingBalance ||
                   (!hasEnoughEthToStake && !topUpFailed) ||
-                  !estimatedFee
+                  !estimatedFeeInWei
                 }
                 className="flex-1"
               >
@@ -406,7 +409,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Cancel
             </Button>
           </div>
-          {!estimatedFee && (
+          {!estimatedFeeInWei && (
             <Typography
               variant="caption"
               color="secondary"

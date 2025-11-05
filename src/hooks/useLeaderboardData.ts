@@ -43,22 +43,18 @@ export default function useLeaderboardData(
       setIsLoading(true);
       try {
         let apiUrl = "";
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-        if (!API_BASE_URL) {
-          throw new Error("API base URL is not set");
-        }
 
         if (activeTab === "keeper") {
-          apiUrl = `${API_BASE_URL}/api/leaderboard/keepers`;
+          apiUrl = `/api/leaderboard/keepers`;
           devLog("Calling URL:", apiUrl);
         } else if (activeTab === "developer" || activeTab === "contributor") {
-          apiUrl = `${API_BASE_URL}/api/leaderboard/users`;
+          apiUrl = `/api/leaderboard/users`;
         }
 
         devLog(`[Leaderboard] Fetching for tab: ${activeTab}, URL:`, apiUrl);
         const response = await fetch(apiUrl, {
           headers: {
-            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+            "Content-Type": "application/json",
           },
         });
         devLog("[Leaderboard] Response status:", response.status);

@@ -78,10 +78,12 @@ export const TGBalanceProvider: React.FC<{
         );
         const [, tgBalance] =
           await stakeRegistryContract.getBalance(userAddress);
-        setUserBalance(ethers.formatEther(tgBalance));
+        // Store balance in Wei as a string to avoid precision loss
+        setUserBalance(tgBalance.toString());
         devLog(
-          "[TGBalance] TG Balance after chain change:",
-          ethers.formatEther(tgBalance),
+          "[TGBalance] TG Balance (Wei):",
+          tgBalance.toString(),
+          "Wei",
         );
       }
     } catch (error) {

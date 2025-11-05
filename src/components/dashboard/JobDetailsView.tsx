@@ -332,13 +332,22 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
             <TooltipTrigger asChild>
               <button
                 onClick={handleUpdateJob}
-                className="p-2 bg-[#C07AF6] rounded-full text-white hover:bg-[#a46be0] transition-colors"
+                disabled={job.status !== "created" && job.status !== "running"}
+                className={`p-2 rounded-full text-white transition-colors ${
+                  job.status === "created" || job.status === "running"
+                    ? "bg-[#C07AF6] hover:bg-[#a46be0]"
+                    : "bg-gray-500 cursor-not-allowed opacity-50"
+                }`}
                 aria-label="Update Job"
               >
                 <Edit className="w-4 h-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>Update Job</TooltipContent>
+            <TooltipContent>
+              {job.status === "created" || job.status === "running"
+                ? "Update Job"
+                : "Cannot update a completed job"}
+            </TooltipContent>
           </Tooltip>
 
           <Tooltip>

@@ -43,17 +43,10 @@ export function useDeleteJob() {
       toast.dismiss();
 
       // 2. Call API to delete job from DB
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!API_BASE_URL) {
-        setError("API base URL not set. Please contact support.");
-        setLoading(false);
-        return;
-      }
-      const response = await fetch(`${API_BASE_URL}/api/jobs/delete/${jobId}`, {
+      const response = await fetch(`/api/jobs/delete/${jobId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         },
       });
       devLog("Response....", response);

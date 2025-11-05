@@ -113,7 +113,6 @@ export const JobForm: React.FC = () => {
     contractInteractions,
     contractErrors,
     setContractErrors,
-    estimatedFee,
     isModalOpen,
     setIsModalOpen,
     setEstimatedFee,
@@ -446,7 +445,6 @@ export const JobForm: React.FC = () => {
       <JobFeeModal
         isOpen={isModalOpen}
         setIsOpen={setIsModalOpen}
-        estimatedFee={estimatedFee}
       />
     </>
   );
