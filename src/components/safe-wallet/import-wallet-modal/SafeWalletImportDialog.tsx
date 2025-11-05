@@ -354,15 +354,26 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
 
         <div className="space-y-6">
           {/* Safe Address Input */}
-          <div className="flex items-center gap-2">
-            <WalletMinimal size={24} className=" mr-1 text-[#F8FF7C]" />
-            <InputField
-              value={existingSafeAddress}
-              onChange={(value) => setExistingSafeAddress(value)}
-              placeholder="Enter Safe Wallet Address"
-              type="text"
-              readOnly={shouldShowStatus}
-            />
+          <div>
+            <label className="block mb-2">
+              <Typography variant="body" color="gray" align="left">
+                Safe Wallet Address
+              </Typography>
+            </label>
+            <div className="relative w-full">
+              <InputField
+                value={existingSafeAddress}
+                onChange={(value) => setExistingSafeAddress(value)}
+                placeholder="Enter Safe Wallet Address"
+                type="text"
+                readOnly={shouldShowStatus}
+                className="rounded-xl w-full pr-12"
+              />
+              <WalletMinimal
+                size={18}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#F8FF7C] pointer-events-none"
+              />
+            </div>
           </div>
 
           {/* Error Message */}
@@ -399,6 +410,7 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
           {!shouldShowStatus && (
             <div className="flex gap-3 pt-2">
               <Button
+                color="purple"
                 onClick={handleSubmitImport}
                 disabled={!existingSafeAddress.trim()}
                 className="flex-1"

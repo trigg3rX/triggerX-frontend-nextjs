@@ -12,57 +12,45 @@ import { Network, Shield } from "lucide-react";
 export const ImportWalletRequirements: React.FC = () => {
   return (
     <div className="space-y-4">
-      <Typography
-        variant="body"
-        color="yellow"
-        align="center"
-        className="uppercase tracking-wider font-bold"
-      >
+      <Typography variant="body" color="secondary" align="left">
         Requirements
       </Typography>
 
       <div className="grid gap-2">
-        {/* Requirement 1: Network */}
-        <Card>
-          <div className="flex items-start">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#C07AF6] flex items-center justify-center transition-colors">
-              <Network size={16} className="text-white" />
+        {[
+          {
+            icon: Network,
+            title: "Network Compatibility",
+            description: "Safe contract must exist on the connected network",
+          },
+          {
+            icon: Shield,
+            title: "Ownership Verification",
+            description:
+              "Connected wallet must be an owner of the Safe contract",
+          },
+        ].map(({ icon: Icon, title, description }) => (
+          <Card key={title}>
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#C07AF6] flex items-center justify-center transition-colors">
+                <Icon size={16} className="text-white" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <Typography
+                  variant="caption"
+                  color="primary"
+                  align="left"
+                  className=""
+                >
+                  {title}
+                </Typography>
+                <Typography variant="caption" color="secondary" align="left">
+                  {description}
+                </Typography>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <Typography
-                variant="caption"
-                color="primary"
-                className="text-sm font-medium mb-1"
-              >
-                Network Compatibility
-              </Typography>
-              <Typography variant="caption" color="secondary">
-                Safe contract must exist on the connected network
-              </Typography>
-            </div>
-          </div>
-        </Card>
-
-        {/* Requirement 2: Ownership */}
-        <Card>
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#C07AF6] flex items-center justify-center transition-colors">
-              <Shield size={16} className="text-white" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <Typography
-                variant="caption"
-                color="primary"
-                className="text-sm font-medium mb-1"
-              >
-                Ownership Verification
-              </Typography>
-              <Typography variant="caption" color="secondary">
-                Connected wallet must be an owner of the Safe contract
-              </Typography>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        ))}
       </div>
     </div>
   );
