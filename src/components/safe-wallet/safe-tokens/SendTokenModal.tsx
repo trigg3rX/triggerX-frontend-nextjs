@@ -19,6 +19,7 @@ interface SendTokenModalProps {
   onSubmit: () => void;
   isSending: boolean;
   sendError?: string;
+  successMessage?: string;
 }
 
 const SendTokenModal: React.FC<SendTokenModalProps> = ({
@@ -33,6 +34,7 @@ const SendTokenModal: React.FC<SendTokenModalProps> = ({
   onSubmit,
   isSending,
   sendError,
+  successMessage,
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -115,6 +117,20 @@ const SendTokenModal: React.FC<SendTokenModalProps> = ({
                   className="!m-0"
                 >
                   <strong>Error:</strong> {sendError}
+                </Typography>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {successMessage && (
+              <div className="p-3 bg-green-100 rounded-lg">
+                <Typography
+                  variant="caption"
+                  color="success"
+                  align="left"
+                  className="!m-0"
+                >
+                  <strong>Success:</strong> {successMessage}
                 </Typography>
               </div>
             )}
