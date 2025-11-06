@@ -1,7 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
+import Image from "next/image";
 import { Typography } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import { TokenBalance } from "@/utils/fetchTokenBalances";
+
+const LOGO_DEV_PUBLIC_KEY = process.env.NEXT_PUBLIC_LOGO_DEV_KEY;
 
 interface TokenRowProps {
   token: TokenBalance;
@@ -9,6 +12,8 @@ interface TokenRowProps {
 }
 
 const TokenRow: React.FC<TokenRowProps> = ({ token, onSendClick }) => {
+  const [imageError, setImageError] = useState(false);
+
   const formatBalance = (balance: string) => {
     const num = parseFloat(balance);
     if (num === 0) return "0";
@@ -23,16 +28,29 @@ const TokenRow: React.FC<TokenRowProps> = ({ token, onSendClick }) => {
       {/* Top row: token info (always) + balance (mobile only) */}
       <div className="flex items-center justify-between sm:justify-start w-full sm:w-auto">
         <div className="flex items-center space-x-3">
-          {/* Token Icon Placeholder or Symbol Icon */}
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <Typography
-              variant="body"
-              color="white"
-              className="text-xs font-bold"
-            >
-              {token.symbol.charAt(0)}
-            </Typography>
-          </div>
+          {/* Token Logo */}
+          {imageError || !LOGO_DEV_PUBLIC_KEY ? (
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <Typography
+                variant="body"
+                color="white"
+                className="text-xs font-bold"
+              >
+                {token.symbol.charAt(0)}
+              </Typography>
+            </div>
+          ) : (
+            <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center relative">
+              <Image
+                src={`https://img.logo.dev/crypto/${token.symbol}?token=${LOGO_DEV_PUBLIC_KEY}`}
+                alt={`${token.symbol} logo`}
+                width={32}
+                height={32}
+                className="rounded-full"
+                onError={() => setImageError(true)}
+              />
+            </div>
+          )}
 
           {/* Token Info */}
           <div className="flex flex-col items-start">
