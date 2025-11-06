@@ -17,10 +17,14 @@ const chainOptions = (
   network.id.toString(),
 ]);
 
+// Shared tooltip message when both blocks are connected
+const CONNECTED_TOOLTIP =
+  "Make sure the Job Contract is deployed on the here-specified chain and the wallet address is correct.";
+
 // 1. Define the JSON structure for the Wallet Selection Block
 const walletSelectionJson = {
   type: "wallet_selection",
-  message0: "🔗 Wallet Address %1", // Added icon and improved message
+  message0: "Wallet Address %1", // Added icon and improved message
   args0: [
     {
       type: "field_input",
@@ -32,7 +36,7 @@ const walletSelectionJson = {
   output: "wallet_output",
   colour: "#F57F17", // Orange color for wallet
   tooltip:
-    "Specify the Wallet Address with which you want to submit your Job. Connect the ChainId block to the right",
+    "Specify the Wallet Address with which you want to submit your Job. Connect the ChainId block to the left.",
   helpUrl: "",
 };
 
@@ -40,13 +44,21 @@ const walletSelectionJson = {
 Blockly.Blocks["wallet_selection"] = {
   init: function () {
     this.jsonInit(walletSelectionJson);
+    // Set dynamic tooltip
+    this.setTooltip(() => {
+      const parentBlock = this.getParent();
+      if (parentBlock && parentBlock.type === "chain_selection") {
+        return CONNECTED_TOOLTIP;
+      }
+      return "Specify the Wallet Address with which you want to submit your Job. Connect to the Chain block on the left.";
+    });
   },
 };
 
 // 3. Define the JSON structure for the Chain Selection Block
 const chainSelectionJson = {
   type: "chain_selection",
-  message0: "⛓️ Chain %1",
+  message0: "Chain %1",
   args0: [
     {
       type: "field_dropdown",
@@ -58,7 +70,7 @@ const chainSelectionJson = {
   inputsInline: true,
   colour: "#1CD35F", // Green color for chain
   tooltip:
-    "Select the target blockchain for the job. Connect to the Wallet Address block on the left.",
+    "Specify the chain at which your job contract is deployed. Connect the Wallet block to its right.",
   helpUrl: "",
 };
 
@@ -70,6 +82,15 @@ Blockly.Blocks["chain_selection"] = {
     this.appendValueInput("WALLET_INPUT")
       .setCheck("wallet_output")
       .appendField("from");
+
+    // Set dynamic tooltip
+    this.setTooltip(() => {
+      const walletInput = this.getInputTargetBlock("WALLET_INPUT");
+      if (walletInput && walletInput.type === "wallet_selection") {
+        return CONNECTED_TOOLTIP;
+      }
+      return "Specify the chain at which your job contract is deployed. Connect the Wallet block to its right.";
+    });
   },
 };
 
