@@ -139,19 +139,20 @@ const SendTokenModal: React.FC<SendTokenModalProps> = ({
           {/*  Buttons Container */}
           <div className="flex gap-4">
             <Button
-              type="submit"
-              disabled={isSending || !recipient || !amount}
-              className="flex-1"
-            >
-              {isSending ? "Sending..." : "Send"}
-            </Button>
-            <Button
               type="button"
               onClick={onClose}
-              color="purple"
+              color="white"
               className="flex-1"
             >
               Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSending || !recipient || !amount}
+              className="flex-1"
+              color="purple"
+            >
+              {isSending ? "Sending..." : "Send"}
             </Button>
           </div>
         </form>

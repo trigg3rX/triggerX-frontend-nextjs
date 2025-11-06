@@ -9,9 +9,14 @@ const LOGO_DEV_PUBLIC_KEY = process.env.NEXT_PUBLIC_LOGO_DEV_KEY;
 interface TokenRowProps {
   token: TokenBalance;
   onSendClick: (token: TokenBalance) => void;
+  onCreateJobClick?: (token: TokenBalance) => void;
 }
 
-const TokenRow: React.FC<TokenRowProps> = ({ token, onSendClick }) => {
+const TokenRow: React.FC<TokenRowProps> = ({
+  token,
+  onSendClick,
+  onCreateJobClick,
+}) => {
   const [imageError, setImageError] = useState(false);
 
   const formatBalance = (balance: string) => {
@@ -98,7 +103,12 @@ const TokenRow: React.FC<TokenRowProps> = ({ token, onSendClick }) => {
           >
             Send
           </Button>
-          <Button className="flex-1" type="button" color="purple">
+          <Button
+            className="flex-1"
+            type="button"
+            color="purple"
+            onClick={() => onCreateJobClick?.(token)}
+          >
             Create Job
           </Button>
         </div>

@@ -12,6 +12,7 @@ import Skeleton from "@/components/ui/Skeleton";
 import EmptyState from "@/components/common/EmptyState";
 import { RefreshCw } from "lucide-react";
 import SendTokenModal from "@/components/safe-wallet/safe-tokens/SendTokenModal";
+import CreateJobModal from "@/components/safe-wallet/safe-tokens/CreateJobModal";
 
 interface SafeTokensProps {
   selectedSafe: string | null;
@@ -37,6 +38,8 @@ const SafeTokens: React.FC<SafeTokensProps> = ({ selectedSafe }) => {
   const [amount, setAmount] = useState("");
   const [sendError, setSendError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [showCreateJobModal, setShowCreateJobModal] = useState(false);
+  const [jobToken, setJobToken] = useState<TokenBalance | null>(null);
 
   // Reset send form when safe changes
   React.useEffect(() => {
@@ -56,6 +59,12 @@ const SafeTokens: React.FC<SafeTokensProps> = ({ selectedSafe }) => {
     setShowSendForm(true);
     setSendError("");
     setSuccessMessage("");
+  };
+
+  // Handler to open the create job modal
+  const handleCreateJobClick = (token: TokenBalance) => {
+    setJobToken(token);
+    setShowCreateJobModal(true);
   };
 
   // Handler to send tokens from safe wallet to a recipient address
@@ -162,6 +171,7 @@ const SafeTokens: React.FC<SafeTokensProps> = ({ selectedSafe }) => {
                   key={token.address}
                   token={token}
                   onSendClick={handleSendClick}
+                  onCreateJobClick={handleCreateJobClick}
                 />
               ))}
             </div>
@@ -183,6 +193,17 @@ const SafeTokens: React.FC<SafeTokensProps> = ({ selectedSafe }) => {
         isSending={isSending}
         sendError={sendError}
         successMessage={successMessage}
+      />
+
+      {/* Create Job Modal */}
+      <CreateJobModal
+        isOpen={showCreateJobModal}
+        onClose={() => {
+          setShowCreateJobModal(false);
+          setJobToken(null);
+        }}
+        token={jobToken}
+        safeAddress={selectedSafe}
       />
     </>
   );
