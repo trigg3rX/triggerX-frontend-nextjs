@@ -32,7 +32,7 @@ const walletSelectionJson = {
   output: "wallet_output",
   colour: "#F57F17", // Orange color for wallet
   tooltip:
-    "Specifies the wallet address for the job. Connect a Chain ID block to the right.",
+    "Specify the Wallet Address with which you want to submit your Job. Connect the ChainId block to the right",
   helpUrl: "",
 };
 
