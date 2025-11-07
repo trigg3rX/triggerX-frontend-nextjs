@@ -1,7 +1,7 @@
 "use client";
 
 import * as Blockly from "blockly/core";
-import { FaWallet, FaLink, FaBriefcase } from "react-icons/fa";
+import { FaWallet, FaLink, FaBriefcase, FaBoxes } from "react-icons/fa";
 import { createRoot } from "react-dom/client";
 import React from "react";
 
@@ -139,6 +139,16 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
         const root = createRoot(customIcon);
         root.render(
           React.createElement(FaBriefcase, {
+            size: 12,
+            color: "white",
+          }),
+        );
+      } else if (categoryName.includes("utility")) {
+        // Utility icon using React Icons
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaBoxes, {
             size: 12,
             color: "white",
           }),

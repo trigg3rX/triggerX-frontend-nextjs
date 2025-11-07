@@ -13,7 +13,6 @@ import { syncBlocklyToJobForm } from "./utils/syncBlocklyToJobForm";
 // Custom hooks
 import { useBlocklyGenerators } from "./hooks/useBlocklyGenerators";
 import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
-import { useBlocklyPreview } from "./hooks/useBlocklyPreview";
 
 // Components
 import { BlocklyHeader } from "./components/BlocklyHeader";
@@ -21,7 +20,6 @@ import { ErrorCard } from "./components/ErrorCard";
 import { BalanceCard } from "./components/BalanceCard";
 import { PermissionCard } from "./components/PermissionCard";
 import { BlocklyWorkspaceSection } from "./components/BlocklyWorkspaceSection";
-import { PreviewPanel } from "./components/PreviewPanel";
 
 export default function BlocklyDemo() {
   const workspaceScopeRef = useRef<HTMLDivElement | null>(null);
@@ -55,7 +53,6 @@ export default function BlocklyDemo() {
   // Custom hooks
   useBlocklyGenerators();
   const { xml, onXmlChange } = useBlocklyWorkspace();
-  const { jsonPreview, humanPreview } = useBlocklyPreview(xml, jobTitle);
 
   // Fetch TG balance on mount and when wallet changes
   useEffect(() => {
@@ -201,8 +198,6 @@ export default function BlocklyDemo() {
           onXmlChange={onXmlChange}
           workspaceScopeRef={workspaceScopeRef}
         />
-
-        <PreviewPanel humanPreview={humanPreview} jsonPreview={jsonPreview} />
       </div>
 
       {/* Job Fee Modal */}

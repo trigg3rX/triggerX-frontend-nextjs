@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import * as Blockly from "blockly/core";
 import DisableInteractions from "@/app/DisableInteractions";
@@ -42,6 +42,8 @@ export function BlocklyWorkspaceSection({
   onXmlChange,
   workspaceScopeRef,
 }: BlocklyWorkspaceSectionProps) {
+  const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
+
   const toolboxJson = useMemo(
     () => ({
       kind: "categoryToolbox",
@@ -122,9 +124,69 @@ export function BlocklyWorkspaceSection({
     [],
   );
 
+  // Keep flyout always open and disable click-to-place
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        // Get the primary workspace
+        const workspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg;
+        if (workspace && workspace.getToolbox()) {
+          workspaceRef.current = workspace;
+
+          // Get the toolbox and select the first category to open the flyout
+          const toolbox = workspace.getToolbox() as unknown as Blockly.Toolbox;
+          if (toolbox) {
+            // Get the first category and select it
+            const firstCategory = toolbox.getToolboxItems?.()?.[0];
+            if (firstCategory) {
+              toolbox.setSelectedItem?.(firstCategory);
+            }
+
+            // Override the clearSelection method to prevent deselection
+            toolbox.clearSelection = function () {
+              // Don't clear selection - keep a category always selected
+              // This keeps the flyout always visible
+              return;
+            };
+          }
+
+          // Prevent flyout from auto-closing and disable click-to-place
+          const flyout = workspace.getFlyout() as unknown as Blockly.Flyout;
+          if (flyout) {
+            // Set autoClose to false
+            flyout.autoClose = false;
+
+            // Disable click-to-place by overriding the createBlock method
+            // This forces users to drag blocks instead of clicking them
+            const originalCreateBlock = flyout.createBlock;
+            flyout.createBlock = function (
+              originalBlock: Blockly.BlockSvg,
+            ): Blockly.BlockSvg {
+              // Only create blocks when dragging, not when clicking
+              // Check if this is a drag operation by checking if there's a current gesture
+              const currentGesture = Blockly.Gesture.inProgress();
+              if (!currentGesture) {
+                // This is a click, not a drag - prevent block creation
+                throw new Error(
+                  "Click-to-place is disabled. Please drag to create blocks.",
+                );
+              }
+              // This is a drag - allow normal behavior
+              return originalCreateBlock.call(flyout, originalBlock);
+            };
+          }
+        }
+      } catch (error) {
+        console.error("Error configuring flyout:", error);
+      }
+    }, 500); // Wait for workspace to be fully initialized
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div
-      className="h-full overflow-hidden w-[75%] rounded-2xl"
+      className="h-full overflow-hidden w-full rounded-2xl"
       ref={workspaceScopeRef}
     >
       <DisableInteractions
