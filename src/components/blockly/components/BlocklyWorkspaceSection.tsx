@@ -87,6 +87,9 @@ export function BlocklyWorkspaceSection({
           name: "Job Type",
           colour: "30",
           contents: [
+            { kind: "block", type: "time_based_job_wrapper" },
+            { kind: "block", type: "event_based_job_wrapper" },
+            { kind: "block", type: "condition_based_job_wrapper" },
             { kind: "block", type: "fixed_time_job" },
             { kind: "block", type: "interval_time_job" },
             { kind: "block", type: "cron_time_job" },
@@ -101,6 +104,8 @@ export function BlocklyWorkspaceSection({
           name: "Utility",
           colour: "260",
           contents: [
+            { kind: "block", type: "specific_datetime" },
+            { kind: "block", type: "cron_expression" },
             {
               kind: "block",
               type: "contract_action",
