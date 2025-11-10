@@ -18,9 +18,16 @@ import { conditionBasedJobWrapperGenerator } from "../blocks/job-type/condition_
 import { contractActionGenerator } from "../blocks/utility/contract_action";
 import { timeframeJobGenerator } from "../blocks/utility/timeframe_job";
 import { recurringJobGenerator } from "../blocks/utility/recurring_job";
-import { manualAbiInputGenerator } from "../blocks/utility/manual_abi_input";
-import { specificDatetimeGenerator } from "../blocks/utility/specific_datetime";
-import { cronExpressionGenerator } from "../blocks/utility/cron_expression";
+import { manualAbiInputGenerator } from "../blocks/utility/contract/manual_abi_input";
+import { specificDatetimeGenerator } from "../blocks/utility/time/specific_datetime";
+import { cronExpressionGenerator } from "../blocks/utility/time/cron_expression";
+import { timeIntervalAtJobGenerator } from "../blocks/utility/time/time_interval_at_job";
+import { eventListenerGenerator } from "../blocks/utility/event/event_listener";
+import { conditionMonitorGenerator } from "../blocks/utility/condition/condition_monitor";
+import { executeFunctionGenerator } from "../blocks/utility/contract/execute_function";
+import { argumentTypeGenerator } from "../blocks/utility/contract/argument_type";
+import { staticArgumentsGenerator } from "../blocks/utility/contract/static_arguments";
+import { dynamicArgumentsGenerator } from "../blocks/utility/contract/dynamic_arguments";
 
 // Custom hook to register all Blockly block generators
 export function useBlocklyGenerators() {
@@ -51,5 +58,15 @@ export function useBlocklyGenerators() {
     javascriptGenerator.forBlock["specific_datetime"] =
       specificDatetimeGenerator;
     javascriptGenerator.forBlock["cron_expression"] = cronExpressionGenerator;
+    javascriptGenerator.forBlock["time_interval_at_job"] =
+      timeIntervalAtJobGenerator;
+    javascriptGenerator.forBlock["event_listener"] = eventListenerGenerator;
+    javascriptGenerator.forBlock["condition_monitor"] =
+      conditionMonitorGenerator;
+    javascriptGenerator.forBlock["execute_function"] = executeFunctionGenerator;
+    javascriptGenerator.forBlock["argument_type"] = argumentTypeGenerator;
+    javascriptGenerator.forBlock["static_arguments"] = staticArgumentsGenerator;
+    javascriptGenerator.forBlock["dynamic_arguments"] =
+      dynamicArgumentsGenerator;
   }, []);
 }

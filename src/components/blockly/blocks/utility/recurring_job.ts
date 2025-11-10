@@ -2,9 +2,10 @@ import * as Blockly from "blockly/core";
 import { Order } from "blockly/javascript";
 
 // JSON structure for the Recurring Job Block
+// Note: This block is intended for use with condition-based or event-based jobs
 const recurringJobJson = {
   type: "recurring_job",
-  message0: "Recurring Job: %1",
+  message0: "keep the job recurring %1",
   args0: [
     {
       type: "field_checkbox",
@@ -14,8 +15,9 @@ const recurringJobJson = {
   ],
   previousStatement: null, // This block can be placed anywhere that accepts a statement.
   nextStatement: null, // This block can connect to other blocks.
-  colour: 260, // Using the Utility category colour
-  tooltip: "Specifies if the job should be a recurring job.",
+  colour: 30, // Using the same color as other time/schedule blocks
+  tooltip:
+    "Specify if you want your job to recur every time the event is detected or the condition is satisfied",
   helpUrl: "",
 };
 

@@ -2,8 +2,8 @@ import * as Blockly from "blockly/core";
 import { Order } from "blockly/javascript";
 
 // Import the custom fields to ensure they are registered
-import "../../fields/DatePickerField";
-import "../../fields/TimePickerField";
+import "../../../fields/DatePickerField";
+import "../../../fields/TimePickerField";
 
 const specificDatetimeJson = {
   type: "specific_datetime",
@@ -22,7 +22,7 @@ const specificDatetimeJson = {
   ],
   previousStatement: null,
   nextStatement: null,
-  colour: 260,
+  colour: 300,
   tooltip:
     "Specify the Date and Time when you want your job to be executed. This job will be executed only once.",
   helpUrl: "",

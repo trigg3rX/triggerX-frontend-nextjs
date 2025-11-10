@@ -3,12 +3,12 @@ import { Order } from "blockly/javascript";
 
 const timeframeJobJson = {
   type: "timeframe_job",
-  message0: "Job runs for %1 %2",
+  message0: "until %1 %2",
   args0: [
     {
       type: "field_number",
       name: "TIMEFRAME_VALUE",
-      value: 3600, // Default to 1 hour (3600 seconds)
+      value: 1,
       min: 1,
       precision: 1,
     },
@@ -16,7 +16,6 @@ const timeframeJobJson = {
       type: "field_dropdown",
       name: "TIMEFRAME_UNIT",
       options: [
-        ["seconds", "second"],
         ["minutes", "minute"],
         ["hours", "hour"],
         ["days", "day"],
@@ -26,7 +25,7 @@ const timeframeJobJson = {
   previousStatement: null,
   nextStatement: null,
   colour: 30, // Using the same color as other time/schedule blocks
-  tooltip: "Define a specific duration for the job to run.",
+  tooltip: "Specify till what time you need your job to be live on TriggerX",
   helpUrl: "",
 };
 

@@ -90,38 +90,54 @@ export function BlocklyWorkspaceSection({
             { kind: "block", type: "time_based_job_wrapper" },
             { kind: "block", type: "event_based_job_wrapper" },
             { kind: "block", type: "condition_based_job_wrapper" },
-            { kind: "block", type: "fixed_time_job" },
-            { kind: "block", type: "interval_time_job" },
-            { kind: "block", type: "cron_time_job" },
-            { kind: "block", type: "event_job" },
-            { kind: "block", type: "condition_job" },
           ],
         },
-        // --- UTILITY CATEGORY ---
-        // Contains essential actions and parameters for the job's execution.
+        // --- TIME UTILITIES ---
         {
           kind: "category",
-          name: "Utility",
-          colour: "260",
+          name: "Time",
+          colour: "300",
           contents: [
             { kind: "block", type: "specific_datetime" },
             { kind: "block", type: "cron_expression" },
-            {
-              kind: "block",
-              type: "contract_action",
-              fields: {
-                TARGET_FUNCTION: "transfer",
-                TARGET_CONTRACT_ADDRESS: "0x...",
-                TARGET_CHAIN_ID: "1",
-                ABI: "[]",
-              },
-              extraState: {
-                argType: "static",
-              },
-            },
-            { kind: "block", type: "timeframe_job" },
-            { kind: "block", type: "recurring_job" },
+            { kind: "block", type: "time_interval_at_job" },
+          ],
+        },
+        // --- EVENT UTILITIES ---
+        {
+          kind: "category",
+          name: "Event",
+          colour: "220",
+          contents: [{ kind: "block", type: "event_listener" }],
+        },
+        // --- CONDITION UTILITIES ---
+        {
+          kind: "category",
+          name: "Condition",
+          colour: "110",
+          contents: [{ kind: "block", type: "condition_monitor" }],
+        },
+        // --- CONTRACT UTILITIES ---
+        {
+          kind: "category",
+          name: "Contract",
+          colour: "190",
+          contents: [
+            { kind: "block", type: "execute_function" },
+            { kind: "block", type: "argument_type" },
+            { kind: "block", type: "static_arguments" },
+            { kind: "block", type: "dynamic_arguments" },
             { kind: "block", type: "manual_abi_input" },
+          ],
+        },
+        // --- COMMON UTILITIES ---
+        {
+          kind: "category",
+          name: "Common",
+          colour: "260",
+          contents: [
+            { kind: "block", type: "recurring_job" },
+            { kind: "block", type: "timeframe_job" },
           ],
         },
       ],

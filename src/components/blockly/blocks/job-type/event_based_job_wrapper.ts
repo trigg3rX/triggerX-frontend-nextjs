@@ -13,7 +13,7 @@ const eventBasedJobWrapperJson = {
       check: null, // Allow any block type inside
     },
   ],
-  previousStatement: null,
+  previousStatement: "JOB_TYPE", // Connects only to chain selection
   nextStatement: null,
   colour: 30,
   tooltip: "Runs the job when an on-chain event is detected.",

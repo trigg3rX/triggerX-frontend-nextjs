@@ -68,6 +68,7 @@ const chainSelectionJson = {
   ],
   // Input connection to receive wallet block output
   inputsInline: true,
+  nextStatement: "JOB_TYPE", // Only job type wrappers can connect below
   colour: "#1CD35F", // Green color for chain
   tooltip:
     "Specify the chain at which your job contract is deployed. Connect the Wallet block to its right.",

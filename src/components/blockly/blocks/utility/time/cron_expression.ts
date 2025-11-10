@@ -13,7 +13,7 @@ const cronExpressionJson = {
   ],
   previousStatement: null,
   nextStatement: null,
-  colour: 260,
+  colour: 300,
   tooltip:
     "Specify the cron expression for the intervals you want to execute the job. This job will be executed at every time interval mentioned using the cron expression.",
   helpUrl: "https://crontab.guru/",
