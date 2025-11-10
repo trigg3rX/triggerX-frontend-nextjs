@@ -1,21 +1,17 @@
 import { useState, useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { ethers } from "ethers";
 import { devLog } from "@/lib/devLog";
 import {
   CreateJobInput,
-  TimeBasedJobInput,
-  EventBasedJobInput,
-  ConditionBasedJobInput,
   ApiResult,
   JobResponse,
   ErrorResponse,
   SuccessResponse,
 } from "@/types/sdk-job";
-
-// Import the SDK
 import { TriggerXClient, createJob as createJobSDK } from "sdk-triggerx";
 import type { Signer } from "ethers";
+import { getWalletDisplayName } from "@/utils/safeWalletNames";
 
 interface UseCreateJobResult {
   createJob: (jobInput: CreateJobInput) => Promise<ApiResult<JobResponse>>;
@@ -24,12 +20,9 @@ interface UseCreateJobResult {
   resetError: () => void;
 }
 
-/**
- * Custom hook for creating jobs using the TriggerX SDK
- * Uses types from sdk-job.ts and the sdk-triggerx package
- */
 export function useCreateJob(): UseCreateJobResult {
   const { address } = useAccount();
+  const chainId = useChainId();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +36,33 @@ export function useCreateJob(): UseCreateJobResult {
       setError(null);
 
       try {
+        if (jobInput.walletMode === "safe") {
+          if (!jobInput.safeAddress) {
+            const errorResult: ErrorResponse = {
+              success: false,
+              error: "Safe wallet address is required.",
+              errorCode: "VALIDATION_ERROR",
+              errorType: "VALIDATION_ERROR",
+              httpStatusCode: 400,
+            };
+            setError(errorResult.error);
+            setIsLoading(false);
+            return errorResult;
+          }
+          if (!("safeName" in jobInput) || !jobInput.safeName) {
+            const displayName = getWalletDisplayName(
+              jobInput.safeAddress!,
+              Number(chainId || 0),
+            );
+            if (displayName) {
+              jobInput = {
+                ...jobInput,
+                safeName: displayName,
+              } as CreateJobInput;
+            }
+          }
+        }
+
         // Validate user address
         if (!address) {
           const errorResult: ErrorResponse = {
@@ -57,27 +77,12 @@ export function useCreateJob(): UseCreateJobResult {
           return errorResult;
         }
 
-        // Validate API configuration
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-        const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
-
-        if (!API_BASE_URL) {
-          const errorResult: ErrorResponse = {
-            success: false,
-            error: "API base URL not configured",
-            errorCode: "CONFIGURATION_ERROR",
-            errorType: "CONFIGURATION_ERROR",
-            httpStatusCode: 500,
-          };
-          setError("API base URL not configured");
-          setIsLoading(false);
-          return errorResult;
-        }
+        const API_KEY = process.env.NEXT_PUBLIC_SDK_API_KEY;
 
         if (!API_KEY) {
           const errorResult: ErrorResponse = {
             success: false,
-            error: "API key not configured",
+            error: "SDK API key not configured",
             errorCode: "UNAUTHORIZED",
             errorType: "AUTHENTICATION_ERROR",
             httpStatusCode: 401,
@@ -106,34 +111,17 @@ export function useCreateJob(): UseCreateJobResult {
         const provider = new ethers.BrowserProvider(
           window.ethereum as ethers.Eip1193Provider,
         );
+
         const signer = await provider.getSigner();
 
         // Initialize SDK client
-        const client = new TriggerXClient(API_KEY, {
-          baseURL: API_BASE_URL,
-        });
+        const client = new TriggerXClient(API_KEY);
 
-        // Extract the base job input (without jobType/argType discriminator)
-        // The SDK expects the base types, not the discriminated union
-        // Remove jobType and argType from the input for SDK compatibility
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { jobType: _jobType, argType: _argType, ...restInput } = jobInput;
-
-        // Type assertion - the SDK will handle the validation
-        const baseJobInput = restInput as
-          | TimeBasedJobInput
-          | EventBasedJobInput
-          | ConditionBasedJobInput;
-
-        // Call SDK createJob function
-        devLog("[useCreateJob] Calling SDK createJob function");
-        // Note: createJobSDK takes client and params object
         const response = await createJobSDK(client, {
-          jobInput: baseJobInput,
+          jobInput: jobInput,
           signer: signer as Signer,
         });
 
-        // SDK returns JobResponse directly
         let result: ApiResult<JobResponse>;
 
         if (response.success) {
@@ -210,7 +198,7 @@ export function useCreateJob(): UseCreateJobResult {
         return errorResult;
       }
     },
-    [address],
+    [address, chainId],
   );
 
   return {

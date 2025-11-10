@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Task {
   id: string;
   name: string;
@@ -130,7 +131,7 @@ export interface ErrorResponse {
     | "BALANCE_ERROR"
     | "CONFIGURATION_ERROR"
     | "UNKNOWN_ERROR";
-  details?: unknown;
+  details?: any;
 }
 
 export interface SuccessResponse<T> {
@@ -189,11 +190,13 @@ export interface TimeBasedJobInput {
   autotopupTG?: boolean;
   // wallet selection
   walletMode?: WalletMode; // default: 'regular'
+  safeName?: string;
+  language?: string;
   /**
    * The Safe address to use when walletMode is 'safe'.
    * Required if walletMode is 'safe'.
    */
-  safeAddress: string;
+  safeAddress?: string;
 }
 
 export interface EventBasedJobInput {
@@ -214,11 +217,13 @@ export interface EventBasedJobInput {
   autotopupTG?: boolean;
   // wallet selection
   walletMode?: WalletMode; // default: 'regular'
+  safeName?: string;
+  language?: string;
   /**
    * The Safe address to use when walletMode is 'safe'.
    * Required if walletMode is 'safe'.
    */
-  safeAddress: string;
+  safeAddress?: string;
 }
 
 export interface ConditionBasedJobInput {
@@ -248,11 +253,13 @@ export interface ConditionBasedJobInput {
   autotopupTG?: boolean;
   // wallet selection
   walletMode?: WalletMode; // default: 'regular'
+  safeName?: string;
+  language?: string;
   /**
    * The Safe address to use when walletMode is 'safe'.
    * Required if walletMode is 'safe'.
    */
-  safeAddress: string;
+  safeAddress?: string;
 }
 
 // Internal type matching backend struct
@@ -289,11 +296,15 @@ export interface CreateJobData {
   arguments?: string[];
   dynamic_arguments_script_url?: string;
   is_imua: boolean;
+  is_safe?: boolean;
+  safe_name?: string;
+  safe_address?: string;
+  language?: string;
 }
 
 export interface JobResponse {
   success: boolean;
-  data?: unknown;
+  data?: any;
   error?: string;
   errorCode?: ApiErrorCode;
   httpStatusCode?: HttpStatusCode;
@@ -306,7 +317,7 @@ export interface JobResponse {
     | "BALANCE_ERROR"
     | "CONFIGURATION_ERROR"
     | "UNKNOWN_ERROR";
-  details?: unknown;
+  details?: any;
 }
 
 // Types matching backend JobResponseAPI
@@ -415,7 +426,7 @@ export interface JobResponseUser {
     | "BALANCE_ERROR"
     | "CONFIGURATION_ERROR"
     | "UNKNOWN_ERROR";
-  details?: unknown;
+  details?: any;
   jobs?: JobResponseAPI;
 }
 
