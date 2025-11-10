@@ -4,17 +4,16 @@ import { Order } from "blockly/javascript";
 const conditionBasedJobWrapperJson = {
   type: "condition_based_job_wrapper",
   message0: "Run condition-based job.",
-  message1: "Execute: %1",
+  message1: "%1",
   args0: [],
   args1: [
     {
       type: "input_statement",
       name: "STATEMENT",
-      check: null, // Allow any block type inside
+      check: "DURATION",
     },
   ],
   previousStatement: "JOB_TYPE", // Connects only to chain selection
-  nextStatement: null,
   colour: 30,
   tooltip: "Runs a job when an off-chain condition is satisfied.",
   helpUrl: "",

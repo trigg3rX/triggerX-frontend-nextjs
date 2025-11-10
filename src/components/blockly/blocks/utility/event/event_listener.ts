@@ -16,8 +16,7 @@ const eventListenerJson = {
       text: "0x...",
     },
   ],
-  previousStatement: null,
-  nextStatement: null,
+  previousStatement: "EVENT_CONFIG",
   colour: 220, // Using the same color as other event/schedule blocks
   tooltip:
     "Specify the event that needs to be detected on-chain and the contract address.",

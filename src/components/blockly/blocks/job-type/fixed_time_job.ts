@@ -26,7 +26,7 @@ const fixedTimeJobJson = {
     {
       type: "input_statement",
       name: "STATEMENT",
-      check: null, // Allow any block type inside
+      check: "ACTION",
     },
   ],
   previousStatement: null,

@@ -4,6 +4,7 @@ import { Order } from "blockly/javascript";
 const timeframeJobJson = {
   type: "timeframe_job",
   message0: "until %1 %2",
+  message1: "Execute: %1",
   args0: [
     {
       type: "field_number",
@@ -22,10 +23,17 @@ const timeframeJobJson = {
       ],
     },
   ],
-  previousStatement: null,
-  nextStatement: null,
-  colour: 30, // Using the same color as other time/schedule blocks
-  tooltip: "Specify till what time you need your job to be live on TriggerX",
+  args1: [
+    {
+      type: "input_statement",
+      name: "STATEMENT",
+      check: ["TIME_CONFIG", "EVENT_CONFIG", "CONDITION_CONFIG", "ACTION"],
+    },
+  ],
+  previousStatement: "DURATION",
+  nextStatement: "TIMEFRAME_END", // Has a bottom notch but nothing can connect to it
+  colour: 240, // Using the same color as other time/schedule blocks
+  tooltip: "Specify till what time you need your job to be live on TriggerX.",
   helpUrl: "",
 };
 

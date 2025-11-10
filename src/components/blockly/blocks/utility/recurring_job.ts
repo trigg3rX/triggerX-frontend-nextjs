@@ -13,8 +13,7 @@ const recurringJobJson = {
       checked: true, // Default to true for recurring
     },
   ],
-  previousStatement: null, // This block can be placed anywhere that accepts a statement.
-  nextStatement: null, // This block can connect to other blocks.
+  previousStatement: "TIME_CONFIG",
   colour: 30, // Using the same color as other time/schedule blocks
   tooltip:
     "Specify if you want your job to recur every time the event is detected or the condition is satisfied",

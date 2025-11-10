@@ -19,8 +19,7 @@ const contractActionJson = {
     },
   ],
   inputsInline: false,
-  previousStatement: null,
-  nextStatement: null,
+  previousStatement: "ACTION",
   colour: 260,
   tooltip:
     "Define a smart contract function to execute as part of a job. ABI will be fetched automatically based on chain ID and contract address.",

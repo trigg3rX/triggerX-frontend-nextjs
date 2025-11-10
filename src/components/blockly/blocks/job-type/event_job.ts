@@ -29,7 +29,7 @@ const eventJobJson = {
     {
       type: "input_statement",
       name: "STATEMENT",
-      check: null,
+      check: "ACTION",
     },
   ],
   inputsInline: false,

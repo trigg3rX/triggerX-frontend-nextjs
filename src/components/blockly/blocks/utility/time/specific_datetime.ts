@@ -20,8 +20,7 @@ const specificDatetimeJson = {
       text: "12:00",
     },
   ],
-  previousStatement: null,
-  nextStatement: null,
+  previousStatement: "TIME_CONFIG",
   colour: 300,
   tooltip:
     "Specify the Date and Time when you want your job to be executed. This job will be executed only once.",

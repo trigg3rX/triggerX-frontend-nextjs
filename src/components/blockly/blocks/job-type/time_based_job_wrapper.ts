@@ -3,18 +3,17 @@ import { Order } from "blockly/javascript";
 
 const timeBasedJobWrapperJson = {
   type: "time_based_job_wrapper",
-  message0: "Run a time-based job for",
-  message1: "Execute: %1",
+  message0: "Run a time-based job",
+  message1: "%1",
   args0: [],
   args1: [
     {
       type: "input_statement",
       name: "STATEMENT",
-      check: null, // Allow any block type inside
+      check: ["TIME_CONFIG", "ACTION"],
     },
   ],
   previousStatement: "JOB_TYPE", // Connects only to chain selection
-  nextStatement: null,
   colour: 30,
   tooltip: "Runs a job based on a time schedule.",
   helpUrl: "",

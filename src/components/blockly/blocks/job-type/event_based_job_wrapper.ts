@@ -4,17 +4,16 @@ import { Order } from "blockly/javascript";
 const eventBasedJobWrapperJson = {
   type: "event_based_job_wrapper",
   message0: "Run an event-based job.",
-  message1: "Execute: %1",
+  message1: "%1",
   args0: [],
   args1: [
     {
       type: "input_statement",
       name: "STATEMENT",
-      check: null, // Allow any block type inside
+      check: "DURATION",
     },
   ],
   previousStatement: "JOB_TYPE", // Connects only to chain selection
-  nextStatement: null,
   colour: 30,
   tooltip: "Runs the job when an on-chain event is detected.",
   helpUrl: "",

@@ -90,7 +90,20 @@ export function BlocklyWorkspaceSection({
             { kind: "block", type: "time_based_job_wrapper" },
             { kind: "block", type: "event_based_job_wrapper" },
             { kind: "block", type: "condition_based_job_wrapper" },
+            { kind: "block", type: "fixed_time_job" },
+            { kind: "block", type: "interval_time_job" },
+            { kind: "block", type: "cron_time_job" },
+            { kind: "block", type: "event_job" },
+            { kind: "block", type: "condition_job" },
+            { kind: "block", type: "contract_action" },
           ],
+        },
+        // --- DURATION UTILITIES ---
+        {
+          kind: "category",
+          name: "Duration",
+          colour: "240",
+          contents: [{ kind: "block", type: "timeframe_job" }],
         },
         // --- TIME UTILITIES ---
         {
@@ -117,6 +130,7 @@ export function BlocklyWorkspaceSection({
           colour: "110",
           contents: [{ kind: "block", type: "condition_monitor" }],
         },
+
         // --- CONTRACT UTILITIES ---
         {
           kind: "category",
@@ -135,10 +149,7 @@ export function BlocklyWorkspaceSection({
           kind: "category",
           name: "Common",
           colour: "260",
-          contents: [
-            { kind: "block", type: "recurring_job" },
-            { kind: "block", type: "timeframe_job" },
-          ],
+          contents: [{ kind: "block", type: "recurring_job" }],
         },
       ],
     }),

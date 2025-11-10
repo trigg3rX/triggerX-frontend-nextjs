@@ -41,8 +41,7 @@ const conditionMonitorJson = {
     },
   ],
   inputsInline: false,
-  previousStatement: null,
-  nextStatement: null,
+  previousStatement: "CONDITION_CONFIG",
   colour: 110, // Using the same color as other condition/schedule blocks
   tooltip:
     "Specify the source URL from which the data will be fetched, and the condition will be monitored.",

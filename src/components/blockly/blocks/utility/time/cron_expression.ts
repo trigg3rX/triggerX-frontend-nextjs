@@ -11,8 +11,7 @@ const cronExpressionJson = {
       text: "*/5 * * * *", // Example: every 5 minutes
     },
   ],
-  previousStatement: null,
-  nextStatement: null,
+  previousStatement: "TIME_CONFIG",
   colour: 300,
   tooltip:
     "Specify the cron expression for the intervals you want to execute the job. This job will be executed at every time interval mentioned using the cron expression.",
