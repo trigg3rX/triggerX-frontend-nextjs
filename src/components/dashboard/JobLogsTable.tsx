@@ -110,8 +110,13 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({
                       {log.tx_url && log.execution_tx_hash ? (
                         <a
                           href={
-                            log.tx_url?.match(/^https?:\/\//)
+                            log.tx_url
+                              ?.replace(/^https:\/(?!\/)/, "https://")
+                              ?.replace(/^http:\/(?!\/)/, "http://")
+                              ?.match(/^https?:\/\//)
                               ? log.tx_url
+                                  .replace(/^https:\/(?!\/)/, "https://")
+                                  .replace(/^http:\/(?!\/)/, "http://")
                               : `https://${log.tx_url.replace(/^\/+/, "")}`
                           }
                           target="_blank"
@@ -313,8 +318,13 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
                             >
                               <a
                                 href={
-                                  log.tx_url?.match(/^https?:\/\//)
+                                  log.tx_url
+                                    ?.replace(/^https:\/(?!\/)/, "https://")
+                                    ?.replace(/^http:\/(?!\/)/, "http://")
+                                    ?.match(/^https?:\/\//)
                                     ? log.tx_url
+                                        .replace(/^https:\/(?!\/)/, "https://")
+                                        .replace(/^http:\/(?!\/)/, "http://")
                                     : `https://${log.tx_url.replace(/^\/+/, "")}`
                                 }
                                 target="_blank"
