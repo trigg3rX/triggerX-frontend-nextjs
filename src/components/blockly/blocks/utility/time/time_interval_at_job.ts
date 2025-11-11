@@ -23,6 +23,7 @@ const timeIntervalAtJobJson = {
     },
   ],
   previousStatement: "TIME_CONFIG",
+  nextStatement: "ACTION",
   colour: 300,
   tooltip:
     "Specify the time interval at which you want to execute the job. This job will be executed at every time interval mentioned above.",

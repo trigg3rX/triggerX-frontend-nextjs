@@ -21,6 +21,7 @@ const specificDatetimeJson = {
     },
   ],
   previousStatement: "TIME_CONFIG",
+  nextStatement: "ACTION",
   colour: 300,
   tooltip:
     "Specify the Date and Time when you want your job to be executed. This job will be executed only once.",

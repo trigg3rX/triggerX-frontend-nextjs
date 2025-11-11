@@ -41,6 +41,50 @@ Blockly.Blocks["timeframe_job"] = {
   init: function () {
     this.jsonInit(timeframeJobJson);
   },
+  onchange: function (event: Blockly.Events.Abstract) {
+    if (!this.workspace || this.isInFlyout) {
+      return;
+    }
+
+    // Check if the event is a block move or create event
+    if (
+      event.type === Blockly.Events.BLOCK_MOVE ||
+      event.type === Blockly.Events.BLOCK_CREATE
+    ) {
+      // Get the parent block
+      const parentBlock = this.getParent();
+
+      // Get the statement input
+      const statementInput = this.getInput("STATEMENT");
+
+      if (statementInput) {
+        if (parentBlock && parentBlock.type === "time_based_job_wrapper") {
+          // If parent is time_based_job_wrapper, only allow TIME_CONFIG blocks
+          statementInput.setCheck("TIME_CONFIG");
+        } else if (
+          parentBlock &&
+          parentBlock.type === "event_based_job_wrapper"
+        ) {
+          // If parent is event_based_job_wrapper, only allow EVENT_CONFIG blocks
+          statementInput.setCheck("EVENT_CONFIG");
+        } else if (
+          parentBlock &&
+          parentBlock.type === "condition_based_job_wrapper"
+        ) {
+          // If parent is condition_based_job_wrapper, only allow CONDITION_CONFIG blocks
+          statementInput.setCheck("CONDITION_CONFIG");
+        } else {
+          // Otherwise, allow all original types
+          statementInput.setCheck([
+            "TIME_CONFIG",
+            "EVENT_CONFIG",
+            "CONDITION_CONFIG",
+            "ACTION",
+          ]);
+        }
+      }
+    }
+  },
 };
 
 export const timeframeJobGenerator = function (

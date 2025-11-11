@@ -10,7 +10,7 @@ const timeBasedJobWrapperJson = {
     {
       type: "input_statement",
       name: "STATEMENT",
-      check: ["TIME_CONFIG", "ACTION"],
+      check: "DURATION",
     },
   ],
   previousStatement: "JOB_TYPE", // Connects only to chain selection

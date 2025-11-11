@@ -12,6 +12,7 @@ const cronExpressionJson = {
     },
   ],
   previousStatement: "TIME_CONFIG",
+  nextStatement: "ACTION",
   colour: 300,
   tooltip:
     "Specify the cron expression for the intervals you want to execute the job. This job will be executed at every time interval mentioned using the cron expression.",
