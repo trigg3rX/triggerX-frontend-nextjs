@@ -40,11 +40,20 @@ const conditionMonitorJson = {
       precision: 0.01,
     },
   ],
+  message3: "execute %1",
+  args3: [
+    {
+      type: "input_statement",
+      name: "ACTION",
+      check: "ACTION",
+    },
+  ],
   inputsInline: false,
   previousStatement: "CONDITION_CONFIG",
+  nextStatement: "UTILITY_END",
   colour: 110, // Using the same color as other condition/schedule blocks
   tooltip:
-    "Specify the source URL from which the data will be fetched, and the condition will be monitored.",
+    "Specify the source URL from which the data will be fetched, and the condition will be monitored. Then connect a contract action to execute.",
   helpUrl: "",
 };
 

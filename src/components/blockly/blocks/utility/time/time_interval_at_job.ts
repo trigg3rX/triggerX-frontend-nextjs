@@ -22,11 +22,19 @@ const timeIntervalAtJobJson = {
       ],
     },
   ],
+  message1: "execute %1",
+  args1: [
+    {
+      type: "input_statement",
+      name: "ACTION",
+      check: "ACTION",
+    },
+  ],
   previousStatement: "TIME_CONFIG",
-  nextStatement: "ACTION",
+  nextStatement: "UTILITY_END",
   colour: 300,
   tooltip:
-    "Specify the time interval at which you want to execute the job. This job will be executed at every time interval mentioned above.",
+    "Specify the time interval at which you want to execute the job. This job will be executed at every time interval mentioned above. Then connect a contract action to execute.",
   helpUrl: "",
 };
 

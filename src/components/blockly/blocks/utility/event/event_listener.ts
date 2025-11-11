@@ -16,10 +16,19 @@ const eventListenerJson = {
       text: "0x...",
     },
   ],
+  message1: "then execute %1",
+  args1: [
+    {
+      type: "input_statement",
+      name: "ACTION",
+      check: "ACTION",
+    },
+  ],
   previousStatement: "EVENT_CONFIG",
+  nextStatement: "UTILITY_END",
   colour: 220, // Using the same color as other event/schedule blocks
   tooltip:
-    "Specify the event that needs to be detected on-chain and the contract address.",
+    "Specify the event that needs to be detected on-chain and the contract address. Then connect a contract action to execute.",
   helpUrl: "",
 };
 

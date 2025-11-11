@@ -20,11 +20,19 @@ const specificDatetimeJson = {
       text: "12:00",
     },
   ],
+  message1: "execute %1",
+  args1: [
+    {
+      type: "input_statement",
+      name: "ACTION",
+      check: "ACTION",
+    },
+  ],
   previousStatement: "TIME_CONFIG",
-  nextStatement: "ACTION",
+  nextStatement: "UTILITY_END",
   colour: 300,
   tooltip:
-    "Specify the Date and Time when you want your job to be executed. This job will be executed only once.",
+    "Specify the Date and Time when you want your job to be executed. This job will be executed only once. Then connect a contract action to execute.",
   helpUrl: "",
 };
 

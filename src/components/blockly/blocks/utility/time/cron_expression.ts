@@ -11,11 +11,19 @@ const cronExpressionJson = {
       text: "*/5 * * * *", // Example: every 5 minutes
     },
   ],
+  message1: "execute %1",
+  args1: [
+    {
+      type: "input_statement",
+      name: "ACTION",
+      check: "ACTION",
+    },
+  ],
   previousStatement: "TIME_CONFIG",
-  nextStatement: "ACTION",
+  nextStatement: "UTILITY_END",
   colour: 300,
   tooltip:
-    "Specify the cron expression for the intervals you want to execute the job. This job will be executed at every time interval mentioned using the cron expression.",
+    "Specify the cron expression for the intervals you want to execute the job. This job will be executed at every time interval mentioned using the cron expression. Then connect a contract action to execute.",
   helpUrl: "https://crontab.guru/",
 };
 
