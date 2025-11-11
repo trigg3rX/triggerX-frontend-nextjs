@@ -2,13 +2,13 @@ import { useState, useCallback } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { ethers } from "ethers";
 import { devLog } from "@/lib/devLog";
-import {
+import type {
   CreateJobInput,
   ApiResult,
   JobResponse,
   ErrorResponse,
   SuccessResponse,
-} from "@/types/sdk-job";
+} from "sdk-triggerx";
 import { TriggerXClient, createJob as createJobSDK } from "sdk-triggerx";
 import type { Signer } from "ethers";
 import { getWalletDisplayName } from "@/utils/safeWalletNames";
