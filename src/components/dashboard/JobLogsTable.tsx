@@ -109,7 +109,12 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({
                     <Typography color="gray">
                       {log.tx_url && log.execution_tx_hash ? (
                         <a
-                          href={log.tx_url}
+                          // href={log.tx_url}
+                          href={
+                            log.tx_url.startsWith("https://")
+                              ? log.tx_url
+                              : log.tx_url.replace(/^https:\/*/, "https://")
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline underline-offset-2 hover:text-[#F8ff7c]/80 "
