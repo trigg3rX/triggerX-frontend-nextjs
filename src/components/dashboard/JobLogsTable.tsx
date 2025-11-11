@@ -107,9 +107,13 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({
                       Tx Hash
                     </Typography>
                     <Typography color="gray">
-                      {/* {log.tx_url && log.execution_tx_hash ? (
+                      {log.tx_url && log.execution_tx_hash ? (
                         <a
-                          href={log.tx_url}
+                          href={
+                            log.tx_url?.match(/^https?:\/\//)
+                              ? log.tx_url
+                              : `https://${log.tx_url.replace(/^\/+/, "")}`
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline underline-offset-2 hover:text-[#F8ff7c]/80 "
@@ -117,32 +121,6 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({
                           {log.execution_tx_hash.slice(0, 8)}...
                           {log.execution_tx_hash.slice(-6)}
                         </a>
-                      ) : (
-                        <span>-</span>
-                      )} */}
-
-                      {log.tx_url && log.execution_tx_hash ? (
-                        (() => {
-                          console.log("Raw tx_url:", log.tx_url);
-
-                          const fixedUrl = log.tx_url?.match(/^https?:\/\//)
-                            ? log.tx_url
-                            : `https://${log.tx_url.replace(/^\/+/, "").replace(/^https:\/*/, "")}`;
-
-                          console.log("Normalized tx_url:", fixedUrl);
-
-                          return (
-                            <a
-                              href={fixedUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="underline underline-offset-2 hover:text-[#F8ff7c]/80"
-                            >
-                              {log.execution_tx_hash.slice(0, 8)}...
-                              {log.execution_tx_hash.slice(-6)}
-                            </a>
-                          );
-                        })()
                       ) : (
                         <span>-</span>
                       )}
@@ -334,7 +312,11 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
                               align="left"
                             >
                               <a
-                                href={log.tx_url}
+                                href={
+                                  log.tx_url?.match(/^https?:\/\//)
+                                    ? log.tx_url
+                                    : `https://${log.tx_url.replace(/^\/+/, "")}`
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline-offset-2 pt-1 hover:text-[#F8ff7c]/80 group-hover:text-[#F8ff7c] transition-colors"
