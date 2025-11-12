@@ -31,6 +31,7 @@ import {
   setModuleStatus,
   clearModuleStatusCache,
 } from "@/hooks/useSafeModuleStatus";
+import { getSafeWebAppUrl } from "@/utils/safeChains";
 interface SafeWalletSidebarProps {
   selectedSafe: string | null;
   onSafeSelect: (safe: string | null) => void;
@@ -269,6 +270,15 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     }
   };
 
+  // Handle open in safe app
+  const handleOpenInSafeApp = async () => {
+    if (!selectedSafe) return;
+    const url = await getSafeWebAppUrl(chainId, selectedSafe);
+    if (url) {
+      window.open(url, "_blank");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Tab-style header for alignment with main content tabs */}
@@ -496,6 +506,13 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
             {/* Create / Import actions - always visible */}
             <div className="space-y-3">
+              <Button
+                onClick={handleOpenInSafeApp}
+                className="w-full"
+                disabled={!selectedSafe}
+              >
+                Open in Safe App
+              </Button>
               <Button
                 onClick={handleCreateNewSafe}
                 className="w-full"
