@@ -2,8 +2,8 @@
 
 import React, { useState, useCallback } from "react";
 import { Typography } from "@/components/ui/Typography";
-import SafeJobs from "./SafeJobs";
-import SafeTokens from "./SafeTokens";
+// import SafeJobs from "./SafeJobs";
+// import SafeTokens from "./SafeTokens";
 import SafeWalletSidebar from "./SafeWalletSidebar";
 
 type TabKey = "jobs" | "tokens" | "templates";
@@ -25,9 +25,9 @@ const Page: React.FC = () => {
   const renderMainContent = () => {
     switch (activeTab) {
       case "jobs":
-        return <SafeJobs selectedSafe={selectedSafe} />;
+      // return <SafeJobs selectedSafe={selectedSafe} />;
       case "tokens":
-        return <SafeTokens selectedSafe={selectedSafe} />;
+      // return <SafeTokens selectedSafe={selectedSafe} />;
       case "templates":
         return (
           <div className="p-6">
@@ -70,7 +70,7 @@ const Page: React.FC = () => {
           </div>
         );
       default:
-        return <SafeJobs selectedSafe={selectedSafe} />;
+      // return <SafeJobs selectedSafe={selectedSafe} />;
     }
   };
 

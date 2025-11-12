@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { useAccount, useChainId } from "wagmi";
@@ -393,7 +394,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
       />
 
       {executionMode === "safe" && (
-        <div className="space-y-6">
+        <div className="space-y-auto">
           {isLoading ? (
             <Skeleton height={50} borderRadius={12} />
           ) : (
@@ -415,9 +416,9 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
               {!isSafeSupported && (
                 <Typography
                   variant="caption"
-                  color="secondary"
-                  className="text-xs text-[#A2A2A2] pl-3"
                   align="left"
+                  color="secondary"
+                  className="w-full md:w-[70%] ml-auto mt-2 pl-3"
                 >
                   Add Existing Safe Wallet is available only on Safe-supported
                   networks.
@@ -426,25 +427,24 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
 
               {/* Import progress indicator */}
               {hasImportOngoingProcess && (
-                <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                <div className="text-xs bg-yellow-100 text-yellow-800 p-3 rounded mt-6 group">
                   <button
                     onClick={() => setShowImportDialog(true)}
-                    className="flex items-center gap-2 text-sm text-blue-100 hover:text-white transition-colors"
+                    className="w-full text-left flex items-center gap-2 hover:opacity-90 transition-opacity"
                     title="Click to view import wallet progress"
                   >
-                    <Import
-                      size={20}
-                      className="animate-pulse text-[#F8FF7C]"
-                    />
-                    <span>
-                      Awaiting signatures to complete Safe import - view status
-                    </span>
+                    <Import size={16} className="" />
+                    <Typography variant="body" color="inherit" align="left">
+                      <strong>Note:</strong> Awaiting signatures to complete
+                      Safe import —{" "}
+                      <span className="group-hover:underline">view status</span>
+                    </Typography>
                   </button>
                 </div>
               )}
 
               {selectedSafeWallet && (
-                <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-2 bg-white/5 border border-white/10 rounded-lg p-3">
+                <div className="flex flex-col-reverse md:flex-row md:items-center justify-between gap-4 md:gap-2 bg-white/5 border border-white/10 rounded-lg p-3 mt-6">
                   <div className="flex gap-2 flex-col items-start">
                     <Typography
                       variant="caption"
@@ -457,7 +457,8 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                     <Typography
                       variant="caption"
                       color="primary"
-                      className="text-md"
+                      align="left"
+                      className="break-all md:break-normal whitespace-normal"
                     >
                       {selectedSafeWallet}
                     </Typography>
@@ -466,7 +467,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                     {editingWallet === selectedSafeWallet ? (
                       <>
                         <div className="flex flex-col flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 md:gap-2">
                             <input
                               type="text"
                               value={editingName}
@@ -480,7 +481,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                                   setNameError("");
                                 }
                               }}
-                              className="bg-white/5 border border-white/10 rounded px-3 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-white/30 transition-colors"
+                              className="bg-white/5 border border-white/10 rounded px-3 py-2 text-xs md:text-sm text-white placeholder-gray-400 focus:outline-none focus:border-white/30 transition-colors"
                               placeholder="Enter wallet name"
                               autoFocus
                             />
@@ -488,7 +489,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                               onClick={() =>
                                 handleSaveWalletName(selectedSafeWallet)
                               }
-                              className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
+                              className="md:p-2 p-1 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
                               title="Save"
                             >
                               <MdCheck size={14} />
@@ -499,7 +500,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                                 setEditingName("");
                                 setNameError("");
                               }}
-                              className="p-2 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
+                              className="md:p-2 p-1 text-[#A2A2A2] hover:text-white hover:bg-white/10 rounded transition-colors mb-0.5"
                               title="Cancel"
                             >
                               <MdClose size={14} />

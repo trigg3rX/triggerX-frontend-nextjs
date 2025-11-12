@@ -1,9 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Modal from "@/components/ui/Modal";
 import { Typography } from "@/components/ui/Typography";
 import { TextInput } from "@/components/ui/TextInput";
 import { Button } from "@/components/ui/Button";
+import { HoverHighlight } from "@/components/common/HoverHighlight";
+import NavLink from "@/components/common/header/NavLink";
 import { InfoIcon, XIcon } from "lucide-react";
+import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 
 interface IpfsScriptWizardProps {
   isOpen: boolean;
@@ -336,49 +346,62 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
           Dynamic Argument Script
         </Typography>
 
-        {/* Mode selector */}
-        <div className="flex justify-between gap-2">
-          <Button
-            color={mode === "url" ? "yellow" : "white"}
-            onClick={() => setMode("url")}
-          >
-            Use IPFS URL
-          </Button>
-          <Button
-            color={mode === "pinata" ? "yellow" : "white"}
-            onClick={() => setMode("pinata")}
-          >
-            Create & validate
-          </Button>
-        </div>
+        {/* Mode selector using theme HoverHighlight + NavLink */}
+        <HoverHighlight className="px-1 py-1 w-full">
+          {[
+            <NavLink
+              key="url"
+              href="#"
+              label="Use IPFS URL"
+              isActive={mode === "url"}
+              onClick={() => setMode("url")}
+              className="text-sm flex-1 text-center"
+            />,
+            <NavLink
+              key="pinata"
+              href="#"
+              label="Create & validate"
+              isActive={mode === "pinata"}
+              onClick={() => setMode("pinata")}
+              className="text-sm flex-1 text-center"
+            />,
+          ]}
+        </HoverHighlight>
 
-        <hr className="border-white/40" />
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
         {mode === "url" && (
-          <div className="space-y-3">
-            <Typography variant="body" align="left" color="secondary">
-              Enter an IPFS URL or IPFS gateway link.
-            </Typography>
-            <TextInput
-              label="IPFS URL"
-              value={manualUrl}
-              onChange={setManualUrl}
-              placeholder="ipfs://<cid> or https://gateway/ipfs/<cid>"
-              type="text"
-            />
+          <div className="space-y-4">
+            <label className="block mb-2">
+              <Typography variant="body" color="gray" align="left">
+                IPFS URL / Gateway Link
+              </Typography>
+            </label>
+            <div className="relative w-full">
+              <TextInput
+                value={manualUrl}
+                onChange={setManualUrl}
+                placeholder="ipfs://<cid> or https://gateway/ipfs/<cid>"
+                type="text"
+                className="rounded-xl w-full pr-16"
+              />
+            </div>
             {manualUrlError && (
               <Typography variant="caption" color="error" align="left">
                 {manualUrlError}
               </Typography>
             )}
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-center gap-2 w-full">
               <Button
+                color="white"
                 onClick={validateManualUrl}
                 disabled={isValidating || !manualUrl.trim()}
+                className="w-full sm:w-auto flex-1"
               >
                 {isValidating ? "Validating..." : "Validate"}
               </Button>
               <Button
+                color="yellow"
                 onClick={async () => {
                   const isValid = await validateManualUrl();
                   if (isValid) {
@@ -387,6 +410,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
                   }
                 }}
                 disabled={!manualUrl.trim() || isValidating || !isUrlValidated}
+                className="w-full sm:w-auto flex-1"
               >
                 Use URL
               </Button>
@@ -396,17 +420,22 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
 
         {mode === "pinata" && (
           <div className="flex gap-2 text-xs">
-            <span className={step === 1 ? "text-white" : "text-white/50"}>
-              1. Create & Validate
-            </span>
-            <span className="text-white/30">/</span>
-            <span className={step === 2 ? "text-white" : "text-white/50"}>
-              2. Pinata Login
-            </span>
-            <span className="text-white/30">/</span>
-            <span className={step === 3 ? "text-white" : "text-white/50"}>
-              3. Upload & Use
-            </span>
+            {[
+              { id: 1 as WizardStep, label: "Create & Validate" },
+              { id: 2 as WizardStep, label: "Pinata Login" },
+              { id: 3 as WizardStep, label: "Upload & Use" },
+            ].map((s, idx, arr) => (
+              <Fragment key={s.id}>
+                <span
+                  className={step === s.id ? "text-white" : "text-white/50"}
+                >
+                  {s.label}
+                </span>
+                {idx < arr.length - 1 && (
+                  <span className="text-white/30">/</span>
+                )}
+              </Fragment>
+            ))}
           </div>
         )}
 
@@ -419,7 +448,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
             <textarea
               value={script}
               onChange={(e) => setScript(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[220px] text-sm"
+              className={`w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[170px] text-sm overflow-auto ${scrollbarStyles.customScrollbar}`}
               placeholder={`package main\n\nimport (\n  \"encoding/json\"\n  \"fmt\"\n)\n\nfunc main() {\n  args := []interface{}{\n    // your args here\n  }\n  out, _ := json.MarshalIndent(args, \"\", \"  \")\n  fmt.Println(string(out))\n}`}
             />
             {scriptError && (
@@ -427,19 +456,23 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
                 {scriptError}
               </Typography>
             )}
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-center gap-2 w-full">
               <Button
                 onClick={async () => {
                   const ok = await validateScript();
                   if (ok) setStep(2);
                 }}
+                className="flex-1"
                 disabled={isValidating || !script.trim()}
+                color="white"
               >
                 {isValidating ? "Validating..." : "Validate"}
               </Button>
               <Button
                 onClick={handleNextFromStep1}
                 disabled={!script.trim() || isValidating || !isScriptValidated}
+                className="flex-1"
+                color="yellow"
               >
                 Continue
               </Button>
@@ -450,13 +483,12 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
         {mode === "pinata" && step === 2 && (
           <div className="space-y-3">
             <Typography variant="body" align="left" color="secondary">
-              Log in to Pinata and create a JWT. Paste it below.
+              Log in to Pinata and create a JWT. Paste it here.
             </Typography>
             <TextInput
-              label="Pinata JWT"
               value={token}
               onChange={(v) => setToken(v)}
-              placeholder="Paste your token"
+              placeholder="Paste your JWT"
               type="password"
             />
             {tokenError && (
@@ -464,69 +496,81 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
                 {tokenError}
               </Typography>
             )}
-            <div className="flex justify-between items-center">
-              <a
-                href="https://app.pinata.cloud/developers/api-keys"
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs underline text-white/70"
-              >
-                Create a Pinata JWT
-              </a>
-              {/* Expandable instructions */}
-              <button
-                type="button"
-                className="text-xs underline text-white/70 hover:text-white"
-                onClick={() => setShowPinataHelp((v) => !v)}
-                ref={helpToggleRef}
-              >
-                {showPinataHelp ? (
-                  <XIcon className="w-3 h-3" />
-                ) : (
-                  <InfoIcon className="w-4 h-4" />
-                )}
-              </button>
-              <div className="flex gap-2">
-                <Button onClick={() => setStep(1)}>Back</Button>
-                <Button onClick={handleSaveToken} disabled={!canContinueStep2}>
+            <div className="flex flex-col items-start gap-2 w-full">
+              <div className="flex items-center gap-2">
+                <a
+                  href="https://app.pinata.cloud/developers/api-keys"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs underline text-white/70"
+                >
+                  Create a Pinata JWT
+                </a>
+                <button
+                  type="button"
+                  className="text-xs underline text-white/70 hover:text-white"
+                  onClick={() => setShowPinataHelp((v) => !v)}
+                  ref={helpToggleRef}
+                >
+                  {showPinataHelp ? (
+                    <XIcon className="w-3 h-3" />
+                  ) : (
+                    <InfoIcon className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+              {showPinataHelp && (
+                <div
+                  className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3"
+                  ref={helpPanelRef}
+                >
+                  <Typography variant="caption" align="left" color="secondary">
+                    Follow these steps to generate a Pinata JWT:
+                  </Typography>
+                  <ol className="list-decimal ml-5 mt-2 space-y-1 text-xs text-white/80">
+                    <li>
+                      Click on the following link: {""}
+                      <a
+                        href="https://app.pinata.cloud/developers/api-keys"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline"
+                      >
+                        Pinata API Keys
+                      </a>
+                    </li>
+                    <li>Click on “+ New Key”.</li>
+                    <li>Enter your preferred key name.</li>
+                    <li>
+                      Enable permissions: Legacy Endpoint → Pinning →
+                      “pinFileToIPFS”.
+                    </li>
+                    <li>Click on “Create”.</li>
+                    <li>
+                      Copy the JWT from “API Key Information” and paste it into
+                      the field above.
+                    </li>
+                  </ol>
+                </div>
+              )}
+              <div className="flex justify-center gap-2 w-full">
+                <Button
+                  onClick={() => setStep(1)}
+                  className="flex-1"
+                  color="white"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSaveToken}
+                  disabled={!canContinueStep2}
+                  className="flex-1"
+                  color="yellow"
+                >
                   Continue
                 </Button>
               </div>
             </div>
-            {showPinataHelp && (
-              <div
-                className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3"
-                ref={helpPanelRef}
-              >
-                <Typography variant="caption" align="left" color="secondary">
-                  Follow these steps to generate a Pinata JWT:
-                </Typography>
-                <ol className="list-decimal ml-5 mt-2 space-y-1 text-xs text-white/80">
-                  <li>
-                    Click on the following link: {""}
-                    <a
-                      href="https://app.pinata.cloud/developers/api-keys"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="underline"
-                    >
-                      Pinata API Keys
-                    </a>
-                  </li>
-                  <li>Click on “+ New Key”.</li>
-                  <li>Enter your preferred key name.</li>
-                  <li>
-                    Enable permissions: Legacy Endpoint → Pinning →
-                    “pinFileToIPFS”.
-                  </li>
-                  <li>Click on “Create”.</li>
-                  <li>
-                    Copy the JWT from “API Key Information” and paste it into
-                    the field above.
-                  </li>
-                </ol>
-              </div>
-            )}
           </div>
         )}
 
@@ -541,9 +585,20 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
                 {tokenError}
               </Typography>
             )}
-            <div className="flex justify-between">
-              <Button onClick={() => setStep(2)}>Back</Button>
-              <Button onClick={uploadToPinata} disabled={isUploading}>
+            <div className="flex justify-center gap-2 w-full">
+              <Button
+                onClick={() => setStep(2)}
+                color="white"
+                className="flex-1"
+              >
+                Back
+              </Button>
+              <Button
+                onClick={uploadToPinata}
+                disabled={isUploading}
+                color="yellow"
+                className="flex-1"
+              >
                 {isUploading ? "Uploading..." : "Upload & Use"}
               </Button>
             </div>
