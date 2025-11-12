@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { useAccount, useChainId } from "wagmi";
 import { ethers } from "ethers";
-import { devLog } from "@/lib/devLog";
 import type {
   CreateJobInput,
   ApiResult,
@@ -92,8 +91,6 @@ export function useCreateJob(): UseCreateJobResult {
           return errorResult;
         }
 
-        devLog("[useCreateJob] Creating job with input:", jobInput);
-
         // Get signer from wallet
         if (typeof window === "undefined" || !window.ethereum) {
           const errorResult: ErrorResponse = {
@@ -140,8 +137,6 @@ export function useCreateJob(): UseCreateJobResult {
           } as ErrorResponse;
         }
 
-        devLog("[useCreateJob] Job created successfully:", result);
-
         if (result.success) {
           setIsLoading(false);
           return result;
@@ -151,8 +146,6 @@ export function useCreateJob(): UseCreateJobResult {
           return result;
         }
       } catch (err: unknown) {
-        devLog("[useCreateJob] Error creating job:", err);
-
         const errorMessage =
           err instanceof Error
             ? err.message

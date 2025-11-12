@@ -146,7 +146,7 @@ export function buildIconItems(args: BuildIconItemsArgs): IconSpec[] {
     <FileCode size={16} />,
   );
   add(
-    true,
+    recurring !== undefined,
     "recurring",
     recurring ? "Yes" : "No",
     recurring ? <RotateCcw size={16} /> : <RefreshCwOff size={16} />,

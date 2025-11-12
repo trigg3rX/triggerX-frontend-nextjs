@@ -87,9 +87,19 @@ export function validateTemplateParams(
   templateId: string,
   params: TemplateParams,
 ): ValidationErrors {
-  const fields = templateFields[templateId];
-  if (!fields) return {};
-  return validateWithFields(fields, params);
+  const templateFieldGroups = templateFields[templateId];
+  if (!templateFieldGroups) return {};
+
+  // Flatten all fields from all parameter sections
+  const allFields: ParamFieldWithRules[] = [];
+  for (const sectionKey in templateFieldGroups) {
+    const sectionFields = templateFieldGroups[sectionKey];
+    if (Array.isArray(sectionFields)) {
+      allFields.push(...sectionFields);
+    }
+  }
+
+  return validateWithFields(allFields, params);
 }
 
 export function isValidTemplateParams(
