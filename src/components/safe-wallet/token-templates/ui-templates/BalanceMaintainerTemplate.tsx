@@ -110,7 +110,7 @@ export const BalanceMaintainerTokenTemplate: React.FC<
 
   return (
     <>
-      <Typography variant="caption" color="white" align="left" className="mb-4">
+      <Typography variant="body" color="white" align="left" className="mb-4">
         Maintain Minimum ETH Balance for a smart contract
       </Typography>
       {/* Parameter icons - only show necessary user input fields */}

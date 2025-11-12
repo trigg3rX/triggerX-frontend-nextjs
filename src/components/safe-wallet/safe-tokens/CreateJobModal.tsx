@@ -25,6 +25,12 @@ import {
   hasTemplateHandler,
   runTemplateHandler,
 } from "@/components/safe-wallet/token-templates/handlers";
+import {
+  TemplateParams,
+  ValidationErrors,
+  validateTemplateParams,
+  isValidTemplateParams,
+} from "@/components/safe-wallet/parameterValidation";
 
 interface CreateJobModalProps {
   isOpen: boolean;
@@ -49,16 +55,47 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   const { fetchTGBalance, userBalance } = useTGBalance();
   const [autotopupTG, setAutotopupTG] = useState<boolean>(true);
+  const [templateParams, setTemplateParams] = useState<
+    Record<string, TemplateParams>
+  >({});
+  const [templateErrors, setTemplateErrors] = useState<
+    Record<string, ValidationErrors>
+  >({});
+
+  const handleTemplateParamsChange = (
+    templateId: string,
+    params: TemplateParams,
+  ) => {
+    setTemplateParams((prev) => ({
+      ...prev,
+      [templateId]: params,
+    }));
+    // Validate params on change
+    const errors = validateTemplateParams(templateId, params);
+    setTemplateErrors((prev) => ({
+      ...prev,
+      [templateId]: errors,
+    }));
+  };
 
   const handleContinue = async () => {
     if (!selectedTemplate) return;
 
+    // Validate safe address is available
+    if (!safeAddress) {
+      toast.error("Safe wallet address is required");
+      return;
+    }
+
+    // Validate template parameters
+    const params = templateParams[selectedTemplate.id];
+    if (params && !isValidTemplateParams(selectedTemplate.id, params)) {
+      toast.error("Please fill all required parameters");
+      return;
+    }
+
     // If we have a handler for the selected template, use it.
     if (hasTemplateHandler(selectedTemplate.id)) {
-      if (!safeAddress) {
-        toast.error("Safe wallet address is required");
-        return;
-      }
       setIsCreating(true);
       try {
         const result = await runTemplateHandler(selectedTemplate.id, {
@@ -69,6 +106,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
           autotopupTG,
           fetchTGBalance,
           userBalance,
+          templateParams: templateParams[selectedTemplate.id],
         });
 
         if (result.success) {
@@ -80,16 +118,16 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
         } else {
           const message = result.error || "Failed to create job";
           if (
-            message.toLowerCase().includes("insufficient") &&
-            message.toLowerCase().includes("tg")
-          ) {
-            toast.error(`Insufficient TG balance`);
-          } else if (
             message.toLowerCase().includes("rejected") &&
             message.toLowerCase().includes("transaction") &&
             message.toLowerCase().includes("denied")
           ) {
             toast.error(`Transaction denied by user`);
+          } else if (
+            message.toLowerCase().includes("insufficient") &&
+            message.toLowerCase().includes("tg")
+          ) {
+            toast.error(`Insufficient TG balance`);
           } else {
             toast.error(message);
           }
@@ -108,10 +146,16 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
     onClose();
   };
 
-  // Reset error when modal opens or closes
+  // Reset error and params when modal opens or closes
   useEffect(() => {
     if (isOpen) {
       resetError();
+    } else {
+      // Reset params when modal closes
+      setTemplateParams({});
+      setTemplateErrors({});
+      setSelectedTemplate(null);
+      setExpandedTemplate(null);
     }
   }, [isOpen, resetError]);
 
@@ -121,6 +165,13 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
     // Auto-expand if not already expanded
     if (expandedTemplate !== template.id) {
       setExpandedTemplate(template.id);
+    }
+    // Initialize params if not already set
+    if (!templateParams[template.id]) {
+      setTemplateParams((prev) => ({
+        ...prev,
+        [template.id]: {},
+      }));
     }
   };
 
@@ -181,6 +232,11 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
                       token={token}
                       autotopupTG={autotopupTG}
                       onToggleAutotopup={() => setAutotopupTG((v) => !v)}
+                      params={templateParams[template.id]}
+                      onParamsChange={(params) =>
+                        handleTemplateParamsChange(template.id, params)
+                      }
+                      errors={templateErrors[template.id]}
                     />
                   </div>
                 ))}
@@ -203,7 +259,17 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
             </Button>
             <Button
               onClick={handleContinue}
-              disabled={!selectedTemplate || isCreating || isLoading}
+              disabled={
+                !selectedTemplate ||
+                isCreating ||
+                isLoading ||
+                (selectedTemplate &&
+                  templateParams[selectedTemplate.id] &&
+                  !isValidTemplateParams(
+                    selectedTemplate.id,
+                    templateParams[selectedTemplate.id],
+                  ))
+              }
               color="purple"
               className="w-full"
             >
