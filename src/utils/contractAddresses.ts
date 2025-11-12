@@ -7,8 +7,7 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS || "",
     SAFE_WALLET_FACTORY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
-    SAFE_MODULE_ADDRESS:
-      process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
+    SAFE_MODULE_ADDRESS: process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "op_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Optimism Sepolia", // Add this for display
@@ -18,6 +17,7 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_ETHERSCAN_OPTIMISM_SEPOLIA_API_KEY || "",
     BLOCKSCOUT_API_URL: "https://optimism-sepolia.blockscout.com/api",
     ETHERSCAN_API_URL: "https://api-sepolia-optimism.etherscan.io/api?",
+    PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_OPEN_RPC_URL || "",
   },
   // Base Sepolia (chainId: 84532)
   84532: {
@@ -27,8 +27,7 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS || "",
     SAFE_WALLET_FACTORY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
-    SAFE_MODULE_ADDRESS:
-      process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
+    SAFE_MODULE_ADDRESS: process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "base_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Base Sepolia", // Add this for display
@@ -38,6 +37,7 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_ETHERSCAN_BASE_SEPOLIA_API_KEY || "",
     BLOCKSCOUT_API_URL: "https://base-sepolia.blockscout.com/api",
     ETHERSCAN_API_URL: "https://api.etherscan.io/v2/api?chainid=84532&",
+    PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_BASE_SEPOLIA_OPEN_RPC_URL || "",
   },
   // Arbitrum Sepolia (chainId: 421614)
   421614: {
@@ -47,8 +47,7 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_JOB_CREATION_CONTRACT_ADDRESS || "",
     SAFE_WALLET_FACTORY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
-    SAFE_MODULE_ADDRESS:
-      process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
+    SAFE_MODULE_ADDRESS: process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum Sepolia", // Add this for display
@@ -58,6 +57,7 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_ETHERSCAN_ARBITRUM_SEPOLIA_API_KEY || "",
     BLOCKSCOUT_API_URL: "https://sepolia.arbiscan.io/api",
     ETHERSCAN_API_URL: "https://api.etherscan.io/v2/api?chainid=421614&",
+    PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_OPEN_RPC_URL || "",
   },
   // Arbitrum mainnet (chainId: 42161)
   42161: {
@@ -77,6 +77,7 @@ export const CONTRACT_ADDRESSES = {
     ETHERSCAN_API_KEY: process.env.NEXT_PUBLIC_ETHERSCAN_ARBITRUM_API_KEY || "",
     BLOCKSCOUT_API_URL: "https://arbiscan.io/api",
     ETHERSCAN_API_URL: "https://api.etherscan.io/v2/api?chainid=42161&",
+    PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_OPEN_RPC_URL || "",
   },
 } as const;
 
@@ -107,6 +108,10 @@ export function getJobRegistryAddress(chainId: number): string {
 
 export function getRpcUrl(chainId: number): string {
   return getContractAddress(chainId, "RPC_URL");
+}
+
+export function getPublicRpcUrl(chainId: number): string {
+  return getContractAddress(chainId, "PUBLIC_RPC_URL");
 }
 
 export function getApiNetworkName(chainId: number): string {
