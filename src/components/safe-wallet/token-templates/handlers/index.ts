@@ -1,7 +1,20 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createBalanceMaintainerJob } from "./createBalanceMaintainerJob";
+import { createBalanceMaintainerJob } from "@/components/safe-wallet/token-templates/handlers/createBalanceMaintainerJob";
+import type { CreateJobInput } from "sdk-triggerx";
 
 type HandlerResult = Promise<{ success: boolean; error?: string }>;
+
+export interface TemplateHandlerContext {
+  createJob: (
+    input: CreateJobInput,
+  ) => Promise<{ success: boolean; error?: string }>;
+  tokenSymbol?: string;
+  chainId: number | string;
+  safeAddress: string; // Required - always use safe wallet in safe-wallet directory
+  autotopupTG: boolean;
+  fetchTGBalance: () => Promise<void>;
+  userBalance: number | string | null | undefined;
+  templateParams?: Record<string, string | undefined>;
+}
 
 export function hasTemplateHandler(templateId: string): boolean {
   return templateId in handlerMap;
@@ -9,15 +22,7 @@ export function hasTemplateHandler(templateId: string): boolean {
 
 export async function runTemplateHandler(
   templateId: string,
-  ctx: {
-    createJob: (input: any) => Promise<{ success: boolean; error?: string }>;
-    tokenSymbol?: string;
-    chainId: number | string;
-    safeAddress: string;
-    autotopupTG: boolean;
-    fetchTGBalance: () => Promise<void>;
-    userBalance: number | string | null | undefined;
-  },
+  ctx: TemplateHandlerContext,
 ): HandlerResult {
   const handler = handlerMap[templateId];
   if (!handler) {
@@ -26,6 +31,7 @@ export async function runTemplateHandler(
   return handler(ctx);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handlerMap: Record<string, (ctx: any) => HandlerResult> = {
   "balance-maintainer": createBalanceMaintainerJob,
 };

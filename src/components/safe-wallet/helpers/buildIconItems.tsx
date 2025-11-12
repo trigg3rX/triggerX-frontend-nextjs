@@ -66,19 +66,19 @@ export function buildIconItems(args: BuildIconItemsArgs): IconSpec[] {
   add(
     !!scheduleType,
     "scheduleType",
-    scheduleType,
+    scheduleType ? scheduleType : undefined,
     <SlidersHorizontalIcon size={16} />,
   );
   add(
     typeof timeInterval === "number",
     "timeInterval",
-    typeof timeInterval === "number" ? String(timeInterval) : undefined,
+    Number.isFinite(timeInterval) ? String(timeInterval) : undefined,
     <Repeat2 size={16} />,
   );
   add(
     !!cronExpression,
     "cronExpression",
-    cronExpression,
+    cronExpression ? cronExpression : undefined,
     <CalendarCog size={16} />,
   );
   add(
@@ -100,13 +100,23 @@ export function buildIconItems(args: BuildIconItemsArgs): IconSpec[] {
   add(
     !!triggerContractAddress,
     "triggerContractAddress",
-    triggerContractAddress,
+    triggerContractAddress ? triggerContractAddress : undefined,
     <ScrollTextIcon size={16} />,
   );
-  add(!!triggerEvent, "triggerEvent", triggerEvent, <BellDot size={16} />);
+  add(
+    !!triggerEvent,
+    "triggerEvent",
+    triggerEvent ? triggerEvent : undefined,
+    <BellDot size={16} />,
+  );
 
   // Condition based parameters
-  add(!!conditionType, "conditionType", conditionType, <Ampersand size={16} />);
+  add(
+    !!conditionType,
+    "conditionType",
+    conditionType ? conditionType : undefined,
+    <Ampersand size={16} />,
+  );
   add(
     typeof upperLimit === "number",
     "upperLimit",
@@ -122,13 +132,13 @@ export function buildIconItems(args: BuildIconItemsArgs): IconSpec[] {
   add(
     !!valueSourceType,
     "valueSourceType",
-    valueSourceType,
+    valueSourceType ? valueSourceType : undefined,
     <Cable size={16} />,
   );
   add(
     !!valueSourceUrl,
     "valueSourceUrl",
-    valueSourceUrl,
+    valueSourceUrl ? valueSourceUrl : undefined,
     <SquareArrowOutUpRightIcon size={16} />,
   );
 
@@ -136,7 +146,7 @@ export function buildIconItems(args: BuildIconItemsArgs): IconSpec[] {
   add(
     typeof timeFrame === "number",
     "timeFrame",
-    typeof timeFrame === "number" ? String(timeFrame) : undefined,
+    Number.isFinite(timeFrame) ? String(timeFrame) : undefined,
     <Timer size={16} />,
   );
   add(
@@ -157,13 +167,13 @@ export function buildIconItems(args: BuildIconItemsArgs): IconSpec[] {
   add(
     !!targetContractAddress,
     "targetContractAddress",
-    targetContractAddress,
+    targetContractAddress ? targetContractAddress : undefined,
     <Scroll size={16} />,
   );
   add(
     !!targetFunction,
     "targetFunction",
-    targetFunction,
+    targetFunction ? targetFunction : undefined,
     <FunctionSquare size={16} />,
   );
 

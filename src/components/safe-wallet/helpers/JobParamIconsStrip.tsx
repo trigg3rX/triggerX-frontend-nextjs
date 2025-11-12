@@ -131,14 +131,6 @@ export const JobParamIconsStrip: React.FC<JobParamIconsProps> = ({
       {selectedItem && (
         <div className="mt-2">
           <hr className="border-white/50 mb-4" />
-          <Typography
-            variant="body"
-            color="white"
-            align="left"
-            className="mb-1"
-          >
-            {selectedItem.value ?? ""}
-          </Typography>
 
           {/* Content Area with Scrollbar */}
           <div
