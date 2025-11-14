@@ -121,7 +121,10 @@ export function BlocklyWorkspaceSection({
           kind: "category",
           name: "Event",
           colour: "220",
-          contents: [{ kind: "block", type: "event_listener" }],
+          contents: [
+            { kind: "block", type: "event_listener" },
+            { kind: "block", type: "event_filter" },
+          ],
         },
         // --- CONDITION UTILITIES ---
         {

@@ -26,6 +26,7 @@ const executeFunctionJson = {
   ],
   inputsInline: false,
   previousStatement: "ACTION",
+  output: "ACTION",
   colour: 190,
   tooltip:
     "Specify the contract address and what function to be called to perform the job.",

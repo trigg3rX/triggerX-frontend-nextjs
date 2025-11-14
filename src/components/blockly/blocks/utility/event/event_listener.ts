@@ -34,19 +34,19 @@ const eventListenerJson = {
       spellcheck: false,
     },
   ],
-  message1: "then execute %1",
+  message1: "then %1",
   args1: [
     {
       type: "input_statement",
       name: "ACTION",
-      check: "ACTION",
+      check: ["EVENT_FILTER", "ACTION"],
     },
   ],
   previousStatement: "EVENT_CONFIG",
   nextStatement: "UTILITY_END",
   colour: 220, // Using the same color as other event/schedule blocks
   tooltip:
-    "Specify the event that needs to be detected on-chain and the contract address. Then connect a contract action to execute.",
+    "Specify the event that needs to be detected on-chain and the contract address. Optionally add a filter block, then connect a contract action to execute.",
   helpUrl: "",
 };
 
@@ -192,9 +192,21 @@ export const eventListenerGenerator = function (
   const eventName = block.getFieldValue("EVENT_NAME");
   const contractAddress = block.getFieldValue("CONTRACT_ADDRESS");
 
+  // Check for filter blocks in the ACTION chain
+  let filterParaName = "";
+  let filterValue = "";
+
+  const firstBlock = block.getInputTargetBlock("ACTION");
+  if (firstBlock && firstBlock.type === "event_filter") {
+    filterParaName = firstBlock.getFieldValue("PARAMETER_NAME") || "";
+    filterValue = firstBlock.getFieldValue("PARAMETER_VALUE") || "";
+  }
+
   const json = JSON.stringify({
     trigger_event: eventName,
     trigger_contract_address: contractAddress,
+    event_filter_para_name: filterParaName,
+    event_filter_value: filterValue,
   });
 
   return [`// Event Listener: ${json}`, Order.NONE];
