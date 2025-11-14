@@ -80,13 +80,16 @@ const fetchAndUpdateABI = async (
 
 const eventListenerJson = {
   type: "event_listener",
-  message0: "Listen for %1 on contract %2",
+  message0: "Listen for %1",
   args0: [
     {
       type: "field_dropdown",
       name: "EVENT_NAME",
       options: [["select an event", ""]],
     },
+  ],
+  message1: "on contract %1",
+  args1: [
     {
       type: "field_input",
       name: "CONTRACT_ADDRESS",
@@ -94,8 +97,8 @@ const eventListenerJson = {
       spellcheck: false,
     },
   ],
-  message1: "then %1",
-  args1: [
+  message2: "then %1",
+  args2: [
     {
       type: "input_statement",
       name: "ACTION",
