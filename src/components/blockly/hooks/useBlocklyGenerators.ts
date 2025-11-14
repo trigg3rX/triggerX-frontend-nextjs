@@ -23,6 +23,7 @@ import { specificDatetimeGenerator } from "../blocks/utility/time/specific_datet
 import { cronExpressionGenerator } from "../blocks/utility/time/cron_expression";
 import { timeIntervalAtJobGenerator } from "../blocks/utility/time/time_interval_at_job";
 import { eventListenerGenerator } from "../blocks/utility/event/event_listener";
+import { eventFilterGenerator } from "../blocks/utility/event/event_filter";
 import { conditionMonitorGenerator } from "../blocks/utility/condition/condition_monitor";
 import { executeFunctionGenerator } from "../blocks/utility/contract/execute_function";
 import { argumentTypeGenerator } from "../blocks/utility/contract/argument_type";
@@ -61,6 +62,7 @@ export function useBlocklyGenerators() {
     javascriptGenerator.forBlock["time_interval_at_job"] =
       timeIntervalAtJobGenerator;
     javascriptGenerator.forBlock["event_listener"] = eventListenerGenerator;
+    javascriptGenerator.forBlock["event_filter"] = eventFilterGenerator;
     javascriptGenerator.forBlock["condition_monitor"] =
       conditionMonitorGenerator;
     javascriptGenerator.forBlock["execute_function"] = executeFunctionGenerator;

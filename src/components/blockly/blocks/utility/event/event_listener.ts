@@ -18,6 +18,66 @@ const extractEvents = (abi: string) => {
 const formatEventSignature = (name: string, inputs: { type: string }[]) =>
   `${name}(${inputs.map((input) => input.type).join(",")})`;
 
+// Helper function to fetch and update ABI for a block
+const fetchAndUpdateABI = async (
+  block: Blockly.Block,
+  contractAddress: string,
+  chainId: number,
+) => {
+  try {
+    const abiString = await fetchContractABI(contractAddress, chainId, false);
+
+    if (abiString) {
+      const events = extractEvents(abiString);
+      const eventDropdown = block.getField("EVENT_NAME");
+
+      if (eventDropdown) {
+        if (events.length > 0) {
+          // Create dropdown options from events
+          const options = events.map(
+            (event: { name: string; inputs: { type: string }[] }) => [
+              formatEventSignature(event.name, event.inputs || []),
+              formatEventSignature(event.name, event.inputs || []),
+            ],
+          );
+
+          // Update dropdown options
+          (
+            eventDropdown as unknown as { menuGenerator_: string[][] }
+          ).menuGenerator_ = options;
+
+          // Set the first event as default
+          eventDropdown.setValue(options[0][1]);
+        } else {
+          // No events found in ABI
+          (
+            eventDropdown as unknown as { menuGenerator_: string[][] }
+          ).menuGenerator_ = [["No events found", ""]];
+          eventDropdown.setValue("");
+        }
+      }
+    } else {
+      // ABI not found
+      const eventDropdown = block.getField("EVENT_NAME");
+      if (eventDropdown) {
+        (
+          eventDropdown as unknown as { menuGenerator_: string[][] }
+        ).menuGenerator_ = [["ABI not found", ""]];
+        eventDropdown.setValue("");
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching contract ABI:", error);
+    const eventDropdown = block.getField("EVENT_NAME");
+    if (eventDropdown) {
+      (
+        eventDropdown as unknown as { menuGenerator_: string[][] }
+      ).menuGenerator_ = [["Error fetching ABI", ""]];
+      eventDropdown.setValue("");
+    }
+  }
+};
+
 const eventListenerJson = {
   type: "event_listener",
   message0: "Listen for %1 on contract %2",
@@ -54,12 +114,37 @@ Blockly.Blocks["event_listener"] = {
   init: function () {
     this.jsonInit(eventListenerJson);
 
+    // Store the last fetched address to track changes
+    let lastFetchedAddress = "";
+
     // Add validator to CONTRACT_ADDRESS field to fetch events when address changes
     const contractAddressField = this.getField("CONTRACT_ADDRESS");
     if (contractAddressField) {
       contractAddressField.setValidator((newValue: string) => {
+        // Normalize the value
+        const normalizedValue = newValue?.trim() || "";
+
+        // Check if address was removed or cleared
+        if (!normalizedValue || normalizedValue === "0x...") {
+          const eventDropdown = this.getField("EVENT_NAME");
+          if (eventDropdown) {
+            (
+              eventDropdown as unknown as { menuGenerator_: string[][] }
+            ).menuGenerator_ = [["Enter contract address", ""]];
+            eventDropdown.setValue("");
+          }
+          lastFetchedAddress = "";
+          return newValue;
+        }
+
+        // Check if address actually changed
+        if (normalizedValue === lastFetchedAddress) {
+          return newValue;
+        }
+
         // Validate address format first
-        if (ethers.isAddress(newValue)) {
+        if (ethers.isAddress(normalizedValue)) {
+          lastFetchedAddress = normalizedValue;
           const eventDropdown = this.getField("EVENT_NAME");
 
           // Show "Fetching ABI..." immediately
@@ -73,10 +158,10 @@ Blockly.Blocks["event_listener"] = {
           // Fetch ABI asynchronously (non-blocking)
           (async () => {
             try {
-              // Traverse up the parent blocks to find the chain_selection block
-              let currentBlock = this.getParent();
-              let chainId = 1; // Default to mainnet if not found
+              let chainId: number | null = null;
 
+              // First, try to find chain_selection in parent blocks (connected)
+              let currentBlock = this.getParent();
               while (currentBlock) {
                 if (currentBlock.type === "chain_selection") {
                   const chainIdValue = currentBlock.getFieldValue("CHAIN_ID");
@@ -86,63 +171,36 @@ Blockly.Blocks["event_listener"] = {
                 currentBlock = currentBlock.getParent();
               }
 
-              const abiString = await fetchContractABI(
-                newValue,
-                chainId,
-                false,
-              );
-
-              if (abiString) {
-                const events = extractEvents(abiString);
-                const eventDropdown = this.getField("EVENT_NAME");
-
-                if (eventDropdown) {
-                  if (events.length > 0) {
-                    // Create dropdown options from events
-                    const options = events.map(
-                      (event: { name: string; inputs: { type: string }[] }) => [
-                        formatEventSignature(event.name, event.inputs || []),
-                        formatEventSignature(event.name, event.inputs || []),
-                      ],
-                    );
-
-                    // Update dropdown options
-                    (
-                      eventDropdown as unknown as { menuGenerator_: string[][] }
-                    ).menuGenerator_ = options;
-
-                    // Set the first event as default
-                    eventDropdown.setValue(options[0][1]);
-                  } else {
-                    // No events found in ABI
-                    (
-                      eventDropdown as unknown as { menuGenerator_: string[][] }
-                    ).menuGenerator_ = [["No events found", ""]];
-                    eventDropdown.setValue("");
+              // If not found in parents, search the entire workspace for any chain_selection block
+              if (chainId === null && this.workspace) {
+                const allBlocks = this.workspace.getAllBlocks(false);
+                for (const block of allBlocks) {
+                  if (block.type === "chain_selection" && !block.isInFlyout) {
+                    const chainIdValue = block.getFieldValue("CHAIN_ID");
+                    chainId = parseInt(chainIdValue, 10);
+                    break;
                   }
                 }
-              } else {
-                // ABI not found
+              }
+
+              // If no chain is found, show error message
+              if (chainId === null) {
                 const eventDropdown = this.getField("EVENT_NAME");
                 if (eventDropdown) {
                   (
                     eventDropdown as unknown as { menuGenerator_: string[][] }
-                  ).menuGenerator_ = [["ABI not found", ""]];
+                  ).menuGenerator_ = [["Select a chain first", ""]];
                   eventDropdown.setValue("");
                 }
+                return;
               }
+
+              await fetchAndUpdateABI(this, normalizedValue, chainId);
             } catch (error) {
-              console.error("Error fetching contract ABI:", error);
-              const eventDropdown = this.getField("EVENT_NAME");
-              if (eventDropdown) {
-                (
-                  eventDropdown as unknown as { menuGenerator_: string[][] }
-                ).menuGenerator_ = [["Error fetching ABI", ""]];
-                eventDropdown.setValue("");
-              }
+              console.error("Error in validator:", error);
             }
           })();
-        } else if (newValue && newValue !== "0x...") {
+        } else {
           // Invalid address format
           const eventDropdown = this.getField("EVENT_NAME");
           if (eventDropdown) {
@@ -151,6 +209,7 @@ Blockly.Blocks["event_listener"] = {
             ).menuGenerator_ = [["Invalid address format", ""]];
             eventDropdown.setValue("");
           }
+          lastFetchedAddress = "";
         }
 
         // Always return the new value to allow editing
@@ -181,6 +240,52 @@ Blockly.Blocks["event_listener"] = {
           eventDropdown as unknown as { menuGenerator_: string[][] }
         ).menuGenerator_ = [["Enter contract address", ""]];
         eventDropdown.setValue("");
+      }
+
+      // Auto-fetch ABI when chain becomes available
+      if (!this.isInFlyout && contractAddress && contractAddress !== "0x...") {
+        let chainId: number | null = null;
+
+        // First, try to find chain_selection in parent blocks (connected)
+        let currentBlock = this.getParent();
+        while (currentBlock) {
+          if (currentBlock.type === "chain_selection") {
+            const chainIdValue = currentBlock.getFieldValue("CHAIN_ID");
+            chainId = parseInt(chainIdValue, 10);
+            break;
+          }
+          currentBlock = currentBlock.getParent();
+        }
+
+        // If not found in parents, search the entire workspace for any chain_selection block
+        if (chainId === null && this.workspace) {
+          const allBlocks = this.workspace.getAllBlocks(false);
+          for (const block of allBlocks) {
+            if (block.type === "chain_selection" && !block.isInFlyout) {
+              const chainIdValue = block.getFieldValue("CHAIN_ID");
+              chainId = parseInt(chainIdValue, 10);
+              break;
+            }
+          }
+        }
+
+        // If we found a chain and have a valid contract address, trigger fetch
+        if (chainId !== null && ethers.isAddress(contractAddress)) {
+          const eventDropdown = this.getField("EVENT_NAME");
+
+          // Show "Fetching ABI..." immediately
+          if (eventDropdown) {
+            (
+              eventDropdown as unknown as { menuGenerator_: string[][] }
+            ).menuGenerator_ = [["Fetching ABI...", ""]];
+            eventDropdown.setValue("");
+          }
+
+          // Fetch ABI asynchronously
+          (async () => {
+            await fetchAndUpdateABI(this, contractAddress, chainId);
+          })();
+        }
       }
     }
   },

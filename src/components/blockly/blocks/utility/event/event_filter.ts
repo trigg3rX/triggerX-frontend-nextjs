@@ -44,20 +44,16 @@ Blockly.Blocks["event_filter"] = {
 
 export const eventFilterGenerator = function (
   block: Blockly.Block,
-  generator: Blockly.CodeGenerator,
 ): [string, Order] {
   const parameterName = block.getFieldValue("PARAMETER_NAME");
   const parameterValue = block.getFieldValue("PARAMETER_VALUE");
-
-  // Get the action block connected on the right
-  const actionCode = generator.valueToCode(block, "ACTION", Order.NONE);
 
   const json = JSON.stringify({
     event_filter_para_name: parameterName,
     event_filter_value: parameterValue,
   });
 
-  return [`// Event Filter: ${json}\n${actionCode}`, Order.NONE];
+  return [`// Event Filter: ${json}`, Order.NONE];
 };
 
 export default eventFilterJson;
