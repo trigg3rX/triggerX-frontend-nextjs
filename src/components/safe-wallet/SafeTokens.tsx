@@ -110,7 +110,6 @@ const SafeTokens: React.FC<SafeTokensProps> = ({ selectedSafe }) => {
         setSendError(result.error);
       }
     } catch (error) {
-      console.error("Send transaction failed:", error);
       setSendError(
         error instanceof Error ? error.message : "Transaction failed",
       );

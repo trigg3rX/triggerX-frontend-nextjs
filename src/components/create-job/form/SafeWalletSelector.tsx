@@ -99,8 +99,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
           new Set([...safeWallets, ...extras]).values(),
         );
         setUserSafeWallets(merged);
-      } catch (e) {
-        console.error("Error merging Safe wallets:", e);
+      } catch {
         setUserSafeWallets(safeWallets);
       }
     }
@@ -115,8 +114,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
         if (!cancelled) {
           setSafeChainInfo(info);
         }
-      } catch (error) {
-        console.error("Error fetching Safe chain info:", error);
+      } catch {
         if (!cancelled) {
           setSafeChainInfo(null);
         }

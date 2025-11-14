@@ -53,8 +53,7 @@ async function fetchSafeChains(): Promise<Map<number, SafeChainInfo>> {
     }
 
     return chainMap;
-  } catch (error) {
-    console.error("Error fetching Safe chains:", error);
+  } catch {
     return new Map();
   }
 }

@@ -159,8 +159,7 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
 
       // Use hook's refresh function to check module status
       await refreshModuleStatus();
-    } catch (error) {
-      console.error("Error checking module status:", error);
+    } catch {
       toast.error("Failed to check module status");
     }
   };
@@ -216,7 +215,6 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
 
         // Check if user rejected the signature
         if (isUserRejection(errorMsg)) {
-          console.log("User rejected signature, closing dialog");
           resetAndClose();
           // Show error toast after modal closes
           setTimeout(() => {
@@ -263,7 +261,6 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
 
         // Check if user rejected the transaction
         if (isUserRejection(errorMsg)) {
-          console.log("User rejected transaction, closing dialog");
           resetAndClose();
           // Show error toast after modal closes
           setTimeout(() => {
@@ -311,7 +308,6 @@ export const SafeWalletImportDialog: React.FC<SafeWalletImportDialogProps> = ({
         setHasOngoingProcess(true);
       }
     } catch (err) {
-      console.error("Import Safe failed:", err);
       const msg = err instanceof Error ? err.message : "Failed to import Safe";
 
       // Show inline error and reset progress UI (but keep address input)
