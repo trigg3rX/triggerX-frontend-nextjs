@@ -29,6 +29,7 @@ import ModuleActionDialog from "@/components/safe-wallet/ModuleActionDialog";
 import type { SafeCreationStepStatus } from "@/types/safe";
 import { useSafeModuleStatus } from "@/hooks/useSafeModuleStatus";
 import { getSafeWebAppUrl } from "@/utils/safeChains";
+import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 interface SafeWalletSidebarProps {
   selectedSafe: string | null;
   onSafeSelect: (safe: string | null) => void;
@@ -825,7 +826,9 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
               {/* Dropdown list */}
               {/* Custom dropdown list with custom styles*/}
               {showList && (
-                <div className="mt-2 text-sm text-white bg-background border border-white/20 rounded-xl overflow-hidden max-h-52 overflow-y-auto">
+                <div
+                  className={`mt-2 text-sm text-white bg-background border border-white/20 rounded-xl overflow-hidden max-h-52 overflow-y-auto ${scrollbarStyles.whiteScrollbar}`}
+                >
                   {dropdownOptions.length === 0 ? (
                     <div className="py-4 px-4">No wallets found</div>
                   ) : (
