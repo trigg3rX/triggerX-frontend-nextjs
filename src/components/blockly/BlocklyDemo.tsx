@@ -76,14 +76,12 @@ export default function BlocklyDemo() {
       setPermissionError(null);
       setWorkspaceError(null);
 
-      // Check permission checkbox
-      if (!hasConfirmedPermission) {
-        const errorMsg =
-          "Please confirm that the address has the required role/permission.";
-        setPermissionError(errorMsg);
-        // Scroll to permission checkbox
+      // Check job title first
+      if (!jobTitle || jobTitle.trim() === "") {
+        setJobTitleError("Job title is required.");
+        // Scroll to job title input
         setTimeout(() => {
-          permissionCheckboxRef.current?.scrollIntoView({
+          jobTitleErrorRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "center",
           });
@@ -104,24 +102,25 @@ export default function BlocklyDemo() {
         // Set appropriate error state
         if (errorKey === "jobTitle") {
           setJobTitleError(errorValue);
-          // Scroll to job title input
-          setTimeout(() => {
-            jobTitleErrorRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }, 100);
         } else {
           // For workspace-related errors
           setWorkspaceError(errorValue);
-          // Scroll to workspace
-          setTimeout(() => {
-            workspaceScopeRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-          }, 100);
         }
+        return;
+      }
+
+      // Check permission checkbox
+      if (!hasConfirmedPermission) {
+        const errorMsg =
+          "Please confirm that the address has the required role/permission.";
+        setPermissionError(errorMsg);
+        // Scroll to permission checkbox
+        setTimeout(() => {
+          permissionCheckboxRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 100);
         return;
       }
 

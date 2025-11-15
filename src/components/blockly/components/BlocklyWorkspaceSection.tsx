@@ -90,12 +90,6 @@ export function BlocklyWorkspaceSection({
             { kind: "block", type: "time_based_job_wrapper" },
             { kind: "block", type: "event_based_job_wrapper" },
             { kind: "block", type: "condition_based_job_wrapper" },
-            { kind: "block", type: "fixed_time_job" },
-            { kind: "block", type: "interval_time_job" },
-            { kind: "block", type: "cron_time_job" },
-            { kind: "block", type: "event_job" },
-            { kind: "block", type: "condition_job" },
-            { kind: "block", type: "contract_action" },
           ],
         },
         // --- DURATION UTILITIES ---

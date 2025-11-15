@@ -6,11 +6,6 @@ import {
   walletSelectionGenerator,
 } from "../blocks/default_blocks";
 
-import { fixedTimeJobGenerator } from "../blocks/job-type/fixed_time_job";
-import { intervalTimeJobGenerator } from "../blocks/job-type/interval_time_job";
-import { cronTimeJobGenerator } from "../blocks/job-type/cron_time_job";
-import { eventJobGenerator } from "../blocks/job-type/event_job";
-import { conditionJobGenerator } from "../blocks/job-type/condition_job";
 import { timeBasedJobWrapperGenerator } from "../blocks/job-type/time_based_job_wrapper";
 import { eventBasedJobWrapperGenerator } from "../blocks/job-type/event_based_job_wrapper";
 import { conditionBasedJobWrapperGenerator } from "../blocks/job-type/condition_based_job_wrapper";
@@ -37,12 +32,6 @@ export function useBlocklyGenerators() {
     javascriptGenerator.forBlock["wallet_selection"] = walletSelectionGenerator;
 
     // Job type blocks
-    javascriptGenerator.forBlock["fixed_time_job"] = fixedTimeJobGenerator;
-    javascriptGenerator.forBlock["interval_time_job"] =
-      intervalTimeJobGenerator;
-    javascriptGenerator.forBlock["cron_time_job"] = cronTimeJobGenerator;
-    javascriptGenerator.forBlock["event_job"] = eventJobGenerator;
-    javascriptGenerator.forBlock["condition_job"] = conditionJobGenerator;
     javascriptGenerator.forBlock["time_based_job_wrapper"] =
       timeBasedJobWrapperGenerator;
     javascriptGenerator.forBlock["event_based_job_wrapper"] =
