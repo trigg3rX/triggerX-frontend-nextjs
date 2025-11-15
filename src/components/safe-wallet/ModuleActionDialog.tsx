@@ -120,38 +120,54 @@ const ModuleActionDialog: React.FC<ModuleActionDialogProps> = ({
   ) {
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
         }}
       >
         <div
-          className="bg-[#1A1A1A] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-md w-full mx-4 shadow-2xl"
+          className="bg-[#1A1A1A] border border-white/10 rounded-2xl max-w-md w-full mx-4 shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex items-start gap-4 mb-6">
-            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-              <AlertTriangle className="text-red-400" size={24} />
-            </div>
-            <div className="flex-1">
-              <Typography variant="h3" color="white" className="mb-2">
-                Disable TriggerX Module?
-              </Typography>
-              <Typography variant="body" color="secondary" className="text-sm">
-                This will prevent automated job execution for this Safe wallet.
-                You can re-enable it anytime.
-              </Typography>
+          {/* Icon Section */}
+          <div className="flex justify-center pt-8 pb-6">
+            <div className="w-16 h-16 rounded-full bg-[#CAA340]/10 border border-[#CAA340]/20 flex items-center justify-center">
+              <AlertTriangle
+                className="text-[#F8FF7C]"
+                size={28}
+                strokeWidth={2}
+              />
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          {/* Content Section */}
+          <div className="px-8 pb-8 text-center">
+            <Typography
+              variant="h3"
+              color="white"
+              className="mb-3 text-lg font-semibold"
+            >
+              Disable TriggerX Module?
+            </Typography>
+            <Typography
+              variant="body"
+              color="secondary"
+              className="text-sm leading-relaxed"
+            >
+              This action will prevent automated job execution for this Safe
+              wallet. You can re-enable the module at any time.
+            </Typography>
+          </div>
+
+          {/* Actions Section */}
+          <div className="px-8 pb-8 flex gap-3">
             <Button
               onClick={(e) => {
                 e.stopPropagation();
                 onClose();
               }}
-              className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10"
+              className="flex-1 px-6 py-3 rounded-lg transition-all duration-200"
             >
               Cancel
             </Button>
@@ -160,7 +176,8 @@ const ModuleActionDialog: React.FC<ModuleActionDialogProps> = ({
                 e.stopPropagation();
                 handleConfirm();
               }}
-              className="flex-1 bg-red-500 hover:bg-red-600 border-0"
+              className="flex-1 px-6 py-3 rounded-lg transition-all duration-200"
+              color="purple"
             >
               Continue
             </Button>
