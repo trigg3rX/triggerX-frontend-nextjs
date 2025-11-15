@@ -141,7 +141,6 @@ export function BlocklyWorkspaceSection({
           colour: "190",
           contents: [
             { kind: "block", type: "execute_function" },
-            { kind: "block", type: "argument_type" },
             { kind: "block", type: "static_arguments" },
             { kind: "block", type: "dynamic_arguments" },
             { kind: "block", type: "manual_abi_input" },

@@ -3,13 +3,8 @@ import { Order } from "blockly/javascript";
 
 const dynamicArgumentsJson = {
   type: "dynamic_arguments",
-  message0: "%1 will fetch value/s from %2",
+  message0: "fetch values dynmically from %1",
   args0: [
-    {
-      type: "field_input",
-      name: "FUNCTION_NAME",
-      text: "transfer",
-    },
     {
       type: "field_input",
       name: "IPFS_URL",

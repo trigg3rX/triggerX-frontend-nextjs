@@ -26,7 +26,6 @@ import { eventListenerGenerator } from "../blocks/utility/event/event_listener";
 import { eventFilterGenerator } from "../blocks/utility/event/event_filter";
 import { conditionMonitorGenerator } from "../blocks/utility/condition/condition_monitor";
 import { executeFunctionGenerator } from "../blocks/utility/contract/execute_function";
-import { argumentTypeGenerator } from "../blocks/utility/contract/argument_type";
 import { staticArgumentsGenerator } from "../blocks/utility/contract/static_arguments";
 import { dynamicArgumentsGenerator } from "../blocks/utility/contract/dynamic_arguments";
 
@@ -66,7 +65,6 @@ export function useBlocklyGenerators() {
     javascriptGenerator.forBlock["condition_monitor"] =
       conditionMonitorGenerator;
     javascriptGenerator.forBlock["execute_function"] = executeFunctionGenerator;
-    javascriptGenerator.forBlock["argument_type"] = argumentTypeGenerator;
     javascriptGenerator.forBlock["static_arguments"] = staticArgumentsGenerator;
     javascriptGenerator.forBlock["dynamic_arguments"] =
       dynamicArgumentsGenerator;
