@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Typography } from "@/components/ui/Typography";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -25,10 +25,10 @@ import {
 import { SafeWalletCopyButton } from "@/components/ui/CopyButton";
 import SafeCreationProgressModal from "@/components/safe-wallet/SafeWalletCreationDialog";
 import SafeWalletImportDialog from "@/components/safe-wallet/import-wallet-modal/SafeWalletImportDialog";
+import ModuleActionDialog from "@/components/safe-wallet/ModuleActionDialog";
 import type { SafeCreationStepStatus } from "@/types/safe";
 import {
   useSafeModuleStatus,
-  setModuleStatus,
   clearModuleStatusCache,
 } from "@/hooks/useSafeModuleStatus";
 import { getSafeWebAppUrl } from "@/utils/safeChains";
@@ -48,10 +48,15 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     createSafeWallet,
     signEnableModule,
     submitEnableModule,
+    signDisableModule,
+    submitDisableModule,
     isCreating,
     isSigningEnableModule,
     isExecutingEnableModule,
     isProposingEnableModule,
+    isSigningDisableModule,
+    isExecutingDisableModule,
+    isProposingDisableModule,
   } = useCreateSafeWallet();
   const [editingName, setEditingName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
@@ -71,6 +76,35 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     null,
   );
   const [hasImportOngoingProcess, setHasImportOngoingProcess] = useState(false);
+
+  // Module action dialog states
+  const [showModuleActionDialog, setShowModuleActionDialog] = useState(false);
+  const [moduleAction, setModuleAction] = useState<"enable" | "disable">(
+    "enable",
+  );
+  const [moduleSignStep, setModuleSignStep] =
+    useState<SafeCreationStepStatus>("idle");
+  const [moduleExecuteStep, setModuleExecuteStep] =
+    useState<SafeCreationStepStatus>("idle");
+  const [moduleSignError, setModuleSignError] = useState<string | undefined>(
+    undefined,
+  );
+  const [moduleExecuteError, setModuleExecuteError] = useState<
+    string | undefined
+  >(undefined);
+  const [moduleMultisigInfo, setModuleMultisigInfo] = useState<{
+    safeAddress: string;
+    threshold: number;
+    safeTxHash: string;
+    queueUrl: string | null;
+    fallbackUrl: string | null;
+    owners: string[];
+  } | null>(null);
+  const [isCheckingModuleStatus, setIsCheckingModuleStatus] = useState(false);
+  const [hasOngoingModuleProcess, setHasOngoingModuleProcess] = useState(false);
+
+  // Ref to track if we've already processed module completion
+  const moduleCompletionProcessedRef = useRef(false);
 
   // Clear selection when chain switches
   useEffect(() => {
@@ -172,11 +206,10 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       // If the submission succeeds, set the success step
       setEnableStep("success");
       if (submitResult.data?.status === "executed") {
-        // Clear cache and update module status in localStorage for executed transactions (module is enabled)
+        // Clear cache and let refresh fetch fresh from blockchain
         clearModuleStatusCache(safeAddress, chainId);
-        setModuleStatus(safeAddress, chainId, true);
       } else if (submitResult.data?.status === "multisig") {
-        // For multisig, module is not enabled yet - don't set status (will be enabled when approved or on manual refresh)
+        // For multisig, module is not enabled yet - will be enabled when approved or on manual refresh
       }
 
       // Auto-close dialog after successful completion of all steps
@@ -237,7 +270,8 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
   const handleImportedSafe = async (
     safeAddress: string,
-    moduleActive: boolean,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _moduleActive: boolean,
   ) => {
     // Select the imported safe
     onSafeSelect(safeAddress);
@@ -245,30 +279,439 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     // Refetch the safe wallets list
     await refetch();
 
-    // Refresh module status
+    // Refresh module status - clear cache to fetch fresh from blockchain
     setTimeout(async () => {
-      if (moduleActive) {
-        clearModuleStatusCache(safeAddress, chainId);
-        setModuleStatus(safeAddress, chainId, true);
-      }
+      clearModuleStatusCache(safeAddress, chainId);
       await refreshModuleStatus();
     }, 500);
   };
 
-  // Handle enable module on created safe wallet
+  // Helper: Reset all module action state
+  const resetModuleActionState = useCallback(() => {
+    setModuleSignStep("idle");
+    setModuleExecuteStep("idle");
+    setModuleSignError(undefined);
+    setModuleExecuteError(undefined);
+    setModuleMultisigInfo(null);
+    setHasOngoingModuleProcess(false);
+    moduleCompletionProcessedRef.current = false;
+  }, []);
+
+  // Show enable module dialog
+  const handleShowEnableDialog = () => {
+    setModuleAction("enable");
+    setShowModuleActionDialog(true);
+    resetModuleActionState();
+  };
+
+  // Execute enable module
   const handleEnableModule = async () => {
     if (!selectedSafe) return;
 
-    // Use two-step flow for enabling module on existing Safe
-    const signResult = await signEnableModule(selectedSafe);
-    if (signResult.success) {
-      const submitResult = await submitEnableModule();
-      if (submitResult.success) {
-        setModuleStatus(selectedSafe, chainId, true); // update localStorage
-        await refreshModuleStatus();
+    // Reset states and start process
+    setModuleSignStep("pending");
+    setModuleExecuteStep("idle");
+    setModuleSignError(undefined);
+    setModuleExecuteError(undefined);
+    setHasOngoingModuleProcess(true);
+
+    try {
+      // Step 1: Sign enable module transaction
+      const signResult = await signEnableModule(selectedSafe);
+      if (!signResult.success) {
+        setModuleSignStep("error");
+        setModuleSignError(signResult.error || "Failed to sign transaction");
+        setHasOngoingModuleProcess(false);
+        return;
       }
+
+      setModuleSignStep("success");
+
+      // Check if module was already enabled (empty safeTxHash)
+      if (signResult.data && !signResult.data.safeTxHash) {
+        // Module already enabled - clear cache and let refresh fetch from blockchain
+        clearModuleStatusCache(selectedSafe, chainId);
+        setModuleExecuteStep("success");
+        setHasOngoingModuleProcess(false);
+
+        // Refresh status and close
+        setTimeout(async () => {
+          await refreshModuleStatus();
+          // Wait a bit more and refresh again to ensure UI updates
+          setTimeout(async () => {
+            clearModuleStatusCache(selectedSafe, chainId);
+            await refreshModuleStatus();
+            handleModuleActionDialogClose();
+          }, 1000);
+        }, 1000);
+        return;
+      }
+
+      // Step 2: Submit enable module transaction
+      setModuleExecuteStep("pending");
+      const submitResult = await submitEnableModule();
+      if (!submitResult.success) {
+        setModuleExecuteStep("error");
+        setModuleExecuteError(submitResult.error || "Failed to enable module");
+        setHasOngoingModuleProcess(false);
+        return;
+      }
+
+      setModuleExecuteStep("success");
+
+      // Check if it's multisig or executed
+      if (submitResult.data?.status === "executed") {
+        // Single-sig: module enabled immediately - clear cache and let refresh fetch from blockchain
+        clearModuleStatusCache(selectedSafe, chainId);
+        setHasOngoingModuleProcess(false);
+
+        // Immediate refresh attempt
+        await refreshModuleStatus();
+
+        // Wait for blockchain to update, then refresh and close
+        setTimeout(async () => {
+          // First refresh after blockchain update
+          clearModuleStatusCache(selectedSafe, chainId);
+          await refreshModuleStatus();
+          // Wait a bit more and refresh again to ensure UI updates
+          setTimeout(async () => {
+            clearModuleStatusCache(selectedSafe, chainId);
+            await refreshModuleStatus();
+            handleModuleActionDialogClose();
+          }, 1000);
+        }, 2000);
+      } else if (submitResult.data?.status === "multisig") {
+        // Multisig: keep dialog open and show waiting state
+        setModuleMultisigInfo({
+          safeAddress: selectedSafe,
+          threshold: submitResult.data.threshold,
+          safeTxHash: submitResult.data.safeTxHash || "",
+          queueUrl: submitResult.data.queueUrl || null,
+          fallbackUrl: submitResult.data.fallbackUrl || null,
+          owners: submitResult.data.owners || [],
+        });
+        // Keep hasOngoingModuleProcess true for multisig
+      }
+    } catch (err) {
+      setHasOngoingModuleProcess(false);
+      throw err;
     }
   };
+
+  // Show disable module dialog
+  const handleShowDisableDialog = () => {
+    setModuleAction("disable");
+    setShowModuleActionDialog(true);
+    resetModuleActionState();
+  };
+
+  // Execute disable module - called after user confirms in dialog
+  const handleDisableModule = async () => {
+    if (!selectedSafe) return;
+
+    // Reset states and start process
+    setModuleSignStep("pending");
+    setModuleExecuteStep("idle");
+    setModuleSignError(undefined);
+    setModuleExecuteError(undefined);
+    setHasOngoingModuleProcess(true);
+
+    try {
+      // Step 1: Sign disable module transaction
+      const signResult = await signDisableModule(selectedSafe);
+      if (!signResult.success) {
+        setModuleSignStep("error");
+        setModuleSignError(signResult.error || "Failed to sign transaction");
+        setHasOngoingModuleProcess(false);
+        return;
+      }
+
+      setModuleSignStep("success");
+
+      // Step 2: Submit disable module transaction
+      setModuleExecuteStep("pending");
+      const submitResult = await submitDisableModule();
+      if (!submitResult.success) {
+        setModuleExecuteStep("error");
+        setModuleExecuteError(submitResult.error || "Failed to disable module");
+        setHasOngoingModuleProcess(false);
+        return;
+      }
+
+      setModuleExecuteStep("success");
+
+      // Check if it's multisig or executed
+      if (submitResult.data?.status === "executed") {
+        // Single-sig: module disabled immediately - clear cache and let refresh fetch from blockchain
+        clearModuleStatusCache(selectedSafe, chainId);
+        setHasOngoingModuleProcess(false);
+
+        // Immediate refresh attempt
+        await refreshModuleStatus();
+
+        // Wait for blockchain to update, then refresh and close
+        setTimeout(async () => {
+          // First refresh after blockchain update
+          clearModuleStatusCache(selectedSafe, chainId);
+          await refreshModuleStatus();
+          // Wait a bit more and refresh again to ensure UI updates
+          setTimeout(async () => {
+            clearModuleStatusCache(selectedSafe, chainId);
+            await refreshModuleStatus();
+            handleModuleActionDialogClose();
+          }, 1000);
+        }, 2000);
+      } else if (submitResult.data?.status === "multisig") {
+        // Multisig: keep dialog open and show waiting state
+        setModuleMultisigInfo({
+          safeAddress: selectedSafe,
+          threshold: submitResult.data.threshold,
+          safeTxHash: submitResult.data.safeTxHash || "",
+          queueUrl: submitResult.data.queueUrl || null,
+          fallbackUrl: submitResult.data.fallbackUrl || null,
+          owners: submitResult.data.owners || [],
+        });
+        // Keep hasOngoingModuleProcess true for multisig
+      }
+    } catch (err) {
+      setHasOngoingModuleProcess(false);
+      throw err;
+    }
+  };
+
+  // Retry handler for sign step - retries sign and continues to execute
+  const handleRetryModuleSign = async () => {
+    if (!selectedSafe) return;
+
+    setModuleSignStep("pending");
+    setModuleSignError(undefined);
+    setHasOngoingModuleProcess(true);
+
+    try {
+      const signResult =
+        moduleAction === "enable"
+          ? await signEnableModule(selectedSafe)
+          : await signDisableModule(selectedSafe);
+
+      if (!signResult.success) {
+        setModuleSignStep("error");
+        setModuleSignError(signResult.error || "Failed to sign transaction");
+        setHasOngoingModuleProcess(false);
+        return;
+      }
+
+      setModuleSignStep("success");
+
+      // Check if module was already in desired state (for enable only)
+      if (
+        moduleAction === "enable" &&
+        signResult.data &&
+        !signResult.data.safeTxHash
+      ) {
+        clearModuleStatusCache(selectedSafe, chainId);
+        setModuleExecuteStep("success");
+        setHasOngoingModuleProcess(false);
+        setTimeout(async () => {
+          await refreshModuleStatus();
+          handleModuleActionDialogClose();
+        }, 1500);
+        return;
+      }
+
+      // Continue to execute step
+      setModuleExecuteStep("pending");
+      const submitResult =
+        moduleAction === "enable"
+          ? await submitEnableModule()
+          : await submitDisableModule();
+
+      if (!submitResult.success) {
+        setModuleExecuteStep("error");
+        setModuleExecuteError(
+          submitResult.error ||
+            `Failed to ${moduleAction === "enable" ? "enable" : "disable"} module`,
+        );
+        setHasOngoingModuleProcess(false);
+        return;
+      }
+
+      setModuleExecuteStep("success");
+
+      if (submitResult.data?.status === "executed") {
+        // Clear cache and let refresh fetch from blockchain
+        clearModuleStatusCache(selectedSafe, chainId);
+        setHasOngoingModuleProcess(false);
+        setTimeout(async () => {
+          // First refresh after blockchain update
+          await refreshModuleStatus();
+          // Wait a bit more and refresh again to ensure UI updates
+          setTimeout(async () => {
+            clearModuleStatusCache(selectedSafe, chainId);
+            await refreshModuleStatus();
+            handleModuleActionDialogClose();
+          }, 1000);
+        }, 2000);
+      } else if (submitResult.data?.status === "multisig") {
+        setModuleMultisigInfo({
+          safeAddress: selectedSafe,
+          threshold: submitResult.data.threshold,
+          safeTxHash: submitResult.data.safeTxHash || "",
+          queueUrl: submitResult.data.queueUrl || null,
+          fallbackUrl: submitResult.data.fallbackUrl || null,
+          owners: submitResult.data.owners || [],
+        });
+        // Keep hasOngoingModuleProcess true for multisig
+      }
+    } catch (err) {
+      setHasOngoingModuleProcess(false);
+      throw err;
+    }
+  };
+
+  // Retry handler for execute step
+  const handleRetryModuleExecute = async () => {
+    if (!selectedSafe) return;
+
+    setModuleExecuteStep("pending");
+    setModuleExecuteError(undefined);
+    setHasOngoingModuleProcess(true);
+
+    try {
+      const submitResult =
+        moduleAction === "enable"
+          ? await submitEnableModule()
+          : await submitDisableModule();
+
+      if (!submitResult.success) {
+        setModuleExecuteStep("error");
+        setModuleExecuteError(
+          submitResult.error ||
+            `Failed to ${moduleAction === "enable" ? "enable" : "disable"} module`,
+        );
+        setHasOngoingModuleProcess(false);
+        return;
+      }
+
+      setModuleExecuteStep("success");
+
+      if (submitResult.data?.status === "executed") {
+        // Clear cache and let refresh fetch from blockchain
+        clearModuleStatusCache(selectedSafe, chainId);
+        setHasOngoingModuleProcess(false);
+        setTimeout(async () => {
+          // First refresh after blockchain update
+          await refreshModuleStatus();
+          // Wait a bit more and refresh again to ensure UI updates
+          setTimeout(async () => {
+            clearModuleStatusCache(selectedSafe, chainId);
+            await refreshModuleStatus();
+            handleModuleActionDialogClose();
+          }, 1000);
+        }, 2000);
+      } else if (submitResult.data?.status === "multisig") {
+        setModuleMultisigInfo({
+          safeAddress: selectedSafe,
+          threshold: submitResult.data.threshold,
+          safeTxHash: submitResult.data.safeTxHash || "",
+          queueUrl: submitResult.data.queueUrl || null,
+          fallbackUrl: submitResult.data.fallbackUrl || null,
+          owners: submitResult.data.owners || [],
+        });
+        // Keep hasOngoingModuleProcess true for multisig
+      }
+    } catch (err) {
+      setHasOngoingModuleProcess(false);
+      throw err;
+    }
+  };
+
+  // Handle manual refresh of module status for multisig
+  const handleManualModuleRefresh = useCallback(async () => {
+    if (!selectedSafe) return;
+
+    setIsCheckingModuleStatus(true);
+    try {
+      // Clear cache to force fresh blockchain check
+      clearModuleStatusCache(selectedSafe, chainId);
+
+      // Refresh module status
+      await refreshModuleStatus();
+    } finally {
+      setIsCheckingModuleStatus(false);
+    }
+  }, [selectedSafe, chainId, refreshModuleStatus]);
+
+  // Handle module action dialog close
+  const handleModuleActionDialogClose = useCallback(() => {
+    // Only reset state if there's no ongoing process
+    if (!hasOngoingModuleProcess) {
+      resetModuleActionState();
+    }
+    setShowModuleActionDialog(false);
+
+    // Refresh module status when closing (if we have a selected safe)
+    // Give it more time to ensure blockchain state is updated
+    if (selectedSafe) {
+      setTimeout(async () => {
+        clearModuleStatusCache(selectedSafe, chainId);
+        await refreshModuleStatus();
+        // Refresh again after a short delay to ensure UI is updated
+        setTimeout(async () => {
+          clearModuleStatusCache(selectedSafe, chainId);
+          await refreshModuleStatus();
+        }, 1500);
+      }, 1000);
+    }
+  }, [
+    selectedSafe,
+    chainId,
+    hasOngoingModuleProcess,
+    resetModuleActionState,
+    refreshModuleStatus,
+  ]);
+
+  // Watch for module status completion (for multisig scenarios)
+  useEffect(() => {
+    if (
+      !hasOngoingModuleProcess ||
+      !moduleMultisigInfo?.safeAddress ||
+      !selectedSafe ||
+      moduleExecuteStep !== "success" ||
+      moduleCompletionProcessedRef.current
+    ) {
+      return;
+    }
+
+    const isCompleted =
+      (moduleAction === "enable" && moduleEnabled === true) ||
+      (moduleAction === "disable" && moduleEnabled === false);
+
+    if (isCompleted) {
+      // Mark as processed immediately to prevent duplicate processing
+      moduleCompletionProcessedRef.current = true;
+
+      // Clear cache and let refresh fetch fresh from blockchain
+      clearModuleStatusCache(selectedSafe, chainId);
+
+      // Refresh status to update UI
+      refreshModuleStatus();
+
+      // Close dialog after a short delay
+      setTimeout(() => {
+        handleModuleActionDialogClose();
+      }, 1500);
+    }
+  }, [
+    hasOngoingModuleProcess,
+    moduleMultisigInfo?.safeAddress,
+    selectedSafe,
+    moduleEnabled,
+    moduleAction,
+    moduleExecuteStep,
+    chainId,
+    handleModuleActionDialogClose,
+    refreshModuleStatus,
+  ]);
 
   // Handle open in safe app
   const handleOpenInSafeApp = async () => {
@@ -486,10 +929,53 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
             {selectedSafe && !checkingModule && moduleEnabled === false && (
               <div className="mt-0.5 flex justify-end">
                 <button
-                  onClick={() => void handleEnableModule()}
-                  className="text-xs text-[#C07AF6] underline underline-offset-4 cursor-pointer"
+                  onClick={handleShowEnableDialog}
+                  disabled={
+                    isSigningEnableModule ||
+                    isExecutingEnableModule ||
+                    isProposingEnableModule
+                  }
+                  className={`text-xs text-[#C07AF6] underline underline-offset-4 ${
+                    isSigningEnableModule ||
+                    isExecutingEnableModule ||
+                    isProposingEnableModule
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer"
+                  }`}
                 >
-                  Enable TriggerX Module
+                  {isSigningEnableModule
+                    ? "Signing..."
+                    : isExecutingEnableModule || isProposingEnableModule
+                      ? "Enabling..."
+                      : "Enable TriggerX Module"}
+                </button>
+              </div>
+            )}
+
+            {/* Disable Module Button as inline link */}
+            {/* Not used defined button component as we have to show button like inline link*/}
+            {selectedSafe && !checkingModule && moduleEnabled === true && (
+              <div className="mt-0.5 flex justify-end">
+                <button
+                  onClick={handleShowDisableDialog}
+                  disabled={
+                    isSigningDisableModule ||
+                    isExecutingDisableModule ||
+                    isProposingDisableModule
+                  }
+                  className={`text-xs text-red-300 underline underline-offset-4 ${
+                    isSigningDisableModule ||
+                    isExecutingDisableModule ||
+                    isProposingDisableModule
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer hover:text-red-300"
+                  }`}
+                >
+                  {isSigningDisableModule
+                    ? "Signing..."
+                    : isExecutingDisableModule || isProposingDisableModule
+                      ? "Disabling..."
+                      : "Disable TriggerX Module"}
                 </button>
               </div>
             )}
@@ -520,15 +1006,21 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                   isCreating ||
                   isSigningEnableModule ||
                   isExecutingEnableModule ||
-                  isProposingEnableModule
+                  isProposingEnableModule ||
+                  isSigningDisableModule ||
+                  isExecutingDisableModule ||
+                  isProposingDisableModule
                 }
               >
                 {isCreating
                   ? "Creating Safe..."
-                  : isSigningEnableModule
+                  : isSigningEnableModule || isSigningDisableModule
                     ? "Signing..."
-                    : isExecutingEnableModule || isProposingEnableModule
-                      ? "Enabling Module..."
+                    : isExecutingEnableModule ||
+                        isProposingEnableModule ||
+                        isExecutingDisableModule ||
+                        isProposingDisableModule
+                      ? "Processing..."
                       : "Create New Safe Wallet"}
               </Button>
 
@@ -542,7 +1034,10 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                     isCreating ||
                     isSigningEnableModule ||
                     isExecutingEnableModule ||
-                    isProposingEnableModule
+                    isProposingEnableModule ||
+                    isSigningDisableModule ||
+                    isExecutingDisableModule ||
+                    isProposingDisableModule
                   }
                 >
                   Import Safe Wallet
@@ -587,6 +1082,25 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
         onRetryCreate={handleRetryCreate}
         onRetrySign={handleRetrySign}
         onRetryEnable={handleRetryEnable}
+      />
+
+      {/* Module Action Dialog (Enable/Disable) */}
+      <ModuleActionDialog
+        open={showModuleActionDialog}
+        onClose={handleModuleActionDialogClose}
+        action={moduleAction}
+        onConfirmEnable={() => void handleEnableModule()}
+        onConfirmDisable={() => void handleDisableModule()}
+        signStep={moduleSignStep}
+        executeStep={moduleExecuteStep}
+        signError={moduleSignError}
+        executeError={moduleExecuteError}
+        onRetrySign={handleRetryModuleSign}
+        onRetryExecute={handleRetryModuleExecute}
+        multisigInfo={moduleMultisigInfo}
+        selectedSafe={selectedSafe}
+        onManualRefresh={handleManualModuleRefresh}
+        isCheckingModuleStatus={isCheckingModuleStatus}
       />
     </div>
   );
