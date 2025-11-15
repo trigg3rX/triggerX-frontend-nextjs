@@ -26,11 +26,8 @@ export const useSafeAssetBalances = (safeAddress: string | null) => {
         const tokenBalances = await fetchAllTokenBalances(safeAddress, chainId);
         setBalances(tokenBalances);
       } catch (err) {
-        console.error("Error fetching Safe asset balances:", err);
-
         // Retry logic for network issues
         if (retryCount < 2) {
-          console.log(`Retrying balance fetch (attempt ${retryCount + 1})`);
           setTimeout(
             () => {
               fetchBalances(retryCount + 1);

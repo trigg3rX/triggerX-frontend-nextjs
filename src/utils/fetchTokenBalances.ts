@@ -5,6 +5,7 @@ import {
   getBlockscoutApiUrl,
   getRpcUrl,
 } from "./contractAddresses";
+import { devLog } from "@/lib/devLog";
 
 export interface TokenBalance {
   address: string;
@@ -62,8 +63,7 @@ export async function fetchNativeBalance(
       balanceFormatted: ethers.formatEther(balance),
       isNative: true,
     };
-  } catch (error) {
-    console.error("Error fetching native balance:", error);
+  } catch {
     return null;
   }
 }
@@ -127,16 +127,13 @@ export async function fetchTokenBalancesEtherscan(
           });
         }
       } catch (error) {
-        console.warn(
-          `Failed to fetch balance for token ${tokenAddress}:`,
-          error,
-        );
+        devLog(`Failed to fetch balance for token ${tokenAddress}:`, error);
       }
     }
 
     return balances;
   } catch (error) {
-    console.error("Error fetching token balances from Etherscan:", error);
+    devLog("Error fetching token balances from Etherscan:", error);
     throw error;
   }
 }
@@ -180,7 +177,7 @@ export async function fetchTokenBalancesBlockscout(
 
     return balances;
   } catch (error) {
-    console.error("Error fetching token balances from Blockscout:", error);
+    devLog("Error fetching token balances from Blockscout:", error);
     throw error;
   }
 }
@@ -205,7 +202,7 @@ export async function fetchAllTokenBalances(
     const erc20Balances = await fetchTokenBalancesEtherscan(address, chainId);
     balances.push(...erc20Balances);
   } catch (error) {
-    console.warn("Etherscan failed, trying Blockscout:", error);
+    devLog("Etherscan failed, trying Blockscout:", error);
     try {
       const erc20Balances = await fetchTokenBalancesBlockscout(
         address,
@@ -213,7 +210,7 @@ export async function fetchAllTokenBalances(
       );
       balances.push(...erc20Balances);
     } catch (blockscoutError) {
-      console.error("Both Etherscan and Blockscout failed:", blockscoutError);
+      devLog("Both Etherscan and Blockscout failed:", blockscoutError);
     }
   }
 

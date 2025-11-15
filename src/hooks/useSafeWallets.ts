@@ -47,30 +47,23 @@ export const useSafeWallets = () => {
 
         let fetchedViaApi = false;
         if (baseUrl) {
-          try {
-            // Ensure checksum address for API compatibility
-            // Skipped that part for now as wagmi hook useAccount() returns the checksum address
-            // TODO: If not using wagmi hook, we need to add the checksum address validation here for the API request
+          // Ensure checksum address for API compatibility
+          // Skipped that part for now as wagmi hook useAccount() returns the checksum address
+          // TODO: If not using wagmi hook, we need to add the checksum address validation here for the API request
 
-            const normalized = baseUrl.replace(/\/$/, "");
-            const url = `${normalized}/api/v1/owners/${address}/safes`;
-            const resp = await fetch(url, { method: "GET" });
-            if (!resp.ok) {
-              throw new Error(`API responded with ${resp.status}`);
-            }
-            const data = (await resp.json()) as { safes?: string[] };
-            if (Array.isArray(data?.safes)) {
-              const merged = mergeApiAndExtraSafes(data.safes, Number(chainId));
-              setSafeWallets(merged);
-              fetchedViaApi = true;
-            } else {
-              throw new Error("Malformed API response: missing safes array");
-            }
-          } catch (apiErr) {
-            console.warn(
-              "Safe accounts API fetch failed; falling back to contract method",
-              apiErr,
-            );
+          const normalized = baseUrl.replace(/\/$/, "");
+          const url = `${normalized}/api/v1/owners/${address}/safes`;
+          const resp = await fetch(url, { method: "GET" });
+          if (!resp.ok) {
+            throw new Error(`API responded with ${resp.status}`);
+          }
+          const data = (await resp.json()) as { safes?: string[] };
+          if (Array.isArray(data?.safes)) {
+            const merged = mergeApiAndExtraSafes(data.safes, Number(chainId));
+            setSafeWallets(merged);
+            fetchedViaApi = true;
+          } else {
+            throw new Error("Malformed API response: missing safes array");
           }
         }
 
@@ -99,11 +92,8 @@ export const useSafeWallets = () => {
           setSafeWallets(merged);
         }
       } catch (err) {
-        console.error("Error fetching Safe wallets:", err);
-
         // Retry logic for network issues
         if (retryCount < 2) {
-          console.log(`Retrying fetchSafeWallets, attempt ${retryCount + 1}`);
           setTimeout(
             () => {
               fetchSafeWallets(retryCount + 1);

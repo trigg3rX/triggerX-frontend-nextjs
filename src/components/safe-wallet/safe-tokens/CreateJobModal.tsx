@@ -132,8 +132,7 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
             toast.error(message);
           }
         }
-      } catch (error) {
-        console.error("Error handling template:", error);
+      } catch {
         toast.error("Failed to create job");
       } finally {
         setIsCreating(false);
