@@ -27,10 +27,7 @@ import SafeCreationProgressModal from "@/components/safe-wallet/SafeWalletCreati
 import SafeWalletImportDialog from "@/components/safe-wallet/import-wallet-modal/SafeWalletImportDialog";
 import ModuleActionDialog from "@/components/safe-wallet/ModuleActionDialog";
 import type { SafeCreationStepStatus } from "@/types/safe";
-import {
-  useSafeModuleStatus,
-  clearModuleStatusCache,
-} from "@/hooks/useSafeModuleStatus";
+import { useSafeModuleStatus } from "@/hooks/useSafeModuleStatus";
 import { getSafeWebAppUrl } from "@/utils/safeChains";
 interface SafeWalletSidebarProps {
   selectedSafe: string | null;
@@ -128,8 +125,10 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
   const handleSelect = async (opt: DropdownOption) => {
     const addr = String(opt.id);
     onSafeSelect(addr);
-    // Refresh the module status
-    refreshModuleStatus();
+    // Refresh the module status after selection (wait a bit for state to update)
+    setTimeout(async () => {
+      await refreshModuleStatus();
+    }, 100);
   };
 
   // Create new Safe wallet
@@ -205,34 +204,27 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     } else {
       // If the submission succeeds, set the success step
       setEnableStep("success");
-      if (submitResult.data?.status === "executed") {
-        // Clear cache and let refresh fetch fresh from blockchain
-        clearModuleStatusCache(safeAddress, chainId);
-      } else if (submitResult.data?.status === "multisig") {
-        // For multisig, module is not enabled yet - will be enabled when approved or on manual refresh
-      }
+      // Module enabled - refresh will happen when dialog closes
 
-      // Auto-close dialog after successful completion of all steps
-      setTimeout(() => {
-        setShowCreateFlow(false);
+      // Wait for blockchain state to update, then select wallet
+      setTimeout(async () => {
+        // First select the safe wallet
+        onSafeSelect(safeAddress);
+
+        // Refetch the safe wallets list
+        await refetch();
+
+        // Refresh module status immediately after selection (wait a bit for state to update)
+        setTimeout(async () => {
+          await refreshModuleStatus();
+        }, 200);
+
+        // Auto-close dialog after selecting wallet
+        setTimeout(() => {
+          setShowCreateFlow(false);
+        }, 500);
       }, 2000);
     }
-
-    // Wait for blockchain state to update, then select wallet and refresh module status
-    setTimeout(async () => {
-      // First select the safe wallet
-      onSafeSelect(safeAddress);
-
-      // Refetch the safe wallets list
-      await refetch();
-
-      // Wait a bit more for the selection to take effect, then force refresh module status from blockchain
-      setTimeout(async () => {
-        // Clear cache again to ensure fresh check (to show as enabled)
-        clearModuleStatusCache(safeAddress, chainId);
-        await refreshModuleStatus();
-      }, 500);
-    }, 3000);
   };
 
   // Retry handlers for create safe wallet
@@ -279,11 +271,10 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     // Refetch the safe wallets list
     await refetch();
 
-    // Refresh module status - clear cache to fetch fresh from blockchain
+    // Refresh module status immediately after selection (wait a bit for state to update)
     setTimeout(async () => {
-      clearModuleStatusCache(safeAddress, chainId);
       await refreshModuleStatus();
-    }, 500);
+    }, 200);
   };
 
   // Helper: Reset all module action state
@@ -329,20 +320,13 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
       // Check if module was already enabled (empty safeTxHash)
       if (signResult.data && !signResult.data.safeTxHash) {
-        // Module already enabled - clear cache and let refresh fetch from blockchain
-        clearModuleStatusCache(selectedSafe, chainId);
+        // Module already enabled
         setModuleExecuteStep("success");
         setHasOngoingModuleProcess(false);
 
-        // Refresh status and close
-        setTimeout(async () => {
-          await refreshModuleStatus();
-          // Wait a bit more and refresh again to ensure UI updates
-          setTimeout(async () => {
-            clearModuleStatusCache(selectedSafe, chainId);
-            await refreshModuleStatus();
-            handleModuleActionDialogClose();
-          }, 1000);
+        // Close dialog - refresh will happen in handleModuleActionDialogClose
+        setTimeout(() => {
+          handleModuleActionDialogClose();
         }, 1000);
         return;
       }
@@ -361,24 +345,12 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
       // Check if it's multisig or executed
       if (submitResult.data?.status === "executed") {
-        // Single-sig: module enabled immediately - clear cache and let refresh fetch from blockchain
-        clearModuleStatusCache(selectedSafe, chainId);
+        // Single-sig: module enabled immediately
         setHasOngoingModuleProcess(false);
 
-        // Immediate refresh attempt
-        await refreshModuleStatus();
-
-        // Wait for blockchain to update, then refresh and close
-        setTimeout(async () => {
-          // First refresh after blockchain update
-          clearModuleStatusCache(selectedSafe, chainId);
-          await refreshModuleStatus();
-          // Wait a bit more and refresh again to ensure UI updates
-          setTimeout(async () => {
-            clearModuleStatusCache(selectedSafe, chainId);
-            await refreshModuleStatus();
-            handleModuleActionDialogClose();
-          }, 1000);
+        // Wait for blockchain to update, then close (refresh will happen in close handler)
+        setTimeout(() => {
+          handleModuleActionDialogClose();
         }, 2000);
       } else if (submitResult.data?.status === "multisig") {
         // Multisig: keep dialog open and show waiting state
@@ -442,24 +414,12 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
       // Check if it's multisig or executed
       if (submitResult.data?.status === "executed") {
-        // Single-sig: module disabled immediately - clear cache and let refresh fetch from blockchain
-        clearModuleStatusCache(selectedSafe, chainId);
+        // Single-sig: module disabled immediately
         setHasOngoingModuleProcess(false);
 
-        // Immediate refresh attempt
-        await refreshModuleStatus();
-
-        // Wait for blockchain to update, then refresh and close
-        setTimeout(async () => {
-          // First refresh after blockchain update
-          clearModuleStatusCache(selectedSafe, chainId);
-          await refreshModuleStatus();
-          // Wait a bit more and refresh again to ensure UI updates
-          setTimeout(async () => {
-            clearModuleStatusCache(selectedSafe, chainId);
-            await refreshModuleStatus();
-            handleModuleActionDialogClose();
-          }, 1000);
+        // Wait for blockchain to update, then close (refresh will happen in close handler)
+        setTimeout(() => {
+          handleModuleActionDialogClose();
         }, 2000);
       } else if (submitResult.data?.status === "multisig") {
         // Multisig: keep dialog open and show waiting state
@@ -508,13 +468,11 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
         signResult.data &&
         !signResult.data.safeTxHash
       ) {
-        clearModuleStatusCache(selectedSafe, chainId);
         setModuleExecuteStep("success");
         setHasOngoingModuleProcess(false);
-        setTimeout(async () => {
-          await refreshModuleStatus();
+        setTimeout(() => {
           handleModuleActionDialogClose();
-        }, 1500);
+        }, 1000);
         return;
       }
 
@@ -538,18 +496,9 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       setModuleExecuteStep("success");
 
       if (submitResult.data?.status === "executed") {
-        // Clear cache and let refresh fetch from blockchain
-        clearModuleStatusCache(selectedSafe, chainId);
         setHasOngoingModuleProcess(false);
-        setTimeout(async () => {
-          // First refresh after blockchain update
-          await refreshModuleStatus();
-          // Wait a bit more and refresh again to ensure UI updates
-          setTimeout(async () => {
-            clearModuleStatusCache(selectedSafe, chainId);
-            await refreshModuleStatus();
-            handleModuleActionDialogClose();
-          }, 1000);
+        setTimeout(() => {
+          handleModuleActionDialogClose();
         }, 2000);
       } else if (submitResult.data?.status === "multisig") {
         setModuleMultisigInfo({
@@ -595,18 +544,9 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       setModuleExecuteStep("success");
 
       if (submitResult.data?.status === "executed") {
-        // Clear cache and let refresh fetch from blockchain
-        clearModuleStatusCache(selectedSafe, chainId);
         setHasOngoingModuleProcess(false);
-        setTimeout(async () => {
-          // First refresh after blockchain update
-          await refreshModuleStatus();
-          // Wait a bit more and refresh again to ensure UI updates
-          setTimeout(async () => {
-            clearModuleStatusCache(selectedSafe, chainId);
-            await refreshModuleStatus();
-            handleModuleActionDialogClose();
-          }, 1000);
+        setTimeout(() => {
+          handleModuleActionDialogClose();
         }, 2000);
       } else if (submitResult.data?.status === "multisig") {
         setModuleMultisigInfo({
@@ -631,15 +571,12 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
     setIsCheckingModuleStatus(true);
     try {
-      // Clear cache to force fresh blockchain check
-      clearModuleStatusCache(selectedSafe, chainId);
-
       // Refresh module status
       await refreshModuleStatus();
     } finally {
       setIsCheckingModuleStatus(false);
     }
-  }, [selectedSafe, chainId, refreshModuleStatus]);
+  }, [selectedSafe, refreshModuleStatus]);
 
   // Handle module action dialog close
   const handleModuleActionDialogClose = useCallback(() => {
@@ -650,21 +587,14 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     setShowModuleActionDialog(false);
 
     // Refresh module status when closing (if we have a selected safe)
-    // Give it more time to ensure blockchain state is updated
+    // Wait for blockchain state to update before refreshing
     if (selectedSafe) {
       setTimeout(async () => {
-        clearModuleStatusCache(selectedSafe, chainId);
         await refreshModuleStatus();
-        // Refresh again after a short delay to ensure UI is updated
-        setTimeout(async () => {
-          clearModuleStatusCache(selectedSafe, chainId);
-          await refreshModuleStatus();
-        }, 1500);
-      }, 1000);
+      }, 1500);
     }
   }, [
     selectedSafe,
-    chainId,
     hasOngoingModuleProcess,
     resetModuleActionState,
     refreshModuleStatus,
@@ -690,13 +620,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       // Mark as processed immediately to prevent duplicate processing
       moduleCompletionProcessedRef.current = true;
 
-      // Clear cache and let refresh fetch fresh from blockchain
-      clearModuleStatusCache(selectedSafe, chainId);
-
-      // Refresh status to update UI
-      refreshModuleStatus();
-
-      // Close dialog after a short delay
+      // Close dialog after a short delay (refresh will happen in close handler)
       setTimeout(() => {
         handleModuleActionDialogClose();
       }, 1500);
@@ -708,9 +632,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     moduleEnabled,
     moduleAction,
     moduleExecuteStep,
-    chainId,
     handleModuleActionDialogClose,
-    refreshModuleStatus,
   ]);
 
   // Handle open in safe app
@@ -1064,6 +986,12 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
         open={showImportDialog}
         onClose={() => {
           setShowImportDialog(false);
+          // Refresh module status when import dialog closes
+          if (selectedSafe) {
+            setTimeout(async () => {
+              await refreshModuleStatus();
+            }, 1000);
+          }
         }}
         onImported={handleImportedSafe}
         onHasOngoingProcessChange={setHasImportOngoingProcess}
@@ -1072,7 +1000,15 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
       {/* Safe Wallet Creation Progress Dialog */}
       <SafeCreationProgressModal
         open={showCreateFlow}
-        onClose={() => setShowCreateFlow(false)}
+        onClose={() => {
+          setShowCreateFlow(false);
+          // Refresh module status when create dialog closes
+          if (selectedSafe) {
+            setTimeout(async () => {
+              await refreshModuleStatus();
+            }, 1000);
+          }
+        }}
         createStep={createStep}
         signStep={signStep}
         enableStep={enableStep}
