@@ -164,7 +164,6 @@ export const useSafeTransact = () => {
         message: "Transaction executed successfully",
       };
     } catch (error) {
-      console.error("Error executing Safe transaction:", error);
       const message =
         error instanceof Error ? error.message : "Transaction failed";
       return { success: false, error: message };
@@ -196,7 +195,6 @@ export const useSafeTransact = () => {
       );
       return success;
     } catch (error) {
-      console.error("Error sending native token:", error);
       const message =
         error instanceof Error ? error.message : "Failed to send native token";
       return { success: false, error: message };
@@ -243,7 +241,6 @@ export const useSafeTransact = () => {
       );
       return success;
     } catch (error) {
-      console.error("Error sending ERC-20 token:", error);
       const message =
         error instanceof Error ? error.message : "Failed to send ERC-20 token";
       return { success: false, error: message };
