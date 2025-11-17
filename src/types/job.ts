@@ -3,6 +3,7 @@ import { StaticImageData } from "next/image";
 export interface Template {
   id: string;
   title: string;
+  tokenTemplateTitle?: string;
 }
 
 export interface TriggerOption {

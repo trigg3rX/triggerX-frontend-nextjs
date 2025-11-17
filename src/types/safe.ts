@@ -72,19 +72,6 @@ export interface MultisigInfo {
   owners: string[];
 }
 
-export interface ImportWalletStatusProps {
-  currentStep: StepId | null;
-  completedSteps: Set<StepId>;
-  isValidating: boolean;
-  isEnablingModule: boolean;
-  isSigningEnableModule: boolean;
-  isExecutingEnableModule: boolean;
-  isProposingEnableModule: boolean;
-  multisigInfo: MultisigInfo | null;
-  isCheckingModuleStatus: boolean;
-  onManualRefresh?: () => void;
-}
-
 export interface SafeWalletImportDialogProps {
   open: boolean;
   onClose: () => void;

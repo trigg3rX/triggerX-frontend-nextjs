@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ethers } from "ethers";
-import toast from "react-hot-toast";
 
 // Safe ABI for execTransaction
 const SAFE_ABI = [
@@ -53,6 +52,9 @@ const SAFE_TX_TYPEHASH =
 
 export const useSafeTransact = () => {
   const [isSending, setIsSending] = useState(false);
+  type SafeTxResult =
+    | { success: true; txHash: string; message?: string }
+    | { success: false; error: string };
 
   const executeSafeTransaction = async (
     safeAddress: string,
@@ -60,7 +62,7 @@ export const useSafeTransact = () => {
     value: bigint,
     data: string,
     operation: number = 0,
-  ): Promise<boolean> => {
+  ): Promise<SafeTxResult> => {
     try {
       if (typeof window.ethereum === "undefined") {
         throw new Error("Please install MetaMask");
@@ -124,7 +126,6 @@ export const useSafeTransact = () => {
       );
 
       // Sign the transaction hash
-      toast.loading("Please sign the transaction...", { id: "safe-tx" });
       const rawSignature = await signer.signMessage(ethers.getBytes(txHash));
 
       // Normalize signature and adjust v for Safe's EthSign type
@@ -143,7 +144,6 @@ export const useSafeTransact = () => {
         signer,
       );
 
-      toast.loading("Executing transaction...", { id: "safe-tx" });
       const tx = await safeProxyWithSigner.execTransaction(
         to,
         value,
@@ -158,15 +158,15 @@ export const useSafeTransact = () => {
       );
 
       await tx.wait();
-      toast.success("Transaction executed successfully!", { id: "safe-tx" });
-      return true;
+      return {
+        success: true,
+        txHash: tx.hash,
+        message: "Transaction executed successfully",
+      };
     } catch (error) {
-      console.error("Error executing Safe transaction:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Transaction failed",
-        { id: "safe-tx" },
-      );
-      return false;
+      const message =
+        error instanceof Error ? error.message : "Transaction failed";
+      return { success: false, error: message };
     }
   };
 
@@ -174,7 +174,7 @@ export const useSafeTransact = () => {
     safeAddress: string,
     recipient: string,
     amount: string,
-  ): Promise<boolean> => {
+  ): Promise<SafeTxResult> => {
     setIsSending(true);
     try {
       if (!ethers.isAddress(recipient)) {
@@ -193,14 +193,11 @@ export const useSafeTransact = () => {
         "0x", // empty data for ETH transfer
         0, // call operation
       );
-
       return success;
     } catch (error) {
-      console.error("Error sending native token:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send native token",
-      );
-      return false;
+      const message =
+        error instanceof Error ? error.message : "Failed to send native token";
+      return { success: false, error: message };
     } finally {
       setIsSending(false);
     }
@@ -212,7 +209,7 @@ export const useSafeTransact = () => {
     recipient: string,
     amount: string,
     decimals: number,
-  ): Promise<boolean> => {
+  ): Promise<SafeTxResult> => {
     setIsSending(true);
     try {
       if (!ethers.isAddress(recipient)) {
@@ -242,14 +239,11 @@ export const useSafeTransact = () => {
         data,
         0, // call operation
       );
-
       return success;
     } catch (error) {
-      console.error("Error sending ERC-20 token:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to send ERC-20 token",
-      );
-      return false;
+      const message =
+        error instanceof Error ? error.message : "Failed to send ERC-20 token";
+      return { success: false, error: message };
     } finally {
       setIsSending(false);
     }
