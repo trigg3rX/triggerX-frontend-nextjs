@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-// import SafeJobs from "@/components/safe-wallet/SafeJobs";
+import SafeJobs from "@/components/safe-wallet/SafeJobs";
 import SafeTokens from "@/components/safe-wallet/SafeTokens";
-import SafeWalletSidebar from "./SafeWalletSidebar";
+import SafeWalletSidebar from "@/components/safe-wallet/SafeWalletSidebar";
 
 type TabKey = "jobs" | "tokens" | "templates";
 
@@ -23,7 +23,7 @@ const Page: React.FC = () => {
   const renderMainContent = () => {
     switch (activeTab) {
       case "jobs":
-      // return <SafeJobs selectedSafe={selectedSafe} />;
+        return <SafeJobs selectedSafe={selectedSafe} />;
       case "tokens":
         return <SafeTokens selectedSafe={selectedSafe} />;
     }

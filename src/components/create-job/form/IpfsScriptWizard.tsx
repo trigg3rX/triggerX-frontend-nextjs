@@ -14,6 +14,7 @@ import { HoverHighlight } from "@/components/common/HoverHighlight";
 import NavLink from "@/components/common/header/NavLink";
 import { InfoIcon, XIcon } from "lucide-react";
 import scrollbarStyles from "@/app/styles/scrollbar.module.css";
+import { devLog } from "@/lib/devLog";
 
 interface IpfsScriptWizardProps {
   isOpen: boolean;
@@ -167,8 +168,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       const requestBody = buildValidationRequestBody(code);
       const data = await callValidationApi(requestBody);
       assertValidationResult(data);
-      if (data.output)
-        console.log("Validation successful. Output:", data.output);
+      if (data.output) devLog("Validation successful. Output:", data.output);
 
       setScriptError("");
       setIsScriptValidated(true);
@@ -236,8 +236,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       const requestBody = buildValidationRequestBody(code);
       const data = await callValidationApi(requestBody);
       assertValidationResult(data);
-      if (data.output)
-        console.log("Validation successful. Output:", data.output);
+      if (data.output) devLog("Validation successful. Output:", data.output);
 
       setManualUrlError("");
       setIsValidating(false);

@@ -1,34 +1,10 @@
 import { devLog } from "@/lib/devLog";
 import { useState, useEffect } from "react";
-import { useAccount, useChainId } from "wagmi";
+import { useChainId } from "wagmi";
 import { transformJobsResponse, JobsApiResponse } from "@/utils/jobsMapper";
+import { JobType } from "@/hooks/useJobs";
 
-export type JobType = {
-  id: number;
-  jobTitle: string;
-  taskDefinitionId: string;
-  raw_task_definition_id: string; // Raw numeric task definition ID for conditional logic
-  is_active: boolean;
-  job_cost_actual: string;
-  timeFrame: string;
-  argType: string;
-  timeInterval: string;
-  targetContractAddress: string;
-  createdAt: string;
-  targetFunction: string;
-  targetChainId: string;
-  created_chain_id: string; // <-- add this
-  linkedJobs?: JobType[];
-  type: string;
-  condition_type?: string;
-  upper_limit?: number;
-  lower_limit?: number;
-  value_source_url?: string;
-  next_execution_timestamp?: string;
-};
-
-export function useJobs() {
-  const { address } = useAccount();
+export function useSafeJobs(safeAddress: string | null) {
   const chainId = useChainId();
   const [jobs, setJobs] = useState<JobType[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,11 +13,15 @@ export function useJobs() {
   useEffect(() => {
     let isActive = true;
     const controller = new AbortController();
-    const fetchJobs = async () => {
-      if (!address || typeof chainId === "undefined" || chainId === null) {
+
+    const fetchSafeJobs = async () => {
+      // Early return if no safe address or chainId
+      if (!safeAddress || typeof chainId === "undefined" || chainId === null) {
         setJobs([]);
+        setLoading(false);
         return;
       }
+
       setLoading(true);
 
       try {
@@ -52,12 +32,15 @@ export function useJobs() {
           return;
         }
 
-        const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}/chain/${chainId}`;
-        devLog("[useJobs] Fetching jobs from:", apiUrl, "chain:", chainId);
+        // Convert safe address to lowercase as per requirement
+        const apiUrl = `${API_BASE_URL}/api/jobs/safe-address/${safeAddress.toLowerCase()}`;
+        devLog("[useSafeJobs] Fetching jobs from:", apiUrl, "chain:", chainId);
+
         const headers = {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
         };
+
         const response = await fetch(apiUrl, {
           headers,
           signal: controller.signal,
@@ -72,17 +55,18 @@ export function useJobs() {
             return;
           }
           if (!isActive) return;
-          setError(`Failed to fetch jobs. (${response.status})`);
+          setError(`Failed to fetch safe jobs. (${response.status})`);
           setLoading(false);
           return;
         }
+
         const jobsData: JobsApiResponse = await response.json();
 
-        // Use shared transformation logic
+        // Use shared transformation logic, filtering to current chain
         const sortedJobs = transformJobsResponse(
           jobsData,
           chainId,
-          "[useJobs]",
+          "[useSafeJobs]",
         );
 
         if (!isActive) return;
@@ -101,15 +85,17 @@ export function useJobs() {
       } finally {
         if (!isActive) return;
         setLoading(false);
-        devLog("[useJobs] Loading finished.");
+        devLog("[useSafeJobs] Loading finished.");
       }
     };
-    fetchJobs();
+
+    fetchSafeJobs();
+
     return () => {
       isActive = false;
       controller.abort();
     };
-  }, [address, chainId]);
+  }, [safeAddress, chainId]);
 
   return { jobs, loading, error };
 }
