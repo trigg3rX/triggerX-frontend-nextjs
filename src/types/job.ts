@@ -82,6 +82,7 @@ export interface ContractDetails {
   isProxy?: boolean;
   implementationAddress?: string;
   proxyType?: string;
+  safeTransactions?: SafeTransaction[];
 }
 
 export interface ContractInteraction {
@@ -89,3 +90,9 @@ export interface ContractInteraction {
 }
 
 export type FunctionInput = { name?: string; type: string };
+
+export interface SafeTransaction {
+  to: string;
+  value: string;
+  data: string;
+}
