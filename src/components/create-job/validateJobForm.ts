@@ -1,4 +1,5 @@
 import { Timeframe, TimeInterval, ContractInteraction } from "@/types/job";
+import { ethers } from "ethers";
 
 interface ValidateJobFormArgs {
   jobType: number;
@@ -138,14 +139,8 @@ export function validateJobForm({
       scrollToId: "contract-target-dropdown",
     };
   }
-  // Safe mode requires dynamic arguments
-  if (executionMode === "safe" && contract.argumentType !== "dynamic") {
-    return {
-      errorKey: "contractIpfs",
-      errorValue: "Safe wallet execution requires dynamic arguments from IPFS.",
-      scrollToId: "contract-ipfs-code-url-contract",
-    };
-  }
+
+  // Dynamic arguments require IPFS URL (applies to both regular and Safe mode)
   if (contract.argumentType === "dynamic") {
     if (
       !contract.ipfsCodeUrl ||
@@ -226,6 +221,87 @@ export function validateJobForm({
       }
     }
   }
+
+  // Safe wallet static transaction validation
+  if (executionMode === "safe" && contract.argumentType === "static") {
+    // Require at least one transaction
+    if (!contract.safeTransactions || contract.safeTransactions.length === 0) {
+      return {
+        errorKey: "safeTransactions",
+        errorValue:
+          "At least one Safe transaction is required for static Safe wallet jobs.",
+        scrollToId: "contract-address-input-contract",
+      };
+    }
+
+    // Validate each transaction
+    for (let i = 0; i < contract.safeTransactions.length; i++) {
+      const tx = contract.safeTransactions[i];
+
+      // Validate 'to' address
+      if (!tx.to || tx.to.trim() === "") {
+        return {
+          errorKey: "safeTransaction",
+          errorValue: `Transaction ${i + 1}: Target address is required.`,
+          scrollToId: "contract-address-input-contract",
+        };
+      }
+
+      if (!ethers.isAddress(tx.to)) {
+        return {
+          errorKey: "safeTransaction",
+          errorValue: `Transaction ${i + 1}: Invalid target address.`,
+          scrollToId: "contract-address-input-contract",
+        };
+      }
+
+      // Validate 'value'
+      if (tx.value === undefined || tx.value === null) {
+        return {
+          errorKey: "safeTransaction",
+          errorValue: `Transaction ${i + 1}: Value is required.`,
+          scrollToId: "contract-address-input-contract",
+        };
+      }
+
+      try {
+        const valueBigInt = BigInt(tx.value);
+        if (valueBigInt < BigInt(0)) {
+          return {
+            errorKey: "safeTransaction",
+            errorValue: `Transaction ${i + 1}: Value cannot be negative.`,
+            scrollToId: "contract-address-input-contract",
+          };
+        }
+      } catch (error) {
+        console.error("Invalid value format:", error);
+        return {
+          errorKey: "safeTransaction",
+          errorValue: `Transaction ${i + 1}: Invalid value format.`,
+          scrollToId: "contract-address-input-contract",
+        };
+      }
+
+      // Validate 'data' - allow "0x" for ETH-only transfers
+      if (tx.data === undefined || tx.data === null) {
+        return {
+          errorKey: "safeTransaction",
+          errorValue: `Transaction ${i + 1}: Transaction data is required (use "0x" for ETH-only transfers).`,
+          scrollToId: "contract-address-input-contract",
+        };
+      }
+
+      // Ensure data is valid hex
+      if (!tx.data.startsWith("0x")) {
+        return {
+          errorKey: "safeTransaction",
+          errorValue: `Transaction ${i + 1}: Transaction data must start with 0x.`,
+          scrollToId: "contract-address-input-contract",
+        };
+      }
+    }
+  }
+
   // Linked jobs
   if (linkedJobs[jobType]?.length > 0) {
     for (const jobId of linkedJobs[jobType]) {
