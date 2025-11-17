@@ -18,13 +18,10 @@ import {
   getWalletDisplayName,
   saveChainWalletName,
 } from "@/utils/safeWalletNames";
-import {
-  setModuleStatus,
-  clearModuleStatusCache,
-} from "@/hooks/useSafeModuleStatus";
 import { addExtraSafe } from "@/utils/safeWalletLocal";
 import { MdEdit, MdCheck, MdClose } from "react-icons/md";
 import { Import } from "lucide-react";
+import { useSafeModuleStatus } from "@/hooks/useSafeModuleStatus";
 
 interface SafeWalletSelectorProps {
   disabled?: boolean;
@@ -85,6 +82,12 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
   );
   const [hasImportOngoingProcess, setHasImportOngoingProcess] = useState(false);
 
+  // Module status hook - same as SafeWalletSidebar
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_moduleEnabled, refreshModuleStatus] = useSafeModuleStatus(
+    selectedSafeWallet || undefined,
+  );
+
   // Update context when Safe wallets are fetched
   useEffect(() => {
     if (safeWallets.length > 0) {
@@ -99,8 +102,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
           new Set([...safeWallets, ...extras]).values(),
         );
         setUserSafeWallets(merged);
-      } catch (e) {
-        console.error("Error merging Safe wallets:", e);
+      } catch {
         setUserSafeWallets(safeWallets);
       }
     }
@@ -115,8 +117,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
         if (!cancelled) {
           setSafeChainInfo(info);
         }
-      } catch (error) {
-        console.error("Error fetching Safe chain info:", error);
+      } catch {
         if (!cancelled) {
           setSafeChainInfo(null);
         }
@@ -162,6 +163,10 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
         JSON.stringify(TriggerXSafeModuleArtifact.abi),
       );
     }
+    // Refresh module status after selection (wait a bit for state to update)
+    setTimeout(async () => {
+      await refreshModuleStatus();
+    }, 100);
   };
 
   // Create new Safe wallet with three-step flow
@@ -237,28 +242,27 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     } else {
       // If the submission succeeds, set the success step
       setEnableStep("success");
-      if (submitResult.data?.status === "executed") {
-        // Clear cache and update module status in localStorage for executed transactions (module is enabled)
-        clearModuleStatusCache(safeAddress, chainId);
-        setModuleStatus(safeAddress, chainId, true);
-      } else if (submitResult.data?.status === "multisig") {
-        // For multisig, module is not enabled yet - don't set status (will be enabled when approved or on manual refresh)
-      }
+      // Module enabled - refresh will happen when dialog closes
 
-      // Auto-close dialog after successful completion of all steps
+      // Wait for blockchain state to update, then select wallet and refresh
+      setTimeout(async () => {
+        // First select the safe wallet
+        await handleSafeWalletSelect(safeAddress);
+
+        // Refetch the safe wallets list
+        await refetch();
+
+        // Refresh module status immediately after selection (wait a bit for state to update)
+        setTimeout(async () => {
+          await refreshModuleStatus();
+        }, 200);
+      }, 2000);
+
+      // Auto-close dialog after selecting wallet
       setTimeout(() => {
         setShowCreateFlow(false);
-      }, 2000);
+      }, 500);
     }
-
-    // Wait for blockchain state to update, then select wallet and refresh
-    setTimeout(async () => {
-      // First select the safe wallet
-      await handleSafeWalletSelect(safeAddress);
-
-      // Refetch the safe wallets list
-      await refetch();
-    }, 3000);
   };
 
   // Retry handlers for create safe wallet
@@ -297,7 +301,8 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
   // Handle imported safe wallet
   const handleImportedSafe = async (
     safeAddress: string,
-    moduleActive: boolean,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _moduleActive: boolean,
   ) => {
     // Add to local storage
     addExtraSafe(chainId, safeAddress);
@@ -314,11 +319,10 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     // Refetch the safe wallets list
     await refetch();
 
-    // Update module status if active
-    if (moduleActive) {
-      clearModuleStatusCache(safeAddress, chainId);
-      setModuleStatus(safeAddress, chainId, true);
-    }
+    // Refresh module status immediately after selection (wait a bit for state to update)
+    setTimeout(async () => {
+      await refreshModuleStatus();
+    }, 200);
   };
 
   const handleDropdownChange = async (option: DropdownOption) => {
@@ -562,7 +566,15 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
       {/* Safe Wallet Creation Progress Dialog */}
       <SafeCreationProgressModal
         open={showCreateFlow}
-        onClose={() => setShowCreateFlow(false)}
+        onClose={() => {
+          setShowCreateFlow(false);
+          // Refresh module status when create dialog closes
+          if (selectedSafeWallet) {
+            setTimeout(async () => {
+              await refreshModuleStatus();
+            }, 1000);
+          }
+        }}
         createStep={createStep}
         signStep={signStep}
         enableStep={enableStep}
@@ -579,6 +591,12 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
         open={showImportDialog}
         onClose={() => {
           setShowImportDialog(false);
+          // Refresh module status when import dialog closes
+          if (selectedSafeWallet) {
+            setTimeout(async () => {
+              await refreshModuleStatus();
+            }, 1000);
+          }
         }}
         onImported={handleImportedSafe}
         onHasOngoingProcessChange={setHasImportOngoingProcess}

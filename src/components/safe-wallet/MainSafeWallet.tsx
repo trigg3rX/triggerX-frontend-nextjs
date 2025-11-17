@@ -1,17 +1,15 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
-import { Typography } from "@/components/ui/Typography";
-// import SafeJobs from "./SafeJobs";
-// import SafeTokens from "./SafeTokens";
-import SafeWalletSidebar from "./SafeWalletSidebar";
+import SafeJobs from "@/components/safe-wallet/SafeJobs";
+import SafeTokens from "@/components/safe-wallet/SafeTokens";
+import SafeWalletSidebar from "@/components/safe-wallet/SafeWalletSidebar";
 
 type TabKey = "jobs" | "tokens" | "templates";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "jobs", label: "Jobs" },
   { key: "tokens", label: "Tokens" },
-  { key: "templates", label: "Templates" },
 ];
 
 const Page: React.FC = () => {
@@ -25,52 +23,9 @@ const Page: React.FC = () => {
   const renderMainContent = () => {
     switch (activeTab) {
       case "jobs":
-      // return <SafeJobs selectedSafe={selectedSafe} />;
+        return <SafeJobs selectedSafe={selectedSafe} />;
       case "tokens":
-      // return <SafeTokens selectedSafe={selectedSafe} />;
-      case "templates":
-        return (
-          <div className="p-6">
-            <Typography variant="h3" color="primary" className="mb-4">
-              Job Templates
-            </Typography>
-            <Typography variant="caption" color="secondary" className="mb-4">
-              Quick-start templates using the selected Safe (mock actions).
-            </Typography>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                "Time-based Trigger",
-                "Condition-based Trigger",
-                "Event-based Trigger",
-              ].map((name) => (
-                <div
-                  key={name}
-                  className="bg-white/5 border border-white/10 rounded-lg p-4"
-                >
-                  <Typography variant="body" align="left" className="mb-2">
-                    {name}
-                  </Typography>
-                  <div className="flex gap-2">
-                    <button
-                      className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded text-sm transition-colors"
-                      onClick={() => alert(`Use template: ${name}`)}
-                    >
-                      Use Template
-                    </button>
-                    <button
-                      className="px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 rounded text-sm transition-colors"
-                      onClick={() => alert("Preview (mock)")}
-                    >
-                      Preview
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      default:
-      // return <SafeJobs selectedSafe={selectedSafe} />;
+        return <SafeTokens selectedSafe={selectedSafe} />;
     }
   };
 

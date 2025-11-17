@@ -22,3 +22,14 @@
 .customScrollbar::-webkit-scrollbar-thumb:hover {
   background: #333333;
 }
+
+.whiteScrollbar {
+  /* white-themed scrollbar styles for CreateJobModal */
+  scrollbar-width: thin;
+  scrollbar-color: white transparent;
+}
+
+.whiteScrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}

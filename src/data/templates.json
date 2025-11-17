@@ -2,7 +2,8 @@
   "templates": [
     {
       "id": "balance-maintainer",
-      "title": "Automating ETH Top-Ups with TriggerX"
+      "title": "Automating ETH Top-Ups with TriggerX",
+      "tokenTemplateTitle": "ETH Balance Maintainer"
     },
     {
       "id": "price-oracle",
