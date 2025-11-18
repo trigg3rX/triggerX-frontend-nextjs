@@ -203,7 +203,7 @@ function mapConditionType(frontendConditionType: string): string {
   return conditionTypeMap[frontendConditionType] || frontendConditionType;
 }
 
-// 1. Add encoding utility functions at the top (after imports):
+// 1. encoding utility functions:
 
 function toBytes32(ipfsHash: string): string {
   // If already 66 chars (0x + 64 hex), return as is

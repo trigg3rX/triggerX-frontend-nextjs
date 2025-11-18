@@ -44,7 +44,7 @@ const SafeJobs: React.FC<SafeJobsProps> = ({ selectedSafe }) => {
   if (!selectedSafe) {
     return (
       <Card>
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12 min-h-[300px]">
           <Typography variant="h3" color="gray" align="center">
             Select a Safe wallet to view its jobs
           </Typography>

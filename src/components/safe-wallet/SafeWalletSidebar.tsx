@@ -638,44 +638,39 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
   // Handle open in safe app
   const handleOpenInSafeApp = async () => {
+    console.log("handle called");
     if (!selectedSafe) return;
+    console.log(chainId, selectedSafe);
     const url = await getSafeWebAppUrl(chainId, selectedSafe);
+    console.log("url", url);
     if (url) {
       window.open(url, "_blank");
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Tab-style header for alignment with main content tabs */}
-      <div className="overflow-x-auto">
-        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1 w-full">
-          <Typography
-            variant="body"
-            color="white"
-            align="center"
-            className="px-4 py-2 rounded-lg text-xs sm:text-sm bg-white/10 w-full"
-          >
-            Safe Wallet Management
-          </Typography>
-        </div>
-      </div>
-
+    <div className="space-y-6 sm:space-y-8 xl:min-h-[500px]">
       {/* Safe Wallet Selection */}
-      <Card className="p-2 sm:p-4">
+      <Card>
         {isLoading ? (
           <Skeleton height={50} borderRadius={12} />
         ) : (
           <>
             {/* Custom selector with inline edit and dropdown toggle */}
             <div className="mb-4">
-              <div className="relative w-full bg-background border border-white/20 rounded-lg px-2 sm:px-3 py-2.5 flex items-center gap-2 sm:gap-3 overflow-hidden">
+              <div
+                className="relative w-full bg-[#1a1a1a] border border-white/10 rounded-md sm:rounded-lg px-4 py-2.5 sm:py-3 flex items-center gap-2 overflow-hidden cursor-pointer"
+                onClick={() => {
+                  if (!isEditingName) setShowList((prev) => !prev);
+                }}
+              >
                 {/* Not used defined button component as we have to show button like icon*/}
                 {/* Left: edit/save button */}
                 <div className="flex items-center gap-2">
                   {!isEditingName ? (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!selectedSafe) return;
                         setIsEditingName(true);
                         setNameError("");
@@ -693,8 +688,8 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                       aria-disabled={!selectedSafe}
                       className={
                         selectedSafe
-                          ? "text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20 rounded p-1.5 sm:p-2"
-                          : "text-white/30 cursor-not-allowed rounded p-1.5 sm:p-2"
+                          ? "text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20 rounded p-1.5 "
+                          : "text-white/30 cursor-not-allowed rounded p-1.5"
                       }
                       title={
                         selectedSafe
@@ -706,7 +701,8 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                     </button>
                   ) : (
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!selectedSafe) return;
                         if (editingName.trim()) {
                           const result = saveChainWalletName(
@@ -735,12 +731,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                 {/* Middle: identity */}
                 <div className="flex-1 overflow-hidden">
                   {!isEditingName ? (
-                    <div
-                      className="flex flex-col cursor-pointer select-none"
-                      onClick={() => setShowList((prev) => !prev)}
-                      role="button"
-                      aria-label="Open wallet list"
-                    >
+                    <div className="flex flex-col select-none">
                       <Typography
                         variant="caption"
                         color="secondary"
@@ -768,7 +759,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                       </Typography>
                     </div>
                   ) : (
-                    <div>
+                    <div onClick={(e) => e.stopPropagation()}>
                       <InputField
                         label=""
                         placeholder="Wallet Nickname"
@@ -779,7 +770,10 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-0">
+                <div
+                  className="flex items-center gap-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {/* Right: copy and arrow icon to toggle dropdown list */}
                   {selectedSafe && !isEditingName && (
                     <SafeWalletCopyButton text={selectedSafe} />
@@ -788,12 +782,13 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                   {/* Toggle wallet list button */}
                   {/* Not used defined button component as we have to show button like icon*/}
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (!isEditingName) setShowList((prev) => !prev);
                     }}
                     disabled={isEditingName}
                     aria-disabled={isEditingName}
-                    className={`p-1.5 sm:p-2 rounded transition-colors ${
+                    className={`p-1.5 rounded transition-colors ${
                       isEditingName
                         ? "text-white/30 cursor-not-allowed"
                         : "text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20"
@@ -827,15 +822,15 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
               {/* Custom dropdown list with custom styles*/}
               {showList && (
                 <div
-                  className={`mt-2 text-sm text-white bg-background border border-white/20 rounded-xl overflow-hidden max-h-52 overflow-y-auto ${scrollbarStyles.whiteScrollbar}`}
+                  className={`mt-2 text-xs xs:text-sm sm:text-base text-white bg-[#1a1a1a] border border-white/10 rounded-md sm:rounded-xl overflow-hidden shadow-lg max-h-52 overflow-y-auto ${scrollbarStyles.whiteScrollbar}`}
                 >
                   {dropdownOptions.length === 0 ? (
-                    <div className="py-4 px-4">No wallets found</div>
+                    <div className="py-2.5 sm:py-3 px-4">No wallets found</div>
                   ) : (
                     dropdownOptions.map((opt) => (
                       <div
                         key={opt.id}
-                        className="py-4 px-4 hover:bg-gray-500/20 cursor-pointer"
+                        className="py-2.5 sm:py-3 px-4 hover:bg-[#333] cursor-pointer rounded-md sm:rounded-lg text-xs xs:text-sm sm:text-base"
                         onClick={() => {
                           handleSelect(opt);
                           setShowList(false);
@@ -848,140 +843,141 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
                 </div>
               )}
             </div>
-
-            {/* Enable Module Button as inline link */}
-            {/* Not used defined button component as we have to show button like inline link*/}
-            {selectedSafe && !checkingModule && moduleEnabled === false && (
-              <div className="mt-0.5 flex justify-end">
-                <button
-                  onClick={handleShowEnableDialog}
-                  disabled={
-                    isSigningEnableModule ||
-                    isExecutingEnableModule ||
-                    isProposingEnableModule
-                  }
-                  className={`text-xs text-[#C07AF6] underline underline-offset-4 ${
-                    isSigningEnableModule ||
-                    isExecutingEnableModule ||
-                    isProposingEnableModule
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer"
-                  }`}
-                >
-                  {isSigningEnableModule
-                    ? "Signing..."
-                    : isExecutingEnableModule || isProposingEnableModule
-                      ? "Enabling..."
-                      : "Enable TriggerX Module"}
-                </button>
-              </div>
-            )}
-
-            {/* Disable Module Button as inline link */}
-            {/* Not used defined button component as we have to show button like inline link*/}
-            {selectedSafe && !checkingModule && moduleEnabled === true && (
-              <div className="mt-0.5 flex justify-end">
-                <button
-                  onClick={handleShowDisableDialog}
-                  disabled={
-                    isSigningDisableModule ||
-                    isExecutingDisableModule ||
-                    isProposingDisableModule
-                  }
-                  className={`text-xs text-red-300 underline underline-offset-4 ${
-                    isSigningDisableModule ||
-                    isExecutingDisableModule ||
-                    isProposingDisableModule
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer hover:text-red-300"
-                  }`}
-                >
-                  {isSigningDisableModule
-                    ? "Signing..."
-                    : isExecutingDisableModule || isProposingDisableModule
-                      ? "Disabling..."
-                      : "Disable TriggerX Module"}
-                </button>
-              </div>
-            )}
-
-            {/* Error Message Display*/}
-            {error && (
-              <Typography variant="caption" color="error" align="left">
-                {error}
-              </Typography>
-            )}
-
-            {/* Separator */}
-            <hr className="my-4 border-white/20" />
-
-            {/* Create / Import actions - always visible */}
-            <div className="space-y-3">
-              <Button
-                onClick={handleOpenInSafeApp}
-                className="w-full"
-                disabled={!selectedSafe}
-              >
-                Open in Safe App
-              </Button>
-              <Button
-                onClick={handleCreateNewSafe}
-                className="w-full"
-                disabled={
-                  isCreating ||
-                  isSigningEnableModule ||
-                  isExecutingEnableModule ||
-                  isProposingEnableModule ||
-                  isSigningDisableModule ||
-                  isExecutingDisableModule ||
-                  isProposingDisableModule
-                }
-              >
-                {isCreating
-                  ? "Creating Safe..."
-                  : isSigningEnableModule || isSigningDisableModule
-                    ? "Signing..."
-                    : isExecutingEnableModule ||
-                        isProposingEnableModule ||
-                        isExecutingDisableModule ||
-                        isProposingDisableModule
-                      ? "Processing..."
-                      : "Create New Safe Wallet"}
-              </Button>
-
-              {/* Import Safe Wallet Button and Progress Button */}
-              <div className="relative flex items-center gap-2">
-                {/* Import Safe Wallet Button */}
-                <Button
-                  onClick={() => setShowImportDialog(true)}
-                  className="w-full"
-                  disabled={
-                    isCreating ||
-                    isSigningEnableModule ||
-                    isExecutingEnableModule ||
-                    isProposingEnableModule ||
-                    isSigningDisableModule ||
-                    isExecutingDisableModule ||
-                    isProposingDisableModule
-                  }
-                >
-                  Import Safe Wallet
-                </Button>
-
-                {/* Show import wallet progress button when there is an ongoing process and the import dialog is not open */}
-                {hasImportOngoingProcess && (
-                  <button
-                    onClick={() => setShowImportDialog(true)}
-                    className="shrink-0 p-2 rounded-lg text-[#C07AF6] bg-[#F8FF7C] border border-white/20"
-                    title="Click to view import wallet progress"
-                  >
-                    <Import size={24} className="animate-pulse" />
-                  </button>
-                )}
-              </div>
-            </div>
           </>
         )}
+        {/* Enable Module Button as inline link */}
+        {/* Not used defined button component as we have to show button like inline link*/}
+        {selectedSafe && !checkingModule && moduleEnabled === false && (
+          <div className="mt-0.5 flex justify-end">
+            <button
+              onClick={handleShowEnableDialog}
+              disabled={
+                isSigningEnableModule ||
+                isExecutingEnableModule ||
+                isProposingEnableModule
+              }
+              className={`text-xs text-[#C07AF6] underline underline-offset-4 ${
+                isSigningEnableModule ||
+                isExecutingEnableModule ||
+                isProposingEnableModule
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer"
+              }`}
+            >
+              {isSigningEnableModule
+                ? "Signing..."
+                : isExecutingEnableModule || isProposingEnableModule
+                  ? "Enabling..."
+                  : "Enable TriggerX Module"}
+            </button>
+          </div>
+        )}
+
+        {/* Disable Module Button as inline link */}
+        {/* Not used defined button component as we have to show button like inline link*/}
+        {selectedSafe && !checkingModule && moduleEnabled === true && (
+          <div className="mt-0.5 flex justify-end">
+            <button
+              onClick={handleShowDisableDialog}
+              disabled={
+                isSigningDisableModule ||
+                isExecutingDisableModule ||
+                isProposingDisableModule
+              }
+              className={`text-xs text-red-300 underline underline-offset-4 ${
+                isSigningDisableModule ||
+                isExecutingDisableModule ||
+                isProposingDisableModule
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer hover:text-red-300"
+              }`}
+            >
+              {isSigningDisableModule
+                ? "Signing..."
+                : isExecutingDisableModule || isProposingDisableModule
+                  ? "Disabling..."
+                  : "Disable TriggerX Module"}
+            </button>
+          </div>
+        )}
+
+        {/* Error Message Display*/}
+        {error && (
+          <Typography variant="caption" color="error" align="left">
+            {error}
+          </Typography>
+        )}
+
+        {/* Separator */}
+        <hr className="my-4 border-white/20" />
+
+        {/* Create / Import actions - always visible */}
+        <div className="space-y-4">
+          <Button
+            onClick={handleOpenInSafeApp}
+            className="w-full"
+            disabled={!selectedSafe}
+          >
+            Open in Safe App
+          </Button>
+          <Button
+            onClick={handleCreateNewSafe}
+            className="w-full"
+            disabled={
+              isCreating ||
+              isSigningEnableModule ||
+              isExecutingEnableModule ||
+              isProposingEnableModule ||
+              isSigningDisableModule ||
+              isExecutingDisableModule ||
+              isProposingDisableModule
+            }
+          >
+            {isCreating
+              ? "Creating Safe..."
+              : isSigningEnableModule || isSigningDisableModule
+                ? "Signing..."
+                : isExecutingEnableModule ||
+                    isProposingEnableModule ||
+                    isExecutingDisableModule ||
+                    isProposingDisableModule
+                  ? "Processing..."
+                  : "Create New Safe Wallet"}
+          </Button>
+
+          {/* Import Safe Wallet Button and Progress Button */}
+          <div className="relative flex items-center gap-2">
+            {/* Import Safe Wallet Button */}
+            <Button
+              onClick={() => setShowImportDialog(true)}
+              className="w-full"
+              disabled={
+                isCreating ||
+                isSigningEnableModule ||
+                isExecutingEnableModule ||
+                isProposingEnableModule ||
+                isSigningDisableModule ||
+                isExecutingDisableModule ||
+                isProposingDisableModule
+              }
+            >
+              Import Safe Wallet
+            </Button>
+            {/* Show import wallet progress button when there is an ongoing process and the import dialog is not open */}
+            {hasImportOngoingProcess && (
+              <button
+                onClick={() => setShowImportDialog(true)}
+                className="shrink-0 p-2 rounded-lg text-[#222222] bg-[#F8FF7C] border border-[#222222]"
+                title="Click to view import wallet progress"
+              >
+                <Import
+                  size={24}
+                  className="animate-[bounce_2s_ease-in-out_infinite]"
+                />
+              </button>
+            )}
+          </div>
+        </div>
       </Card>
 
       {/* Import Safe Dialog */}

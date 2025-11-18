@@ -7,7 +7,7 @@ import { IpfsScriptWizard } from "./IpfsScriptWizard";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
 import { FormErrorMessage } from "@/components/common/FormErrorMessage";
-import { ExternalLinkIcon, CircleCheckIcon } from "lucide-react";
+import { ExternalLinkIcon, LucideCircleArrowOutUpLeft } from "lucide-react";
 import Link from "next/link";
 
 interface ContractDetailsProps {
@@ -574,7 +574,7 @@ export const ContractDetails = ({
                     <span className="text-sm sm:text-base">
                       Upload or Validate Script
                     </span>
-                    <CircleCheckIcon className="w-5 h-5 text-white/50" />
+                    <LucideCircleArrowOutUpLeft className="w-4 h-4 text-white/50" />
                   </div>
                 </button>
               </div>
