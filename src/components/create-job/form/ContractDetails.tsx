@@ -22,6 +22,7 @@ interface ContractDetailsProps {
   sourceUrlError?: string | null;
   conditionTypeError?: string | null;
   limitsError?: string | null;
+  safeTransactionsError?: string | null;
   readOnly?: boolean;
 }
 
@@ -36,6 +37,7 @@ export const ContractDetails = ({
   sourceUrlError = null,
   conditionTypeError = null,
   limitsError = null,
+  safeTransactionsError = null,
   readOnly = false,
 }: ContractDetailsProps) => {
   const {
@@ -511,16 +513,14 @@ export const ContractDetails = ({
           {isSafeMode &&
             contract.argumentType === "static" &&
             !isEventContract && (
-              <div className="mt-6">
-                <SafeTransactionBuilder
-                  transactions={contract.safeTransactions || []}
-                  onChange={(transactions) =>
-                    handleSafeTransactionsChange(contractKey, transactions)
-                  }
-                  selectedNetwork={selectedNetwork}
-                  error={null}
-                />
-              </div>
+              <SafeTransactionBuilder
+                transactions={contract.safeTransactions || []}
+                onChange={(transactions) =>
+                  handleSafeTransactionsChange(contractKey, transactions)
+                }
+                selectedNetwork={selectedNetwork}
+                error={safeTransactionsError}
+              />
             )}
         </>
       )}
