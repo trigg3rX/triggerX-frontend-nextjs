@@ -84,8 +84,6 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
   const [isScriptValidated, setIsScriptValidated] = useState<boolean>(false);
   const helpPanelRef = useRef<HTMLDivElement | null>(null);
   const helpToggleRef = useRef<HTMLButtonElement | null>(null);
-  const [selectedLanguage, setSelectedLanguage] =
-    useState<SupportedLanguage>(initialLanguage);
 
   const previousLanguageRef = useRef<SupportedLanguage>(initialLanguage);
 
@@ -101,17 +99,19 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       setIsScriptValidated(false);
       const saved = localStorage.getItem(STORAGE_TOKEN_KEY) || "";
       if (saved) setToken(saved);
-      setSelectedLanguage(initialLanguage);
+      if (!formLanguage) {
+        setFormLanguage("go");
+      }
     }
-  }, [isOpen, initialLanguage]);
+  }, [isOpen, formLanguage, setFormLanguage]);
 
   useEffect(() => {
     const previousLanguage = previousLanguageRef.current;
-    if (previousLanguage === selectedLanguage) {
+    if (previousLanguage === initialLanguage) {
       return;
     }
     const previousPlaceholder = LANGUAGE_PLACEHOLDERS[previousLanguage];
-    const nextPlaceholder = LANGUAGE_PLACEHOLDERS[selectedLanguage];
+    const nextPlaceholder = LANGUAGE_PLACEHOLDERS[initialLanguage];
     if (
       script.trim() === "" ||
       script === previousPlaceholder ||
@@ -121,8 +121,8 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       setIsScriptValidated(false);
       setScriptError("");
     }
-    previousLanguageRef.current = selectedLanguage;
-  }, [selectedLanguage, script]);
+    previousLanguageRef.current = initialLanguage;
+  }, [initialLanguage, script]);
 
   // Step 1 continue triggers validation on click
   const canContinueStep2 = useMemo(() => token.trim().length > 0, [token]);
@@ -150,7 +150,10 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
 
   const buildValidationRequestBody = useCallback(
     (code: string) => {
-      const base = { code, language: "go" } as Record<string, unknown>;
+      const base = {
+        code,
+        language: initialLanguage,
+      } as Record<string, unknown>;
       if (isSafeMode && selectedSafeWallet && targetFunction) {
         return {
           ...base,
@@ -161,7 +164,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       }
       return { ...base, IsSafe: false, target_function: targetFunction };
     },
-    [isSafeMode, selectedSafeWallet, targetFunction],
+    [isSafeMode, selectedSafeWallet, targetFunction, initialLanguage],
   );
 
   const callValidationApi = useCallback(
@@ -170,6 +173,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
         "Validation API URL:",
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
       );
+      devLog("[IpfsScriptWizard] Request body:", requestBody);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
         {
@@ -219,7 +223,9 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     const code = script.trim();
     if (!code) {
       setScriptError(
-        `Please paste your ${selectedLanguage === "ts" ? "TypeScript" : "Go"} code`,
+        `Please paste your ${
+          initialLanguage === "ts" ? "TypeScript" : "Go"
+        } code`,
       );
       return false;
     }
@@ -246,7 +252,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     assertValidationResult,
     buildValidationRequestBody,
     callValidationApi,
-    selectedLanguage,
+    initialLanguage,
   ]);
 
   const handleNextFromStep1 = async () => {
@@ -434,13 +440,14 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
           label="Script Language"
           options={LANGUAGE_OPTIONS}
           selectedOption={
-            LANGUAGE_OPTIONS.find((opt) => opt.id === selectedLanguage)?.name ||
+            LANGUAGE_OPTIONS.find((opt) => opt.id === initialLanguage)?.name ||
             "Go"
           }
           onChange={(option) => {
             const lang =
               (option.id as SupportedLanguage) ?? ("go" as SupportedLanguage);
-            setSelectedLanguage(lang);
+            devLog("[IpfsScriptWizard] Selected language:", lang);
+            setFormLanguage(lang);
             setScriptError("");
             setIsScriptValidated(false);
           }}
@@ -483,7 +490,6 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
                 onClick={async () => {
                   const isValid = await validateManualUrl();
                   if (isValid) {
-                    setFormLanguage(selectedLanguage);
                     onComplete(manualUrl.trim());
                     onClose();
                   }
@@ -522,14 +528,14 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
           <div className="space-y-3">
             <Typography variant="body" align="left" color="secondary">
               {`Paste your ${
-                selectedLanguage === "ts" ? "TypeScript" : "Golang"
+                initialLanguage === "ts" ? "TypeScript" : "Golang"
               } script that returns an array of args for the function call.`}
             </Typography>
             <textarea
               value={script}
               onChange={(e) => setScript(e.target.value)}
               className={`w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[170px] text-sm overflow-auto ${scrollbarStyles.customScrollbar}`}
-              placeholder={LANGUAGE_PLACEHOLDERS[selectedLanguage]}
+              placeholder={LANGUAGE_PLACEHOLDERS[initialLanguage]}
             />
             {scriptError && (
               <Typography variant="caption" color="error" align="left">
