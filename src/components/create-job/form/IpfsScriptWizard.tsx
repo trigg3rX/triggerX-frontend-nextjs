@@ -112,6 +112,10 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
 
   const callValidationApi = useCallback(
     async (requestBody: Record<string, unknown>) => {
+      devLog(
+        "Validation API URL:",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
+      );
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
         {
@@ -232,7 +236,6 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     try {
       // Fetch the code from IPFS
       const code = await fetchCodeFromIpfs(url);
-
       const requestBody = buildValidationRequestBody(code);
       const data = await callValidationApi(requestBody);
       assertValidationResult(data);
@@ -243,6 +246,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       setIsUrlValidated(true);
       return true;
     } catch (e) {
+      console.log(e);
       setIsValidating(false);
       const msg = e instanceof Error ? e.message : String(e);
       setManualUrlError(msg || "Validation failed");

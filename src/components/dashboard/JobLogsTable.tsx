@@ -109,7 +109,16 @@ const JobLogsMobileView: React.FC<JobLogsTableProps> = ({
                     <Typography color="gray">
                       {log.tx_url && log.execution_tx_hash ? (
                         <a
-                          href={log.tx_url}
+                          href={
+                            log.tx_url
+                              ?.replace(/^https:\/(?!\/)/, "https://")
+                              ?.replace(/^http:\/(?!\/)/, "http://")
+                              ?.match(/^https?:\/\//)
+                              ? log.tx_url
+                                  .replace(/^https:\/(?!\/)/, "https://")
+                                  .replace(/^http:\/(?!\/)/, "http://")
+                              : `https://${log.tx_url.replace(/^\/+/, "")}`
+                          }
                           target="_blank"
                           rel="noopener noreferrer"
                           className="underline underline-offset-2 hover:text-[#F8ff7c]/80 "
@@ -308,7 +317,16 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
                               align="left"
                             >
                               <a
-                                href={log.tx_url}
+                                href={
+                                  log.tx_url
+                                    ?.replace(/^https:\/(?!\/)/, "https://")
+                                    ?.replace(/^http:\/(?!\/)/, "http://")
+                                    ?.match(/^https?:\/\//)
+                                    ? log.tx_url
+                                        .replace(/^https:\/(?!\/)/, "https://")
+                                        .replace(/^http:\/(?!\/)/, "http://")
+                                    : `https://${log.tx_url.replace(/^\/+/, "")}`
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline-offset-2 pt-1 hover:text-[#F8ff7c]/80 group-hover:text-[#F8ff7c] transition-colors"

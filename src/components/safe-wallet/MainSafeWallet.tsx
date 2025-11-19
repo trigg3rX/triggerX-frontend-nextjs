@@ -4,8 +4,9 @@ import React, { useState, useCallback } from "react";
 import SafeJobs from "@/components/safe-wallet/SafeJobs";
 import SafeTokens from "@/components/safe-wallet/SafeTokens";
 import SafeWalletSidebar from "@/components/safe-wallet/SafeWalletSidebar";
+import { HoverHighlight } from "@/components/common/HoverHighlight";
 
-type TabKey = "jobs" | "tokens" | "templates";
+type TabKey = "jobs" | "tokens";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "jobs", label: "Jobs" },
@@ -30,9 +31,9 @@ const Page: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 sm:gap-5 p-4 sm:p-6">
+    <div className="flex flex-col xl:flex-row gap-6 sm:gap-8 p-4 sm:p-6">
       {/* Sidebar - moved to the left for better affordance */}
-      <div className="space-y-4 sm:space-y-6 lg:space-y-8 h-full lg:w-[25%] xl:w-[25%] w-full order-1 lg:order-1">
+      <div className="h-full xl:w-[25%] w-full">
         <SafeWalletSidebar
           selectedSafe={selectedSafe}
           onSafeSelect={handleSafeSelect}
@@ -40,26 +41,26 @@ const Page: React.FC = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="lg:w-[73%] xl:w-[73%] w-full order-2 lg:order-2 min-w-0">
+      <div className="w-full xl:w-[75%]">
         <div className="space-y-6">
           {/* Tab Navigation */}
-          <div className="overflow-x-auto">
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl p-1">
+          <div className="w-max">
+            <HoverHighlight>
               {TABS.map((t) => (
                 <button
                   key={t.key}
                   onClick={() => setActiveTab(t.key)}
-                  className={`px-4 py-2 rounded-lg text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                  className={` min-w-[170px] text-nowrap px-4 py-3 rounded-xl cursor-pointer text-xs sm:text-sm lg:text-base transition-colors ${
                     activeTab === t.key
-                      ? "bg-white/10 text-white"
-                      : "text-[#A2A2A2] hover:text-white"
+                      ? "bg-gradient-to-r from-[#D9D9D924] to-[#14131324] border border-[#4B4A4A] text-white"
+                      : "text-gray-200 hover:text-white"
                   }`}
                   aria-pressed={activeTab === t.key}
                 >
                   {t.label}
                 </button>
               ))}
-            </div>
+            </HoverHighlight>
           </div>
 
           {/* Tab Content */}

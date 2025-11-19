@@ -72,7 +72,7 @@ export function SafeWalletCopyButton({
   return (
     <button
       onClick={handleCopy}
-      className={`p-1.5 sm:p-2 rounded transition-colors text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20 ${className}`}
+      className={`p-1.5 rounded transition-colors text-[#C07AF6] hover:text-white hover:bg-[#C07AF6]/20 ${className}`}
       aria-label="Copy to clipboard"
       title={copied ? "Copied!" : "Copy"}
     >

@@ -148,7 +148,7 @@ const SafeTokens: React.FC<SafeTokensProps> = ({ selectedSafe }) => {
               onClick={() => refetchBalances()}
               disabled={isLoadingBalances}
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={14} />
             </Button>
           </div>
 

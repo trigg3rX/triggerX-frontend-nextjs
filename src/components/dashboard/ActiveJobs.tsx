@@ -80,7 +80,7 @@ const ActiveJobs = () => {
           />
         </div>
       </div>
-      <div className={`mb-10   `}>
+      <div className="mb-10">
         {/* Delegates rendering, filtering, and in-list interactions to `MainJobs` */}
         <MainJobs
           selectedType={selectedType}
