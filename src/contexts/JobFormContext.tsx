@@ -20,9 +20,13 @@ import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { devLog } from "@/lib/devLog";
 import JobRegistryArtifact from "@/artifacts/JobRegistry.json";
 import { useChainId } from "wagmi";
-import { getJobRegistryAddress } from "@/utils/contractAddresses";
+import {
+  getJobRegistryAddress,
+  getSafeMultiSendCallOnlyAddress,
+} from "@/utils/contractAddresses";
 import { getWalletDisplayName } from "@/utils/safeWalletNames";
 import { extractFunctions, extractEvents, parseABI } from "@/utils/abiUtils";
+import { encodeMultisendData } from "@/utils/multisendEncoding";
 
 // Utility types and functions moved from JobForm.tsx
 export type JobDetails = {
@@ -102,7 +106,7 @@ function extractJobDetails(
     c.address || "0x0000000000000000000000000000000000000000";
   const contractABI = c.abi;
   const argType = getArgType(c.argumentType || "static");
-  const argsArray = c.argumentValues || [];
+  let argsArray = [...(c.argumentValues || [])];
   const ipfsCodeUrl = c.ipfsCodeUrl || "";
   const targetFunction = c.targetFunction ? c.targetFunction.split("(")[0] : "";
   const taskDefinitionId = getTaskDefinitionId(
@@ -113,6 +117,8 @@ function extractJobDetails(
 
   // Use safeTransactions for Safe wallet with static arguments
   let safeTransactions: SafeTransaction[] | undefined = undefined;
+  let encodedMultiSendData: string | null = null;
+
   if (
     executionMode === "safe" &&
     selectedSafeWallet &&
@@ -137,6 +143,46 @@ function extractJobDetails(
         devLog(
           "[extractJobDetails] Warning: No safe transactions provided for static Safe wallet job",
         );
+      }
+    }
+
+    if (safeTransactions && safeTransactions.length > 0) {
+      try {
+        encodedMultiSendData = encodeMultisendData(safeTransactions);
+      } catch (error) {
+        devLog(
+          "[extractJobDetails] Failed to encode Safe multisend data:",
+          error,
+        );
+        encodedMultiSendData = null;
+      }
+    }
+
+    if (
+      safeTransactions &&
+      safeTransactions.length > 0 &&
+      selectedSafeWallet &&
+      encodedMultiSendData
+    ) {
+      const numericChainId = chainId ?? networkId ?? 0;
+      const multiSendCallOnlyAddress =
+        numericChainId !== 0
+          ? getSafeMultiSendCallOnlyAddress(numericChainId)
+          : "";
+
+      if (!multiSendCallOnlyAddress) {
+        devLog(
+          "[extractJobDetails] Missing MultiSendCallOnly address for chain",
+          numericChainId,
+        );
+      } else {
+        argsArray = [
+          selectedSafeWallet,
+          multiSendCallOnlyAddress,
+          "0",
+          encodedMultiSendData,
+          "1",
+        ];
       }
     }
   }

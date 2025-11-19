@@ -1,3 +1,6 @@
+const DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS =
+  "0x40A2aCCbd92BCA938b02010E17A5b8929b49130D";
+
 export const CONTRACT_ADDRESSES = {
   // OP Sepolia (chainId: 11155420)
   11155420: {
@@ -8,6 +11,9 @@ export const CONTRACT_ADDRESSES = {
     SAFE_WALLET_FACTORY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
     SAFE_MODULE_ADDRESS: process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
+    SAFE_MULTISEND_CALL_ONLY_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
+      DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
     RPC_URL: process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "op_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Optimism Sepolia", // Add this for display
@@ -28,6 +34,9 @@ export const CONTRACT_ADDRESSES = {
     SAFE_WALLET_FACTORY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
     SAFE_MODULE_ADDRESS: process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
+    SAFE_MULTISEND_CALL_ONLY_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
+      DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
     RPC_URL: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "base_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Base Sepolia", // Add this for display
@@ -48,6 +57,9 @@ export const CONTRACT_ADDRESSES = {
     SAFE_WALLET_FACTORY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_WALLET_FACTORY_ADDRESS || "",
     SAFE_MODULE_ADDRESS: process.env.NEXT_PUBLIC_SAFE_MODULE_ADDRESS || "",
+    SAFE_MULTISEND_CALL_ONLY_ADDRESS:
+      process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
+      DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum Sepolia", // Add this for display
@@ -69,6 +81,10 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_MAINNET_SAFE_WALLET_FACTORY_ADDRESS || "",
     SAFE_MODULE_ADDRESS:
       process.env.NEXT_PUBLIC_MAINNET_SAFE_MODULE_ADDRESS || "",
+    SAFE_MULTISEND_CALL_ONLY_ADDRESS:
+      process.env.NEXT_PUBLIC_MAINNET_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
+      process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
+      DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum", // Add this for display
@@ -144,4 +160,8 @@ export function getSafeWalletFactoryAddress(chainId: number): string {
 
 export function getSafeModuleAddress(chainId: number): string {
   return getContractAddress(chainId, "SAFE_MODULE_ADDRESS");
+}
+
+export function getSafeMultiSendCallOnlyAddress(chainId: number): string {
+  return getContractAddress(chainId, "SAFE_MULTISEND_CALL_ONLY_ADDRESS");
 }

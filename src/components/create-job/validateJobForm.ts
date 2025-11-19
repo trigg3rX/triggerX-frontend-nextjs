@@ -153,7 +153,9 @@ export function validateJobForm({
         scrollToId: "contract-ipfs-code-url-contract",
       };
     }
-  } else {
+  } else if (
+    !(executionMode === "safe" && contract.argumentType === "static")
+  ) {
     const selectedFunction = contract.functions.find(
       (func) =>
         `${func.name}(${(func.inputs || []).map((input) => input.type).join(",")})` ===

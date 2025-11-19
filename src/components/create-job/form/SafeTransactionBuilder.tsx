@@ -310,7 +310,9 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
       updateState(index, {
         selectedFunction: functionSig,
         functionInputs: new Array(selectedFunc.inputs.length).fill(""),
+        valueInput: "0",
       });
+      updateTransaction(index, { value: "0" });
     }
   };
 
@@ -626,6 +628,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                   placeholder="0.0"
                                   type="text"
                                   className="w-full "
+                                  disabled={Boolean(state.selectedFunction)}
                                 />
                               </div>
                             </>
@@ -746,6 +749,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                 placeholder="0.0"
                                 type="text"
                                 className="w-full"
+                                disabled={Boolean(state.selectedFunction)}
                               />
                             </div>
                           </>
