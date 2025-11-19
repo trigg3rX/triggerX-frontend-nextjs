@@ -638,11 +638,9 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
 
   // Handle open in safe app
   const handleOpenInSafeApp = async () => {
-    console.log("handle called");
     if (!selectedSafe) return;
-    console.log(chainId, selectedSafe);
     const url = await getSafeWebAppUrl(chainId, selectedSafe);
-    console.log("url", url);
+    console.log("safe url", url);
     if (url) {
       window.open(url, "_blank");
     }

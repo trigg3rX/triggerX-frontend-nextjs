@@ -13,6 +13,7 @@ import { devLog } from "@/lib/devLog";
 import JobRegistryArtifact from "@/artifacts/JobRegistry.json";
 import { useChainId } from "wagmi";
 import { getJobRegistryAddress } from "@/utils/contractAddresses";
+import { getWalletDisplayName } from "@/utils/safeWalletNames";
 
 interface ABIItem {
   type: string;
@@ -54,6 +55,10 @@ export type JobDetails = {
   upper_limit?: number;
   lower_limit?: number;
   job_id?: string;
+  language?: string;
+  is_safe?: boolean;
+  safe_address?: string;
+  safe_name?: string;
 };
 
 function extractJobDetails(
@@ -66,6 +71,11 @@ function extractJobDetails(
   userAddress: string | undefined,
   networkId: number | undefined,
   jobType: number,
+  language?: string,
+  executionMode?: "contract" | "safe",
+  selectedSafeWallet?: string | null,
+  chainId?: number,
+  userSafeWallets?: string[],
 ): JobDetails {
   let triggerContractAddress = "0x0000000000000000000000000000000000000000";
   let triggerEvent = "NULL";
@@ -147,6 +157,18 @@ function extractJobDetails(
     condition_type: mapConditionType(c.conditionType || ""),
     upper_limit: c.upperLimit ? parseFloat(c.upperLimit) : undefined,
     lower_limit: c.lowerLimit ? parseFloat(c.lowerLimit) : undefined,
+    language: language || undefined,
+    is_safe: executionMode === "safe",
+    safe_address:
+      executionMode === "safe" ? selectedSafeWallet || undefined : undefined,
+    safe_name:
+      executionMode === "safe" && selectedSafeWallet && chainId
+        ? getWalletDisplayName(
+            selectedSafeWallet,
+            chainId,
+            userSafeWallets || [],
+          )
+        : undefined,
   };
 }
 
@@ -250,6 +272,8 @@ export interface JobFormContextType {
   setSelectedSafeWallet: React.Dispatch<React.SetStateAction<string | null>>;
   userSafeWallets: string[];
   setUserSafeWallets: React.Dispatch<React.SetStateAction<string[]>>;
+  language: string;
+  setLanguage: React.Dispatch<React.SetStateAction<string>>;
   handleJobTypeChange: (
     e: React.MouseEvent<HTMLButtonElement>,
     type: number,
@@ -450,6 +474,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     null,
   );
   const [userSafeWallets, setUserSafeWallets] = useState<string[]>([]);
+  const [language, setLanguage] = useState<string>("");
 
   React.useEffect(() => {
     setContractInteractions((prev) => ({
@@ -950,8 +975,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           (key) => String(key.value) === apiKeyValue,
         );
 
-        console.log("in handle", selectedApiKey);
-
         // Get the actual value from the selected API key
         let actualValue = "";
         if (selectedApiKey) {
@@ -1186,7 +1209,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       let executionCount;
       if (jobType === 1) {
         executionCount = Math.floor(timeframeInSeconds / intervalInSeconds);
-        console.log(
+        devLog(
           "execution count",
           executionCount,
           "timeframe in seconds",
@@ -1199,7 +1222,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       let totalFeeWei: bigint = BigInt(0);
-      console.log("argType", argType);
+      devLog("argType", argType);
       if (argType === 2) {
         if (codeUrls) {
           try {
@@ -1239,9 +1262,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         // For static jobs, calculate the fee in Wei (0.001 TG * executionCount * 1e15)
         const staticFeeTG = 0.001 * executionCount;
-        console.log("staticFeeTG", staticFeeTG);
         totalFeeWei = BigInt(Math.floor(staticFeeTG * 1e15));
-        console.log(
+        devLog(
           "Total fee required for static (Wei):",
           totalFeeWei.toString(),
           "Wei",
@@ -1401,6 +1423,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           userAddress,
           networkId,
           jobType,
+          language || "go",
+          executionMode,
+          selectedSafeWallet,
+          chainId,
+          userSafeWallets,
         );
 
         // Check if this is a linked job (contractKey format: "jobType-jobId")
@@ -2064,6 +2091,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     setExecutionMode("contract");
     setSelectedSafeWallet(null);
     setUserSafeWallets([]);
+    setLanguage("");
   };
 
   return (
@@ -2152,6 +2180,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setSelectedSafeWallet,
         userSafeWallets,
         setUserSafeWallets,
+        language,
+        setLanguage,
         resetContractInteractionState,
         reset,
       }}
