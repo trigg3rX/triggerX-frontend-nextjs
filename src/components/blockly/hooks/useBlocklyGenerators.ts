@@ -10,7 +10,6 @@ import { timeBasedJobWrapperGenerator } from "../blocks/job-type/time_based_job_
 import { eventBasedJobWrapperGenerator } from "../blocks/job-type/event_based_job_wrapper";
 import { conditionBasedJobWrapperGenerator } from "../blocks/job-type/condition_based_job_wrapper";
 
-import { contractActionGenerator } from "../blocks/utility/contract_action";
 import { timeframeJobGenerator } from "../blocks/utility/timeframe_job";
 import { recurringJobGenerator } from "../blocks/utility/recurring_job";
 import { manualAbiInputGenerator } from "../blocks/utility/contract/manual_abi_input";
@@ -40,7 +39,6 @@ export function useBlocklyGenerators() {
       conditionBasedJobWrapperGenerator;
 
     // Utility blocks
-    javascriptGenerator.forBlock["contract_action"] = contractActionGenerator;
     javascriptGenerator.forBlock["timeframe_job"] = timeframeJobGenerator;
     javascriptGenerator.forBlock["recurring_job"] = recurringJobGenerator;
     javascriptGenerator.forBlock["manual_abi_input"] = manualAbiInputGenerator;

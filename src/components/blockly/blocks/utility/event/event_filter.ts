@@ -241,13 +241,17 @@ Blockly.Blocks["event_filter"] = {
     this.setOnChange((event?: Blockly.Events.Abstract) => {
       if (!event) return;
 
-      // Fetch parameters when block is moved/connected
+      // Fetch parameters when block is moved from flyout
       if (
         event.type === Blockly.Events.BLOCK_MOVE ||
         event.type === Blockly.Events.BLOCK_CREATE
       ) {
-        const ev = event as unknown as { blockId?: string };
-        if (ev.blockId === this.id) {
+        const ev = event as unknown as {
+          blockId?: string;
+          oldParentId?: string;
+        };
+        // Only fetch if this is the block being moved from the flyout (initial placement)
+        if (ev.blockId === this.id && ev.oldParentId === undefined) {
           fetchEventParameters();
         }
       }

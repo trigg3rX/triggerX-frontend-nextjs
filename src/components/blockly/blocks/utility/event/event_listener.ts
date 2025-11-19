@@ -225,11 +225,33 @@ Blockly.Blocks["event_listener"] = {
       return;
     }
 
+    // Store last known chain ID to detect actual chain changes
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const blockInstance = this as any;
+    if (blockInstance.lastKnownChainId === undefined) {
+      blockInstance.lastKnownChainId = null;
+    }
+
     // When block is moved from flyout to workspace or created
     if (
       event.type === Blockly.Events.BLOCK_MOVE ||
       event.type === Blockly.Events.BLOCK_CREATE
     ) {
+      const moveEvent = event as Blockly.Events.BlockMove;
+
+      // Only handle events for chain_selection blocks being added/removed
+      // or this block being moved from flyout
+      const isChainBlockEvent =
+        moveEvent.blockId &&
+        this.workspace.getBlockById(moveEvent.blockId)?.type ===
+          "chain_selection";
+      const isThisBlockFromFlyout =
+        moveEvent.blockId === this.id && moveEvent.oldParentId === undefined;
+
+      if (!isChainBlockEvent && !isThisBlockFromFlyout) {
+        return;
+      }
+
       const contractAddress = this.getFieldValue("CONTRACT_ADDRESS");
       const eventDropdown = this.getField("EVENT_NAME");
 
@@ -245,7 +267,7 @@ Blockly.Blocks["event_listener"] = {
         eventDropdown.setValue("");
       }
 
-      // Auto-fetch ABI when chain becomes available
+      // Auto-fetch ABI when chain becomes available or changes
       if (!this.isInFlyout && contractAddress && contractAddress !== "0x...") {
         let chainId: number | null = null;
 
@@ -272,22 +294,64 @@ Blockly.Blocks["event_listener"] = {
           }
         }
 
-        // If we found a chain and have a valid contract address, trigger fetch
-        if (chainId !== null && ethers.isAddress(contractAddress)) {
-          const eventDropdown = this.getField("EVENT_NAME");
+        // Only fetch if chain ID actually changed
+        if (chainId !== blockInstance.lastKnownChainId) {
+          blockInstance.lastKnownChainId = chainId;
 
-          // Show "Fetching ABI..." immediately
-          if (eventDropdown) {
-            (
-              eventDropdown as unknown as { menuGenerator_: string[][] }
-            ).menuGenerator_ = [["Fetching ABI...", ""]];
-            eventDropdown.setValue("");
+          // If we found a chain and have a valid contract address, trigger fetch
+          if (chainId !== null && ethers.isAddress(contractAddress)) {
+            const eventDropdown = this.getField("EVENT_NAME");
+
+            // Show "Fetching ABI..." immediately
+            if (eventDropdown) {
+              (
+                eventDropdown as unknown as { menuGenerator_: string[][] }
+              ).menuGenerator_ = [["Fetching ABI...", ""]];
+              eventDropdown.setValue("");
+            }
+
+            // Fetch ABI asynchronously
+            (async () => {
+              await fetchAndUpdateABI(this, contractAddress, chainId);
+            })();
           }
+        }
+      }
+    }
 
-          // Fetch ABI asynchronously
-          (async () => {
-            await fetchAndUpdateABI(this, contractAddress, chainId);
-          })();
+    // Handle chain selection field changes
+    if (event.type === Blockly.Events.BLOCK_CHANGE) {
+      const changeEvent = event as Blockly.Events.BlockChange;
+
+      // Check if a chain_selection block's CHAIN_ID field changed
+      if (changeEvent.name === "CHAIN_ID") {
+        const changedBlock = this.workspace.getBlockById(changeEvent.blockId);
+        if (changedBlock && changedBlock.type === "chain_selection") {
+          const contractAddress = this.getFieldValue("CONTRACT_ADDRESS");
+
+          if (
+            contractAddress &&
+            contractAddress !== "0x..." &&
+            ethers.isAddress(contractAddress)
+          ) {
+            const newChainId = parseInt(changeEvent.newValue as string, 10);
+
+            // Update last known chain ID and fetch
+            blockInstance.lastKnownChainId = newChainId;
+
+            const eventDropdown = this.getField("EVENT_NAME");
+            if (eventDropdown) {
+              (
+                eventDropdown as unknown as { menuGenerator_: string[][] }
+              ).menuGenerator_ = [["Fetching ABI...", ""]];
+              eventDropdown.setValue("");
+            }
+
+            // Fetch ABI asynchronously
+            (async () => {
+              await fetchAndUpdateABI(this, contractAddress, newChainId);
+            })();
+          }
         }
       }
     }

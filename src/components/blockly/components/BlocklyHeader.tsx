@@ -41,13 +41,7 @@ export function BlocklyHeader({
   const handleEditClick = () => {
     if (isEditing) {
       // Save mode
-      if (tempTitle.trim() !== "") {
-        setJobTitle(tempTitle);
-        setJobTitleError(null);
-        setIsEditing(false);
-      } else {
-        setJobTitleError("Job title cannot be empty");
-      }
+      handleSave();
     } else {
       // Edit mode
       setTempTitle(jobTitle);
@@ -59,6 +53,29 @@ export function BlocklyHeader({
     if (!isEditing) {
       setTempTitle(jobTitle);
       setIsEditing(true);
+    }
+  };
+
+  const handleSave = () => {
+    if (tempTitle.trim() !== "") {
+      setJobTitle(tempTitle);
+      setJobTitleError(null);
+      setIsEditing(false);
+    } else {
+      setJobTitleError("Job title cannot be empty");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" && isEditing) {
+      e.preventDefault();
+      handleSave();
+    }
+  };
+
+  const handleBlur = () => {
+    if (isEditing) {
+      handleSave();
     }
   };
 
@@ -84,6 +101,8 @@ export function BlocklyHeader({
               if (value.trim() !== "") setJobTitleError(null);
             }}
             onClick={handleInputClick}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
             readOnly={!isEditing}
             className={`bg-[#181818] text-[#EDEDED] border border-[#A2A2A2] placeholder-[#A2A2A2] rounded-l-full px-6 py-2.5 focus:outline-none text-sm sm:text-base shadow-none w-full ${!isEditing ? "cursor-pointer" : ""}`}
           />
