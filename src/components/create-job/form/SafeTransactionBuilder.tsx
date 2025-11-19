@@ -18,6 +18,7 @@ import {
   findFunctionBySignature,
   type ParsedFunction,
 } from "@/utils/abiUtils";
+import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 
 interface SafeTransactionBuilderProps {
   transactions: SafeTransaction[];
@@ -447,11 +448,12 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         <div className="w-full md:w-[30%]"></div>
         <div className="w-full md:w-[70%] space-y-4">
           {transactions.length === 0 && (
-            <Typography variant="body" color="secondary" align="center">
-              Click &quot;Add Transaction&quot; to begin.
-            </Typography>
+            <div className="border border-dashed border-white/10 rounded-lg p-6 bg-white/0">
+              <Typography variant="body" color="secondary" align="center">
+                Click &quot;Add Transaction&quot; to begin.
+              </Typography>
+            </div>
           )}
-
           {transactions.map((tx, index) => {
             const state = transactionStates[index] || {
               expanded: false,
@@ -638,7 +640,9 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                         {state.abi && state.functions.length > 0 && (
                           <>
                             {/* Function Selector */}
-                            <div>
+                            <div
+                              className={`max-h-60 overflow-y-auto pr-1 ${scrollbarStyles.whiteScrollbar} `}
+                            >
                               <label className="block mb-2">
                                 <Typography
                                   variant="body"

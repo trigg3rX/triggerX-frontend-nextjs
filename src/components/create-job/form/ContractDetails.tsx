@@ -138,6 +138,21 @@ export const ContractDetails = ({
     { id: "dynamic", name: "Dynamic" },
   ];
 
+  // Default to static argument type when entering Safe mode (without overriding user's choice)
+  React.useEffect(() => {
+    if (
+      isSafeMode &&
+      (!contract.argumentType || contract.argumentType.trim() === "")
+    ) {
+      handleArgumentTypeChange(contractKey, "static");
+    }
+  }, [
+    isSafeMode,
+    contract.argumentType,
+    contractKey,
+    handleArgumentTypeChange,
+  ]);
+
   const getInputName = (input: FunctionInput, index: number) => {
     return typeof input.name === "string" && input.name.length > 0
       ? input.name
