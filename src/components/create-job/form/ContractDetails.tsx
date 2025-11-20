@@ -722,47 +722,6 @@ export const ContractDetails = ({
             </div>
           )}
 
-          {/* API Keys Selection */}
-          {/* {contract.sourceUrl && !contract.sourceUrlError && (
-            <div className="space-y-auto mt-4">
-              {contract.isFetchingApiKeys ? (
-                <div className="flex items-center ml-3">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
-                  <Typography variant="body" color="secondary" className="pl-2">
-                    Fetching API keys...
-                  </Typography>
-                </div>
-              ) : contract.apiKeysError ? (
-                <Typography variant="caption" color="error" align="left">
-                  {contract.apiKeysError}
-                </Typography>
-              ) : contract.apiKeys && contract.apiKeys.length > 0 ? (
-                <div className="space-y-2">
-                  <RadioGroup
-                    label="API Key"
-                    options={contract.apiKeys.map((apiKey) => ({
-                      label: apiKey.name,
-                      value: String(apiKey.value),
-                    }))}
-                    value={contract.selectedApiKey || ""}
-                    onChange={
-                      readOnly
-                        ? () => {}
-                        : (value) =>
-                            handleApiKeySelection(contractKey, String(value))
-                    }
-                    name={`apiKey-${contractKey}`}
-                    disabled={readOnly}
-                  />
-                </div>
-              ) : contract.sourceUrl && !contract.isFetchingApiKeys ? (
-                <Typography variant="caption" color="secondary" align="left">
-                  No API keys found from the provided URL.
-                </Typography>
-              ) : null}
-            </div>
-          )} */}
-
           {/* Condition Type Field */}
           <div id={`contract-condition-type-${contractKey}`}>
             <Dropdown

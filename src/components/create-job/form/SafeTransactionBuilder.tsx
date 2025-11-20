@@ -18,7 +18,6 @@ import {
   findFunctionBySignature,
   type ParsedFunction,
 } from "@/utils/abiUtils";
-import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 
 interface SafeTransactionBuilderProps {
   transactions: SafeTransaction[];
@@ -159,6 +158,28 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     const newTransactions = [...transactions];
     newTransactions[index] = { ...newTransactions[index], ...updates };
     onChange(newTransactions);
+  };
+
+  // Handle address change with auto-detection
+  const handleAddressChange = (index: number, value: string) => {
+    updateTransaction(index, { to: value });
+
+    // Trigger address detection when valid address is entered
+    if (value && ethers.isAddress(value)) {
+      detectAddressType(value, index);
+    } else if (value === "") {
+      // Reset state when address is cleared
+      updateState(index, {
+        addressType: "eoa",
+        detectedType: null,
+        abi: null,
+        manualABI: "",
+        isCheckingABI: false,
+        functions: [],
+        selectedFunction: "",
+        functionInputs: [],
+      });
+    }
   };
 
   // Toggle the expanded state for the transaction
@@ -433,112 +454,292 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   return (
     <div className="space-y-6">
       {/* Title Section */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start">
         <Typography variant="h3" color="primary">
           Safe Transactions
         </Typography>
-        {error && (
-          <Typography variant="caption" color="error">
-            {error}
-          </Typography>
-        )}
-      </div>
-
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
-        <div className="w-full md:w-[30%]"></div>
-        <div className="w-full md:w-[70%] space-y-4">
-          {transactions.length === 0 && (
-            <div className="border border-dashed border-white/10 rounded-lg p-6 bg-white/0">
-              <Typography variant="body" color="secondary" align="center">
-                Click &quot;Add Transaction&quot; to begin.
-              </Typography>
-            </div>
+        <div className="w-full md:w-[70%] ml-auto">
+          {error && (
+            <Typography
+              variant="caption"
+              color="error"
+              align="left"
+              className="mb-3"
+            >
+              {error}
+            </Typography>
           )}
-          {transactions.map((tx, index) => {
-            const state = transactionStates[index] || {
-              expanded: false,
-              addressType: "eoa" as AddressType,
-              detectedType: null,
-              abi: null,
-              manualABI: "",
-              isCheckingABI: false,
-              functions: [],
-              selectedFunction: "",
-              functionInputs: [],
-              valueInput:
-                transactions[index]?.value && transactions[index]?.value !== "0"
-                  ? ethers.formatEther(transactions[index]?.value as string)
-                  : "0",
-            };
 
-            return (
-              <div
-                key={index}
-                className="border border-white/10 rounded-lg overflow-hidden bg-white/5"
-              >
-                {/* Transaction Header */}
+          <div className="w-full">
+            {transactions.map((tx, index) => {
+              const state = transactionStates[index] || {
+                expanded: false,
+                addressType: "eoa" as AddressType,
+                detectedType: null,
+                abi: null,
+                manualABI: "",
+                isCheckingABI: false,
+                functions: [],
+                selectedFunction: "",
+                functionInputs: [],
+                valueInput:
+                  transactions[index]?.value &&
+                  transactions[index]?.value !== "0"
+                    ? ethers.formatEther(transactions[index]?.value as string)
+                    : "0",
+              };
+
+              return (
                 <div
-                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--color-background-secondary)] transition-colors"
-                  onClick={() => toggleExpanded(index)}
+                  key={index}
+                  className="border border-white/10 rounded-lg bg-white/5 mb-4"
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    <Typography
-                      variant="body"
-                      color="primary"
-                      className="font-medium"
-                    >
-                      Transaction {index + 1}
-                    </Typography>
-                    <Typography variant="caption" color="secondary">
-                      {getTransactionSummary(tx, state)}
-                    </Typography>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {transactions.length > 1 && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDeleteDialog(index);
-                        }}
-                        className="p-1 hover:bg-red-500/10 rounded transition-colors"
-                        title="Delete transaction"
+                  {/* Transaction Header */}
+                  <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--color-background-secondary)] transition-colors"
+                    onClick={() => toggleExpanded(index)}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <Typography
+                        variant="body"
+                        color="primary"
+                        className="font-medium"
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
-                      </button>
-                    )}
-                    {state.expanded ? (
-                      <ChevronUp className="w-5 h-5 text-[var(--color-text-secondary)]" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Transaction Fields */}
-                {state.expanded && (
-                  <div className="p-4 border-t border-white/10 space-y-4">
-                    {/* Target Address */}
-                    <div>
-                      <label className="block mb-2">
-                        <Typography variant="body" color="gray" align="left">
-                          Target Address
-                        </Typography>
-                      </label>
-                      <TextInput
-                        label=""
-                        value={tx.to}
-                        onChange={(value) =>
-                          updateTransaction(index, { to: value })
-                        }
-                        onBlur={() => detectAddressType(tx.to, index)}
-                        placeholder="0x..."
-                        type="text"
-                        className="w-full"
-                      />
+                        Transaction {index + 1}
+                      </Typography>
+                      <Typography variant="caption" color="secondary">
+                        {getTransactionSummary(tx, state)}
+                      </Typography>
                     </div>
+                    <div className="flex items-center gap-2">
+                      {transactions.length > 1 && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openDeleteDialog(index);
+                          }}
+                          className="p-1 hover:bg-red-500/10 rounded transition-colors"
+                          title="Delete transaction"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      )}
+                      {state.expanded ? (
+                        <ChevronUp className="w-5 h-5 text-[var(--color-text-secondary)]" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-[var(--color-text-secondary)]" />
+                      )}
+                    </div>
+                  </div>
 
-                    {/* EOA Mode */}
-                    {state.addressType === "eoa" && (
+                  {/* Transaction Fields */}
+                  {state.expanded && (
+                    <div className="p-4 border-t border-white/10 space-y-4">
+                      {/* Target Address */}
+                      <div>
+                        <label className="block mb-2">
+                          <Typography variant="body" color="gray" align="left">
+                            Target Address
+                          </Typography>
+                        </label>
+                        <TextInput
+                          label=""
+                          value={tx.to}
+                          onChange={(value) =>
+                            handleAddressChange(index, value)
+                          }
+                          placeholder="0x..."
+                          type="text"
+                          className="w-full"
+                        />
+                      </div>
+
+                      {/* Contract Mode */}
+                      {state.addressType === "contract" && (
+                        <>
+                          {/* ABI Status Display */}
+                          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
+                            <Typography
+                              variant="body"
+                              color="gray"
+                              className="text-nowrap"
+                            >
+                              Contract ABI
+                            </Typography>
+                            <div className="w-[70%] h-[38px] sm:h-[50px] text-start ml-3 flex items-center">
+                              {state.isCheckingABI ? (
+                                <div className="flex items-center ml-3">
+                                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
+                                  <Typography
+                                    variant="caption"
+                                    color="secondary"
+                                    className="pl-2"
+                                  >
+                                    Validating Contract...
+                                  </Typography>
+                                </div>
+                              ) : state.abi ? (
+                                <svg
+                                  className="w-5 h-5 text-green-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              ) : (
+                                <div className="flex items-center ml-3">
+                                  <Typography
+                                    variant="caption"
+                                    color="secondary"
+                                    className="pr-2"
+                                  >
+                                    Not Available
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="error"
+                                    className="mt-[2px]"
+                                  >
+                                    ✕
+                                  </Typography>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Manual ABI Input */}
+                          {!state.isCheckingABI &&
+                            (!state.abi || state.functions.length === 0) && (
+                              <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
+                                <Typography
+                                  variant="body"
+                                  color="gray"
+                                  className="text-nowrap h-[50px] flex items-center"
+                                >
+                                  Manual ABI Input
+                                </Typography>
+                                <div className="w-full md:w-[70%]">
+                                  <textarea
+                                    value={state.manualABI}
+                                    onChange={(e) =>
+                                      handleManualABI(index, e.target.value)
+                                    }
+                                    placeholder={`[
+  {
+    "inputs": [],
+    "name": "functionName",
+    "type": "function",
+    "stateMutability": "nonpayable"
+  }
+]`}
+                                    className="text-xs w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[170px]"
+                                  />
+                                  <Typography
+                                    variant="caption"
+                                    align="left"
+                                    color="secondary"
+                                    className="mt-1"
+                                  >
+                                    Automatic fetch failed. To continue, please
+                                    enter the contract ABI in JSON format.
+                                  </Typography>
+                                </div>
+                              </div>
+                            )}
+
+                          {/* ABI with functions available */}
+                          {state.abi && state.functions.length > 0 && (
+                            <>
+                              {/* Function Selector */}
+                              <div>
+                                <Dropdown
+                                  label="Target function"
+                                  color="secondary"
+                                  options={[
+                                    {
+                                      id: "",
+                                      name: "ETH Transfer to Contract",
+                                    },
+                                    ...state.functions.map((f) => ({
+                                      id: getFunctionSignature(
+                                        f.name,
+                                        f.inputs,
+                                      ),
+                                      name: f.name,
+                                    })),
+                                  ]}
+                                  selectedOption={
+                                    state.selectedFunction
+                                      ? state.selectedFunction.split("(")[0]
+                                      : "ETH Transfer to Contract"
+                                  }
+                                  className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
+                                  onChange={(option) => {
+                                    if (option.id === "") {
+                                      // Clear function selection
+                                      updateState(index, {
+                                        selectedFunction: "",
+                                        functionInputs: [],
+                                      });
+                                      updateTransaction(index, {
+                                        data: "0x",
+                                      });
+                                    } else {
+                                      handleFunctionSelect(
+                                        index,
+                                        String(option.id),
+                                      );
+                                    }
+                                  }}
+                                />
+                              </div>
+
+                              {/* Function Parameters */}
+                              {state.selectedFunction &&
+                                (() => {
+                                  const selectedFunc = findFunctionBySignature(
+                                    state.functions,
+                                    state.selectedFunction,
+                                  );
+                                  return selectedFunc?.inputs.map(
+                                    (input, paramIndex) => (
+                                      <div key={paramIndex}>
+                                        <TextInput
+                                          label={`${
+                                            input.name ||
+                                            `Param ${paramIndex + 1}`
+                                          } (${input.type})`}
+                                          value={
+                                            state.functionInputs[paramIndex] ||
+                                            ""
+                                          }
+                                          onChange={(value) =>
+                                            handleParameterChange(
+                                              index,
+                                              paramIndex,
+                                              value,
+                                            )
+                                          }
+                                          placeholder={`Enter ${input.type}`}
+                                          type="text"
+                                        />
+                                      </div>
+                                    ),
+                                  );
+                                })()}
+                            </>
+                          )}
+                        </>
+                      )}
+
+                      {/* Value - Common for both EOA and Contract */}
                       <div>
                         <label className="block mb-2">
                           <Typography variant="body" color="gray" align="left">
@@ -557,230 +758,35 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                           placeholder="0.0"
                           type="text"
                           className="w-full"
+                          disabled={Boolean(state.selectedFunction)}
                         />
                       </div>
-                    )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-                    {/* Contract Mode */}
-                    {state.addressType === "contract" && (
-                      <>
-                        {/* ABI Section */}
-                        {state.isCheckingABI && (
-                          <div>
-                            <label className="block mb-2">
-                              <Typography
-                                variant="body"
-                                color="gray"
-                                align="left"
-                              >
-                                Contract ABI
-                              </Typography>
-                            </label>
-                            <Typography variant="caption" color="secondary">
-                              Fetching ABI...
-                            </Typography>
-                          </div>
-                        )}
-
-                        {/* Manual ABI / fallback */}
-                        {!state.isCheckingABI &&
-                          (!state.abi || state.functions.length === 0) && (
-                            <>
-                              <div>
-                                <label className="block mb-2">
-                                  <Typography
-                                    variant="body"
-                                    color="gray"
-                                    align="left"
-                                  >
-                                    Contract ABI
-                                  </Typography>
-                                </label>
-                                <textarea
-                                  value={state.manualABI}
-                                  onChange={(e) =>
-                                    handleManualABI(index, e.target.value)
-                                  }
-                                  placeholder="Insert contract ABI here..."
-                                  className="w-full h-32 p-2 border border-white/10 rounded-md bg-[var(--color-background)] text-[var(--color-text-primary)] font-mono text-sm"
-                                />
-                              </div>
-
-                              <div>
-                                <label className="block mb-2">
-                                  <Typography
-                                    variant="body"
-                                    color="gray"
-                                    align="left"
-                                  >
-                                    Value
-                                  </Typography>
-                                </label>
-                                <TextInput
-                                  label=""
-                                  value={
-                                    state.valueInput ??
-                                    (tx.value === "0"
-                                      ? "0"
-                                      : ethers.formatEther(tx.value || "0"))
-                                  }
-                                  onChange={(value) =>
-                                    handleValueChange(index, value)
-                                  }
-                                  placeholder="0.0"
-                                  type="text"
-                                  className="w-full "
-                                  disabled={Boolean(state.selectedFunction)}
-                                />
-                              </div>
-                            </>
-                          )}
-
-                        {/* ABI with functions available */}
-                        {state.abi && state.functions.length > 0 && (
-                          <>
-                            {/* Function Selector */}
-                            <div
-                              className={`max-h-60 overflow-y-auto pr-1 ${scrollbarStyles.whiteScrollbar} `}
-                            >
-                              <label className="block mb-2">
-                                <Typography
-                                  variant="body"
-                                  color="gray"
-                                  align="left"
-                                >
-                                  Function
-                                </Typography>
-                              </label>
-                              <Dropdown
-                                label=""
-                                color="secondary"
-                                options={[
-                                  { id: "", name: "ETH Transfer to Contract" },
-                                  ...state.functions.map((f) => ({
-                                    id: getFunctionSignature(f.name, f.inputs),
-                                    name: f.name,
-                                  })),
-                                ]}
-                                selectedOption={
-                                  state.selectedFunction
-                                    ? state.selectedFunction.split("(")[0]
-                                    : "ETH Transfer to Contract"
-                                }
-                                className="w-full md:w-full"
-                                onChange={(option) => {
-                                  if (option.id === "") {
-                                    // Clear function selection
-                                    updateState(index, {
-                                      selectedFunction: "",
-                                      functionInputs: [],
-                                    });
-                                    updateTransaction(index, { data: "0x" });
-                                  } else {
-                                    handleFunctionSelect(
-                                      index,
-                                      String(option.id),
-                                    );
-                                  }
-                                }}
-                              />
-                            </div>
-
-                            {/* Function Parameters */}
-                            {state.selectedFunction &&
-                              (() => {
-                                const selectedFunc = findFunctionBySignature(
-                                  state.functions,
-                                  state.selectedFunction,
-                                );
-                                return selectedFunc?.inputs.map(
-                                  (input, paramIndex) => (
-                                    <div key={paramIndex}>
-                                      <label className="block mb-2">
-                                        <Typography
-                                          variant="body"
-                                          color="gray"
-                                          align="left"
-                                        >
-                                          {input.name ||
-                                            `Param ${paramIndex + 1}`}{" "}
-                                          ({input.type})
-                                        </Typography>
-                                      </label>
-                                      <TextInput
-                                        label=""
-                                        value={
-                                          state.functionInputs[paramIndex] || ""
-                                        }
-                                        onChange={(value) =>
-                                          handleParameterChange(
-                                            index,
-                                            paramIndex,
-                                            value,
-                                          )
-                                        }
-                                        placeholder={`Enter ${input.type}`}
-                                        type="text"
-                                        className="w-full"
-                                      />
-                                    </div>
-                                  ),
-                                );
-                              })()}
-
-                            {/* Value input - always visible */}
-                            <div>
-                              <label className="block mb-2">
-                                <Typography
-                                  variant="body"
-                                  color="gray"
-                                  align="left"
-                                >
-                                  Value
-                                </Typography>
-                              </label>
-                              <TextInput
-                                label=""
-                                value={
-                                  state.valueInput ??
-                                  (tx.value === "0"
-                                    ? "0"
-                                    : ethers.formatEther(tx.value || "0"))
-                                }
-                                onChange={(value) =>
-                                  handleValueChange(index, value)
-                                }
-                                placeholder="0.0"
-                                type="text"
-                                className="w-full"
-                                disabled={Boolean(state.selectedFunction)}
-                              />
-                            </div>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Add Transaction Button */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
-        <div className="w-full md:w-[30%]"></div>
-        <div className="w-full md:w-[70%]">
-          <button
-            onClick={addTransaction}
-            className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-white/10 rounded-lg hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-colors"
-          >
-            <Plus className="w-5 h-5 text-[var(--color-primary)]" />
-            <Typography variant="body" color="primary" className="font-medium">
-              Add Transaction
-            </Typography>
-          </button>
+          {/* Add Transaction Button */}
+          <div className="w-full">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                addTransaction();
+              }}
+              className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-white/10 rounded-lg hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-colors"
+            >
+              <Plus className="w-5 h-5 text-[var(--color-primary)]" />
+              <Typography
+                variant="body"
+                color="primary"
+                className="font-medium"
+              >
+                Add Transaction
+              </Typography>
+            </button>
+          </div>
         </div>
       </div>
 
