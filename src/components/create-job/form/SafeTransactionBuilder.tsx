@@ -6,6 +6,7 @@ import { Typography } from "@/components/ui/Typography";
 import { TextInput } from "@/components/ui/TextInput";
 import { Dropdown } from "@/components/ui/Dropdown";
 import DeleteDialog from "@/components/common/DeleteDialog";
+import { FormErrorMessage } from "@/components/common/FormErrorMessage";
 import { ethers } from "ethers";
 import { Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { devLog } from "@/lib/devLog";
@@ -83,6 +84,25 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions.length]);
+
+  // Re-detect address types for existing transactions when component mounts or transactions change
+  useEffect(() => {
+    transactions.forEach((transaction, index) => {
+      const state = transactionStates[index];
+      // Re-detect if we have an address but state hasn't been initialized properly
+      if (
+        transaction.to &&
+        ethers.isAddress(transaction.to) &&
+        state &&
+        !state.isCheckingABI &&
+        state.addressType === "eoa" &&
+        state.detectedType === null
+      ) {
+        detectAddressType(transaction.to, index);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions, selectedNetwork, transactionStates]);
 
   // Add a new transaction
   const addTransaction = () => {
@@ -162,23 +182,38 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
 
   // Handle address change with auto-detection
   const handleAddressChange = (index: number, value: string) => {
+    const previousAddress = transactions[index]?.to;
+
     updateTransaction(index, { to: value });
 
-    // Trigger address detection when valid address is entered
-    if (value && ethers.isAddress(value)) {
-      detectAddressType(value, index);
-    } else if (value === "") {
-      // Reset state when address is cleared
-      updateState(index, {
-        addressType: "eoa",
-        detectedType: null,
-        abi: null,
-        manualABI: "",
-        isCheckingABI: false,
-        functions: [],
-        selectedFunction: "",
-        functionInputs: [],
-      });
+    // Only reset and re-detect if the address actually changed
+    if (value !== previousAddress) {
+      if (value && ethers.isAddress(value)) {
+        // Reset state and trigger new detection
+        updateState(index, {
+          addressType: "detecting",
+          detectedType: null,
+          abi: null,
+          manualABI: "",
+          isCheckingABI: false,
+          functions: [],
+          selectedFunction: "",
+          functionInputs: [],
+        });
+        detectAddressType(value, index);
+      } else if (value === "") {
+        // Reset state when address is cleared
+        updateState(index, {
+          addressType: "eoa",
+          detectedType: null,
+          abi: null,
+          manualABI: "",
+          isCheckingABI: false,
+          functions: [],
+          selectedFunction: "",
+          functionInputs: [],
+        });
+      }
     }
   };
 
@@ -452,23 +487,14 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" id="safe-transactions-section">
       {/* Title Section */}
       <div className="flex justify-between items-start">
         <Typography variant="h3" color="primary">
           Safe Transactions
         </Typography>
         <div className="w-full md:w-[70%] ml-auto">
-          {error && (
-            <Typography
-              variant="caption"
-              color="error"
-              align="left"
-              className="mb-3"
-            >
-              {error}
-            </Typography>
-          )}
+          <FormErrorMessage error={error ?? null} className="mb-1" />
 
           <div className="w-full">
             {transactions.map((tx, index) => {

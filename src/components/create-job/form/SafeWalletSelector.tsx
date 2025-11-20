@@ -8,6 +8,7 @@ import { Typography } from "@/components/ui/Typography";
 import { Dropdown, DropdownOption } from "@/components/ui/Dropdown";
 import { RadioGroup } from "@/components/ui/RadioGroup";
 import Skeleton from "@/components/ui/Skeleton";
+import { FormErrorMessage } from "@/components/common/FormErrorMessage";
 import { getSafeModuleAddress } from "@/utils/contractAddresses";
 import { getSafeChainInfo } from "@/utils/safeChains";
 import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
@@ -26,12 +27,16 @@ import { useSafeModuleStatus } from "@/hooks/useSafeModuleStatus";
 
 interface SafeWalletSelectorProps {
   disabled?: boolean;
+  error?: string | null;
+  onClearError?: () => void;
 }
 
 const EXTRA_SAFES_KEY_PREFIX = "triggerx_extra_safe_wallets_";
 
 export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
   disabled = false,
+  error = null,
+  onClearError,
 }) => {
   const { address } = useAccount();
   const chainId = useChainId();
@@ -334,6 +339,8 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     } else {
       const walletAddress = option.id as string;
       await handleSafeWalletSelect(walletAddress);
+      // Clear error when wallet is selected
+      onClearError?.();
     }
   };
 
@@ -409,7 +416,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
       />
 
       {executionMode === "safe" && (
-        <div className="space-y-auto">
+        <div className="space-y-auto" id="safe-wallet-dropdown">
           {isLoading ? (
             <Skeleton height={50} borderRadius={12} />
           ) : (
@@ -439,6 +446,10 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                   networks.
                 </Typography>
               )}
+              <FormErrorMessage
+                error={error}
+                className="w-full md:w-[70%] ml-auto mt-1 pl-3"
+              />
 
               {/* Import progress indicator */}
               {hasImportOngoingProcess && (

@@ -22,6 +22,7 @@ import { useSearchParams } from "next/navigation";
 import { useJobs } from "@/hooks/useJobs";
 import { fetchContractABI } from "@/utils/fetchContractABI";
 import { useChainId } from "wagmi";
+import { devLog } from "@/lib/devLog";
 
 const networkIcons = Object.fromEntries(
   Object.entries(networksData.networkIcons).map(([name, icon]) => [
@@ -215,8 +216,13 @@ export const JobForm: React.FC = () => {
 
     // Check if the permission checkbox is checked (only for contract mode)
     if (executionMode === "contract" && !hasConfirmedPermission) {
+      const address =
+        networksData.supportedNetworks.find((n) => n.name === selectedNetwork)
+          ?.type === "mainnet"
+          ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33"
+          : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54";
       setPermissionError(
-        "Please confirm that the address 0x2469...F474 has the required role/permission.",
+        `Please confirm that the address ${address} has the required role/permission.`,
       );
       return;
     }
@@ -237,6 +243,14 @@ export const JobForm: React.FC = () => {
     });
     if (validationResult) {
       const { errorKey, errorValue, scrollToId } = validationResult;
+      devLog(
+        "[JobForm] Validation failed:",
+        errorKey,
+        "->",
+        errorValue,
+        "| ScrollTo:",
+        scrollToId,
+      );
       if (errorKey === "jobTitle") setJobTitleError(errorValue);
       else if (errorKey === "timeframe") setErrorFrame(errorValue);
       else if (errorKey === "timeInterval") setErrorInterval(errorValue);
@@ -276,7 +290,16 @@ export const JobForm: React.FC = () => {
                 />
                 {/* <NetworkSelector disabled={isUpdateMode} /> */}
                 <NetworkSelector />
-                <SafeWalletSelector disabled={isUpdateMode} />
+                <SafeWalletSelector
+                  disabled={isUpdateMode}
+                  error={contractErrors.safeWallet ?? null}
+                  onClearError={() =>
+                    setContractErrors((prev) => ({
+                      ...prev,
+                      safeWallet: null,
+                    }))
+                  }
+                />
                 <TimeframeInputs
                   timeframe={timeframe}
                   onTimeframeChange={handleTimeframeChange}

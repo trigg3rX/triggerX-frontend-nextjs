@@ -39,7 +39,7 @@ export function validateJobForm({
     return {
       errorKey: "safeWallet",
       errorValue: "Please select or create a Safe wallet to continue.",
-      scrollToId: "contract-address-input-contract",
+      scrollToId: "safe-wallet-dropdown",
     };
   }
 
@@ -232,7 +232,7 @@ export function validateJobForm({
         errorKey: "safeTransactions",
         errorValue:
           "At least one Safe transaction is required for static Safe wallet jobs.",
-        scrollToId: "contract-address-input-contract",
+        scrollToId: "safe-transactions-section",
       };
     }
 
@@ -245,7 +245,7 @@ export function validateJobForm({
         return {
           errorKey: "safeTransaction",
           errorValue: `Transaction ${i + 1}: Target address is required.`,
-          scrollToId: "contract-address-input-contract",
+          scrollToId: "safe-transactions-section",
         };
       }
 
@@ -253,7 +253,7 @@ export function validateJobForm({
         return {
           errorKey: "safeTransaction",
           errorValue: `Transaction ${i + 1}: Invalid target address.`,
-          scrollToId: "contract-address-input-contract",
+          scrollToId: "safe-transactions-section",
         };
       }
 
@@ -262,7 +262,7 @@ export function validateJobForm({
         return {
           errorKey: "safeTransaction",
           errorValue: `Transaction ${i + 1}: Value is required.`,
-          scrollToId: "contract-address-input-contract",
+          scrollToId: "safe-transactions-section",
         };
       }
 
@@ -272,7 +272,7 @@ export function validateJobForm({
           return {
             errorKey: "safeTransaction",
             errorValue: `Transaction ${i + 1}: Value cannot be negative.`,
-            scrollToId: "contract-address-input-contract",
+            scrollToId: "safe-transactions-section",
           };
         }
       } catch (error) {
@@ -280,7 +280,7 @@ export function validateJobForm({
         return {
           errorKey: "safeTransaction",
           errorValue: `Transaction ${i + 1}: Invalid value format.`,
-          scrollToId: "contract-address-input-contract",
+          scrollToId: "safe-transactions-section",
         };
       }
 
@@ -289,7 +289,7 @@ export function validateJobForm({
         return {
           errorKey: "safeTransaction",
           errorValue: `Transaction ${i + 1}: Transaction data is required (use "0x" for ETH-only transfers).`,
-          scrollToId: "contract-address-input-contract",
+          scrollToId: "safe-transactions-section",
         };
       }
 
@@ -298,7 +298,7 @@ export function validateJobForm({
         return {
           errorKey: "safeTransaction",
           errorValue: `Transaction ${i + 1}: Transaction data must start with 0x.`,
-          scrollToId: "contract-address-input-contract",
+          scrollToId: "safe-transactions-section",
         };
       }
     }
