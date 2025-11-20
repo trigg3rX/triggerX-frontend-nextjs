@@ -1,7 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { createContext, useContext, useState, useCallback } from "react";
-import { Timeframe, TimeInterval, ContractInteraction } from "@/types/job";
+import {
+  Timeframe,
+  TimeInterval,
+  ContractInteraction,
+  ContractEvent,
+  ContractFunction,
+  SafeTransaction,
+} from "@/types/job";
 import networksData from "@/utils/networks.json";
 import { ethers } from "ethers";
 import { fetchContractABI } from "@/utils/fetchContractABI";
@@ -12,18 +20,13 @@ import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { devLog } from "@/lib/devLog";
 import JobRegistryArtifact from "@/artifacts/JobRegistry.json";
 import { useChainId } from "wagmi";
-import { getJobRegistryAddress } from "@/utils/contractAddresses";
+import {
+  getJobRegistryAddress,
+  getSafeMultiSendCallOnlyAddress,
+} from "@/utils/contractAddresses";
 import { getWalletDisplayName } from "@/utils/safeWalletNames";
-
-interface ABIItem {
-  type: string;
-  name?: string;
-  inputs?: { type: string }[];
-  outputs?: { type: string }[];
-  stateMutability?: string;
-  payable?: boolean;
-  constant?: boolean;
-}
+import { extractFunctions, extractEvents, parseABI } from "@/utils/abiUtils";
+import { encodeMultisendData } from "@/utils/multisendEncoding";
 
 // Utility types and functions moved from JobForm.tsx
 export type JobDetails = {
@@ -54,6 +57,7 @@ export type JobDetails = {
   condition_type?: string;
   upper_limit?: number;
   lower_limit?: number;
+  safe_transactions?: SafeTransaction[];
   job_id?: string;
   language?: string;
   is_safe?: boolean;
@@ -102,7 +106,7 @@ function extractJobDetails(
     c.address || "0x0000000000000000000000000000000000000000";
   const contractABI = c.abi;
   const argType = getArgType(c.argumentType || "static");
-  const argsArray = c.argumentValues || [];
+  let argsArray = [...(c.argumentValues || [])];
   const ipfsCodeUrl = c.ipfsCodeUrl || "";
   const targetFunction = c.targetFunction ? c.targetFunction.split("(")[0] : "";
   const taskDefinitionId = getTaskDefinitionId(
@@ -110,6 +114,78 @@ function extractJobDetails(
     jobType,
   );
   const triggerChainId = networkId ? networkId.toString() : "";
+
+  // Use safeTransactions for Safe wallet with static arguments
+  let safeTransactions: SafeTransaction[] | undefined = undefined;
+  let encodedMultiSendData: string | null = null;
+
+  if (
+    executionMode === "safe" &&
+    selectedSafeWallet &&
+    c.argumentType === "static" &&
+    contractKey === "contract" // Only for main contract, not event contract
+  ) {
+    // Use user-provided safeTransactions from UI if available
+    if (c.safeTransactions && c.safeTransactions.length > 0) {
+      safeTransactions = c.safeTransactions;
+    } else {
+      // Fallback: build from static arguments (legacy behavior)
+      const fullFunctionSignature = c.targetFunction || "";
+      safeTransactions = buildSafeTransactionsFromStaticArgs(
+        contractAddress,
+        contractABI,
+        fullFunctionSignature,
+        argsArray,
+      );
+
+      // If  no safe transactions were built, log a warning
+      if (!safeTransactions || safeTransactions.length === 0) {
+        devLog(
+          "[extractJobDetails] Warning: No safe transactions provided for static Safe wallet job",
+        );
+      }
+    }
+
+    if (safeTransactions && safeTransactions.length > 0) {
+      try {
+        encodedMultiSendData = encodeMultisendData(safeTransactions);
+      } catch (error) {
+        devLog(
+          "[extractJobDetails] Failed to encode Safe multisend data:",
+          error,
+        );
+        encodedMultiSendData = null;
+      }
+    }
+
+    if (
+      safeTransactions &&
+      safeTransactions.length > 0 &&
+      selectedSafeWallet &&
+      encodedMultiSendData
+    ) {
+      const numericChainId = chainId ?? networkId ?? 0;
+      const multiSendCallOnlyAddress =
+        numericChainId !== 0
+          ? getSafeMultiSendCallOnlyAddress(numericChainId)
+          : "";
+
+      if (!multiSendCallOnlyAddress) {
+        devLog(
+          "[extractJobDetails] Missing MultiSendCallOnly address for chain",
+          numericChainId,
+        );
+      } else {
+        argsArray = [
+          selectedSafeWallet,
+          multiSendCallOnlyAddress,
+          "0",
+          encodedMultiSendData,
+          "1",
+        ];
+      }
+    }
+  }
 
   // Generate unique job title for linked jobs
   // let finalJobTitle = jobTitle;
@@ -169,6 +245,7 @@ function extractJobDetails(
             userSafeWallets || [],
           )
         : undefined,
+    safe_transactions: safeTransactions,
   };
 }
 
@@ -205,6 +282,29 @@ function getTaskDefinitionId(argumentType: string, jobType: number): number {
         ? 6
         : 4;
 }
+
+const mapParsedFunctionsToContractFunctions = (
+  parsedFunctions: ReturnType<typeof extractFunctions>,
+): ContractFunction[] =>
+  parsedFunctions.map((func) => ({
+    name: func.name,
+    inputs: func.inputs.map((input) => ({ type: input.type })),
+    outputs: (func.outputs || []).map((output) => ({ type: output.type })),
+    stateMutability: func.stateMutability || "nonpayable",
+    payable: func.payable ?? func.stateMutability === "payable",
+    constant: func.constant ?? false,
+  }));
+
+const mapParsedEventsToContractEvents = (
+  parsedEvents: ReturnType<typeof extractEvents>,
+): ContractEvent[] =>
+  parsedEvents.map((event) => ({
+    name: event.name,
+    inputs: event.inputs.map((input) => ({
+      name: input.name,
+      type: input.type,
+    })),
+  }));
 
 function getArgType(argumentType: string): number {
   return argumentType === "static" ? 1 : 2;
@@ -251,6 +351,99 @@ function encodeJobType4or6Data(recurringJob: boolean, ipfsHash: string) {
     ["bool", "bytes32"],
     [recurringJob, toBytes32(ipfsHash)],
   );
+}
+
+/**
+ * Builds SafeTransaction array from static arguments for Safe wallet jobs
+ * @param contractAddress - Target contract address
+ * @param abi - Contract ABI as string
+ * @param targetFunction - Function signature (e.g., "transfer(address,uint256)")
+ * @param argumentValues - Array of argument values as strings
+ * @returns Array of SafeTransaction objects
+ */
+function buildSafeTransactionsFromStaticArgs(
+  contractAddress: string,
+  abi: string | null,
+  targetFunction: string,
+  argumentValues: string[],
+): SafeTransaction[] {
+  if (!abi || !targetFunction || !contractAddress) {
+    return [];
+  }
+
+  try {
+    // Parse ABI
+    const abiArray = typeof abi === "string" ? JSON.parse(abi) : abi;
+    const contractInterface = new ethers.Interface(abiArray);
+
+    // Try to get function by full signature first, then by name if that fails
+    let functionFragment;
+    try {
+      functionFragment = contractInterface.getFunction(targetFunction);
+    } catch {
+      // If full signature fails, try with just the function name
+      const functionName = targetFunction.split("(")[0];
+      functionFragment = contractInterface.getFunction(functionName);
+    }
+
+    if (!functionFragment) {
+      const functionName = targetFunction.split("(")[0];
+      devLog(
+        `[buildSafeTransactions] Function ${functionName} not found in ABI`,
+      );
+      return [];
+    }
+
+    // Parse and encode arguments
+    // Convert string arguments to appropriate types based on function inputs
+    const parsedArgs: any[] = [];
+    const functionInputs = functionFragment.inputs;
+
+    for (let i = 0; i < functionInputs.length; i++) {
+      const input = functionInputs[i];
+      const argValue = argumentValues[i] || "";
+
+      if (!argValue) {
+        throw new Error(
+          `Missing argument ${i + 1} (${input.name || input.type})`,
+        );
+      }
+
+      // Parse argument based on type
+      let parsedValue: any = argValue;
+      if (input.type.startsWith("uint") || input.type.startsWith("int")) {
+        parsedValue = BigInt(argValue);
+      } else if (input.type === "bool") {
+        parsedValue = argValue.toLowerCase() === "true";
+      } else if (input.type === "address") {
+        parsedValue = argValue; // Addresses are strings
+      } else if (input.type.startsWith("bytes")) {
+        parsedValue = argValue; // Bytes are hex strings
+      } else if (input.type === "string") {
+        parsedValue = argValue; // Strings stay as strings
+      }
+
+      parsedArgs.push(parsedValue);
+    }
+
+    // Encode function call
+    const encodedData = contractInterface.encodeFunctionData(
+      functionFragment,
+      parsedArgs,
+    );
+
+    // Create SafeTransaction
+    const safeTransaction: SafeTransaction = {
+      to: contractAddress,
+      value: "0", // Default to 0, can be extended if needed
+      data: encodedData,
+    };
+
+    return [safeTransaction];
+  } catch (error) {
+    devLog("[buildSafeTransactions] Error building safe transaction:", error);
+    return [];
+  }
 }
 
 export interface JobFormContextType {
@@ -304,6 +497,10 @@ export interface JobFormContextType {
   handleConditionTypeChange: (contractKey: string, value: string) => void;
   handleUpperLimitChange: (contractKey: string, value: string) => void;
   handleLowerLimitChange: (contractKey: string, value: string) => void;
+  handleSafeTransactionsChange: (
+    contractKey: string,
+    transactions: SafeTransaction[],
+  ) => void;
   linkedJobs: { [key: number]: number[] };
   handleLinkJob: (jobType: number) => void;
   handleDeleteLinkedJob: (jobType: number, jobId: number) => void;
@@ -424,6 +621,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         isProxy: false,
         implementationAddress: undefined,
         proxyType: undefined,
+        safeTransactions: [],
       },
       contract: {
         address: "",
@@ -452,6 +650,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         isProxy: false,
         implementationAddress: undefined,
         proxyType: undefined,
+        safeTransactions: [],
       },
     });
   const [linkedJobs, setLinkedJobs] = useState<{ [key: number]: number[] }>({});
@@ -548,55 +747,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
-  const extractEvents = (abi: string) => {
-    try {
-      const parsedABI = JSON.parse(abi);
-      return parsedABI.filter((item: ABIItem) => item.type === "event");
-    } catch (error) {
-      console.error("Error parsing ABI:", error);
-      return [];
-    }
-  };
-
-  const extractFunctions = (abi: string) => {
-    try {
-      let abiArray;
-      if (typeof abi === "string") {
-        try {
-          abiArray = JSON.parse(abi);
-        } catch {
-          throw new Error("Invalid ABI string format");
-        }
-      } else if (Array.isArray(abi)) {
-        abiArray = abi;
-      } else if (typeof abi === "object") {
-        abiArray = [abi];
-      } else {
-        throw new Error("ABI must be an array, object, or valid JSON string");
-      }
-
-      if (!Array.isArray(abiArray)) {
-        throw new Error("Processed ABI is not an array");
-      }
-
-      const functions = abiArray
-        .filter((item) => item && item.type === "function")
-        .map((func) => ({
-          name: func.name || "unnamed",
-          inputs: func.inputs || [],
-          outputs: func.outputs || [],
-          stateMutability: func.stateMutability || "nonpayable",
-          payable: func.payable || false,
-          constant: func.constant || false,
-        }));
-
-      return functions;
-    } catch (error) {
-      console.error("Error processing ABI:", error);
-      return [];
-    }
-  };
-
   const handleContractAddressChange = useCallback(
     async (contractKey: string, value: string) => {
       setContractInteractions((prev) => ({
@@ -672,13 +822,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           }
 
           if (abiString) {
-            JSON.parse(abiString); // Validate JSON
-            const functions = extractFunctions(abiString).filter(
-              (func) =>
-                func.stateMutability === "nonpayable" ||
-                func.stateMutability === "payable",
-            );
-            const events = extractEvents(abiString);
+            const parseResult = parseABI(abiString);
+            if (!parseResult.success || !parseResult.abi) {
+              throw new Error(parseResult.error || "Invalid ABI format");
+            }
+            const parsedFunctions = extractFunctions(parseResult.abi, true);
+            const functions =
+              mapParsedFunctionsToContractFunctions(parsedFunctions);
+            const parsedEvents = extractEvents(parseResult.abi);
+            const events = mapParsedEventsToContractEvents(parsedEvents);
 
             setContractInteractions((prev) => ({
               ...prev,
@@ -753,25 +905,25 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       }));
 
       try {
-        const parsedABI = JSON.parse(value);
-        if (Array.isArray(parsedABI)) {
-          const functions = extractFunctions(value).filter(
-            (func) =>
-              func.stateMutability === "nonpayable" ||
-              func.stateMutability === "payable",
-          );
-          const events = extractEvents(value);
-
-          setContractInteractions((prev) => ({
-            ...prev,
-            [contractKey]: {
-              ...prev[contractKey],
-              abi: value,
-              events,
-              functions,
-            },
-          }));
+        const parseResult = parseABI(value);
+        if (!parseResult.success || !parseResult.abi) {
+          throw new Error(parseResult.error || "Invalid ABI format");
         }
+        const parsedFunctions = extractFunctions(parseResult.abi, true);
+        const functions =
+          mapParsedFunctionsToContractFunctions(parsedFunctions);
+        const parsedEvents = extractEvents(parseResult.abi);
+        const events = mapParsedEventsToContractEvents(parsedEvents);
+
+        setContractInteractions((prev) => ({
+          ...prev,
+          [contractKey]: {
+            ...prev[contractKey],
+            abi: value,
+            events,
+            functions,
+          },
+        }));
       } catch (error) {
         console.error("Invalid ABI format:", error);
         setContractInteractions((prev) => ({
@@ -1038,6 +1190,19 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         [contractKey]: {
           ...prev[contractKey],
           lowerLimit: value,
+        },
+      }));
+    },
+    [],
+  );
+
+  const handleSafeTransactionsChange = useCallback(
+    (contractKey: string, transactions: SafeTransaction[]) => {
+      setContractInteractions((prev) => ({
+        ...prev,
+        [contractKey]: {
+          ...prev[contractKey],
+          safeTransactions: transactions,
         },
       }));
     },
@@ -1929,25 +2094,24 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const handleSetABI = useCallback((contractKey: string, value: string) => {
     try {
-      const parsedABI = JSON.parse(value);
-      if (Array.isArray(parsedABI)) {
-        const functions = extractFunctions(value).filter(
-          (func) =>
-            func.stateMutability === "nonpayable" ||
-            func.stateMutability === "payable",
-        );
-        const events = extractEvents(value);
-
-        setContractInteractions((prev) => ({
-          ...prev,
-          [contractKey]: {
-            ...prev[contractKey],
-            abi: value,
-            events,
-            functions,
-          },
-        }));
+      const parseResult = parseABI(value);
+      if (!parseResult.success || !parseResult.abi) {
+        throw new Error(parseResult.error || "Invalid ABI format");
       }
+      const parsedFunctions = extractFunctions(parseResult.abi, true);
+      const functions = mapParsedFunctionsToContractFunctions(parsedFunctions);
+      const parsedEvents = extractEvents(parseResult.abi);
+      const events = mapParsedEventsToContractEvents(parsedEvents);
+
+      setContractInteractions((prev) => ({
+        ...prev,
+        [contractKey]: {
+          ...prev[contractKey],
+          abi: value,
+          events,
+          functions,
+        },
+      }));
     } catch (error) {
       console.error("Invalid ABI format:", error);
       setContractInteractions((prev) => ({
@@ -1965,26 +2129,26 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const handleSetContractDetails = useCallback(
     (contractKey: string, address: string, abiString: string) => {
       try {
-        const parsedABI = JSON.parse(abiString);
-        if (Array.isArray(parsedABI)) {
-          const functions = extractFunctions(abiString).filter(
-            (func) =>
-              func.stateMutability === "nonpayable" ||
-              func.stateMutability === "payable",
-          );
-          const events = extractEvents(abiString);
-
-          setContractInteractions((prev) => ({
-            ...prev,
-            [contractKey]: {
-              ...prev[contractKey],
-              address,
-              abi: abiString,
-              events,
-              functions,
-            },
-          }));
+        const parseResult = parseABI(abiString);
+        if (!parseResult.success || !parseResult.abi) {
+          throw new Error(parseResult.error || "Invalid ABI format");
         }
+        const parsedFunctions = extractFunctions(parseResult.abi, true);
+        const functions =
+          mapParsedFunctionsToContractFunctions(parsedFunctions);
+        const parsedEvents = extractEvents(parseResult.abi);
+        const events = mapParsedEventsToContractEvents(parsedEvents);
+
+        setContractInteractions((prev) => ({
+          ...prev,
+          [contractKey]: {
+            ...prev[contractKey],
+            address,
+            abi: abiString,
+            events,
+            functions,
+          },
+        }));
       } catch (error) {
         console.error("Invalid ABI format:", error);
         setContractInteractions((prev) => ({
@@ -2047,6 +2211,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         isProxy: false,
         implementationAddress: undefined,
         proxyType: undefined,
+        safeTransactions: [],
       },
       contract: {
         address: "",
@@ -2075,6 +2240,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         isProxy: false,
         implementationAddress: undefined,
         proxyType: undefined,
+        safeTransactions: [],
       },
     });
     setLinkedJobs({});
@@ -2127,6 +2293,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         handleConditionTypeChange,
         handleUpperLimitChange,
         handleLowerLimitChange,
+        handleSafeTransactionsChange,
         linkedJobs,
         handleLinkJob,
         handleDeleteLinkedJob,

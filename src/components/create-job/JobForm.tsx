@@ -317,6 +317,11 @@ export const JobForm: React.FC = () => {
                   sourceUrlError={contractErrors["contractSourceUrl"]}
                   conditionTypeError={contractErrors["contractConditionType"]}
                   limitsError={contractErrors["contractLimits"]}
+                  safeTransactionsError={
+                    contractErrors["safeTransaction"] ||
+                    contractErrors["safeTransactions"] ||
+                    null
+                  }
                   readOnly={isUpdateMode}
                 />
               </Card>

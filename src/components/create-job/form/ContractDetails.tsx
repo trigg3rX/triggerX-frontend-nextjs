@@ -4,6 +4,7 @@ import { Typography } from "../../ui/Typography";
 import { Dropdown, DropdownOption } from "../../ui/Dropdown";
 import React, { useState } from "react";
 import { IpfsScriptWizard } from "./IpfsScriptWizard";
+import { SafeTransactionBuilder } from "./SafeTransactionBuilder";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
 import { FormErrorMessage } from "@/components/common/FormErrorMessage";
@@ -21,6 +22,7 @@ interface ContractDetailsProps {
   sourceUrlError?: string | null;
   conditionTypeError?: string | null;
   limitsError?: string | null;
+  safeTransactionsError?: string | null;
   readOnly?: boolean;
 }
 
@@ -35,6 +37,7 @@ export const ContractDetails = ({
   sourceUrlError = null,
   conditionTypeError = null,
   limitsError = null,
+  safeTransactionsError = null,
   readOnly = false,
 }: ContractDetailsProps) => {
   const {
@@ -49,6 +52,7 @@ export const ContractDetails = ({
     handleArgumentTypeChange,
     handleArgumentValueChange,
     handleIpfsCodeUrlChange,
+    handleSafeTransactionsChange,
     handleSourceTypeChange,
     handleSourceUrlChange,
     handleApiKeySelection,
@@ -57,6 +61,7 @@ export const ContractDetails = ({
     handleUpperLimitChange,
     executionMode,
     selectedSafeWallet,
+    selectedNetwork,
   } = useJobFormContext();
 
   const contract = contractInteractions[contractKey] || {
@@ -76,18 +81,6 @@ export const ContractDetails = ({
 
   const isEventContract = contractKey === "eventContract";
   const isSafeMode = executionMode === "safe" && contractKey === "contract";
-
-  // Auto-set argument type to dynamic when in Safe mode
-  React.useEffect(() => {
-    if (isSafeMode && contract.argumentType !== "dynamic") {
-      handleArgumentTypeChange(contractKey, "dynamic");
-    }
-  }, [
-    isSafeMode,
-    contract.argumentType,
-    contractKey,
-    handleArgumentTypeChange,
-  ]);
 
   // Auto-select execJobFromHub function in Safe mode
   React.useEffect(() => {
@@ -137,13 +130,28 @@ export const ContractDetails = ({
     selectedFunction.inputs &&
     selectedFunction.inputs.length > 0;
 
-  const isDisabled = contract.argumentType === "dynamic" || isSafeMode;
+  const isDisabled = contract.argumentType === "dynamic";
   const functionInputs = (selectedFunction?.inputs || []) as FunctionInput[];
 
   const argumentTypeOptions: DropdownOption[] = [
     { id: "static", name: "Static" },
     { id: "dynamic", name: "Dynamic" },
   ];
+
+  // Default to static argument type when entering Safe mode (without overriding user's choice)
+  React.useEffect(() => {
+    if (
+      isSafeMode &&
+      (!contract.argumentType || contract.argumentType.trim() === "")
+    ) {
+      handleArgumentTypeChange(contractKey, "static");
+    }
+  }, [
+    isSafeMode,
+    contract.argumentType,
+    contractKey,
+    handleArgumentTypeChange,
+  ]);
 
   const getInputName = (input: FunctionInput, index: number) => {
     return typeof input.name === "string" && input.name.length > 0
@@ -152,11 +160,9 @@ export const ContractDetails = ({
   };
 
   // Ensure 'Static' is selected by default if argumentType is empty
-  // Force 'Dynamic' if Safe mode
   const selectedArgumentType =
     argumentTypeOptions.find(
-      (opt) =>
-        opt.id === (isSafeMode ? "dynamic" : contract.argumentType || "static"),
+      (opt) => opt.id === (contract.argumentType || "static"),
     )?.name || "Static";
 
   const conditionTypeOptions: DropdownOption[] = [
@@ -170,7 +176,7 @@ export const ContractDetails = ({
   ];
 
   const handleChange = (value: string) => {
-    if (readOnly || isSafeMode) return;
+    if (readOnly) return;
     handleContractAddressChange(contractKey, value);
     if (value.trim() !== "") {
       setContractErrors((prev) => ({ ...prev, [contractKey]: null }));
@@ -445,7 +451,7 @@ export const ContractDetails = ({
               options={argumentTypeOptions}
               selectedOption={selectedArgumentType}
               onChange={
-                readOnly || isSafeMode
+                readOnly
                   ? () => {}
                   : (option) => {
                       const type = option.name.toLowerCase() as
@@ -454,7 +460,7 @@ export const ContractDetails = ({
                       handleArgumentTypeChange(contractKey, type);
                     }
               }
-              disabled={readOnly || isSafeMode}
+              disabled={readOnly}
             />
 
             <Typography
@@ -463,18 +469,17 @@ export const ContractDetails = ({
               color="secondary"
               className="w-full md:w-[70%] ml-auto mt-2 pl-3"
             >
-              {isSafeMode
-                ? "Safe wallet execution requires dynamic arguments from IPFS"
-                : hasArguments
-                  ? "Select how function arguments should be handled during execution"
-                  : "No arguments required for this function"}
+              {hasArguments
+                ? "Select how function arguments should be handled during execution"
+                : "No arguments required for this function"}
             </Typography>
           </div>
 
-          {/* Function Arguments Section */}
+          {/* Function Arguments Section - Hidden in Safe mode */}
           {contract.targetFunction &&
             functionInputs.length > 0 &&
-            !isDisabled && (
+            !isDisabled &&
+            !isSafeMode && (
               <div
                 className="space-y-6 sm:space-y-6"
                 id={`contract-args-section-${contractKey}`}
@@ -490,34 +495,47 @@ export const ContractDetails = ({
                   </Typography>
                 </div>
                 <FormErrorMessage error={argsError ?? null} className="mb-2" />
-                {!isDisabled &&
-                  functionInputs.map((input, index) => (
-                    <div key={index}>
-                      <TextInput
-                        label={`${getInputName(input, index)} (${input.type})`}
-                        value={contract.argumentValues?.[index] || ""}
-                        onChange={
-                          readOnly
-                            ? () => {}
-                            : (value) => {
-                                handleArgumentValueChange(
-                                  contractKey,
-                                  index,
-                                  value,
-                                );
-                                setContractErrors((prev) => ({
-                                  ...prev,
-                                  [`${contractKey}Args`]: null,
-                                }));
-                              }
-                        }
-                        placeholder={`Enter ${input.type}`}
-                        type="text"
-                        disabled={readOnly}
-                      />
-                    </div>
-                  ))}
+                {functionInputs.map((input, index) => (
+                  <div key={index}>
+                    <TextInput
+                      label={`${getInputName(input, index)} (${input.type})`}
+                      value={contract.argumentValues?.[index] || ""}
+                      onChange={
+                        readOnly
+                          ? () => {}
+                          : (value) => {
+                              handleArgumentValueChange(
+                                contractKey,
+                                index,
+                                value,
+                              );
+                              setContractErrors((prev) => ({
+                                ...prev,
+                                [`${contractKey}Args`]: null,
+                              }));
+                            }
+                      }
+                      placeholder={`Enter ${input.type}`}
+                      type="text"
+                      disabled={readOnly}
+                    />
+                  </div>
+                ))}
               </div>
+            )}
+
+          {/* Safe Transaction Builder - Show when Safe mode + Static arguments */}
+          {isSafeMode &&
+            contract.argumentType === "static" &&
+            !isEventContract && (
+              <SafeTransactionBuilder
+                transactions={contract.safeTransactions || []}
+                onChange={(transactions) =>
+                  handleSafeTransactionsChange(contractKey, transactions)
+                }
+                selectedNetwork={selectedNetwork}
+                error={safeTransactionsError}
+              />
             )}
         </>
       )}

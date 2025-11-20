@@ -17,6 +17,7 @@ interface DropdownProps {
   className?: string;
   icons?: Record<string, React.ReactNode>;
   disabled?: boolean;
+  color?: "primary" | "secondary";
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -27,9 +28,27 @@ export const Dropdown: React.FC<DropdownProps> = ({
   className = "",
   icons = {},
   disabled = false,
+  color = "primary",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const colorClasses = {
+    primary: {
+      trigger:
+        "bg-[#1a1a1a] border-white/10 text-white hover:border-white/30 focus:border-white/30",
+      menu: "bg-[#1a1a1a] border-white/10",
+      optionHover: "hover:bg-white/10",
+    },
+    secondary: {
+      trigger:
+        "bg-white/5 border-white/10 text-white hover:border-white/30 focus:border-white/30",
+      menu: "bg-[#2a2a2a] border-white/10",
+      optionHover: "hover:bg-white/10",
+    },
+  };
+
+  const selectedColors = colorClasses[color] || colorClasses.primary;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -58,7 +77,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
       >
         <div
           className={twMerge(
-            "text-xs xs:text-sm sm:text-base w-full bg-[#1a1a1a] text-white py-2.5 sm:py-3 px-4 rounded-md sm:rounded-lg cursor-pointer border border-white/10 flex items-center gap-5",
+            "text-xs xs:text-sm sm:text-base w-full py-2.5 sm:py-3 px-4 rounded-md sm:rounded-lg cursor-pointer border flex items-center gap-5 transition-colors duration-200",
+            selectedColors.trigger,
             disabled ? "opacity-50 cursor-not-allowed" : "",
           )}
           onClick={() => {
@@ -79,11 +99,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
         </div>
 
         {isOpen && !disabled && (
-          <div className="absolute top-12 sm:top-14 w-full bg-[#1a1a1a] border border-white/10 rounded-md sm:rounded-xl overflow-hidden shadow-lg z-10">
+          <div
+            className={twMerge(
+              "absolute top-12 sm:top-14 w-full rounded-md sm:rounded-xl overflow-hidden shadow-lg z-10 border",
+              selectedColors.menu,
+            )}
+          >
             {options.map((option) => (
               <div
                 key={option.id}
-                className="py-2.5 sm:py-3 px-4 hover:bg-[#333] cursor-pointer rounded-md sm:rounded-lg flex items-center gap-5"
+                className={twMerge(
+                  "py-2.5 sm:py-3 px-4 cursor-pointer rounded-md sm:rounded-lg flex items-center gap-5 transition-colors",
+                  selectedColors.optionHover,
+                )}
                 onClick={() => {
                   if (!disabled) {
                     onChange(option);

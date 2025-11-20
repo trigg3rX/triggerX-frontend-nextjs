@@ -12,9 +12,11 @@ import { TextInput } from "@/components/ui/TextInput";
 import { Button } from "@/components/ui/Button";
 import { HoverHighlight } from "@/components/common/HoverHighlight";
 import NavLink from "@/components/common/header/NavLink";
+import { Dropdown, DropdownOption } from "@/components/ui/Dropdown";
 import { InfoIcon, XIcon } from "lucide-react";
 import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 import { devLog } from "@/lib/devLog";
+import { useJobFormContext } from "@/hooks/useJobFormContext";
 
 interface IpfsScriptWizardProps {
   isOpen: boolean;
@@ -27,7 +29,31 @@ interface IpfsScriptWizardProps {
 
 type WizardStep = 1 | 2 | 3;
 
+type SupportedLanguage = "go" | "ts";
+
 const STORAGE_TOKEN_KEY = "pinata.jwt";
+
+const LANGUAGE_PLACEHOLDERS: Record<SupportedLanguage, string> = {
+  go: 'package main\n\nimport (\n    "encoding/json"\n    "fmt"\n)\n\nfunc main() {\n    // Build and print a JSON array of args\n    args := []interface{}{\n        "0x...", // example arg\n    }\n\n    out, _ := json.MarshalIndent(args, "", "  ")\n    fmt.Println(string(out))\n}',
+  ts: `async function main() {
+  // Build and return an array of args for the contract call
+  const args = [
+    "0x...", // example arg
+  ];
+  return args;
+}
+
+main()
+  .then((args) => console.log(JSON.stringify(args, null, 2)))
+  .catch((err) => {
+    console.error("Script error:", err);
+    process.exit(1);
+  });`,
+};
+const LANGUAGE_OPTIONS: DropdownOption[] = [
+  { id: "go", name: "Go" },
+  { id: "ts", name: "TypeScript" },
+];
 
 export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
   isOpen,
@@ -37,10 +63,14 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
   selectedSafeWallet = null,
   targetFunction = "",
 }) => {
+  const { language: formLanguage, setLanguage: setFormLanguage } =
+    useJobFormContext();
+  const initialLanguage: SupportedLanguage =
+    formLanguage === "ts" ? "ts" : "go";
   const [mode, setMode] = useState<"url" | "pinata">("url");
   const [step, setStep] = useState<WizardStep>(1);
   const [script, setScript] = useState<string>(
-    'package main\n\nimport (\n    "encoding/json"\n    "fmt"\n)\n\nfunc main() {\n    // Build and print a JSON array of args\n    args := []interface{}{\n        "0x...", // example arg\n    }\n\n    out, _ := json.MarshalIndent(args, "", "  ")\n    fmt.Println(string(out))\n}',
+    LANGUAGE_PLACEHOLDERS[initialLanguage],
   );
   const [scriptError, setScriptError] = useState<string>("");
   const [isValidating, setIsValidating] = useState<boolean>(false);
@@ -55,6 +85,8 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
   const helpPanelRef = useRef<HTMLDivElement | null>(null);
   const helpToggleRef = useRef<HTMLButtonElement | null>(null);
 
+  const previousLanguageRef = useRef<SupportedLanguage>(initialLanguage);
+
   useEffect(() => {
     if (isOpen) {
       setMode("url");
@@ -67,8 +99,30 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       setIsScriptValidated(false);
       const saved = localStorage.getItem(STORAGE_TOKEN_KEY) || "";
       if (saved) setToken(saved);
+      if (!formLanguage) {
+        setFormLanguage("go");
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, formLanguage, setFormLanguage]);
+
+  useEffect(() => {
+    const previousLanguage = previousLanguageRef.current;
+    if (previousLanguage === initialLanguage) {
+      return;
+    }
+    const previousPlaceholder = LANGUAGE_PLACEHOLDERS[previousLanguage];
+    const nextPlaceholder = LANGUAGE_PLACEHOLDERS[initialLanguage];
+    if (
+      script.trim() === "" ||
+      script === previousPlaceholder ||
+      script === nextPlaceholder
+    ) {
+      setScript(nextPlaceholder);
+      setIsScriptValidated(false);
+      setScriptError("");
+    }
+    previousLanguageRef.current = initialLanguage;
+  }, [initialLanguage, script]);
 
   // Step 1 continue triggers validation on click
   const canContinueStep2 = useMemo(() => token.trim().length > 0, [token]);
@@ -96,7 +150,10 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
 
   const buildValidationRequestBody = useCallback(
     (code: string) => {
-      const base = { code, language: "go" } as Record<string, unknown>;
+      const base = {
+        code,
+        language: initialLanguage,
+      } as Record<string, unknown>;
       if (isSafeMode && selectedSafeWallet && targetFunction) {
         return {
           ...base,
@@ -107,7 +164,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       }
       return { ...base, IsSafe: false, target_function: targetFunction };
     },
-    [isSafeMode, selectedSafeWallet, targetFunction],
+    [isSafeMode, selectedSafeWallet, targetFunction, initialLanguage],
   );
 
   const callValidationApi = useCallback(
@@ -116,6 +173,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
         "Validation API URL:",
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
       );
+      devLog("[IpfsScriptWizard] Request body:", requestBody);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
         {
@@ -164,7 +222,11 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
   const validateScript = useCallback(async () => {
     const code = script.trim();
     if (!code) {
-      setScriptError("Please paste your Go code");
+      setScriptError(
+        `Please paste your ${
+          initialLanguage === "ts" ? "TypeScript" : "Go"
+        } code`,
+      );
       return false;
     }
     setIsValidating(true);
@@ -190,6 +252,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     assertValidationResult,
     buildValidationRequestBody,
     callValidationApi,
+    initialLanguage,
   ]);
 
   const handleNextFromStep1 = async () => {
@@ -373,6 +436,25 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
 
         <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
+        <Dropdown
+          label="Script Language"
+          options={LANGUAGE_OPTIONS}
+          selectedOption={
+            LANGUAGE_OPTIONS.find((opt) => opt.id === initialLanguage)?.name ||
+            "Go"
+          }
+          onChange={(option) => {
+            const lang =
+              (option.id as SupportedLanguage) ?? ("go" as SupportedLanguage);
+            devLog("[IpfsScriptWizard] Selected language:", lang);
+            setFormLanguage(lang);
+            setScriptError("");
+            setIsScriptValidated(false);
+          }}
+          className="w-full"
+          color="secondary"
+        />
+
         {mode === "url" && (
           <div className="space-y-4">
             <label className="block mb-2">
@@ -445,14 +527,15 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
         {mode === "pinata" && step === 1 && (
           <div className="space-y-3">
             <Typography variant="body" align="left" color="secondary">
-              Paste your Golang script that returns an array of args for
-              function call.
+              {`Paste your ${
+                initialLanguage === "ts" ? "TypeScript" : "Golang"
+              } script that returns an array of args for the function call.`}
             </Typography>
             <textarea
               value={script}
               onChange={(e) => setScript(e.target.value)}
               className={`w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[170px] text-sm overflow-auto ${scrollbarStyles.customScrollbar}`}
-              placeholder={`package main\n\nimport (\n  \"encoding/json\"\n  \"fmt\"\n)\n\nfunc main() {\n  args := []interface{}{\n    // your args here\n  }\n  out, _ := json.MarshalIndent(args, \"\", \"  \")\n  fmt.Println(string(out))\n}`}
+              placeholder={LANGUAGE_PLACEHOLDERS[initialLanguage]}
             />
             {scriptError && (
               <Typography variant="caption" color="error" align="left">
