@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Typography } from "../ui/Typography";
+import React, { useCallback, useRef, useState } from "react";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import "./customToolbox";
 import { validateBlocklyWorkspace } from "./validateBlocklyWorkspace";
 import JobFeeModal from "../create-job/JobFeeModal";
-import { useTGBalance } from "@/contexts/TGBalanceContext";
 import { useAccount } from "wagmi";
 import { syncBlocklyToJobForm } from "./utils/syncBlocklyToJobForm";
 
@@ -17,9 +15,9 @@ import { useBlocklyWorkspace } from "./hooks/useBlocklyWorkspace";
 // Components
 import { BlocklyHeader } from "./components/BlocklyHeader";
 import { ErrorCard } from "./components/ErrorCard";
-import { BalanceCard } from "./components/BalanceCard";
 import { PermissionCard } from "./components/PermissionCard";
 import { BlocklyWorkspaceSection } from "./components/BlocklyWorkspaceSection";
+import { MobileWarning } from "./MobileWarning";
 
 export default function BlocklyDemo() {
   const workspaceScopeRef = useRef<HTMLDivElement | null>(null);
@@ -39,9 +37,8 @@ export default function BlocklyDemo() {
     setIsModalOpen,
   } = jobFormContext;
 
-  // TG Balance context
-  const { userBalance, fetchTGBalance } = useTGBalance();
-  const { address, chain } = useAccount();
+  // Account info
+  const { address } = useAccount();
 
   // Permission and validation state
   const [hasConfirmedPermission, setHasConfirmedPermission] =
@@ -53,19 +50,6 @@ export default function BlocklyDemo() {
   // Custom hooks
   useBlocklyGenerators();
   const { xml, onXmlChange } = useBlocklyWorkspace();
-
-  // Fetch TG balance on mount and when wallet changes
-  useEffect(() => {
-    if (address) {
-      fetchTGBalance();
-    }
-  }, [address, chain, fetchTGBalance]);
-
-  useEffect(() => {
-    if (isModalOpen && address) {
-      fetchTGBalance();
-    }
-  }, [isModalOpen, address, fetchTGBalance]);
 
   const handleCreateJob = useCallback(
     (e: React.FormEvent) => {
@@ -151,60 +135,52 @@ export default function BlocklyDemo() {
     ],
   );
 
-  const handleSaveJob = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Workspace saved successfully!");
-  }, []);
-
   return (
-    <div className="flex flex-col gap-2 -mt-[10px] lg:-my-[200px] pt-[100px] pb-[400px]">
-      <Typography variant="h1">Create Automation Job</Typography>
+    <>
+      {/* Mobile/Tablet Warning - Show below 768px */}
+      <MobileWarning />
 
-      <BlocklyHeader
-        jobTitle={jobTitle}
-        setJobTitle={setJobTitle}
-        jobTitleError={jobTitleError}
-        setJobTitleError={setJobTitleError}
-        jobTitleErrorRef={jobTitleErrorRef}
-        isModalOpen={isModalOpen}
-        onSaveJob={handleSaveJob}
-        onCreateJob={handleCreateJob}
-      />
+      {/* Desktop View - Show 768px and above */}
+      <div className="hidden md:flex flex-col gap-2 -mt-[10px] lg:-my-[150px]">
+        <BlocklyHeader
+          jobTitle={jobTitle}
+          setJobTitle={setJobTitle}
+          jobTitleError={jobTitleError}
+          setJobTitleError={setJobTitleError}
+          jobTitleErrorRef={jobTitleErrorRef}
+          isModalOpen={isModalOpen}
+          onCreateJob={handleCreateJob}
+        />
 
-      <ErrorCard
-        error={workspaceError}
-        onClose={() => setWorkspaceError(null)}
-      />
+        <ErrorCard
+          error={workspaceError}
+          onClose={() => setWorkspaceError(null)}
+        />
 
-      <BalanceCard
-        address={address}
-        userBalance={userBalance}
-        onRefresh={fetchTGBalance}
-      />
+        <PermissionCard
+          hasConfirmedPermission={hasConfirmedPermission}
+          setHasConfirmedPermission={setHasConfirmedPermission}
+          permissionError={permissionError}
+          setPermissionError={setPermissionError}
+          permissionCheckboxRef={permissionCheckboxRef}
+          selectedNetwork={selectedNetwork}
+        />
 
-      <PermissionCard
-        hasConfirmedPermission={hasConfirmedPermission}
-        setHasConfirmedPermission={setHasConfirmedPermission}
-        permissionError={permissionError}
-        setPermissionError={setPermissionError}
-        permissionCheckboxRef={permissionCheckboxRef}
-        selectedNetwork={selectedNetwork}
-      />
+        <div className="flex gap-2 h-[80vh]">
+          <BlocklyWorkspaceSection
+            xml={xml}
+            onXmlChange={onXmlChange}
+            workspaceScopeRef={workspaceScopeRef}
+          />
+        </div>
 
-      <div className="flex gap-2 h-[80vh]">
-        <BlocklyWorkspaceSection
-          xml={xml}
-          onXmlChange={onXmlChange}
-          workspaceScopeRef={workspaceScopeRef}
+        {/* Job Fee Modal */}
+        <JobFeeModal
+          isOpen={isModalOpen}
+          setIsOpen={setIsModalOpen}
+          estimatedFee={estimatedFee}
         />
       </div>
-
-      {/* Job Fee Modal */}
-      <JobFeeModal
-        isOpen={isModalOpen}
-        setIsOpen={setIsModalOpen}
-        estimatedFee={estimatedFee}
-      />
-    </div>
+    </>
   );
 }

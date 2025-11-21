@@ -98,6 +98,7 @@ export const useDevHubPost = (slug: string): UseDevHubPostReturn => {
 
   useEffect(() => {
     fetchPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   return { post, isLoading, error, refetch: fetchPost };

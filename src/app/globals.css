@@ -75,6 +75,10 @@ body {
   background-attachment: fixed;
 }
 
+[data-rk] .iekbcc0 {
+  font-size: 98% !important;
+}
+
 [data-rk] .ju367vn,
 [data-rk] .ju367va3 {
   border-radius: 50px !important;
@@ -110,6 +114,18 @@ body {
 
 [data-rk] .ju367vcl {
   border-color: transparent !important;
+}
+
+[data-rk] .ju367v93 {
+  width: 20px !important;
+}
+
+[data-rk] .ju367v2a {
+  height: 20px !important;
+}
+
+[data-rk] .ju367v1s {
+  gap: 5px !important;
 }
 
 @media screen and (max-width: 620px) {
@@ -155,6 +171,18 @@ body {
   }
   [data-rk] .ju367v6j {
     padding-bottom: 4px !important;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(-3px);
+    animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+  }
+  50% {
+    transform: translateY(3px);
+    animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
   }
 }
 

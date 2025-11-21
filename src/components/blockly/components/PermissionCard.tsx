@@ -26,33 +26,38 @@ export function PermissionCard({
       ? "0x3509F38e10eB3cDcE7695743cB7e81446F4d8A33"
       : "0x179c62e83c3f90981B65bc12176FdFB0f2efAD54";
 
+  const handleToggle = () => {
+    const newValue = !hasConfirmedPermission;
+    setHasConfirmedPermission(newValue);
+    if (newValue) setPermissionError(null);
+  };
+
   return (
     <div ref={permissionCheckboxRef}>
-      <Card className="flex flex-col items-start gap-2 mt-4">
+      <Card
+        className="flex flex-col items-start gap-2 mt-4 cursor-pointer hover:border-white/20"
+        onClick={handleToggle}
+      >
         <div className="flex items-start gap-2">
           <input
             id="blockly-permission-checkbox"
             type="checkbox"
             checked={hasConfirmedPermission}
-            onChange={(e) => {
-              setHasConfirmedPermission(e.target.checked);
-              if (e.target.checked) setPermissionError(null);
-            }}
-            className="w-4 h-4 mt-1"
+            onChange={() => {}}
+            className="w-4 h-4 mt-1 pointer-events-none"
           />
-          <label
-            htmlFor="blockly-permission-checkbox"
-            className="text-sm select-none text-gray-400 cursor-pointer"
-          >
+          <div className="text-sm select-none text-gray-400">
             If your target function contains a modifier or requires certain
             address for calling the function, then make sure that this
             <span className="ml-2 text-white break-all">{triggerAddress}</span>
-            <LucideCopyButton
-              text={triggerAddress}
-              className="align-middle inline-block !px-2"
-            />
+            <span onClick={(e) => e.stopPropagation()} className="inline-block">
+              <LucideCopyButton
+                text={triggerAddress}
+                className="align-middle inline-block !px-2"
+              />
+            </span>
             address have role/permission to call that function.
-          </label>
+          </div>
         </div>
         {permissionError && (
           <div className="text-red-500 text-xs sm:text-sm ml-6">

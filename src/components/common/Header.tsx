@@ -16,6 +16,7 @@ const navItems = [
   { href: "/", label: "Create Job" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/safe", label: "Safe Wallet" },
 ];
 
 const Header: React.FC = () => {
@@ -64,36 +65,38 @@ const Header: React.FC = () => {
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
       <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
-      {isDesktop && !isBlocklyDemoPage ? (
+      {isDesktop ? (
         /* Desktop Header */
         <div
           className={`w-[90%] mx-auto ${bannerVisible ? "my-6 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
         >
           {" "}
-          <div className="w-[170px]">
+          <div className="w-[130px] xl:w-[160px]">
             <LogoLink
               width={180}
               height={40}
-              className="w-[140px] xl:w-[170px] h-auto"
+              className="w-[130px] xl:w-[160px] h-auto"
               priority={true}
             />
           </div>
           <div className="relative">
-            <div
-              className="absolute z-0 w-[500px] h-max transition-all duration-700 ease-out"
-              style={{
-                top: isScrolled ? -300 : -50,
-                left: "50%",
-                transform: "translateX(-50%)",
-              }}
-            >
-              <LandingImage
-                alt="Navigation Background Design"
-                width={658}
-                height={386}
-                priority={!isScrolled} // Only prioritize when visible
-              />
-            </div>
+            {!isBlocklyDemoPage && (
+              <div
+                className="absolute z-0 w-[500px] h-max transition-all duration-700 ease-out"
+                style={{
+                  top: isScrolled ? -300 : -50,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                }}
+              >
+                <LandingImage
+                  alt="Navigation Background Design"
+                  width={658}
+                  height={386}
+                  priority={!isScrolled} // Only prioritize when visible
+                />
+              </div>
+            )}
 
             <nav className="relative bg-[#181818F0] rounded-xl z-10">
               <HoverHighlight>
@@ -103,14 +106,14 @@ const Header: React.FC = () => {
                     href={item.href}
                     label={item.label}
                     isActive={pathname === item.href}
-                    className="text-center xl:w-[150px] lg:w-[110px] lg:text-[12px] xl:text-base text-gray-200 hover:text-white"
+                    className="text-center lg:w-[95px] xl:w-[135px] lg:text-[11px] xl:text-[14px] text-gray-200 hover:text-white"
                     onClick={() => setMenuOpen(false)}
                   />
                 ))}
               </HoverHighlight>
             </nav>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center lg:gap-[5px]">
             <ConnectButton
               chainStatus="icon"
               accountStatus="address"
@@ -123,46 +126,44 @@ const Header: React.FC = () => {
         /* Mobile Header */
         <>
           <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
-          {!isBlocklyDemoPage && (
-            <div
-              className={`w-[90%] mx-auto ${bannerVisible ? "my-8 sm:my-12 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
-            >
-              <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
-                <LogoLink
-                  width={130}
-                  height={30}
-                  className="w-[170px] h-auto"
-                  priority={true}
-                />
-              </div>
-
-              <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
-                <LandingImage
-                  alt="Mobile Navigation Background"
-                  width={256}
-                  height={100}
-                  priority={true}
-                />
-              </div>
-
-              <div className="relative flex items-center gap-2 md:gap-4 z-10">
-                <button
-                  onClick={() => setMenuOpen(!menuOpen)}
-                  className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
-                  aria-label="Toggle menu"
-                  aria-expanded={menuOpen}
-                >
-                  {menuOpen ? "✖" : "☰"}
-                </button>
-                <MobileMenu
-                  isOpen={menuOpen}
-                  onClose={() => setMenuOpen(false)}
-                  navItems={navItems}
-                  currentPath={pathname}
-                />
-              </div>
+          <div
+            className={`w-[90%] mx-auto ${bannerVisible ? "my-8 sm:my-12 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
+          >
+            <div className="flex-shrink-0 relative z-10 w-[120px] sm:w-[140px] md:w-[170px] h-max">
+              <LogoLink
+                width={130}
+                height={30}
+                className="w-[170px] h-auto"
+                priority={true}
+              />
             </div>
-          )}
+
+            <div className="absolute left-[calc(50%-90px)] sm:left-[calc(50%-120px)] -top-3 sm:-top-7 w-[180px] sm:w-[240px]">
+              <LandingImage
+                alt="Mobile Navigation Background"
+                width={256}
+                height={100}
+                priority={true}
+              />
+            </div>
+
+            <div className="relative flex items-center gap-2 md:gap-4 z-10">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="text-white text-xl sm:text-2xl focus:outline-none mt-1 md:mt-2"
+                aria-label="Toggle menu"
+                aria-expanded={menuOpen}
+              >
+                {menuOpen ? "✖" : "☰"}
+              </button>
+              <MobileMenu
+                isOpen={menuOpen}
+                onClose={() => setMenuOpen(false)}
+                navItems={navItems}
+                currentPath={pathname}
+              />
+            </div>
+          </div>
         </>
       )}
     </header>

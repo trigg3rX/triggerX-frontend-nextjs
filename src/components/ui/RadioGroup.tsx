@@ -57,7 +57,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
               }
               disabled={disabled || option.disabled}
             />
-            <span className="ml-2  text-[10px] xs:text-xs sm:text-sm">
+            <span className="ml-2 text-[10px] xs:text-xs sm:text-sm">
               {option.label}
             </span>
           </label>

@@ -9,7 +9,6 @@ interface BlocklyHeaderProps {
   setJobTitleError: (error: string | null) => void;
   jobTitleErrorRef: React.RefObject<HTMLDivElement | null>;
   isModalOpen: boolean;
-  onSaveJob: (e: React.FormEvent) => void;
   onCreateJob: (e: React.FormEvent) => void;
 }
 
@@ -20,7 +19,6 @@ export function BlocklyHeader({
   setJobTitleError,
   jobTitleErrorRef,
   isModalOpen,
-  onSaveJob,
   onCreateJob,
 }: BlocklyHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -156,15 +154,6 @@ export function BlocklyHeader({
       </div>
 
       <div className="flex gap-4 justify-center items-center relative z-10">
-        <Button
-          type="button"
-          color="white"
-          className="min-w-[120px] md:min-w-[170px]"
-          onClick={onSaveJob}
-        >
-          Save Job
-        </Button>
-
         <Button
           type="button"
           color="yellow"

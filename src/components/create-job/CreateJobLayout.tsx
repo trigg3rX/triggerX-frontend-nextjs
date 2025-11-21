@@ -8,6 +8,7 @@ import templatesData from "@/data/templates.json";
 import { JobFormSection } from "./JobFormSection";
 import { Typography } from "../ui/Typography";
 import { useJob } from "@/contexts/JobContext";
+import { BlocklyPlaygroundLink } from "./BlocklyPlaygroundLink";
 
 export const CreateJobLayout: React.FC = () => {
   return (
@@ -57,6 +58,7 @@ const CreateJobLayoutContent: React.FC = () => {
       <div className="flex flex-col xl:flex-row gap-6 sm:gap-8 p-4 sm:p-6">
         <div className="w-full xl:w-1/3">
           <div className=" space-y-6 sm:space-y-8">
+            <BlocklyPlaygroundLink />
             <PointsSystem />
             <TemplateList
               templates={templatesData.templates}

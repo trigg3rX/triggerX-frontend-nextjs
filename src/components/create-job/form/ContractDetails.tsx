@@ -2,10 +2,14 @@ import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { TextInput } from "../../ui/TextInput";
 import { Typography } from "../../ui/Typography";
 import { Dropdown, DropdownOption } from "../../ui/Dropdown";
-import React from "react";
+import React, { useState } from "react";
+import { IpfsScriptWizard } from "./IpfsScriptWizard";
+import { SafeTransactionBuilder } from "./SafeTransactionBuilder";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
 import { FormErrorMessage } from "@/components/common/FormErrorMessage";
+import { ExternalLinkIcon, LucideCircleArrowOutUpLeft } from "lucide-react";
+import Link from "next/link";
 
 interface ContractDetailsProps {
   contractKey: string;
@@ -18,6 +22,7 @@ interface ContractDetailsProps {
   sourceUrlError?: string | null;
   conditionTypeError?: string | null;
   limitsError?: string | null;
+  safeTransactionsError?: string | null;
   readOnly?: boolean;
 }
 
@@ -32,6 +37,7 @@ export const ContractDetails = ({
   sourceUrlError = null,
   conditionTypeError = null,
   limitsError = null,
+  safeTransactionsError = null,
   readOnly = false,
 }: ContractDetailsProps) => {
   const {
@@ -46,12 +52,16 @@ export const ContractDetails = ({
     handleArgumentTypeChange,
     handleArgumentValueChange,
     handleIpfsCodeUrlChange,
+    handleSafeTransactionsChange,
     handleSourceTypeChange,
     handleSourceUrlChange,
     handleApiKeySelection,
     handleConditionTypeChange,
     handleLowerLimitChange,
     handleUpperLimitChange,
+    executionMode,
+    selectedSafeWallet,
+    selectedNetwork,
   } = useJobFormContext();
 
   const contract = contractInteractions[contractKey] || {
@@ -70,6 +80,29 @@ export const ContractDetails = ({
   };
 
   const isEventContract = contractKey === "eventContract";
+  const isSafeMode = executionMode === "safe" && contractKey === "contract";
+
+  // Auto-select execJobFromHub function in Safe mode
+  React.useEffect(() => {
+    if (isSafeMode && contract.functions.length > 0) {
+      const execJobFromHub = contract.functions.find(
+        (func) => func.name === "execJobFromHub",
+      );
+      if (execJobFromHub && !contract.targetFunction) {
+        const signature = formatSignature(
+          execJobFromHub.name,
+          execJobFromHub.inputs,
+        );
+        handleFunctionChange(contractKey, signature);
+      }
+    }
+  }, [
+    isSafeMode,
+    contract.functions,
+    contract.targetFunction,
+    contractKey,
+    handleFunctionChange,
+  ]);
 
   const formatSignature = (name: string, inputs: { type: string }[]) =>
     `${name}(${inputs.map((input) => input.type).join(",")})`;
@@ -105,6 +138,21 @@ export const ContractDetails = ({
     { id: "dynamic", name: "Dynamic" },
   ];
 
+  // Default to static argument type when entering Safe mode (without overriding user's choice)
+  React.useEffect(() => {
+    if (
+      isSafeMode &&
+      (!contract.argumentType || contract.argumentType.trim() === "")
+    ) {
+      handleArgumentTypeChange(contractKey, "static");
+    }
+  }, [
+    isSafeMode,
+    contract.argumentType,
+    contractKey,
+    handleArgumentTypeChange,
+  ]);
+
   const getInputName = (input: FunctionInput, index: number) => {
     return typeof input.name === "string" && input.name.length > 0
       ? input.name
@@ -136,21 +184,22 @@ export const ContractDetails = ({
   };
 
   const targetDropdownId = `${contractKey}-target-dropdown`;
+  const [isIpfsWizardOpen, setIsIpfsWizardOpen] = useState(false);
 
   return (
     <div className="space-y-6">
       <TextInput
-        label={label}
+        label={isSafeMode ? "Safe Module Address" : label}
         value={contract.address}
         onChange={handleChange}
-        placeholder="Contract address"
+        placeholder={isSafeMode ? "Safe Module Address" : "Contract address"}
         type="text"
         id={`contract-address-input-${contractKey}`}
         error={error ?? null}
-        readOnly={readOnly}
+        readOnly={readOnly || isSafeMode}
       />
 
-      {contract.address && (
+      {contract.address && !isSafeMode && (
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
           <Typography variant="h4" color="secondary" className="text-nowrap">
             Contract ABI
@@ -191,25 +240,28 @@ export const ContractDetails = ({
         </div>
       )}
 
-      {contract.address && !contract.abi && !contract.isCheckingABI && (
-        <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
-          <Typography
-            variant="h4"
-            color="secondary"
-            className="text-nowrap h-[50px] flex items-center"
-          >
-            Manual ABI Input
-          </Typography>
-          <div className="w-full md:w-[70%]">
-            <textarea
-              id={`manualEventABI-${contractKey}`}
-              value={contract.manualABI}
-              onChange={
-                readOnly
-                  ? undefined
-                  : (e) => handleManualABIChange(contractKey, e.target.value)
-              }
-              placeholder={`[
+      {contract.address &&
+        !contract.abi &&
+        !contract.isCheckingABI &&
+        !isSafeMode && (
+          <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
+            <Typography
+              variant="h4"
+              color="secondary"
+              className="text-nowrap h-[50px] flex items-center"
+            >
+              Manual ABI Input
+            </Typography>
+            <div className="w-full md:w-[70%]">
+              <textarea
+                id={`manualEventABI-${contractKey}`}
+                value={contract.manualABI}
+                onChange={
+                  readOnly
+                    ? undefined
+                    : (e) => handleManualABIChange(contractKey, e.target.value)
+                }
+                placeholder={`[
 {
     "inputs": [],
     "name": "functionName",
@@ -217,23 +269,23 @@ export const ContractDetails = ({
     "stateMutability": "nonpayable"
   }
 ]`}
-              className="text-xs xs:text-sm sm:text-base w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[230px]"
-              readOnly={readOnly}
-              disabled={readOnly}
-            />
-            <FormErrorMessage error={abiError ?? null} className="mt-1" />
-            <Typography
-              variant="caption"
-              align="left"
-              color="secondary"
-              className="mt-1"
-            >
-              Automatic fetch failed. To continue, please enter the contract ABI
-              in JSON format.
-            </Typography>
+                className="text-xs xs:text-sm sm:text-base w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[230px]"
+                readOnly={readOnly}
+                disabled={readOnly}
+              />
+              <FormErrorMessage error={abiError ?? null} className="mt-1" />
+              <Typography
+                variant="caption"
+                align="left"
+                color="secondary"
+                className="mt-1"
+              >
+                Automatic fetch failed. To continue, please enter the contract
+                ABI in JSON format.
+              </Typography>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {contract.address && contract.abi && (
         <div className="space-y-auto">
@@ -401,11 +453,12 @@ export const ContractDetails = ({
               onChange={
                 readOnly
                   ? () => {}
-                  : (option) =>
-                      handleArgumentTypeChange(
-                        contractKey,
-                        option.name.toLowerCase() as "static" | "dynamic",
-                      )
+                  : (option) => {
+                      const type = option.name.toLowerCase() as
+                        | "static"
+                        | "dynamic";
+                      handleArgumentTypeChange(contractKey, type);
+                    }
               }
               disabled={readOnly}
             />
@@ -422,10 +475,11 @@ export const ContractDetails = ({
             </Typography>
           </div>
 
-          {/* Function Arguments Section */}
+          {/* Function Arguments Section - Hidden in Safe mode */}
           {contract.targetFunction &&
             functionInputs.length > 0 &&
-            !isDisabled && (
+            !isDisabled &&
+            !isSafeMode && (
               <div
                 className="space-y-6 sm:space-y-6"
                 id={`contract-args-section-${contractKey}`}
@@ -441,34 +495,47 @@ export const ContractDetails = ({
                   </Typography>
                 </div>
                 <FormErrorMessage error={argsError ?? null} className="mb-2" />
-                {!isDisabled &&
-                  functionInputs.map((input, index) => (
-                    <div key={index}>
-                      <TextInput
-                        label={`${getInputName(input, index)} (${input.type})`}
-                        value={contract.argumentValues?.[index] || ""}
-                        onChange={
-                          readOnly
-                            ? () => {}
-                            : (value) => {
-                                handleArgumentValueChange(
-                                  contractKey,
-                                  index,
-                                  value,
-                                );
-                                setContractErrors((prev) => ({
-                                  ...prev,
-                                  [`${contractKey}Args`]: null,
-                                }));
-                              }
-                        }
-                        placeholder={`Enter ${input.type}`}
-                        type="text"
-                        disabled={readOnly}
-                      />
-                    </div>
-                  ))}
+                {functionInputs.map((input, index) => (
+                  <div key={index}>
+                    <TextInput
+                      label={`${getInputName(input, index)} (${input.type})`}
+                      value={contract.argumentValues?.[index] || ""}
+                      onChange={
+                        readOnly
+                          ? () => {}
+                          : (value) => {
+                              handleArgumentValueChange(
+                                contractKey,
+                                index,
+                                value,
+                              );
+                              setContractErrors((prev) => ({
+                                ...prev,
+                                [`${contractKey}Args`]: null,
+                              }));
+                            }
+                      }
+                      placeholder={`Enter ${input.type}`}
+                      type="text"
+                      disabled={readOnly}
+                    />
+                  </div>
+                ))}
               </div>
+            )}
+
+          {/* Safe Transaction Builder - Show when Safe mode + Static arguments */}
+          {isSafeMode &&
+            contract.argumentType === "static" &&
+            !isEventContract && (
+              <SafeTransactionBuilder
+                transactions={contract.safeTransactions || []}
+                onChange={(transactions) =>
+                  handleSafeTransactionsChange(contractKey, transactions)
+                }
+                selectedNetwork={selectedNetwork}
+                error={safeTransactionsError}
+              />
             )}
         </>
       )}
@@ -476,26 +543,61 @@ export const ContractDetails = ({
       {/* IPFS Code URL Field */}
       {contract.argumentType === "dynamic" && (
         <div className="space-y-auto">
-          <TextInput
-            label="IPFS Code URL"
-            value={contract.ipfsCodeUrl || ""}
-            onChange={
-              readOnly
-                ? () => {}
-                : (value) => {
-                    handleIpfsCodeUrlChange(contractKey, value);
-                    setContractErrors((prev) => ({
-                      ...prev,
-                      [`${contractKey}Ipfs`]: null,
-                    }));
-                  }
-            }
-            placeholder="Enter IPFS URL or CID (e.g., ipfs://... or https://ipfs.io/ipfs/...)"
-            error={ipfsError ?? null}
-            type="text"
-            id={`contract-ipfs-code-url-${contractKey}`}
-            disabled={readOnly}
-          />
+          {contract.ipfsCodeUrl ? (
+            <TextInput
+              label="IPFS Code URL"
+              value={contract.ipfsCodeUrl || ""}
+              onChange={() => {}}
+              placeholder="IPFS URL"
+              error={ipfsError ?? null}
+              type="text"
+              id={`contract-ipfs-code-url-${contractKey}`}
+              disabled
+              endAdornment={
+                <Link
+                  href={(() => {
+                    const url = contract.ipfsCodeUrl;
+                    if (url.startsWith("ipfs://")) {
+                      const cid = url.replace("ipfs://", "");
+                      return `https://ipfs.io/ipfs/${cid}`;
+                    }
+                    return url;
+                  })()}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-white/70 hover:text-white"
+                  aria-label="Open IPFS URL"
+                >
+                  <ExternalLinkIcon className="w-4 h-4" />
+                </Link>
+              }
+            />
+          ) : (
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
+              <Typography
+                variant="h4"
+                color="secondary"
+                className="text-nowrap"
+              >
+                IPFS Code URL
+              </Typography>
+              <div className="w-full md:w-[70%]">
+                <button
+                  type="button"
+                  onClick={() => !readOnly && setIsIpfsWizardOpen(true)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={readOnly}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm sm:text-base">
+                      Upload or Validate Script
+                    </span>
+                    <LucideCircleArrowOutUpLeft className="w-4 h-4 text-white/50" />
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
           <div className="w-full md:w-[70%] ml-auto pl-3 mt-3 flex flex-wrap gap-2">
             <FormErrorMessage error={ipfsError ?? null} className="mb-1" />
             {contract.ipfsCodeUrlError && (
@@ -503,9 +605,6 @@ export const ContractDetails = ({
                 {contract.ipfsCodeUrlError}
               </Typography>
             )}
-            <Typography variant="caption" color="secondary" align="left">
-              Provide an IPFS URL or CID, where your code is stored.
-            </Typography>
           </div>
         </div>
       )}
@@ -622,47 +721,6 @@ export const ContractDetails = ({
               </div>
             </div>
           )}
-
-          {/* API Keys Selection */}
-          {/* {contract.sourceUrl && !contract.sourceUrlError && (
-            <div className="space-y-auto mt-4">
-              {contract.isFetchingApiKeys ? (
-                <div className="flex items-center ml-3">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
-                  <Typography variant="body" color="secondary" className="pl-2">
-                    Fetching API keys...
-                  </Typography>
-                </div>
-              ) : contract.apiKeysError ? (
-                <Typography variant="caption" color="error" align="left">
-                  {contract.apiKeysError}
-                </Typography>
-              ) : contract.apiKeys && contract.apiKeys.length > 0 ? (
-                <div className="space-y-2">
-                  <RadioGroup
-                    label="API Key"
-                    options={contract.apiKeys.map((apiKey) => ({
-                      label: apiKey.name,
-                      value: String(apiKey.value),
-                    }))}
-                    value={contract.selectedApiKey || ""}
-                    onChange={
-                      readOnly
-                        ? () => {}
-                        : (value) =>
-                            handleApiKeySelection(contractKey, String(value))
-                    }
-                    name={`apiKey-${contractKey}`}
-                    disabled={readOnly}
-                  />
-                </div>
-              ) : contract.sourceUrl && !contract.isFetchingApiKeys ? (
-                <Typography variant="caption" color="secondary" align="left">
-                  No API keys found from the provided URL.
-                </Typography>
-              ) : null}
-            </div>
-          )} */}
 
           {/* Condition Type Field */}
           <div id={`contract-condition-type-${contractKey}`}>
@@ -798,6 +856,25 @@ export const ContractDetails = ({
             </>
           )}
         </>
+      )}
+
+      {/* IPFS Script Wizard */}
+      {contract.argumentType === "dynamic" && (
+        <IpfsScriptWizard
+          isOpen={isIpfsWizardOpen}
+          onClose={() => setIsIpfsWizardOpen(false)}
+          onComplete={(url) => {
+            handleIpfsCodeUrlChange(contractKey, url);
+            setContractErrors((prev) => ({
+              ...prev,
+              [`${contractKey}Ipfs`]: null,
+            }));
+            setIsIpfsWizardOpen(false);
+          }}
+          isSafeMode={isSafeMode}
+          selectedSafeWallet={selectedSafeWallet}
+          targetFunction={contract.targetFunction || ""}
+        />
       )}
     </div>
   );

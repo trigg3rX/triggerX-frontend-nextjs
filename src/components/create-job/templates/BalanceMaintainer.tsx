@@ -75,7 +75,7 @@ const BalanceMaintainer = () => {
 
   useEffect(() => {
     if (chainId) {
-      console.log("chainId", chainId);
+      devLog("chainId", chainId);
       setExplorerBaseUrl(getExplorerUrl(Number(chainId)));
     }
   }, [chainId]);

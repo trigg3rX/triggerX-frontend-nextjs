@@ -330,7 +330,7 @@ export function useJobLogsHybrid(
         clearTimeout(initialLoadTimeoutRef.current);
       }
       if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
+        clearInterval(pollingIntervalRef.current as NodeJS.Timeout);
       }
     };
   }, []);
