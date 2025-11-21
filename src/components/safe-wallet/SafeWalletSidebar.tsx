@@ -646,6 +646,10 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
     }
   };
 
+  // Check if the current chain is not supported by Safe App
+  // OP Sepolia (11155420) and Arbitrum Sepolia (421614) are not supported
+  const isSafeAppUnsupported = [11155420, 421614].includes(chainId);
+
   return (
     <div className="space-y-6 sm:space-y-8 xl:min-h-[500px]">
       {/* Safe Wallet Selection */}
@@ -914,7 +918,7 @@ const SafeWalletSidebar: React.FC<SafeWalletSidebarProps> = ({
           <Button
             onClick={handleOpenInSafeApp}
             className="w-full"
-            disabled={!selectedSafe}
+            disabled={!selectedSafe || isSafeAppUnsupported}
           >
             Open in Safe App
           </Button>

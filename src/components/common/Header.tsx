@@ -16,6 +16,7 @@ const navItems = [
   { href: "/", label: "Create Job" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/safe", label: "Safe Wallet" },
 ];
 
 const Header: React.FC = () => {
@@ -69,11 +70,11 @@ const Header: React.FC = () => {
           className={`w-[90%] mx-auto ${bannerVisible ? "my-6 md:my-12" : "my-6 md:my-8"} header flex items-center justify-between`}
         >
           {" "}
-          <div className="w-[170px]">
+          <div className="w-[130px] xl:w-[160px]">
             <LogoLink
               width={180}
               height={40}
-              className="w-[140px] xl:w-[170px] h-auto"
+              className="w-[130px] xl:w-[160px] h-auto"
               priority={true}
             />
           </div>
@@ -102,14 +103,14 @@ const Header: React.FC = () => {
                     href={item.href}
                     label={item.label}
                     isActive={pathname === item.href}
-                    className="text-center xl:w-[150px] lg:w-[110px] lg:text-[12px] xl:text-base text-gray-200 hover:text-white"
+                    className="text-center lg:w-[95px] xl:w-[135px] lg:text-[11px] xl:text-[14px] text-gray-200 hover:text-white"
                     onClick={() => setMenuOpen(false)}
                   />
                 ))}
               </HoverHighlight>
             </nav>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center lg:gap-[5px]">
             <ConnectButton
               chainStatus="icon"
               accountStatus="address"

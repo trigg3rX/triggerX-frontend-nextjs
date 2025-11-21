@@ -489,7 +489,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   return (
     <div className="space-y-6" id="safe-transactions-section">
       {/* Title Section */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
         <Typography variant="h3" color="primary">
           Safe Transactions
         </Typography>
@@ -525,7 +525,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--color-background-secondary)] transition-colors"
                     onClick={() => toggleExpanded(index)}
                   >
-                    <div className="flex items-center gap-3 flex-1">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-3 flex-1">
                       <Typography
                         variant="body"
                         color="primary"
