@@ -28,7 +28,7 @@ const Header: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  const isBlocklyDemoPage = pathname === "/blockly-demo";
+  const isBlocklyDemoPage = pathname === "/visual-job-builder";
 
   useEffect(() => {
     setIsMounted(true);

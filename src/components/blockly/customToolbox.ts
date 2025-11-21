@@ -1,7 +1,18 @@
 "use client";
 
 import * as Blockly from "blockly/core";
-import { FaWallet, FaLink, FaBriefcase, FaBoxes } from "react-icons/fa";
+import {
+  FaWallet,
+  FaLink,
+  FaBriefcase,
+  FaClock,
+  FaRedo,
+  FaFileCode,
+  FaCalendarAlt,
+  FaBolt,
+  FaSlidersH,
+  FaFileContract,
+} from "react-icons/fa";
 import { createRoot } from "react-dom/client";
 import React from "react";
 
@@ -110,48 +121,59 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
       let customIcon: HTMLElement;
 
       if (categoryName.includes("wallet")) {
-        // Wallet icon using React Icons
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
-          React.createElement(FaWallet, {
-            size: 12,
-            color: "white",
-          }),
+          React.createElement(FaWallet, { size: 12, color: "white" }),
         );
       } else if (categoryName.includes("chain")) {
-        // Chain icon using React Icons
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
-        root.render(
-          React.createElement(FaLink, {
-            size: 12,
-            color: "white",
-          }),
-        );
+        root.render(React.createElement(FaLink, { size: 12, color: "white" }));
       } else if (
         categoryName.includes("job type") ||
-        categoryName.includes("jobtype") ||
-        categoryName.includes("job")
+        categoryName.includes("jobtype")
       ) {
-        // Job Type icon using React Icons
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
-          React.createElement(FaBriefcase, {
-            size: 12,
-            color: "white",
-          }),
+          React.createElement(FaBriefcase, { size: 12, color: "white" }),
         );
-      } else if (categoryName.includes("utility")) {
-        // Utility icon using React Icons
+      } else if (categoryName.includes("duration")) {
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(React.createElement(FaClock, { size: 12, color: "white" }));
+      } else if (categoryName.includes("recurring")) {
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(React.createElement(FaRedo, { size: 12, color: "white" }));
+      } else if (categoryName.includes("abi")) {
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
-          React.createElement(FaBoxes, {
-            size: 12,
-            color: "white",
-          }),
+          React.createElement(FaFileCode, { size: 12, color: "white" }),
+        );
+      } else if (categoryName.includes("time")) {
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaCalendarAlt, { size: 12, color: "white" }),
+        );
+      } else if (categoryName.includes("event")) {
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(React.createElement(FaBolt, { size: 12, color: "white" }));
+      } else if (categoryName.includes("condition")) {
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaSlidersH, { size: 12, color: "white" }),
+        );
+      } else if (categoryName.includes("contract")) {
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaFileContract, { size: 12, color: "white" }),
         );
       } else {
         // Use existing icon for other categories

@@ -17,7 +17,7 @@ const manualAbiInputJson = {
   ],
   previousStatement: null,
   nextStatement: null,
-  colour: 190,
+  colour: 160,
   tooltip: "Add the ABI JSON of the target function you want to execute.",
   helpUrl: "",
 };

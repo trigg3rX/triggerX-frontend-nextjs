@@ -1,5 +1,6 @@
 import React from "react";
 import { Card } from "../../ui/Card";
+import { Typography } from "../../ui/Typography";
 
 interface ErrorCardProps {
   error: string | null;
@@ -10,29 +11,24 @@ export function ErrorCard({ error, onClose }: ErrorCardProps) {
   if (!error) return null;
 
   return (
-    <Card className="!border-red-500 !bg-red-500/10 mt-4">
-      <div className="flex items-start gap-2">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-            clipRule="evenodd"
-          />
-        </svg>
-        <div className="flex-1">
-          <p className="text-red-500 text-sm sm:text-base font-medium">
+    <Card className="mt-4 border-l-4 !border-l-red-500 !border-t-white/10 !border-r-white/10 !border-b-white/10">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 space-y-2">
+          <Typography variant="h3" color="error" align="left">
             Validation Error
-          </p>
-          <p className="text-red-400 text-xs sm:text-sm mt-1">{error}</p>
+          </Typography>
+          <Typography
+            variant="body"
+            color="secondary"
+            align="left"
+            className="leading-relaxed"
+          >
+            {error}
+          </Typography>
         </div>
         <button
           onClick={onClose}
-          className="text-red-400 hover:text-red-300 transition-colors"
+          className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
           aria-label="Close error"
         >
           <svg

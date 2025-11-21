@@ -4,7 +4,7 @@ type SerializedState = {
   xml: string;
 };
 
-const LOCAL_STORAGE_KEY = "triggerx:blockly-demo:xml";
+const LOCAL_STORAGE_KEY = "triggerx:visual-job-builder:xml";
 
 /**
  * Custom hook to manage Blockly workspace state and local storage persistence

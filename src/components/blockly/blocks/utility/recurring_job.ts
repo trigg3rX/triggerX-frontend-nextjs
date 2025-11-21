@@ -14,7 +14,7 @@ const recurringJobJson = {
     },
   ],
   previousStatement: "TIME_CONFIG",
-  colour: 30, // Using the same color as other time/schedule blocks
+  colour: 260, // Using the same color as other time/schedule blocks
   tooltip:
     "Specify if you want your job to recur every time the event is detected or the condition is satisfied",
   helpUrl: "",

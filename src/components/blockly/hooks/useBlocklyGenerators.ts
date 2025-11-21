@@ -12,7 +12,7 @@ import { conditionBasedJobWrapperGenerator } from "../blocks/job-type/condition_
 
 import { timeframeJobGenerator } from "../blocks/utility/timeframe_job";
 import { recurringJobGenerator } from "../blocks/utility/recurring_job";
-import { manualAbiInputGenerator } from "../blocks/utility/contract/manual_abi_input";
+import { manualAbiInputGenerator } from "../blocks/utility/manual_abi_input";
 import { specificDatetimeGenerator } from "../blocks/utility/time/specific_datetime";
 import { cronExpressionGenerator } from "../blocks/utility/time/cron_expression";
 import { timeIntervalAtJobGenerator } from "../blocks/utility/time/time_interval_at_job";

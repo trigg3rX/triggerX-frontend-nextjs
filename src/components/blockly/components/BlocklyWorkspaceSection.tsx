@@ -99,6 +99,20 @@ export function BlocklyWorkspaceSection({
           colour: "240",
           contents: [{ kind: "block", type: "timeframe_job" }],
         },
+        // --- RECURRING UTILITIES ---
+        {
+          kind: "category",
+          name: "Recurring",
+          colour: "260",
+          contents: [{ kind: "block", type: "recurring_job" }],
+        },
+        // --- ABI UTILITIES ---
+        {
+          kind: "category",
+          name: "ABI",
+          colour: "160",
+          contents: [{ kind: "block", type: "manual_abi_input" }],
+        },
         // --- TIME UTILITIES ---
         {
           kind: "category",
@@ -137,15 +151,7 @@ export function BlocklyWorkspaceSection({
             { kind: "block", type: "execute_function" },
             { kind: "block", type: "static_arguments" },
             { kind: "block", type: "dynamic_arguments" },
-            { kind: "block", type: "manual_abi_input" },
           ],
-        },
-        // --- COMMON UTILITIES ---
-        {
-          kind: "category",
-          name: "Common",
-          colour: "260",
-          contents: [{ kind: "block", type: "recurring_job" }],
         },
       ],
     }),
@@ -241,6 +247,7 @@ export function BlocklyWorkspaceSection({
           grid: { spacing: 25, length: 3, colour: "#1f1f1f", snap: true },
           renderer: "zelos",
           trashcan: false,
+          sounds: false,
         }}
       />
     </div>

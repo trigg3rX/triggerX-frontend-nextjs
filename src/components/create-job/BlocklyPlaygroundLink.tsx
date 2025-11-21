@@ -21,7 +21,7 @@ export const BlocklyPlaygroundLink: React.FC = () => {
         </Typography>
       </div>
 
-      <Link href="/blockly-demo">
+      <Link href="/visual-job-builder">
         <Button color="purple" className="w-full">
           Create Your Workflow
         </Button>
