@@ -1,10 +1,6 @@
 import * as Blockly from "blockly/core";
 import { Order } from "blockly/javascript";
 
-/**
- * Manual ABI Input Block
- * Allows adding ABI JSON for the target function
- */
 const manualAbiInputJson = {
   type: "manual_abi_input",
   message0: "Add ABI of the target function %1",
@@ -15,10 +11,10 @@ const manualAbiInputJson = {
       text: "[]",
     },
   ],
-  previousStatement: null,
-  nextStatement: null,
+  output: "MANUAL_ABI_TYPE",
   colour: 160,
-  tooltip: "Add the ABI JSON of the target function you want to execute.",
+  tooltip:
+    "Add the ABI JSON of the target function you want to execute. Format: JSON array with function/event ABI.",
   helpUrl: "",
 };
 

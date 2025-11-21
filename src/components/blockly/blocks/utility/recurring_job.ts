@@ -13,7 +13,7 @@ const recurringJobJson = {
       checked: true, // Default to true for recurring
     },
   ],
-  previousStatement: "TIME_CONFIG",
+  output: "RECURRING_TYPE",
   colour: 260, // Using the same color as other time/schedule blocks
   tooltip:
     "Specify if you want your job to recur every time the event is detected or the condition is satisfied",

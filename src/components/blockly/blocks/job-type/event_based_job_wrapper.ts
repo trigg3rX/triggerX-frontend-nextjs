@@ -5,12 +5,20 @@ const eventBasedJobWrapperJson = {
   type: "event_based_job_wrapper",
   message0: "Run an event-based job.",
   message1: "%1",
+  message2: "recurring %1",
   args0: [],
   args1: [
     {
       type: "input_statement",
       name: "STATEMENT",
       check: "DURATION",
+    },
+  ],
+  args2: [
+    {
+      type: "input_value",
+      name: "RECURRING",
+      check: "RECURRING_TYPE",
     },
   ],
   previousStatement: "JOB_TYPE", // Connects only to chain selection

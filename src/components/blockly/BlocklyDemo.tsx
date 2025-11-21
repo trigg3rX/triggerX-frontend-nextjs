@@ -141,7 +141,7 @@ export default function BlocklyDemo() {
       <MobileWarning />
 
       {/* Desktop View - Show 768px and above */}
-      <div className="hidden md:flex flex-col gap-2 -mt-[10px] lg:-my-[150px]">
+      <div className="hidden md:flex flex-col gap-2">
         <BlocklyHeader
           jobTitle={jobTitle}
           setJobTitle={setJobTitle}

@@ -2,6 +2,7 @@ import * as Blockly from "blockly/core";
 import { Order } from "blockly/javascript";
 import { fetchContractABI } from "@/utils/fetchContractABI";
 import { ethers } from "ethers";
+import { devLog } from "@/lib/devLog";
 
 // Helper function to extract events from ABI
 const extractEvents = (abi: string) => {
@@ -48,12 +49,20 @@ const fetchAndUpdateABI = async (
 
           // Set the first event as default
           eventDropdown.setValue(options[0][1]);
+
+          // Hide manual ABI input
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (block as any).setShowManualABI(false);
         } else {
           // No events found in ABI
           (
             eventDropdown as unknown as { menuGenerator_: string[][] }
           ).menuGenerator_ = [["No events found", ""]];
           eventDropdown.setValue("");
+
+          // Show manual ABI input
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (block as any).setShowManualABI(true);
         }
       }
     } else {
@@ -65,6 +74,10 @@ const fetchAndUpdateABI = async (
         ).menuGenerator_ = [["ABI not found", ""]];
         eventDropdown.setValue("");
       }
+
+      // Show manual ABI input
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (block as any).setShowManualABI(true);
     }
   } catch (error) {
     console.error("Error fetching contract ABI:", error);
@@ -75,6 +88,10 @@ const fetchAndUpdateABI = async (
       ).menuGenerator_ = [["Error fetching ABI", ""]];
       eventDropdown.setValue("");
     }
+
+    // Show manual ABI input on error
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (block as any).setShowManualABI(true);
   }
 };
 
@@ -232,6 +249,115 @@ Blockly.Blocks["event_listener"] = {
       blockInstance.lastKnownChainId = null;
     }
 
+    // Handle manual ABI input changes
+    if (event.type === Blockly.Events.BLOCK_CHANGE) {
+      const changeEvent = event as Blockly.Events.BlockChange;
+
+      // Check if ABI_TEXT field changed in a connected manual_abi_input block
+      if (changeEvent.name === "ABI_TEXT") {
+        const changedBlock = this.workspace.getBlockById(changeEvent.blockId);
+        if (changedBlock && changedBlock.type === "manual_abi_input") {
+          // Check if this manual_abi_input block is connected to this event_listener
+          const manualAbiBlock = this.getInputTargetBlock("MANUAL_ABI");
+          if (manualAbiBlock && manualAbiBlock.id === changedBlock.id) {
+            const abiText = changedBlock.getFieldValue("ABI_TEXT");
+
+            try {
+              const parsedABI = JSON.parse(abiText);
+
+              // Check if it's a valid event ABI structure
+              if (Array.isArray(parsedABI) && parsedABI.length > 0) {
+                // Filter for event type entries or treat all as events if no type specified
+                const events = parsedABI.filter(
+                  (item: { type?: string }) =>
+                    !item.type || item.type === "event",
+                );
+
+                if (events.length > 0) {
+                  const eventDropdown = this.getField("EVENT_NAME");
+                  if (eventDropdown) {
+                    // Create dropdown options from manual ABI
+                    const options = events.map(
+                      (event: {
+                        name?: string;
+                        inputs?: { type: string }[];
+                      }) => {
+                        const name = event.name || "UnnamedEvent";
+                        const signature = formatEventSignature(
+                          name,
+                          event.inputs || [],
+                        );
+                        return [signature, signature];
+                      },
+                    );
+
+                    // Update dropdown options
+                    (
+                      eventDropdown as unknown as { menuGenerator_: string[][] }
+                    ).menuGenerator_ = options;
+
+                    // Set the first event as default
+                    eventDropdown.setValue(options[0][1]);
+                  }
+                } else {
+                  // No valid events in manual ABI
+                  const eventDropdown = this.getField("EVENT_NAME");
+                  if (eventDropdown) {
+                    (
+                      eventDropdown as unknown as { menuGenerator_: string[][] }
+                    ).menuGenerator_ = [["No events in manual ABI", ""]];
+                    eventDropdown.setValue("");
+                  }
+                }
+              }
+            } catch (error) {
+              // Invalid JSON in manual ABI
+              devLog(error);
+              const eventDropdown = this.getField("EVENT_NAME");
+              if (eventDropdown) {
+                (
+                  eventDropdown as unknown as { menuGenerator_: string[][] }
+                ).menuGenerator_ = [["Invalid JSON format", ""]];
+                eventDropdown.setValue("");
+              }
+            }
+          }
+        }
+      }
+
+      // Check if a chain_selection block's CHAIN_ID field changed
+      if (changeEvent.name === "CHAIN_ID") {
+        const changedBlock = this.workspace.getBlockById(changeEvent.blockId);
+        if (changedBlock && changedBlock.type === "chain_selection") {
+          const contractAddress = this.getFieldValue("CONTRACT_ADDRESS");
+
+          if (
+            contractAddress &&
+            contractAddress !== "0x..." &&
+            ethers.isAddress(contractAddress)
+          ) {
+            const newChainId = parseInt(changeEvent.newValue as string, 10);
+
+            // Update last known chain ID and fetch
+            blockInstance.lastKnownChainId = newChainId;
+
+            const eventDropdown = this.getField("EVENT_NAME");
+            if (eventDropdown) {
+              (
+                eventDropdown as unknown as { menuGenerator_: string[][] }
+              ).menuGenerator_ = [["Fetching ABI...", ""]];
+              eventDropdown.setValue("");
+            }
+
+            // Fetch ABI asynchronously
+            (async () => {
+              await fetchAndUpdateABI(this, contractAddress, newChainId);
+            })();
+          }
+        }
+      }
+    }
+
     // When block is moved from flyout to workspace or created
     if (
       event.type === Blockly.Events.BLOCK_MOVE ||
@@ -318,42 +444,14 @@ Blockly.Blocks["event_listener"] = {
         }
       }
     }
-
-    // Handle chain selection field changes
-    if (event.type === Blockly.Events.BLOCK_CHANGE) {
-      const changeEvent = event as Blockly.Events.BlockChange;
-
-      // Check if a chain_selection block's CHAIN_ID field changed
-      if (changeEvent.name === "CHAIN_ID") {
-        const changedBlock = this.workspace.getBlockById(changeEvent.blockId);
-        if (changedBlock && changedBlock.type === "chain_selection") {
-          const contractAddress = this.getFieldValue("CONTRACT_ADDRESS");
-
-          if (
-            contractAddress &&
-            contractAddress !== "0x..." &&
-            ethers.isAddress(contractAddress)
-          ) {
-            const newChainId = parseInt(changeEvent.newValue as string, 10);
-
-            // Update last known chain ID and fetch
-            blockInstance.lastKnownChainId = newChainId;
-
-            const eventDropdown = this.getField("EVENT_NAME");
-            if (eventDropdown) {
-              (
-                eventDropdown as unknown as { menuGenerator_: string[][] }
-              ).menuGenerator_ = [["Fetching ABI...", ""]];
-              eventDropdown.setValue("");
-            }
-
-            // Fetch ABI asynchronously
-            (async () => {
-              await fetchAndUpdateABI(this, contractAddress, newChainId);
-            })();
-          }
-        }
-      }
+  },
+  setShowManualABI: function (show: boolean) {
+    if (show && !this.getInput("MANUAL_ABI")) {
+      this.appendValueInput("MANUAL_ABI")
+        .setCheck("MANUAL_ABI_TYPE")
+        .appendField("manual ABI");
+    } else if (!show && this.getInput("MANUAL_ABI")) {
+      this.removeInput("MANUAL_ABI");
     }
   },
 };

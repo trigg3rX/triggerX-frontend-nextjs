@@ -10,6 +10,7 @@ import Footer from "@/components/common/Footer";
 import StickySocialIcons from "@/components/common/StickySocialIcons";
 import { ReactNode } from "react";
 import { GoogleTagManager } from "@next/third-parties/google";
+import MainWrapper from "@/components/common/MainWrapper";
 
 export const metadata: Metadata = {
   title: "TriggerX",
@@ -32,9 +33,7 @@ export default function RootLayout({
               <Header />
               <ScrollToTop />
               <StickySocialIcons />
-              <main className="max-w-[1600px] w-[90%] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
-                {children}
-              </main>
+              <MainWrapper>{children}</MainWrapper>
               <Footer />
             </TGBalanceProvider>
           </Providers>
