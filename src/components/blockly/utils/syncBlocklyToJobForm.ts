@@ -22,7 +22,9 @@ export function syncBlocklyToJobForm(
 
     // Find all relevant blocks
     const chainBlock = findFirstBlockByType("chain_selection");
-    const intervalBlock = findFirstBlockByType("interval_time_job");
+    const intervalBlock = findFirstBlockByType("time_interval_at_job");
+    const cronBlock = findFirstBlockByType("cron_expression");
+    const specificDatetimeBlock = findFirstBlockByType("specific_datetime");
     const timeframeBlock = findFirstBlockByType("timeframe_job");
     const recurringBlock = findFirstBlockByType("recurring_job");
     const eventBlock = findFirstBlockByType("event_job");
@@ -72,9 +74,9 @@ export function syncBlocklyToJobForm(
 
     // 4. Set time interval (for time-based jobs)
     if (intervalBlock) {
-      const val = Number(getField(intervalBlock, "TIME_INTERVAL_VALUE") || 0);
+      const val = Number(getField(intervalBlock, "INTERVAL_VALUE") || 0);
       const unit = (
-        getField(intervalBlock, "TIME_INTERVAL_UNIT") || "second"
+        getField(intervalBlock, "INTERVAL_UNIT") || "second"
       ).toLowerCase();
 
       let totalSeconds = val;
@@ -89,6 +91,28 @@ export function syncBlocklyToJobForm(
       formContext.setTimeInterval({ hours, minutes, seconds });
     }
 
+    // 4b. Set cron expression (alternative to time interval)
+    if (cronBlock) {
+      const cronExpr = getField(cronBlock, "CRON_EXPRESSION") || "";
+      formContext.setCronExpression(cronExpr);
+    } else {
+      formContext.setCronExpression("");
+    }
+
+    // 4c. Set specific schedule (alternative to time interval)
+    if (specificDatetimeBlock) {
+      const scheduleDate =
+        getField(specificDatetimeBlock, "SCHEDULE_DATE") || "";
+      const scheduleTime =
+        getField(specificDatetimeBlock, "SCHEDULE_TIME") || "";
+      // Combine date and time into ISO format
+      const specificSchedule =
+        scheduleDate && scheduleTime ? `${scheduleDate}T${scheduleTime}` : "";
+      formContext.setSpecificSchedule(specificSchedule);
+    } else {
+      formContext.setSpecificSchedule("");
+    }
+
     // 5. Set recurring
     if (recurringBlock) {
       const isRec = getField(recurringBlock, "IS_RECURRING");
@@ -97,7 +121,7 @@ export function syncBlocklyToJobForm(
       formContext.setRecurring(true);
     }
 
-    // 6. Set execute function details
+    // 6. Set execute function details and argument type
     if (executeFunctionBlock) {
       const addr = getField(executeFunctionBlock, "CONTRACT_ADDRESS") || "";
       const func = getField(executeFunctionBlock, "FUNCTION_NAME") || "";
@@ -105,14 +129,56 @@ export function syncBlocklyToJobForm(
       // Set contract address (this will trigger ABI fetching)
       formContext.handleContractAddressChange("contract", addr);
 
+      // Determine argument type from child blocks
+      const staticArgsBlock = findFirstBlockByType("static_arguments");
+      const dynamicArgsBlock = findFirstBlockByType("dynamic_arguments");
+
+      let argumentType: "static" | "dynamic" | "" = "";
+      if (staticArgsBlock) {
+        argumentType = "static";
+      } else if (dynamicArgsBlock) {
+        argumentType = "dynamic";
+      }
+
+      // Set argument type
+      if (argumentType) {
+        formContext.handleArgumentTypeChange("contract", argumentType);
+      }
+
+      // If dynamic arguments, set IPFS URL
+      if (dynamicArgsBlock) {
+        const ipfsUrl = getField(dynamicArgsBlock, "IPFS_URL") || "";
+        if (ipfsUrl) {
+          formContext.handleIpfsCodeUrlChange("contract", ipfsUrl);
+        }
+      }
+
+      // If static arguments, set argument values
+      if (staticArgsBlock) {
+        const fields = Array.from(
+          staticArgsBlock.getElementsByTagName("field"),
+        );
+        const argumentValues: string[] = [];
+
+        // Extract argument values (fields named VALUE_0, VALUE_1, etc.)
+        fields.forEach((field) => {
+          const fieldName = field.getAttribute("name") || "";
+          if (fieldName.startsWith("VALUE_")) {
+            argumentValues.push((field.textContent || "").trim());
+          }
+        });
+
+        // Set argument values
+        argumentValues.forEach((value, index) => {
+          formContext.handleArgumentValueChange("contract", index, value);
+        });
+      }
+
       // Wait a bit for ABI to load, then set function
       setTimeout(() => {
         if (func) {
           formContext.handleFunctionChange("contract", func);
         }
-
-        // Note: execute_function block handles arguments differently
-        // This may need adjustment based on your actual execute_function implementation
       }, 500); // Give time for ABI to load
     }
 

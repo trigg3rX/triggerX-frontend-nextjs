@@ -39,6 +39,8 @@ export type JobDetails = {
   recurring: boolean;
   timezone: string;
   time_interval: number;
+  cron_expression?: string;
+  specific_schedule?: string;
   trigger_chain_id: string;
   trigger_contract_address: string;
   trigger_event: string;
@@ -80,6 +82,8 @@ function extractJobDetails(
   selectedSafeWallet?: string | null,
   chainId?: number,
   userSafeWallets?: string[],
+  cronExpression?: string,
+  specificSchedule?: string,
 ): JobDetails {
   let triggerContractAddress = "0x0000000000000000000000000000000000000000";
   let triggerEvent = "NULL";
@@ -204,6 +208,8 @@ function extractJobDetails(
     recurring,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     time_interval: intervalInSeconds,
+    cron_expression: cronExpression || undefined,
+    specific_schedule: specificSchedule || undefined,
     trigger_chain_id: triggerChainId,
     trigger_contract_address: triggerContractAddress,
     trigger_event: triggerEvent,
@@ -459,6 +465,10 @@ export interface JobFormContextType {
   setTimeInterval: React.Dispatch<React.SetStateAction<TimeInterval>>;
   recurring: boolean;
   setRecurring: React.Dispatch<React.SetStateAction<boolean>>;
+  cronExpression: string;
+  setCronExpression: React.Dispatch<React.SetStateAction<string>>;
+  specificSchedule: string;
+  setSpecificSchedule: React.Dispatch<React.SetStateAction<string>>;
   executionMode: "contract" | "safe";
   setExecutionMode: React.Dispatch<React.SetStateAction<"contract" | "safe">>;
   selectedSafeWallet: string | null;
@@ -590,6 +600,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     seconds: 0,
   });
   const [recurring, setRecurring] = useState<boolean>(true);
+  const [cronExpression, setCronExpression] = useState<string>("");
+  const [specificSchedule, setSpecificSchedule] = useState<string>("");
   const [contractInteractions, setContractInteractions] =
     useState<ContractInteraction>({
       eventContract: {
@@ -1593,6 +1605,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           selectedSafeWallet,
           chainId,
           userSafeWallets,
+          cronExpression,
+          specificSchedule,
         );
 
         // Check if this is a linked job (contractKey format: "jobType-jobId")
@@ -2180,6 +2194,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     setErrorFrame(null);
     setTimeInterval({ hours: 0, minutes: 0, seconds: 0 });
     setRecurring(true);
+    setCronExpression("");
+    setSpecificSchedule("");
     setErrorInterval(null);
     setContractInteractions({
       eventContract: {
@@ -2275,6 +2291,10 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setTimeInterval,
         recurring,
         setRecurring,
+        cronExpression,
+        setCronExpression,
+        specificSchedule,
+        setSpecificSchedule,
         handleJobTypeChange,
         handleTimeframeChange,
         handleTimeIntervalChange,
