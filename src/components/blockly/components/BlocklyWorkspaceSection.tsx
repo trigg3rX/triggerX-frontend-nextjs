@@ -4,6 +4,7 @@ import React, { useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import * as Blockly from "blockly/core";
 import DisableInteractions from "@/app/DisableInteractions";
+import { setConnectedChainId } from "../blocks/default_blocks";
 
 // react-blockly uses window, so ensure client-only dynamic import
 const BlocklyWorkspace = dynamic(
@@ -35,12 +36,16 @@ interface BlocklyWorkspaceSectionProps {
   xml: string;
   onXmlChange: (newXml: string) => void;
   workspaceScopeRef: React.RefObject<HTMLDivElement | null>;
+  connectedAddress?: string;
+  connectedChainId?: number;
 }
 
 export function BlocklyWorkspaceSection({
   xml,
   onXmlChange,
   workspaceScopeRef,
+  connectedAddress,
+  connectedChainId,
 }: BlocklyWorkspaceSectionProps) {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
 
@@ -59,7 +64,7 @@ export function BlocklyWorkspaceSection({
               kind: "block",
               type: "wallet_selection",
               fields: {
-                WALLET_ADDRESS: "0x...",
+                WALLET_ADDRESS: connectedAddress || "0x...",
               },
             },
           ],
@@ -75,7 +80,7 @@ export function BlocklyWorkspaceSection({
               kind: "block",
               type: "chain_selection",
               fields: {
-                CHAIN_ID: "11155420", // OP Sepolia chain ID as default (first in networks.json)
+                CHAIN_ID: connectedChainId?.toString() || "11155420", // Use connected chain or OP Sepolia as default
               },
             },
           ],
@@ -155,7 +160,7 @@ export function BlocklyWorkspaceSection({
         },
       ],
     }),
-    [],
+    [connectedAddress, connectedChainId],
   );
 
   // Keep flyout always open and disable click-to-place
@@ -217,6 +222,50 @@ export function BlocklyWorkspaceSection({
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Sync wallet blocks with connected address
+  useEffect(() => {
+    if (!workspaceRef.current || !connectedAddress) return;
+
+    const workspace = workspaceRef.current;
+    const allBlocks = workspace.getAllBlocks(false);
+
+    // Update all wallet_selection blocks with the connected address
+    allBlocks.forEach((block) => {
+      if (block.type === "wallet_selection") {
+        const currentValue = block.getFieldValue("WALLET_ADDRESS");
+        // Only update if different to avoid unnecessary re-renders
+        if (currentValue !== connectedAddress) {
+          block.setFieldValue(connectedAddress, "WALLET_ADDRESS");
+        }
+      }
+    });
+  }, [connectedAddress]);
+
+  // Update the global connected chain ID for validation
+  useEffect(() => {
+    setConnectedChainId(connectedChainId?.toString() || null);
+  }, [connectedChainId]);
+
+  // Sync chain blocks with connected chain
+  useEffect(() => {
+    if (!workspaceRef.current || !connectedChainId) return;
+
+    const workspace = workspaceRef.current;
+    const allBlocks = workspace.getAllBlocks(false);
+    const chainIdStr = connectedChainId.toString();
+
+    // Update all chain_selection blocks with the connected chain
+    allBlocks.forEach((block) => {
+      if (block.type === "chain_selection") {
+        const currentValue = block.getFieldValue("CHAIN_ID");
+        // Only update if different to avoid unnecessary re-renders
+        if (currentValue !== chainIdStr) {
+          block.setFieldValue(chainIdStr, "CHAIN_ID");
+        }
+      }
+    });
+  }, [connectedChainId]);
 
   return (
     <div

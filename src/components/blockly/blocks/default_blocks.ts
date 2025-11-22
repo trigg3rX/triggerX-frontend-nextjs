@@ -75,6 +75,28 @@ const chainSelectionJson = {
   helpUrl: "",
 };
 
+// Global variable to store the connected chain ID for validation
+let connectedChainId: string | null = null;
+
+// Function to set the connected chain ID (called from React component)
+export function setConnectedChainId(chainId: string | null) {
+  connectedChainId = chainId;
+}
+
+// Validator function for chain selection
+function validateChainSelection(newValue: string): string | null {
+  // If no chain is connected, allow any selection
+  if (!connectedChainId) {
+    return newValue;
+  }
+  // Only allow selection of the connected chain
+  if (newValue === connectedChainId) {
+    return newValue;
+  }
+  // Revert to connected chain if user tries to select a different one
+  return connectedChainId;
+}
+
 // 4. Register the Chain Selection Block using jsonInit
 Blockly.Blocks["chain_selection"] = {
   init: function () {
@@ -84,13 +106,19 @@ Blockly.Blocks["chain_selection"] = {
       .setCheck("wallet_output")
       .appendField("from");
 
+    // Add validator to the CHAIN_ID field to prevent selecting non-connected chains
+    const chainField = this.getField("CHAIN_ID");
+    if (chainField) {
+      chainField.setValidator(validateChainSelection);
+    }
+
     // Set dynamic tooltip
     this.setTooltip(() => {
       const walletInput = this.getInputTargetBlock("WALLET_INPUT");
       if (walletInput && walletInput.type === "wallet_selection") {
         return CONNECTED_TOOLTIP;
       }
-      return "Specify the chain at which your job contract is deployed. Connect the Wallet block to its right.";
+      return "Specify the chain at which your job contract is deployed. Connect the Wallet block to its right. Only the connected chain can be selected.";
     });
   },
 };

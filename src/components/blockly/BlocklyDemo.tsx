@@ -38,7 +38,7 @@ export default function BlocklyDemo() {
   } = jobFormContext;
 
   // Account info
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
 
   // Permission and validation state
   const [hasConfirmedPermission, setHasConfirmedPermission] =
@@ -171,6 +171,8 @@ export default function BlocklyDemo() {
             xml={xml}
             onXmlChange={onXmlChange}
             workspaceScopeRef={workspaceScopeRef}
+            connectedAddress={address}
+            connectedChainId={chain?.id}
           />
         </div>
 
