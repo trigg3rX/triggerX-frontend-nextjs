@@ -27,9 +27,9 @@ export function syncBlocklyToJobForm(
     const specificDatetimeBlock = findFirstBlockByType("specific_datetime");
     const timeframeBlock = findFirstBlockByType("timeframe_job");
     const recurringBlock = findFirstBlockByType("recurring_job");
-    const eventBlock = findFirstBlockByType("event_job");
+    const eventBlock = findFirstBlockByType("event_listener");
     const executeFunctionBlock = findFirstBlockByType("execute_function");
-    const conditionBlock = findFirstBlockByType("condition_job");
+    const conditionBlock = findFirstBlockByType("condition_monitor");
 
     // 1. Set network based on chain ID
     if (chainBlock) {
@@ -129,6 +129,15 @@ export function syncBlocklyToJobForm(
       // Set contract address (this will trigger ABI fetching)
       formContext.handleContractAddressChange("contract", addr);
 
+      // Check for manual ABI input block
+      const manualAbiBlock = findFirstBlockByType("manual_abi_input");
+      if (manualAbiBlock) {
+        const abiText = getField(manualAbiBlock, "ABI_TEXT") || "";
+        if (abiText && abiText !== "[]") {
+          formContext.handleManualABIChange("contract", abiText);
+        }
+      }
+
       // Determine argument type from child blocks
       const staticArgsBlock = findFirstBlockByType("static_arguments");
       const dynamicArgsBlock = findFirstBlockByType("dynamic_arguments");
@@ -184,10 +193,17 @@ export function syncBlocklyToJobForm(
 
     // 7. Set event job details (for event-based jobs)
     if (eventBlock && jobType === 3) {
-      const tAddr = getField(eventBlock, "TRIGGER_CONTRACT_ADDRESS") || "";
-      const tEvent = getField(eventBlock, "TRIGGER_EVENT") || "";
-      const fName = getField(eventBlock, "EVENT_FILTER_PARA_NAME") || "";
-      const fVal = getField(eventBlock, "EVENT_FILTER_VALUE") || "";
+      const tAddr = getField(eventBlock, "CONTRACT_ADDRESS") || "";
+      const tEvent = getField(eventBlock, "EVENT_NAME") || "";
+
+      // Look for event_filter block as a child
+      const eventFilterBlock = findFirstBlockByType("event_filter");
+      const fName = eventFilterBlock
+        ? getField(eventFilterBlock, "PARAMETER_NAME") || ""
+        : "";
+      const fVal = eventFilterBlock
+        ? getField(eventFilterBlock, "PARAMETER_VALUE") || ""
+        : "";
 
       // Set event contract address
       formContext.handleContractAddressChange("eventContract", tAddr);
@@ -214,20 +230,24 @@ export function syncBlocklyToJobForm(
     // 8. Set condition job details (for condition-based jobs)
     if (conditionBlock && jobType === 2) {
       const cType = getField(conditionBlock, "CONDITION_TYPE") || "";
-      const srcUrl = getField(conditionBlock, "VALUE_SOURCE_URL") || "";
-      const keyRoute = getField(conditionBlock, "SELECTED_KEY_ROUTE") || "";
-      const lower = getField(conditionBlock, "LOWER_LIMIT") || "";
-      const upper = getField(conditionBlock, "UPPER_LIMIT") || "";
+      const srcUrl = getField(conditionBlock, "SOURCE_URL") || "";
+      const keyRoute = getField(conditionBlock, "DATA_KEY") || "";
+
+      // For range conditions, there are LOWER_VALUE and UPPER_VALUE
+      // For non-range conditions, there is a single VALUE field
+      const lower = getField(conditionBlock, "LOWER_VALUE") || "";
+      const upper = getField(conditionBlock, "UPPER_VALUE") || "";
+      const value = getField(conditionBlock, "VALUE") || "";
 
       // Map condition type from Blockly to form format
       const conditionTypeMap: Record<string, string> = {
-        EQUALS: "equals",
-        NOT_EQUALS: "not_equals",
-        LESS_THAN: "less_than",
-        GREATER_THAN: "greater_than",
-        BETWEEN: "between",
-        LESS_EQUAL: "less_equal",
-        GREATER_EQUAL: "greater_equal",
+        equals_to: "equals",
+        not_equals_to: "not_equals",
+        less_than: "less_than",
+        greater_than: "greater_than",
+        in_range: "between",
+        less_than_or_equals: "less_equal",
+        greater_than_or_equals: "greater_equal",
       };
 
       const mappedConditionType =
@@ -240,12 +260,14 @@ export function syncBlocklyToJobForm(
         formContext.handleSourceUrlChange("contract", srcUrl);
       }
 
-      if (lower) {
+      // For range conditions, set both lower and upper
+      if (lower && upper) {
         formContext.handleLowerLimitChange("contract", lower);
-      }
-
-      if (upper) {
         formContext.handleUpperLimitChange("contract", upper);
+      }
+      // For non-range conditions, set the single value as upper limit
+      else if (value) {
+        formContext.handleUpperLimitChange("contract", value);
       }
 
       // Set selected key route if present
