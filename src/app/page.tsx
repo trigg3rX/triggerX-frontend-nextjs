@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { CreateJobLayout } from "@/components/create-job/CreateJobLayout";
 import { JobFormProvider } from "@/contexts/JobFormContext";
+import { SafeWalletProvider } from "@/contexts/SafeWalletContext";
 import CreateJobSkeleton from "@/components/skeleton/CreateJobSkeleton";
 import { Metadata } from "next";
 
@@ -33,9 +34,11 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <Suspense fallback={<CreateJobSkeleton />}>
-      <JobFormProvider>
-        <CreateJobLayout />
-      </JobFormProvider>
+      <SafeWalletProvider>
+        <JobFormProvider>
+          <CreateJobLayout />
+        </JobFormProvider>
+      </SafeWalletProvider>
     </Suspense>
   );
 }

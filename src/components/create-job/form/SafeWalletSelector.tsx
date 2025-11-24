@@ -1,9 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
-import { useAccount, useChainId } from "wagmi";
-import { useSafeWallets } from "@/hooks/useSafeWallets";
-import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
+import { useChainId } from "wagmi";
+import { useSafeWalletContext } from "@/contexts/SafeWalletContext";
 import { Typography } from "@/components/ui/Typography";
 import { Dropdown, DropdownOption } from "@/components/ui/Dropdown";
 import { RadioGroup } from "@/components/ui/RadioGroup";
@@ -15,7 +14,6 @@ import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
 import networksData from "@/utils/networks.json";
 import SafeCreationProgressModal from "@/components/safe-wallet/SafeWalletCreationDialog";
 import SafeWalletImportDialog from "@/components/safe-wallet/import-wallet-modal/SafeWalletImportDialog";
-import type { SafeCreationStepStatus } from "@/types/safe";
 import {
   getWalletDisplayName,
   saveChainWalletName,
@@ -23,7 +21,6 @@ import {
 import { addExtraSafe } from "@/utils/safeWalletLocal";
 import { MdEdit, MdCheck, MdClose } from "react-icons/md";
 import { Import } from "lucide-react";
-import { useSafeModuleStatus } from "@/hooks/useSafeModuleStatus";
 
 interface SafeWalletSelectorProps {
   disabled?: boolean;
@@ -38,7 +35,6 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
   error = null,
   onClearError,
 }) => {
-  const { address } = useAccount();
   const chainId = useChainId();
   const {
     executionMode,
@@ -51,16 +47,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     handleSetContractDetails,
   } = useJobFormContext();
 
-  const { safeWallets, isLoading, refetch } = useSafeWallets();
-  const {
-    createSafeWallet,
-    signEnableModule,
-    submitEnableModule,
-    isCreating,
-    isSigningEnableModule,
-    isExecutingEnableModule,
-    isProposingEnableModule,
-  } = useCreateSafeWallet();
+  const { selection, creation, importFlow } = useSafeWalletContext();
 
   const [editingWallet, setEditingWallet] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
@@ -74,29 +61,9 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     [safeChainInfo],
   );
 
-  // Dialog states
-  const [showCreateFlow, setShowCreateFlow] = useState(false);
-  const [showImportDialog, setShowImportDialog] = useState(false);
-  const [createStep, setCreateStep] = useState<SafeCreationStepStatus>("idle");
-  const [signStep, setSignStep] = useState<SafeCreationStepStatus>("idle");
-  const [enableStep, setEnableStep] = useState<SafeCreationStepStatus>("idle");
-  const [createError, setCreateError] = useState<string | undefined>(undefined);
-  const [signError, setSignError] = useState<string | undefined>(undefined);
-  const [enableError, setEnableError] = useState<string | undefined>(undefined);
-  const [currentSafeAddress, setCurrentSafeAddress] = useState<string | null>(
-    null,
-  );
-  const [hasImportOngoingProcess, setHasImportOngoingProcess] = useState(false);
-
-  // Module status hook - same as SafeWalletSidebar
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_moduleEnabled, refreshModuleStatus] = useSafeModuleStatus(
-    selectedSafeWallet || undefined,
-  );
-
   // Update context when Safe wallets are fetched
   useEffect(() => {
-    if (safeWallets.length > 0) {
+    if (selection.safeWallets.length > 0) {
       // Merge API wallets with any locally added extra safes (per chain)
       try {
         const extrasRaw =
@@ -105,14 +72,14 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
             : null;
         const extras: string[] = extrasRaw ? JSON.parse(extrasRaw) : [];
         const merged = Array.from(
-          new Set([...safeWallets, ...extras]).values(),
+          new Set([...selection.safeWallets, ...extras]).values(),
         );
         setUserSafeWallets(merged);
       } catch {
-        setUserSafeWallets(safeWallets);
+        setUserSafeWallets(selection.safeWallets);
       }
     }
-  }, [safeWallets, setUserSafeWallets, chainId]);
+  }, [selection.safeWallets, setUserSafeWallets, chainId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,145 +138,12 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     }
     // Refresh module status after selection (wait a bit for state to update)
     setTimeout(async () => {
-      await refreshModuleStatus();
+      await selection.refreshModuleStatus();
     }, 100);
   };
 
-  // Create new Safe wallet with three-step flow
-  const handleCreateNewSafe = async () => {
-    if (!address) return;
-    // Show the create flow
-    setShowCreateFlow(true);
-    setCreateStep("pending");
-    setSignStep("idle");
-    setEnableStep("idle");
-    setCreateError(undefined);
-    setSignError(undefined);
-    setEnableError(undefined);
-    setCurrentSafeAddress(null);
-
-    // Step 1: Create Safe wallet
-    const createResult = await createSafeWallet(address);
-
-    // If the creation fails, set the error and return
-    if (!createResult.success || !createResult.safeAddress) {
-      setCreateStep("error");
-      setCreateError(createResult.error || "Failed to create Safe wallet");
-      return;
-    }
-
-    // Set the current safe address
-    const newSafe = createResult.safeAddress;
-    setCurrentSafeAddress(newSafe);
-    setCreateStep("success");
-
-    // Continue to sign step
-    await handleSignStep(newSafe);
-  };
-
-  // Handle sign step - can be called independently for retry
-  const handleSignStep = async (safeAddress: string) => {
-    setSignStep("pending");
-    setSignError(undefined);
-
-    // Step 2: Sign enable module transaction
-    const signResult = await signEnableModule(safeAddress);
-
-    // If the signing fails, set the error and return
-    if (!signResult.success) {
-      setSignStep("error");
-      setSignError(signResult.error || "Failed to sign transaction");
-      // Still try to select the wallet even if module enabling fails
-      setTimeout(async () => {
-        await refetch();
-        await handleSafeWalletSelect(safeAddress);
-      }, 3000);
-      return;
-    }
-
-    setSignStep("success");
-
-    // Continue to enable step
-    await handleEnableStep(safeAddress);
-  };
-
-  // Handle enable step - can be called independently for retry
-  const handleEnableStep = async (safeAddress: string) => {
-    setEnableStep("pending");
-    setEnableError(undefined);
-
-    // Step 3: Submit (execute or propose) the transaction
-    const submitResult = await submitEnableModule();
-
-    // If the submission fails, set the error and return
-    if (!submitResult.success) {
-      setEnableStep("error");
-      setEnableError(submitResult.error || "Failed to submit transaction");
-    } else {
-      // If the submission succeeds, set the success step
-      setEnableStep("success");
-      // Module enabled - refresh will happen when dialog closes
-
-      // Wait for blockchain state to update, then select wallet and refresh
-      setTimeout(async () => {
-        // First select the safe wallet
-        await handleSafeWalletSelect(safeAddress);
-
-        // Refetch the safe wallets list
-        await refetch();
-
-        // Refresh module status immediately after selection (wait a bit for state to update)
-        setTimeout(async () => {
-          await refreshModuleStatus();
-        }, 200);
-      }, 2000);
-
-      // Auto-close dialog after selecting wallet
-      setTimeout(() => {
-        setShowCreateFlow(false);
-      }, 500);
-    }
-  };
-
-  // Retry handlers for create safe wallet
-  const handleRetryCreate = async () => {
-    if (!address) return;
-    setCreateStep("pending");
-    setCreateError(undefined);
-
-    const createResult = await createSafeWallet(address);
-    if (!createResult.success || !createResult.safeAddress) {
-      setCreateStep("error");
-      setCreateError(createResult.error || "Failed to create Safe wallet");
-      return;
-    }
-
-    const newSafe = createResult.safeAddress;
-    setCurrentSafeAddress(newSafe);
-    setCreateStep("success");
-
-    // Continue to sign step
-    await handleSignStep(newSafe);
-  };
-
-  // Retry handler for sign step
-  const handleRetrySign = async () => {
-    if (!currentSafeAddress) return;
-    await handleSignStep(currentSafeAddress);
-  };
-
-  // Retry handler for enable step
-  const handleRetryEnable = async () => {
-    if (!currentSafeAddress) return;
-    await handleEnableStep(currentSafeAddress);
-  };
-
   // Handle imported safe wallet
-  const handleImportedSafe = async (
-    safeAddress: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _moduleActive: boolean,
-  ) => {
+  const handleImportedSafe = async (safeAddress: string) => {
     // Add to local storage
     addExtraSafe(chainId, safeAddress);
 
@@ -323,19 +157,17 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     await handleSafeWalletSelect(safeAddress);
 
     // Refetch the safe wallets list
-    await refetch();
+    await selection.refreshSafeList();
 
-    // Refresh module status immediately after selection (wait a bit for state to update)
-    setTimeout(async () => {
-      await refreshModuleStatus();
-    }, 200);
+    // Call the context handler
+    await importFlow.handleImportedSafe(safeAddress);
   };
 
   const handleDropdownChange = async (option: DropdownOption) => {
     if (option.id === "create-new") {
-      await handleCreateNewSafe();
+      await creation.handleCreateNewSafe();
     } else if (option.id === "add-existing") {
-      setShowImportDialog(true);
+      importFlow.openImportDialog();
     } else {
       const walletAddress = option.id as string;
       await handleSafeWalletSelect(walletAddress);
@@ -356,7 +188,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
         setEditingName("");
         setNameError("");
         // Force re-render by refetching (this will update the display)
-        refetch();
+        selection.refreshSafeList();
       } else {
         setNameError(result.error);
       }
@@ -417,7 +249,7 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
 
       {executionMode === "safe" && (
         <div className="space-y-auto" id="safe-wallet-dropdown">
-          {isLoading ? (
+          {selection.isLoading ? (
             <Skeleton height={50} borderRadius={12} />
           ) : (
             <>
@@ -428,10 +260,10 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
                 onChange={handleDropdownChange}
                 disabled={
                   disabled ||
-                  isCreating ||
-                  isSigningEnableModule ||
-                  isExecutingEnableModule ||
-                  isProposingEnableModule
+                  creation.isCreating ||
+                  creation.isSigningEnableModule ||
+                  creation.isExecutingEnableModule ||
+                  creation.isProposingEnableModule
                 }
               />
 
@@ -452,10 +284,10 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
               />
 
               {/* Import progress indicator */}
-              {hasImportOngoingProcess && (
+              {importFlow.hasImportOngoingProcess && (
                 <div className="text-xs bg-yellow-100 text-yellow-800 p-3 rounded mt-6 group">
                   <button
-                    onClick={() => setShowImportDialog(true)}
+                    onClick={importFlow.openImportDialog}
                     className="w-full text-left flex items-center gap-2 hover:opacity-90 transition-opacity"
                     title="Click to view import wallet progress"
                   >
@@ -587,41 +419,25 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
 
       {/* Safe Wallet Creation Progress Dialog */}
       <SafeCreationProgressModal
-        open={showCreateFlow}
-        onClose={() => {
-          setShowCreateFlow(false);
-          // Refresh module status when create dialog closes
-          if (selectedSafeWallet) {
-            setTimeout(async () => {
-              await refreshModuleStatus();
-            }, 1000);
-          }
-        }}
-        createStep={createStep}
-        signStep={signStep}
-        enableStep={enableStep}
-        createError={createError}
-        signError={signError}
-        enableError={enableError}
-        onRetryCreate={handleRetryCreate}
-        onRetrySign={handleRetrySign}
-        onRetryEnable={handleRetryEnable}
+        open={creation.showCreateFlow}
+        onClose={creation.closeCreateFlow}
+        createStep={creation.createStep}
+        signStep={creation.signStep}
+        enableStep={creation.enableStep}
+        createError={creation.createError}
+        signError={creation.signError}
+        enableError={creation.enableError}
+        onRetryCreate={creation.handleRetryCreate}
+        onRetrySign={creation.handleRetrySign}
+        onRetryEnable={creation.handleRetryEnable}
       />
 
       {/* Import Safe Dialog */}
       <SafeWalletImportDialog
-        open={showImportDialog}
-        onClose={() => {
-          setShowImportDialog(false);
-          // Refresh module status when import dialog closes
-          if (selectedSafeWallet) {
-            setTimeout(async () => {
-              await refreshModuleStatus();
-            }, 1000);
-          }
-        }}
+        open={importFlow.showImportDialog}
+        onClose={importFlow.closeImportDialog}
         onImported={handleImportedSafe}
-        onHasOngoingProcessChange={setHasImportOngoingProcess}
+        onHasOngoingProcessChange={importFlow.setHasImportOngoingProcess}
       />
     </div>
   );
