@@ -96,4 +96,7 @@ export interface SafeTransaction {
   to: string;
   value: string;
   data: string;
+  defaultFunctionSignature?: string;
+  defaultArgumentValues?: string[];
+  defaultAbi?: string | Record<string, unknown>;
 }

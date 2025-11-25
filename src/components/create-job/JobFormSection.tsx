@@ -4,6 +4,7 @@ import { useJob } from "@/contexts/JobContext";
 import BalanceMaintainer from "./templates/BalanceMaintainer";
 import PriceOracle from "./templates/PriceOracle";
 import StakingRewards from "./templates/StakingRewards";
+import AavePosition from "./templates/AavePosition";
 
 export const JobFormSection: React.FC = () => {
   const { selectedJob } = useJob();
@@ -18,6 +19,8 @@ export const JobFormSection: React.FC = () => {
         return <PriceOracle />;
       case "staking-rewards":
         return <StakingRewards />;
+      case "aave-position":
+        return <AavePosition />;
       default:
         return null;
     }

@@ -19,6 +19,7 @@ import {
   findFunctionBySignature,
   type ParsedFunction,
 } from "@/utils/abiUtils";
+import { useAccount } from "wagmi";
 
 interface SafeTransactionBuilderProps {
   transactions: SafeTransaction[];
@@ -28,6 +29,16 @@ interface SafeTransactionBuilderProps {
 }
 
 type AddressType = "contract" | "eoa" | "detecting";
+
+const AAVE_POOL_PROXY_ADDRESSES = new Set(
+  [
+    "0xb50201558b00496a145fe76f7424749556e326d8", // OP Sepolia Pool proxy
+  ].map((addr) => addr.toLowerCase()),
+);
+
+const MAX_UINT256_STRING = ethers.MaxUint256.toString();
+const PLACEHOLDER_TX2_TOKEN_ADDRESS = "__TOKEN_TX2_ADDRESS__";
+const PLACEHOLDER_CONNECTED_EOA = "__CONNECTED_EOA__";
 
 interface TransactionState {
   expanded: boolean;
@@ -40,6 +51,7 @@ interface TransactionState {
   selectedFunction: string;
   functionInputs: string[];
   valueInput: string;
+  defaultApplied: boolean;
 }
 
 export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
@@ -48,6 +60,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   selectedNetwork,
   error,
 }) => {
+  const { address: connectedEOA } = useAccount();
   // Track state for each transaction
   const [transactionStates, setTransactionStates] = useState<
     Record<number, TransactionState>
@@ -57,6 +70,90 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     index: number | null;
   }>({ open: false, index: null });
 
+  const getTxIndexBySignature = useCallback(
+    (signaturePrefix: string) => {
+      const lowerPrefix = signaturePrefix.toLowerCase();
+      for (let i = 0; i < transactions.length; i++) {
+        const tx = transactions[i];
+        const state = transactionStates[i];
+        const signature = (
+          state?.selectedFunction ||
+          tx.defaultFunctionSignature ||
+          ""
+        ).toLowerCase();
+        if (signature.startsWith(lowerPrefix)) {
+          return i;
+        }
+      }
+      return -1;
+    },
+    [transactions, transactionStates],
+  );
+
+  const getApprovalAddress = useCallback(() => {
+    const idx = getTxIndexBySignature("approve(");
+    if (idx === -1) return "";
+    return transactions[idx]?.to || "";
+  }, [getTxIndexBySignature, transactions]);
+
+  const getSupplyAddress = useCallback(() => {
+    const idx = getTxIndexBySignature("supply(");
+    if (idx === -1) return "";
+    return transactions[idx]?.to || "";
+  }, [getTxIndexBySignature, transactions]);
+
+  const resolveDefaultValue = useCallback(
+    (value: string) => {
+      if (value === PLACEHOLDER_TX2_TOKEN_ADDRESS) {
+        return getApprovalAddress();
+      }
+      if (value === PLACEHOLDER_CONNECTED_EOA) {
+        return connectedEOA || "";
+      }
+      return value;
+    },
+    [getApprovalAddress, connectedEOA],
+  );
+
+  const computePrefilledInputs = useCallback(
+    (
+      index: number,
+      selectedFunc: ParsedFunction,
+      providedDefaults?: (string | undefined)[],
+    ) => {
+      const nextInputs = new Array(selectedFunc.inputs.length).fill("");
+
+      if (providedDefaults && providedDefaults.length > 0) {
+        providedDefaults.forEach((value, idx) => {
+          if (value !== undefined && value !== null && value !== "") {
+            nextInputs[idx] = resolveDefaultValue(value);
+          }
+        });
+      }
+
+      if (
+        selectedFunc.name.toLowerCase() === "approve" &&
+        selectedFunc.inputs.length >= 2
+      ) {
+        if (!nextInputs[0]) {
+          nextInputs[0] = getSupplyAddress();
+        }
+        nextInputs[1] = MAX_UINT256_STRING;
+      }
+
+      if (
+        selectedFunc.name.toLowerCase() === "supply" &&
+        selectedFunc.inputs.length >= 1
+      ) {
+        if (!nextInputs[0]) {
+          nextInputs[0] = getApprovalAddress();
+        }
+      }
+
+      return nextInputs;
+    },
+    [resolveDefaultValue, getSupplyAddress, getApprovalAddress],
+  );
   // Initialize states for existing transactions
   useEffect(() => {
     const newStates: Record<number, TransactionState> = {};
@@ -76,6 +173,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
             transaction.value && transaction.value !== "0"
               ? ethers.formatEther(transaction.value)
               : "0",
+          defaultApplied: false,
         };
       }
     });
@@ -128,6 +226,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         selectedFunction: "",
         functionInputs: [],
         valueInput: "0",
+        defaultApplied: false,
       },
     }));
   };
@@ -171,14 +270,14 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   };
 
   // Update the transaction
-  const updateTransaction = (
-    index: number,
-    updates: Partial<SafeTransaction>,
-  ) => {
-    const newTransactions = [...transactions];
-    newTransactions[index] = { ...newTransactions[index], ...updates };
-    onChange(newTransactions);
-  };
+  const updateTransaction = useCallback(
+    (index: number, updates: Partial<SafeTransaction>) => {
+      const newTransactions = [...transactions];
+      newTransactions[index] = { ...newTransactions[index], ...updates };
+      onChange(newTransactions);
+    },
+    [transactions, onChange],
+  );
 
   // Handle address change with auto-detection
   const handleAddressChange = (index: number, value: string) => {
@@ -199,6 +298,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
           functions: [],
           selectedFunction: "",
           functionInputs: [],
+          defaultApplied: false,
         });
         detectAddressType(value, index);
       } else if (value === "") {
@@ -212,6 +312,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
           functions: [],
           selectedFunction: "",
           functionInputs: [],
+          defaultApplied: false,
         });
       }
     }
@@ -229,35 +330,275 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   };
 
   // Update the state for the transaction
-  const updateState = (index: number, updates: Partial<TransactionState>) => {
-    setTransactionStates((prev) => {
-      const currentState = prev[index] || {
-        expanded: false,
-        addressType: "eoa" as AddressType,
-        detectedType: null,
-        abi: null,
-        manualABI: "",
-        isCheckingABI: false,
-        functions: [],
-        selectedFunction: "",
-        functionInputs: [],
-        valueInput: "0",
-      };
+  const updateState = useCallback(
+    (index: number, updates: Partial<TransactionState>) => {
+      setTransactionStates((prev) => {
+        const currentState = prev[index] || {
+          expanded: false,
+          addressType: "eoa" as AddressType,
+          detectedType: null,
+          abi: null,
+          manualABI: "",
+          isCheckingABI: false,
+          functions: [],
+          selectedFunction: "",
+          functionInputs: [],
+          valueInput: "0",
+          defaultApplied: false,
+        };
 
-      return {
-        ...prev,
-        [index]: {
-          ...currentState,
-          ...updates,
-        },
-      };
+        return {
+          ...prev,
+          [index]: {
+            ...currentState,
+            ...updates,
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const encodeContractCallWithArgs = useCallback(
+    (index: number, parsedFunction: ParsedFunction, inputs: string[]) => {
+      const state = transactionStates[index];
+      const abiSource =
+        state?.abi || state?.manualABI || JSON.stringify([parsedFunction]);
+
+      try {
+        const parsedABI =
+          typeof abiSource === "string" ? JSON.parse(abiSource) : abiSource;
+        const contractInterface = new ethers.Interface(parsedABI);
+
+        const parsedArgs: unknown[] = [];
+        for (let i = 0; i < parsedFunction.inputs.length; i++) {
+          const input = parsedFunction.inputs[i];
+          const argValue = inputs[i];
+          if (!argValue) {
+            return;
+          }
+
+          let parsedValue: unknown = argValue;
+          if (input.type.startsWith("uint") || input.type.startsWith("int")) {
+            parsedValue = BigInt(argValue);
+          } else if (input.type === "bool") {
+            parsedValue = argValue.toLowerCase() === "true";
+          } else if (input.type === "address") {
+            parsedValue = argValue;
+          } else if (input.type.startsWith("bytes")) {
+            parsedValue = argValue;
+          } else if (input.type === "string") {
+            parsedValue = argValue;
+          }
+
+          parsedArgs.push(parsedValue);
+        }
+
+        const encodedData = contractInterface.encodeFunctionData(
+          parsedFunction.name,
+          parsedArgs,
+        );
+        updateTransaction(index, { data: encodedData });
+      } catch (err) {
+        devLog("[encodeContractCallWithArgs] Error encoding:", err);
+      }
+    },
+    [transactionStates, updateTransaction],
+  );
+
+  const handleFunctionSelect = useCallback(
+    (
+      index: number,
+      functionSig: string,
+      preselectedFunc?: ParsedFunction,
+      providedInputs?: string[],
+      markDefaultApplied = false,
+    ) => {
+      const state = transactionStates[index];
+      if (!state && !preselectedFunc) return;
+
+      const selectedFunc =
+        preselectedFunc ||
+        (state ? findFunctionBySignature(state.functions, functionSig) : null);
+
+      if (!selectedFunc) return;
+
+      const nextFunctionInputs = computePrefilledInputs(
+        index,
+        selectedFunc,
+        providedInputs,
+      );
+
+      const shouldEncodeImmediately = selectedFunc.inputs.every(
+        (_, idx) => !!nextFunctionInputs[idx],
+      );
+
+      const defaultAppliedValue = markDefaultApplied
+        ? true
+        : (state?.defaultApplied ?? false);
+
+      updateState(index, {
+        selectedFunction: functionSig,
+        functionInputs: nextFunctionInputs,
+        valueInput: "0",
+        defaultApplied: defaultAppliedValue,
+      });
+      updateTransaction(index, { value: "0" });
+
+      if (shouldEncodeImmediately) {
+        encodeContractCallWithArgs(index, selectedFunc, nextFunctionInputs);
+      } else {
+        updateTransaction(index, { data: "0x" });
+      }
+    },
+    [
+      transactionStates,
+      computePrefilledInputs,
+      updateState,
+      updateTransaction,
+      encodeContractCallWithArgs,
+    ],
+  );
+
+  const maybeApplyDefaultFunction = useCallback(
+    (index: number, availableFunctions: ParsedFunction[]) => {
+      const tx = transactions[index];
+      if (!tx) return;
+
+      const state = transactionStates[index];
+      if (state?.defaultApplied) return;
+
+      let targetFunc: ParsedFunction | undefined;
+      let signature: string | undefined = tx.defaultFunctionSignature;
+
+      if (signature) {
+        targetFunc = findFunctionBySignature(availableFunctions, signature);
+      }
+
+      if (!targetFunc) {
+        const normalizedTo = tx.to?.toLowerCase() || "";
+        if (normalizedTo && AAVE_POOL_PROXY_ADDRESSES.has(normalizedTo)) {
+          targetFunc = availableFunctions.find(
+            (func) =>
+              func.name === "supply" &&
+              func.inputs.length >= 4 &&
+              func.inputs[0].type === "address",
+          );
+          if (targetFunc) {
+            signature = getFunctionSignature(
+              targetFunc.name,
+              targetFunc.inputs,
+            );
+          }
+        }
+      }
+
+      if (!targetFunc || !signature) return;
+
+      const prefilledInputs = computePrefilledInputs(
+        index,
+        targetFunc,
+        tx.defaultArgumentValues,
+      );
+
+      handleFunctionSelect(index, signature, targetFunc, prefilledInputs, true);
+    },
+    [
+      transactions,
+      transactionStates,
+      computePrefilledInputs,
+      handleFunctionSelect,
+    ],
+  );
+
+  const loadDefaultAbi = useCallback(
+    (index: number) => {
+      const tx = transactions[index];
+      const state = transactionStates[index];
+
+      if (!tx?.defaultAbi) return false;
+      if (state?.abi && state.functions.length > 0) return false;
+
+      try {
+        const abiString =
+          typeof tx.defaultAbi === "string"
+            ? tx.defaultAbi
+            : JSON.stringify(tx.defaultAbi);
+        const functions = extractFunctions(abiString);
+
+        updateState(index, {
+          abi: abiString,
+          functions,
+          isCheckingABI: false,
+          addressType: "contract",
+        });
+
+        maybeApplyDefaultFunction(index, functions);
+        return true;
+      } catch (err) {
+        devLog("[loadDefaultAbi] Failed to load default ABI", err);
+        return false;
+      }
+    },
+    [transactions, transactionStates, updateState, maybeApplyDefaultFunction],
+  );
+
+  useEffect(() => {
+    transactions.forEach((_, index) => {
+      loadDefaultAbi(index);
     });
-  };
+  }, [transactions, loadDefaultAbi]);
+
+  useEffect(() => {
+    const approvalAddress = getApprovalAddress();
+    const supplyIndex = getTxIndexBySignature("supply(");
+
+    if (supplyIndex === -1) return;
+
+    const supplyState = transactionStates[supplyIndex];
+    if (
+      !approvalAddress ||
+      !supplyState ||
+      !supplyState.defaultApplied ||
+      !supplyState.selectedFunction ||
+      !supplyState.functions ||
+      !supplyState.selectedFunction.startsWith("supply(")
+    ) {
+      return;
+    }
+
+    if (supplyState.functionInputs[0] === approvalAddress) {
+      return;
+    }
+
+    const selectedFunc = findFunctionBySignature(
+      supplyState.functions,
+      supplyState.selectedFunction,
+    );
+
+    if (!selectedFunc) return;
+
+    const updatedInputs = [...supplyState.functionInputs];
+    updatedInputs[0] = approvalAddress;
+
+    updateState(supplyIndex, { functionInputs: updatedInputs });
+    encodeContractCallWithArgs(supplyIndex, selectedFunc, updatedInputs);
+  }, [
+    getApprovalAddress,
+    getTxIndexBySignature,
+    transactionStates,
+    updateState,
+    encodeContractCallWithArgs,
+  ]);
 
   // Fetch the ABI for the contract
   const fetchABI = useCallback(
     async (address: string, index: number) => {
       if (!address || !ethers.isAddress(address)) {
+        return;
+      }
+
+      if (loadDefaultAbi(index)) {
         return;
       }
 
@@ -284,6 +625,8 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
             functions,
             isCheckingABI: false,
           });
+
+          maybeApplyDefaultFunction(index, functions);
         } else {
           updateState(index, {
             abi: null,
@@ -300,7 +643,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         });
       }
     },
-    [selectedNetwork],
+    [selectedNetwork, updateState, maybeApplyDefaultFunction, loadDefaultAbi],
   );
 
   // Detect the address type (contract or eoa)
@@ -335,7 +678,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         });
       }
     },
-    [selectedNetwork, fetchABI],
+    [selectedNetwork, fetchABI, updateState],
   );
 
   // Handle the manual ABI change
@@ -349,27 +692,12 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         manualABI: abiString,
         functions,
       });
+
+      maybeApplyDefaultFunction(index, functions);
     } catch {
       updateState(index, {
         manualABI: abiString,
       });
-    }
-  };
-
-  const handleFunctionSelect = (index: number, functionSig: string) => {
-    const state = transactionStates[index];
-    if (!state) return;
-
-    // Use the utility function to find the selected function
-    const selectedFunc = findFunctionBySignature(state.functions, functionSig);
-
-    if (selectedFunc) {
-      updateState(index, {
-        selectedFunction: functionSig,
-        functionInputs: new Array(selectedFunc.inputs.length).fill(""),
-        valueInput: "0",
-      });
-      updateTransaction(index, { value: "0" });
     }
   };
 
@@ -421,7 +749,15 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
 
         let parsedValue: unknown = argValue;
         if (input.type.startsWith("uint") || input.type.startsWith("int")) {
-          parsedValue = BigInt(argValue);
+          if (
+            selectedFunc.name.toLowerCase() === "supply" &&
+            i === 1 &&
+            argValue !== ""
+          ) {
+            parsedValue = ethers.parseUnits(argValue, 18);
+          } else {
+            parsedValue = BigInt(argValue);
+          }
         } else if (input.type === "bool") {
           parsedValue = argValue.toLowerCase() === "true";
         } else if (input.type === "address") {

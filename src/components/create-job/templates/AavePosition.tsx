@@ -1,0 +1,138 @@
+import React from "react";
+import { WalletConnectionCard } from "../../common/WalletConnectionCard";
+import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
+import TemplateInfoSection from "./components/TemplateInfoSection";
+import { Button } from "../../ui/Button";
+import { useJobFormContext } from "@/hooks/useJobFormContext";
+import { useJob } from "@/contexts/JobContext";
+import { getSafeModuleAddress } from "@/utils/contractAddresses";
+import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
+import AavePoolArtifact from "@/artifacts/AavePool.json";
+
+// Contract addresses on OP Sepolia
+const AAVE_POOL_ADDRESS = "0xb50201558B00496A145fE76f7424749556E326D8";
+const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
+const MAX_UINT256 =
+  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+const OP_SEPOLIA_CHAIN_ID = 11155420;
+
+const AavePosition = () => {
+  const { isConnected } = useWalletConnectionContext();
+
+  return (
+    <div className="space-y-6 sm:space-y-8">
+      <TemplateInfoSection
+        title="Maintain Aave Position Template"
+        description="Automatically monitor your Aave V3 health factor and execute supply/approve transactions via Safe wallet when the health factor falls below a safe threshold. This template uses condition-based triggers to protect your position from liquidation."
+        steps={[
+          "Prerequisites - Have an existing Aave V3 position and a funded Safe wallet on OP Sepolia.",
+          "Setup API - Deploy and expose your health-factor monitoring API endpoint (see documentation).",
+          "Create Job - Click 'Create Job' to pre-fill the job form with Aave-specific settings.",
+          "Configure Safe Transactions - Fill in the specific parameters for the supply and approve functions.",
+          "Enter API URL - Paste your public health-factor API endpoint URL in the Source URL field.",
+          "Activate - Finalize and activate the automation. Your position will be monitored 24/7.",
+        ]}
+      />
+      <WalletConnectionCard className="mt-4" />
+
+      {isConnected && (
+        <div className="flex justify-center mt-4 sm:mt-6">
+          <CreateJobButton />
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CreateJobButton: React.FC = () => {
+  const jobForm = useJobFormContext();
+  const { handleCreateCustomJob } = useJob();
+
+  const handleCreateJob = async () => {
+    // Switch to custom job form
+    handleCreateCustomJob();
+
+    // Set TriggerX type to condition-based (2)
+    jobForm.setJobType(2);
+
+    // Set job title
+    jobForm.setJobTitle("Aave Health Factor Guard");
+
+    // Set network to OP Sepolia
+    jobForm.setSelectedNetwork("OP Sepolia");
+
+    // Set timeframe to 1 day
+    jobForm.setTimeframe({ days: 1, hours: 0, minutes: 0 });
+
+    // Set recurring to false
+    jobForm.setRecurring(false);
+
+    // Set execution mode to Safe wallet
+    jobForm.setExecutionMode("safe");
+
+    // Configure Safe module address and ABI
+    const moduleAddress = getSafeModuleAddress(OP_SEPOLIA_CHAIN_ID);
+    if (moduleAddress) {
+      jobForm.handleSetContractDetails(
+        "contract",
+        moduleAddress,
+        JSON.stringify(TriggerXSafeModuleArtifact.abi),
+      );
+    }
+
+    // Wait for state to update
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Select the execJobFromHub function (Safe module function)
+    const execJobFunction =
+      "execJobFromHub(address,address,uint256,bytes,uint8)";
+    jobForm.handleFunctionChange("contract", execJobFunction);
+
+    // Set argument type to static
+    jobForm.handleArgumentTypeChange("contract", "static");
+
+    // Configure condition-based settings
+    // Source type is already "api" by default
+    jobForm.handleSourceTypeChange("contract", "api");
+
+    // Set condition type to less than or equal to
+    jobForm.handleConditionTypeChange("contract", "less_equal");
+
+    // Set value to 1.2
+    jobForm.handleUpperLimitChange("contract", "1.2");
+
+    // Pre-populate two Safe transactions
+    const safeTransactions = [
+      {
+        to: WETH_ADDRESS,
+        value: "0",
+        data: "0x",
+        defaultFunctionSignature: "approve(address,uint256)",
+        defaultArgumentValues: [AAVE_POOL_ADDRESS, MAX_UINT256],
+      },
+      {
+        to: AAVE_POOL_ADDRESS,
+        value: "0",
+        data: "0x",
+        defaultFunctionSignature: "supply(address,uint256,address,uint16)",
+        defaultArgumentValues: [
+          "__TOKEN_TX2_ADDRESS__",
+          "",
+          "__CONNECTED_EOA__",
+          "0",
+        ],
+        defaultAbi: JSON.stringify(AavePoolArtifact.abi),
+      },
+    ];
+
+    jobForm.handleSafeTransactionsChange("contract", safeTransactions);
+  };
+
+  return (
+    <Button color="yellow" onClick={handleCreateJob}>
+      Create Job
+    </Button>
+  );
+};
+
+export default AavePosition;
