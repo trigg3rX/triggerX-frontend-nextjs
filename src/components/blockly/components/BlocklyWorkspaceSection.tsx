@@ -89,27 +89,6 @@ export function BlocklyWorkspaceSection({
             },
           ],
         },
-        // --- SAFE WALLET CATEGORY ---
-        // Tools for creating and managing Safe wallets
-        {
-          kind: "category",
-          name: "Safe Wallet",
-          colour: "#9C27B0",
-          contents: [
-            {
-              kind: "block",
-              type: "create_safe_wallet",
-            },
-            {
-              kind: "block",
-              type: "import_safe_wallet",
-            },
-            {
-              kind: "block",
-              type: "select_safe_wallet",
-            },
-          ],
-        },
         // --- JOB TYPE CATEGORY ---
         // Any one of these is required for validation, defining *how* the job is triggered.
         {
@@ -171,13 +150,37 @@ export function BlocklyWorkspaceSection({
           colour: "110",
           contents: [{ kind: "block", type: "condition_monitor" }],
         },
-
+        // --- SAFE WALLET CATEGORY ---
+        // Tools for creating and managing Safe wallets
+        {
+          kind: "category",
+          name: "Safe Wallet",
+          colour: "#9C27B0",
+          contents: [
+            {
+              kind: "block",
+              type: "create_safe_wallet",
+            },
+            {
+              kind: "block",
+              type: "import_safe_wallet",
+            },
+            {
+              kind: "block",
+              type: "select_safe_wallet",
+            },
+          ],
+        },
         // --- CONTRACT UTILITIES ---
         {
           kind: "category",
           name: "Contract",
           colour: "190",
           contents: [
+            {
+              kind: "block",
+              type: "execute_through_safe_wallet",
+            },
             { kind: "block", type: "execute_function" },
             { kind: "block", type: "static_arguments" },
             { kind: "block", type: "dynamic_arguments" },
