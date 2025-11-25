@@ -12,6 +12,7 @@ import {
   FaBolt,
   FaSlidersH,
   FaFileContract,
+  FaShieldAlt,
 } from "react-icons/fa";
 import { createRoot } from "react-dom/client";
 import React from "react";
@@ -174,6 +175,15 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
         const root = createRoot(customIcon);
         root.render(
           React.createElement(FaFileContract, { size: 12, color: "white" }),
+        );
+      } else if (
+        categoryName.includes("safe wallet") ||
+        categoryName.includes("safewallet")
+      ) {
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaShieldAlt, { size: 12, color: "white" }),
         );
       } else {
         // Use existing icon for other categories

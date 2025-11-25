@@ -53,6 +53,39 @@ Blockly.Blocks["wallet_selection"] = {
       return "Specify the Wallet Address with which you want to submit your Job. Connect to the Chain block on the left.";
     });
   },
+
+  // Hook called when block is created (both in flyout and workspace)
+  onchange: function (event: Blockly.Events.Abstract) {
+    // Only process create events
+    if (event.type !== Blockly.Events.BLOCK_CREATE) {
+      return;
+    }
+
+    // Cast to BlockCreate event to access blockId
+    const createEvent = event as Blockly.Events.BlockCreate;
+
+    // Check if this event is for this block
+    if (createEvent.blockId !== this.id) {
+      return;
+    }
+
+    // If block is in the flyout, keep it as "0x..."
+    if (this.isInFlyout) {
+      const currentValue = this.getFieldValue("WALLET_ADDRESS");
+      if (currentValue !== "0x...") {
+        this.setFieldValue("0x...", "WALLET_ADDRESS");
+      }
+      return;
+    }
+
+    // If block is on workspace and we have a connected address, update it
+    if (!this.isInFlyout && connectedWalletAddress) {
+      const currentValue = this.getFieldValue("WALLET_ADDRESS");
+      if (currentValue === "0x..." || currentValue !== connectedWalletAddress) {
+        this.setFieldValue(connectedWalletAddress, "WALLET_ADDRESS");
+      }
+    }
+  },
 };
 
 // 3. Define the JSON structure for the Chain Selection Block
@@ -78,9 +111,17 @@ const chainSelectionJson = {
 // Global variable to store the connected chain ID for validation
 let connectedChainId: string | null = null;
 
+// Global variable to store the connected wallet address
+let connectedWalletAddress: string | null = null;
+
 // Function to set the connected chain ID (called from React component)
 export function setConnectedChainId(chainId: string | null) {
   connectedChainId = chainId;
+}
+
+// Function to set the connected wallet address (called from React component)
+export function setConnectedWalletAddress(address: string | null) {
+  connectedWalletAddress = address;
 }
 
 // Validator function for chain selection

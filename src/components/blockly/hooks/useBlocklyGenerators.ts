@@ -22,6 +22,9 @@ import { conditionMonitorGenerator } from "../blocks/utility/condition/condition
 import { executeFunctionGenerator } from "../blocks/utility/contract/execute_function";
 import { staticArgumentsGenerator } from "../blocks/utility/contract/static_arguments";
 import { dynamicArgumentsGenerator } from "../blocks/utility/contract/dynamic_arguments";
+import { createSafeWalletGenerator } from "../blocks/utility/safe-wallet/create_safe_wallet";
+import { importSafeWalletGenerator } from "../blocks/utility/safe-wallet/import_safe_wallet";
+import { selectSafeWalletGenerator } from "../blocks/utility/safe-wallet/select_safe_wallet";
 
 // Custom hook to register all Blockly block generators
 export function useBlocklyGenerators() {
@@ -55,5 +58,11 @@ export function useBlocklyGenerators() {
     javascriptGenerator.forBlock["static_arguments"] = staticArgumentsGenerator;
     javascriptGenerator.forBlock["dynamic_arguments"] =
       dynamicArgumentsGenerator;
+    javascriptGenerator.forBlock["create_safe_wallet"] =
+      createSafeWalletGenerator;
+    javascriptGenerator.forBlock["import_safe_wallet"] =
+      importSafeWalletGenerator;
+    javascriptGenerator.forBlock["select_safe_wallet"] =
+      selectSafeWalletGenerator;
   }, []);
 }

@@ -4,7 +4,11 @@ import React, { useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import * as Blockly from "blockly/core";
 import DisableInteractions from "@/app/DisableInteractions";
-import { setConnectedChainId } from "../blocks/default_blocks";
+import {
+  setConnectedChainId,
+  setConnectedWalletAddress,
+} from "../blocks/default_blocks";
+import { setImportSafeChainId } from "../blocks/utility/safe-wallet/import_safe_wallet";
 
 // react-blockly uses window, so ensure client-only dynamic import
 const BlocklyWorkspace = dynamic(
@@ -64,7 +68,7 @@ export function BlocklyWorkspaceSection({
               kind: "block",
               type: "wallet_selection",
               fields: {
-                WALLET_ADDRESS: connectedAddress || "0x...",
+                WALLET_ADDRESS: "0x...", // Always show placeholder in flyout
               },
             },
           ],
@@ -82,6 +86,27 @@ export function BlocklyWorkspaceSection({
               fields: {
                 CHAIN_ID: connectedChainId?.toString() || "11155420", // Use connected chain or OP Sepolia as default
               },
+            },
+          ],
+        },
+        // --- SAFE WALLET CATEGORY ---
+        // Tools for creating and managing Safe wallets
+        {
+          kind: "category",
+          name: "Safe Wallet",
+          colour: "#9C27B0",
+          contents: [
+            {
+              kind: "block",
+              type: "create_safe_wallet",
+            },
+            {
+              kind: "block",
+              type: "import_safe_wallet",
+            },
+            {
+              kind: "block",
+              type: "select_safe_wallet",
             },
           ],
         },
@@ -160,7 +185,7 @@ export function BlocklyWorkspaceSection({
         },
       ],
     }),
-    [connectedAddress, connectedChainId],
+    [connectedChainId],
   );
 
   // Keep flyout always open and disable click-to-place
@@ -242,9 +267,15 @@ export function BlocklyWorkspaceSection({
     });
   }, [connectedAddress]);
 
-  // Update the global connected chain ID for validation
+  // Update the global connected wallet address for wallet blocks
+  useEffect(() => {
+    setConnectedWalletAddress(connectedAddress || null);
+  }, [connectedAddress]);
+
+  // Update the global connected chain ID for validation and import safe button
   useEffect(() => {
     setConnectedChainId(connectedChainId?.toString() || null);
+    setImportSafeChainId(connectedChainId || null);
   }, [connectedChainId]);
 
   // Sync chain blocks with connected chain

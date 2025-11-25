@@ -1,12 +1,25 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import "./customToolbox";
 import { validateBlocklyWorkspace } from "./validateBlocklyWorkspace";
 import JobFeeModal from "../create-job/JobFeeModal";
 import { useAccount } from "wagmi";
 import { syncBlocklyToJobForm } from "./utils/syncBlocklyToJobForm";
+import { setCreateSafeHandler } from "./blocks/utility/safe-wallet/create_safe_wallet";
+import { setImportSafeHandler } from "./blocks/utility/safe-wallet/import_safe_wallet";
+import {
+  setSafeWallets,
+  setLoadingWallets,
+  setOnBlockAddedCallback,
+} from "./blocks/utility/safe-wallet/select_safe_wallet";
+import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
+import SafeCreationProgressModal from "../safe-wallet/SafeWalletCreationDialog";
+import SafeWalletImportDialog from "../safe-wallet/import-wallet-modal/SafeWalletImportDialog";
+import type { SafeCreationStepStatus } from "@/types/safe";
+import { useSafeWallets } from "@/hooks/useSafeWallets";
+import { addExtraSafe } from "@/utils/safeWalletLocal";
 
 // Custom hooks
 import { useBlocklyGenerators } from "./hooks/useBlocklyGenerators";
@@ -47,9 +60,189 @@ export default function BlocklyDemo() {
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const permissionCheckboxRef = useRef<HTMLDivElement | null>(null);
 
+  // Safe wallet creation state
+  const [showCreateFlow, setShowCreateFlow] = useState(false);
+  const [createStep, setCreateStep] = useState<SafeCreationStepStatus>("idle");
+  const [signStep, setSignStep] = useState<SafeCreationStepStatus>("idle");
+  const [enableStep, setEnableStep] = useState<SafeCreationStepStatus>("idle");
+  const [createError, setCreateError] = useState<string | undefined>(undefined);
+  const [signError, setSignError] = useState<string | undefined>(undefined);
+  const [enableError, setEnableError] = useState<string | undefined>(undefined);
+  const [currentSafeAddress, setCurrentSafeAddress] = useState<string | null>(
+    null,
+  );
+
+  // Import safe wallet state
+  const [showImportDialog, setShowImportDialog] = useState(false);
+
+  // Safe wallet hooks
+  const { safeWallets, isLoading, refetch } = useSafeWallets();
+  const { createSafeWallet, signEnableModule, submitEnableModule } =
+    useCreateSafeWallet();
+
+  // Update loading state in the select block
+  useEffect(() => {
+    setLoadingWallets(isLoading);
+  }, [isLoading]);
+
+  // Update safe wallets in the select block whenever they change
+  useEffect(() => {
+    setSafeWallets(safeWallets);
+  }, [safeWallets]);
+
+  // Set up callback to refetch wallets when block is added
+  useEffect(() => {
+    setOnBlockAddedCallback(() => {
+      refetch();
+    });
+  }, [refetch]);
+
   // Custom hooks
   useBlocklyGenerators();
   const { xml, onXmlChange } = useBlocklyWorkspace();
+
+  // Handle enable step - can be called independently for retry
+  const handleEnableStep = useCallback(async () => {
+    setEnableStep("pending");
+    setEnableError(undefined);
+
+    const submitResult = await submitEnableModule();
+
+    if (!submitResult.success) {
+      setEnableStep("error");
+      setEnableError(submitResult.error || "Failed to submit transaction");
+    } else {
+      setEnableStep("success");
+      setTimeout(async () => {
+        await refetch();
+      }, 2000);
+
+      setTimeout(() => {
+        setShowCreateFlow(false);
+      }, 500);
+    }
+  }, [submitEnableModule, refetch]);
+
+  // Handle sign step - can be called independently for retry
+  const handleSignStep = useCallback(
+    async (safeAddress: string) => {
+      setSignStep("pending");
+      setSignError(undefined);
+
+      const signResult = await signEnableModule(safeAddress);
+
+      if (!signResult.success) {
+        setSignStep("error");
+        setSignError(signResult.error || "Failed to sign transaction");
+        setTimeout(async () => {
+          await refetch();
+        }, 3000);
+        return;
+      }
+
+      setSignStep("success");
+      await handleEnableStep();
+    },
+    [signEnableModule, refetch, handleEnableStep],
+  );
+
+  // Create new Safe wallet with three-step flow
+  const handleCreateNewSafe = useCallback(async () => {
+    if (!address) return;
+
+    setShowCreateFlow(true);
+    setCreateStep("pending");
+    setSignStep("idle");
+    setEnableStep("idle");
+    setCreateError(undefined);
+    setSignError(undefined);
+    setEnableError(undefined);
+    setCurrentSafeAddress(null);
+
+    const createResult = await createSafeWallet(address);
+
+    if (!createResult.success || !createResult.safeAddress) {
+      setCreateStep("error");
+      setCreateError(createResult.error || "Failed to create Safe wallet");
+      return;
+    }
+
+    const newSafe = createResult.safeAddress;
+    setCurrentSafeAddress(newSafe);
+    setCreateStep("success");
+
+    await handleSignStep(newSafe);
+  }, [address, createSafeWallet, handleSignStep]);
+
+  // Retry handlers
+  const handleRetryCreate = useCallback(async () => {
+    if (!address) return;
+    setCreateStep("pending");
+    setCreateError(undefined);
+
+    const createResult = await createSafeWallet(address);
+    if (!createResult.success || !createResult.safeAddress) {
+      setCreateStep("error");
+      setCreateError(createResult.error || "Failed to create Safe wallet");
+      return;
+    }
+
+    const newSafe = createResult.safeAddress;
+    setCurrentSafeAddress(newSafe);
+    setCreateStep("success");
+    await handleSignStep(newSafe);
+  }, [address, createSafeWallet, handleSignStep]);
+
+  const handleRetrySign = useCallback(async () => {
+    if (!currentSafeAddress) return;
+    await handleSignStep(currentSafeAddress);
+  }, [currentSafeAddress, handleSignStep]);
+
+  const handleRetryEnable = useCallback(async () => {
+    if (!currentSafeAddress) return;
+    await handleEnableStep();
+  }, [currentSafeAddress, handleEnableStep]);
+
+  // Handle import safe wallet
+  const handleImportSafe = useCallback(() => {
+    console.log("Import Safe button clicked in BlocklyDemo");
+    setShowImportDialog(true);
+  }, []);
+
+  // Handle imported safe wallet
+  const handleImportedSafe = useCallback(
+    async (
+      safeAddress: string,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _moduleActive: boolean,
+    ) => {
+      // Add to local storage
+      if (chain?.id) {
+        addExtraSafe(chain.id, safeAddress);
+      }
+
+      // Refetch the safe wallets list
+      await refetch();
+    },
+    [chain?.id, refetch],
+  );
+
+  // Set up the handlers for the Blockly block buttons
+  useEffect(() => {
+    console.log("Setting up create safe handler in BlocklyDemo");
+    setCreateSafeHandler(handleCreateNewSafe);
+    return () => {
+      console.log("Cleaning up create safe handler");
+    };
+  }, [handleCreateNewSafe]);
+
+  useEffect(() => {
+    console.log("Setting up import safe handler in BlocklyDemo");
+    setImportSafeHandler(handleImportSafe);
+    return () => {
+      console.log("Cleaning up import safe handler");
+    };
+  }, [handleImportSafe]);
 
   const handleCreateJob = useCallback(
     (e: React.FormEvent) => {
@@ -181,6 +374,29 @@ export default function BlocklyDemo() {
           isOpen={isModalOpen}
           setIsOpen={setIsModalOpen}
           estimatedFee={estimatedFee}
+        />
+
+        {/* Safe Wallet Creation Progress Dialog */}
+        <SafeCreationProgressModal
+          open={showCreateFlow}
+          onClose={() => setShowCreateFlow(false)}
+          createStep={createStep}
+          signStep={signStep}
+          enableStep={enableStep}
+          createError={createError}
+          signError={signError}
+          enableError={enableError}
+          onRetryCreate={handleRetryCreate}
+          onRetrySign={handleRetrySign}
+          onRetryEnable={handleRetryEnable}
+        />
+
+        {/* Import Safe Wallet Dialog */}
+        <SafeWalletImportDialog
+          open={showImportDialog}
+          onClose={() => setShowImportDialog(false)}
+          onImported={handleImportedSafe}
+          onHasOngoingProcessChange={() => {}}
         />
       </div>
     </>
