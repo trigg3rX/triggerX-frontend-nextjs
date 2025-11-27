@@ -101,7 +101,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         {isOpen && !disabled && (
           <div
             className={twMerge(
-              "absolute top-12 sm:top-14 w-full rounded-md sm:rounded-xl overflow-hidden shadow-lg z-10 border",
+              "absolute top-12 sm:top-14 w-full rounded-md sm:rounded-xl overflow-hidden shadow-lg z-50 border",
               selectedColors.menu,
             )}
           >

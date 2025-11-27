@@ -15,6 +15,7 @@ interface TextInputProps {
   onValueChange?: (value: string) => void;
   id?: string;
   readOnly?: boolean;
+  onKeyPress?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 export const InputField: React.FC<TextInputProps> = ({
@@ -30,6 +31,7 @@ export const InputField: React.FC<TextInputProps> = ({
   onValueChange,
   id,
   readOnly,
+  onKeyPress,
 }) => {
   const inputWidthClass = label ? "w-full md:w-[70%]" : "w-full";
 
@@ -57,6 +59,7 @@ export const InputField: React.FC<TextInputProps> = ({
           placeholder={placeholder}
           onFocus={onFocus}
           onBlur={onBlur}
+          onKeyPress={onKeyPress}
           id={id}
           readOnly={readOnly}
         />
