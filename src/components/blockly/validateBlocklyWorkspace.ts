@@ -380,21 +380,26 @@ export function validateBlocklyWorkspace({
             };
           }
 
-          // Verify it's an execute function block
+          // Verify it's an execute function or execute through safe wallet block
           const actionType = actionBlock.getAttribute("type");
-          if (actionType !== "execute_function") {
+          if (
+            actionType !== "execute_function" &&
+            actionType !== "execute_through_safe_wallet"
+          ) {
             return {
               errorKey: "time",
-              errorValue: `Time utility block requires an execute function block to execute. Please connect an execute function block (not other block types) to the 'execute' input. Found: ${actionType || "unknown"}`,
+              errorValue: `Time utility block requires an execute block to execute. Please connect an execute function block or execute through safe wallet block to the 'execute' input. Found: ${actionType || "unknown"}`,
             };
           }
 
-          // Validate execute_function block using helper
-          const execValidation = validateExecuteFunctionBlock(
-            actionBlock,
-            "time",
-          );
-          if (execValidation) return execValidation;
+          // Validate execute_function block using helper (only for execute_function, not safe wallet)
+          if (actionType === "execute_function") {
+            const execValidation = validateExecuteFunctionBlock(
+              actionBlock,
+              "time",
+            );
+            if (execValidation) return execValidation;
+          }
         }
       }
 
@@ -545,25 +550,33 @@ export function validateBlocklyWorkspace({
             }
 
             const contractActionType = contractActionBlock.getAttribute("type");
-            if (contractActionType !== "execute_function") {
+            if (
+              contractActionType !== "execute_function" &&
+              contractActionType !== "execute_through_safe_wallet"
+            ) {
               return {
                 errorKey: "event",
-                errorValue: `Event filter must contain an execute function block. Please connect an execute function block inside the event filter's 'execute' input. Found: ${contractActionType || "unknown"}`,
+                errorValue: `Event filter must contain an execute block. Please connect an execute function block or execute through safe wallet block inside the event filter's 'execute' input. Found: ${contractActionType || "unknown"}`,
               };
             }
 
-            // Validate execute_function block using helper
-            const filterExecValidation = validateExecuteFunctionBlock(
-              contractActionBlock,
-              "event",
-            );
-            if (filterExecValidation) return filterExecValidation;
-          } else if (actionType !== "execute_function") {
+            // Validate execute_function block using helper (only for execute_function, not safe wallet)
+            if (contractActionType === "execute_function") {
+              const filterExecValidation = validateExecuteFunctionBlock(
+                contractActionBlock,
+                "event",
+              );
+              if (filterExecValidation) return filterExecValidation;
+            }
+          } else if (
+            actionType !== "execute_function" &&
+            actionType !== "execute_through_safe_wallet"
+          ) {
             return {
               errorKey: "event",
-              errorValue: `Event listener requires either an event filter or execute function block. Please connect the appropriate block to the 'then' input. Found: ${actionType || "unknown"}`,
+              errorValue: `Event listener requires either an event filter or execute block. Please connect the appropriate block to the 'then' input. Found: ${actionType || "unknown"}`,
             };
-          } else {
+          } else if (actionType === "execute_function") {
             // Direct execute_function block connected to event listener
             const directExecValidation = validateExecuteFunctionBlock(
               actionBlock,
@@ -703,21 +716,26 @@ export function validateBlocklyWorkspace({
             };
           }
 
-          // Verify it's an execute function block
+          // Verify it's an execute function or execute through safe wallet block
           const actionType = actionBlock.getAttribute("type");
-          if (actionType !== "execute_function") {
+          if (
+            actionType !== "execute_function" &&
+            actionType !== "execute_through_safe_wallet"
+          ) {
             return {
               errorKey: "condition",
-              errorValue: `Condition monitor requires an execute function block to execute. Please connect an execute function block (not other block types) to the 'execute' input. Found block type: ${actionType || "unknown"}`,
+              errorValue: `Condition monitor requires an execute block to execute. Please connect an execute function block or execute through safe wallet block to the 'execute' input. Found block type: ${actionType || "unknown"}`,
             };
           }
 
-          // Validate execute_function block using helper
-          const condExecValidation = validateExecuteFunctionBlock(
-            actionBlock,
-            "condition",
-          );
-          if (condExecValidation) return condExecValidation;
+          // Validate execute_function block using helper (only for execute_function, not safe wallet)
+          if (actionType === "execute_function") {
+            const condExecValidation = validateExecuteFunctionBlock(
+              actionBlock,
+              "condition",
+            );
+            if (condExecValidation) return condExecValidation;
+          }
         }
       }
 
@@ -735,6 +753,77 @@ export function validateBlocklyWorkspace({
           errorValue:
             "Condition-based jobs cannot contain Event utility blocks. Please remove the event listener block or switch to an event-based job wrapper.",
         };
+      }
+    }
+
+    // Check for execute contract blocks - only one type allowed
+    const executeContractBlocks = blockNodes.filter(
+      (b) => b.getAttribute("type") === "execute_function",
+    );
+    const executeSafeWalletBlocks = blockNodes.filter(
+      (b) => b.getAttribute("type") === "execute_through_safe_wallet",
+    );
+
+    // Ensure only one type of execute block is used
+    if (
+      executeContractBlocks.length > 0 &&
+      executeSafeWalletBlocks.length > 0
+    ) {
+      return {
+        errorKey: "execute",
+        errorValue:
+          "Only one type of execution block is allowed. Please use either 'Execute Function' blocks OR 'Execute through Safe Wallet' blocks, but not both in the same workspace.",
+      };
+    }
+
+    if (executeSafeWalletBlocks.length > 0) {
+      // Check each execute_through_safe_wallet block
+      for (const executeBlock of executeSafeWalletBlocks) {
+        // Check if there's a safe wallet block connected to the SAFE_WALLET input
+        const safeWalletValue = Array.from(
+          executeBlock.getElementsByTagName("value"),
+        ).find((val) => val.getAttribute("name") === "SAFE_WALLET");
+
+        const connectedSafeBlock =
+          safeWalletValue?.getElementsByTagName("block")[0];
+
+        if (!connectedSafeBlock) {
+          return {
+            errorKey: "safe_wallet",
+            errorValue:
+              "Execute through Safe Wallet block requires a safe wallet to be connected. Please connect a Safe wallet block (Create Safe Wallet, Import Safe Wallet, or Select Safe Wallet) from the Safe Wallet category.",
+          };
+        }
+
+        // Verify the connected block is a valid safe wallet block
+        const connectedBlockType = connectedSafeBlock.getAttribute("type");
+        const validSafeWalletTypes = [
+          "create_safe_wallet",
+          "import_safe_wallet",
+          "select_safe_wallet",
+        ];
+
+        if (!validSafeWalletTypes.includes(connectedBlockType || "")) {
+          return {
+            errorKey: "safe_wallet",
+            errorValue: `Execute through Safe Wallet block requires a valid Safe wallet block. Please connect a Create Safe Wallet, Import Safe Wallet, or Select Safe Wallet block. Found: ${connectedBlockType || "unknown"}`,
+          };
+        }
+
+        // Additional validation for select_safe_wallet
+        if (connectedBlockType === "select_safe_wallet") {
+          const selectedWallet = getFieldValue(
+            connectedSafeBlock,
+            "SAFE_WALLET",
+          );
+          if (!selectedWallet || selectedWallet === "") {
+            return {
+              errorKey: "safe_wallet",
+              errorValue:
+                "Please select a Safe wallet from the dropdown in the Select Safe Wallet block, or use Create/Import Safe Wallet block instead.",
+            };
+          }
+        }
       }
     }
 

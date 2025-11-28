@@ -144,12 +144,20 @@ Blockly.fieldRegistry.register("field_button_import", ButtonField);
 
 const importSafeWalletJson = {
   type: "import_safe_wallet",
-  message0: "Import Safe Wallet (Base Network) %1",
+  message0: "Import Safe Wallet (Base Network) %1 %2 %3",
   args0: [
     {
       type: "field_button_import",
       name: "IMPORT_BUTTON",
       text: "Import Safe",
+    },
+    {
+      type: "input_dummy",
+    },
+    {
+      type: "field_label",
+      name: "WALLET_ADDRESS",
+      text: "",
     },
   ],
   output: "SAFE_WALLET_OUTPUT",
@@ -157,6 +165,7 @@ const importSafeWalletJson = {
   tooltip:
     "Click the button to import an existing Safe wallet from Base network. This will guide you through the import process.",
   helpUrl: "",
+  data: "", // Store wallet address as data attribute
 };
 
 // Global click handler that can be set from React
@@ -195,6 +204,34 @@ function updateImportButtonStates(): void {
     }
   } catch (error) {
     console.error("Error updating import button states:", error);
+  }
+}
+
+// Function to update wallet address on import_safe_wallet blocks
+export function updateImportedWalletAddress(walletAddress: string): void {
+  try {
+    const workspace = Blockly.getMainWorkspace();
+    if (workspace) {
+      const allBlocks = workspace.getAllBlocks(false);
+      allBlocks.forEach((block) => {
+        if (block.type === "import_safe_wallet") {
+          // Update the display label
+          const addressField = block.getField(
+            "WALLET_ADDRESS",
+          ) as Blockly.FieldLabel | null;
+          if (addressField) {
+            // Format the address for display
+            const shortAddress = `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`;
+            addressField.setValue(`✓ ${shortAddress}`);
+          }
+
+          // Store the full address in the block's data attribute
+          block.data = walletAddress;
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error updating imported wallet address:", error);
   }
 }
 

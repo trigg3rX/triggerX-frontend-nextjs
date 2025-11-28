@@ -30,6 +30,12 @@ export function syncBlocklyToJobForm(
     const eventBlock = findFirstBlockByType("event_listener");
     const executeFunctionBlock = findFirstBlockByType("execute_function");
     const conditionBlock = findFirstBlockByType("condition_monitor");
+    const executeSafeWalletBlock = findFirstBlockByType(
+      "execute_through_safe_wallet",
+    );
+    const createSafeWalletBlock = findFirstBlockByType("create_safe_wallet");
+    const importSafeWalletBlock = findFirstBlockByType("import_safe_wallet");
+    const selectSafeWalletBlock = findFirstBlockByType("select_safe_wallet");
 
     // 1. Set network based on chain ID
     if (chainBlock) {
@@ -122,9 +128,30 @@ export function syncBlocklyToJobForm(
     }
 
     // 6. Set execute function details and argument type
-    if (executeFunctionBlock) {
-      const addr = getField(executeFunctionBlock, "CONTRACT_ADDRESS") || "";
-      const func = getField(executeFunctionBlock, "FUNCTION_NAME") || "";
+    // Check for both execute_function and execute_through_safe_wallet
+    let contractExecuteBlock = executeFunctionBlock;
+
+    // If using Safe wallet execution, look for execute_function inside TARGET_CONTRACT
+    if (!contractExecuteBlock && executeSafeWalletBlock) {
+      const targetContractStatement = Array.from(
+        executeSafeWalletBlock.getElementsByTagName("statement"),
+      ).find((val) => val.getAttribute("name") === "TARGET_CONTRACT");
+
+      if (targetContractStatement) {
+        const innerBlock =
+          targetContractStatement.getElementsByTagName("block")[0];
+        if (
+          innerBlock &&
+          innerBlock.getAttribute("type") === "execute_function"
+        ) {
+          contractExecuteBlock = innerBlock;
+        }
+      }
+    }
+
+    if (contractExecuteBlock) {
+      const addr = getField(contractExecuteBlock, "CONTRACT_ADDRESS") || "";
+      const func = getField(contractExecuteBlock, "FUNCTION_NAME") || "";
 
       // Set contract address (this will trigger ABI fetching)
       formContext.handleContractAddressChange("contract", addr);
@@ -228,6 +255,24 @@ export function syncBlocklyToJobForm(
     }
 
     // 8. Set condition job details (for condition-based jobs)
+    // Clear condition-related fields for non-condition jobs
+    if (jobType !== 2) {
+      formContext.handleSourceTypeChange("contract", "");
+      formContext.handleSourceUrlChange("contract", "");
+      formContext.handleConditionTypeChange("contract", "");
+      formContext.handleUpperLimitChange("contract", "");
+      formContext.handleLowerLimitChange("contract", "");
+      formContext.setContractInteractions((prev) => ({
+        ...prev,
+        contract: {
+          ...prev.contract,
+          selectedApiKey: "",
+          selectedApiKeyValue: "",
+          apiKeys: [],
+        },
+      }));
+    }
+
     if (conditionBlock && jobType === 2) {
       const cType = getField(conditionBlock, "CONDITION_TYPE") || "";
       const srcUrl = getField(conditionBlock, "SOURCE_URL") || "";
@@ -281,6 +326,52 @@ export function syncBlocklyToJobForm(
             },
           }));
         }, 1000); // Wait for API keys to load
+      }
+    }
+
+    // 9. Handle Safe wallet execution mode
+    if (executeSafeWalletBlock) {
+      // Set execution mode to "safe"
+      formContext.setExecutionMode("safe");
+
+      // Check for created Safe wallet
+      if (createSafeWalletBlock) {
+        // Try to get the wallet address from the block's data attribute
+        const dataAttr = createSafeWalletBlock.getAttribute("data");
+
+        if (dataAttr && dataAttr.trim() !== "") {
+          formContext.setSelectedSafeWallet(dataAttr);
+          console.log(
+            "Safe wallet execution mode enabled with created wallet:",
+            dataAttr,
+          );
+        }
+      }
+      // Check for imported Safe wallet
+      else if (importSafeWalletBlock) {
+        // Try to get the wallet address from the block's data attribute
+        const dataAttr = importSafeWalletBlock.getAttribute("data");
+
+        if (dataAttr && dataAttr.trim() !== "") {
+          formContext.setSelectedSafeWallet(dataAttr);
+          console.log(
+            "Safe wallet execution mode enabled with imported wallet:",
+            dataAttr,
+          );
+        }
+      }
+      // Check for selected Safe wallet
+      else if (selectSafeWalletBlock) {
+        // Get the selected wallet from the dropdown field
+        const selectedWallet = getField(selectSafeWalletBlock, "SAFE_WALLET");
+
+        if (selectedWallet && selectedWallet.trim() !== "") {
+          formContext.setSelectedSafeWallet(selectedWallet);
+          console.log(
+            "Safe wallet execution mode enabled with selected wallet:",
+            selectedWallet,
+          );
+        }
       }
     }
 

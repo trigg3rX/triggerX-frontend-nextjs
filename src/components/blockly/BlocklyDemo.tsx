@@ -7,8 +7,14 @@ import { validateBlocklyWorkspace } from "./validateBlocklyWorkspace";
 import JobFeeModal from "../create-job/JobFeeModal";
 import { useAccount } from "wagmi";
 import { syncBlocklyToJobForm } from "./utils/syncBlocklyToJobForm";
-import { setCreateSafeHandler } from "./blocks/utility/safe-wallet/create_safe_wallet";
-import { setImportSafeHandler } from "./blocks/utility/safe-wallet/import_safe_wallet";
+import {
+  setCreateSafeHandler,
+  updateCreatedWalletAddress,
+} from "./blocks/utility/safe-wallet/create_safe_wallet";
+import {
+  setImportSafeHandler,
+  updateImportedWalletAddress,
+} from "./blocks/utility/safe-wallet/import_safe_wallet";
 import {
   setSafeWallets,
   setLoadingWallets,
@@ -171,6 +177,9 @@ export default function BlocklyDemo() {
     setCurrentSafeAddress(newSafe);
     setCreateStep("success");
 
+    // Update the block with the created wallet address
+    updateCreatedWalletAddress(newSafe);
+
     await handleSignStep(newSafe);
   }, [address, createSafeWallet, handleSignStep]);
 
@@ -190,6 +199,10 @@ export default function BlocklyDemo() {
     const newSafe = createResult.safeAddress;
     setCurrentSafeAddress(newSafe);
     setCreateStep("success");
+
+    // Update the block with the created wallet address
+    updateCreatedWalletAddress(newSafe);
+
     await handleSignStep(newSafe);
   }, [address, createSafeWallet, handleSignStep]);
 
@@ -220,6 +233,9 @@ export default function BlocklyDemo() {
       if (chain?.id) {
         addExtraSafe(chain.id, safeAddress);
       }
+
+      // Update the import_safe_wallet block with the imported address
+      updateImportedWalletAddress(safeAddress);
 
       // Refetch the safe wallets list
       await refetch();
