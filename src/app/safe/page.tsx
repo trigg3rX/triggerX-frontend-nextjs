@@ -3,6 +3,7 @@ import { Typography } from "@/components/ui/Typography";
 import LeaderboardSkeleton from "@/components/skeleton/LeaderboardSkeleton";
 import { Suspense } from "react";
 import { Metadata } from "next";
+import { SafeWalletProvider } from "@/contexts/SafeWalletContext";
 
 export const metadata: Metadata = {
   title: "TriggerX Safe Wallet | Create, Import & Manage Safe Wallets",
@@ -33,16 +34,18 @@ export const metadata: Metadata = {
 export default function Safe() {
   return (
     <Suspense fallback={<LeaderboardSkeleton />}>
-      <div>
-        <Typography variant="h1" color="primary">
-          Safe Wallet
-        </Typography>
-        <Typography variant="h4" color="secondary" className="my-6">
-          Manage your Safe wallets, view balances and templates, and run jobs on
-          a single page.
-        </Typography>
-        <MainSafeWallet />
-      </div>
+      <SafeWalletProvider>
+        <div>
+          <Typography variant="h1" color="primary">
+            Safe Wallet
+          </Typography>
+          <Typography variant="h4" color="secondary" className="my-6">
+            Manage your Safe wallets, view balances and templates, and run jobs
+            on a single page.
+          </Typography>
+          <MainSafeWallet />
+        </div>
+      </SafeWalletProvider>
     </Suspense>
   );
 }

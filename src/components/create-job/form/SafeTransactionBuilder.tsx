@@ -585,17 +585,19 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                       {state.addressType === "contract" && (
                         <>
                           {/* ABI Status Display */}
-                          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
-                            <Typography
-                              variant="body"
-                              color="gray"
-                              className="text-nowrap"
-                            >
-                              Contract ABI
-                            </Typography>
-                            <div className="w-[70%] h-[38px] sm:h-[50px] text-start ml-3 flex items-center">
+                          <div>
+                            <label className="block mb-2">
+                              <Typography
+                                variant="body"
+                                color="gray"
+                                align="left"
+                              >
+                                Contract ABI
+                              </Typography>
+                            </label>
+                            <div className="flex items-center min-h-[50px]">
                               {state.isCheckingABI ? (
-                                <div className="flex items-center ml-3">
+                                <div className="flex items-center">
                                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-300"></div>
                                   <Typography
                                     variant="caption"
@@ -606,34 +608,42 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                   </Typography>
                                 </div>
                               ) : state.abi ? (
-                                <svg
-                                  className="w-5 h-5 text-green-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M5 13l4 4L19 7"
-                                  />
-                                </svg>
-                              ) : (
-                                <div className="flex items-center ml-3">
+                                <div className="flex items-center">
+                                  <svg
+                                    className="w-5 h-5 text-green-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
                                   <Typography
                                     variant="caption"
                                     color="secondary"
-                                    className="pr-2"
+                                    className="pl-2"
                                   >
-                                    Not Available
+                                    ABI Verified
                                   </Typography>
+                                </div>
+                              ) : (
+                                <div className="flex items-center">
                                   <Typography
                                     variant="caption"
                                     color="error"
-                                    className="mt-[2px]"
+                                    className="pr-2"
                                   >
                                     ✕
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="secondary"
+                                  >
+                                    Not Available
                                   </Typography>
                                 </div>
                               )}
@@ -643,21 +653,22 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                           {/* Manual ABI Input */}
                           {!state.isCheckingABI &&
                             (!state.abi || state.functions.length === 0) && (
-                              <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
-                                <Typography
-                                  variant="body"
-                                  color="gray"
-                                  className="text-nowrap h-[50px] flex items-center"
-                                >
-                                  Manual ABI Input
-                                </Typography>
-                                <div className="w-full md:w-[70%]">
-                                  <textarea
-                                    value={state.manualABI}
-                                    onChange={(e) =>
-                                      handleManualABI(index, e.target.value)
-                                    }
-                                    placeholder={`[
+                              <div>
+                                <label className="block mb-2">
+                                  <Typography
+                                    variant="body"
+                                    color="gray"
+                                    align="left"
+                                  >
+                                    Manual ABI Input
+                                  </Typography>
+                                </label>
+                                <textarea
+                                  value={state.manualABI}
+                                  onChange={(e) =>
+                                    handleManualABI(index, e.target.value)
+                                  }
+                                  placeholder={`[
   {
     "inputs": [],
     "name": "functionName",
@@ -665,18 +676,17 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     "stateMutability": "nonpayable"
   }
 ]`}
-                                    className="text-xs w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[170px]"
-                                  />
-                                  <Typography
-                                    variant="caption"
-                                    align="left"
-                                    color="secondary"
-                                    className="mt-1"
-                                  >
-                                    Automatic fetch failed. To continue, please
-                                    enter the contract ABI in JSON format.
-                                  </Typography>
-                                </div>
+                                  className="text-xs w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none min-h-[170px]"
+                                />
+                                <Typography
+                                  variant="caption"
+                                  align="left"
+                                  color="secondary"
+                                  className="mt-1"
+                                >
+                                  Automatic fetch failed. To continue, please
+                                  enter the contract ABI in JSON format.
+                                </Typography>
                               </div>
                             )}
 
@@ -685,8 +695,17 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                             <>
                               {/* Function Selector */}
                               <div>
+                                <label className="block mb-2">
+                                  <Typography
+                                    variant="body"
+                                    color="gray"
+                                    align="left"
+                                  >
+                                    Target function
+                                  </Typography>
+                                </label>
                                 <Dropdown
-                                  label="Target function"
+                                  label=""
                                   color="secondary"
                                   options={[
                                     {
@@ -706,7 +725,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                       ? state.selectedFunction.split("(")[0]
                                       : "ETH Transfer to Contract"
                                   }
-                                  className="[&_p]:break-all [&_p]:text-left [&_p]:w-[90%]"
+                                  className="!w-full"
                                   onChange={(option) => {
                                     if (option.id === "") {
                                       // Clear function selection
@@ -727,6 +746,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                 />
                               </div>
 
+                              {/* Function Arguments is kept in grid of 2 columns, does not like other inputs in the form*/}
                               {/* Function Parameters */}
                               {state.selectedFunction &&
                                 (() => {

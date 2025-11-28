@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import SafeJobs from "@/components/safe-wallet/SafeJobs";
 import SafeTokens from "@/components/safe-wallet/SafeTokens";
 import SafeWalletSidebar from "@/components/safe-wallet/SafeWalletSidebar";
 import { HoverHighlight } from "@/components/common/HoverHighlight";
+import { useSafeWalletContext } from "@/contexts/SafeWalletContext";
 
 type TabKey = "jobs" | "tokens";
 
@@ -15,18 +16,14 @@ const TABS: { key: TabKey; label: string }[] = [
 
 const Page: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("jobs");
-  const [selectedSafe, setSelectedSafe] = useState<string | null>(null);
-
-  const handleSafeSelect = useCallback((safe: string | null) => {
-    setSelectedSafe(safe);
-  }, []);
+  const { selection } = useSafeWalletContext();
 
   const renderMainContent = () => {
     switch (activeTab) {
       case "jobs":
-        return <SafeJobs selectedSafe={selectedSafe} />;
+        return <SafeJobs selectedSafe={selection.selectedSafe} />;
       case "tokens":
-        return <SafeTokens selectedSafe={selectedSafe} />;
+        return <SafeTokens selectedSafe={selection.selectedSafe} />;
     }
   };
 
@@ -34,10 +31,7 @@ const Page: React.FC = () => {
     <div className="flex flex-col xl:flex-row gap-6 sm:gap-8 p-4 sm:p-6">
       {/* Sidebar - moved to the left for better affordance */}
       <div className="h-full xl:w-[25%] w-full">
-        <SafeWalletSidebar
-          selectedSafe={selectedSafe}
-          onSafeSelect={handleSafeSelect}
-        />
+        <SafeWalletSidebar />
       </div>
 
       {/* Main Content Area */}
