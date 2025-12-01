@@ -12,19 +12,104 @@ export async function fetchApiKeys(apiUrl: string): Promise<ApiKey[]> {
       throw new Error("Invalid URL format");
     }
 
+    // Parse URL to check origin
+    let urlObj: URL;
+    let isCrossOrigin = false;
+    try {
+      urlObj = new URL(apiUrl);
+      if (typeof window !== "undefined") {
+        const currentOrigin = window.location.origin;
+        isCrossOrigin = urlObj.origin !== currentOrigin;
+      }
+    } catch {
+      throw new Error("Invalid URL format");
+    }
+
+    // If cross-origin request, use proxy API route
+    let response: Response;
+    let actualUrl = apiUrl;
+
+    if (isCrossOrigin && typeof window !== "undefined") {
+      const proxyUrl = `/api/proxy-api-keys?url=${encodeURIComponent(apiUrl)}`;
+      actualUrl = proxyUrl;
+    }
+
     // Make a request to the API to get available keys
-    const response = await fetch(apiUrl, {
+    const fetchOptions = {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
-    });
+    };
+
+    try {
+      response = await fetch(actualUrl, fetchOptions);
+    } catch (fetchError) {
+      throw fetchError;
+    }
 
     if (!response.ok) {
+      // Try to get error body
+      try {
+        const errorText = await response.text();
+
+        // If using proxy, check if it's a proxy error
+        if (isCrossOrigin && typeof window !== "undefined") {
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.error) {
+              throw new Error(`Proxy error: ${errorData.error}`);
+            }
+          } catch {
+            // Not JSON or no error field, use original error
+          }
+        }
+      } catch {
+        // Could not read error body
+      }
+
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
+    let data: unknown;
+    try {
+      const responseText = await response.text();
+
+      try {
+        data = JSON.parse(responseText);
+
+        // If using proxy and response has error field, throw it
+        if (
+          isCrossOrigin &&
+          typeof window !== "undefined" &&
+          typeof data === "object" &&
+          data !== null
+        ) {
+          const dataObj = data as Record<string, unknown>;
+          if (dataObj.error && typeof dataObj.error === "string") {
+            throw new Error(`Proxy error: ${dataObj.error}`);
+          }
+        }
+      } catch (parseError) {
+        // If it's our custom error, rethrow it
+        if (
+          parseError instanceof Error &&
+          parseError.message.includes("Proxy error")
+        ) {
+          throw parseError;
+        }
+        throw parseError;
+      }
+    } catch (textError) {
+      // If it's our custom error, rethrow it
+      if (
+        textError instanceof Error &&
+        textError.message.includes("Proxy error")
+      ) {
+        throw textError;
+      }
+      throw textError;
+    }
 
     // Try to extract keys from common API response patterns
     const keys: ApiKey[] = [];
@@ -69,8 +154,9 @@ export async function fetchApiKeys(apiUrl: string): Promise<ApiKey[]> {
     }
     // Pattern 2: Object with keys property
     else if (typeof data === "object" && data !== null) {
-      if (data.keys && Array.isArray(data.keys)) {
-        data.keys.forEach((key: Record<string, unknown>, index: number) => {
+      const dataObj = data as Record<string, unknown>;
+      if (dataObj.keys && Array.isArray(dataObj.keys)) {
+        dataObj.keys.forEach((key: Record<string, unknown>, index: number) => {
           const rawValue = key.value || key;
           const originalValue =
             typeof rawValue === "object"
@@ -92,8 +178,8 @@ export async function fetchApiKeys(apiUrl: string): Promise<ApiKey[]> {
         });
       }
       // Pattern 3: Object with data property
-      else if (data.data && Array.isArray(data.data)) {
-        data.data.forEach((item: Record<string, unknown>, index: number) => {
+      else if (dataObj.data && Array.isArray(dataObj.data)) {
+        dataObj.data.forEach((item: Record<string, unknown>, index: number) => {
           const rawValue = item.value || item;
           const value =
             typeof rawValue === "object"
@@ -115,8 +201,8 @@ export async function fetchApiKeys(apiUrl: string): Promise<ApiKey[]> {
         });
       }
       // Pattern 4: Single value in response
-      else if (data.value || data.result || data.key) {
-        const rawValue = data.value || data.result || data.key;
+      else if (dataObj.value || dataObj.result || dataObj.key) {
+        const rawValue = dataObj.value || dataObj.result || dataObj.key;
         const value =
           typeof rawValue === "object"
             ? JSON.stringify(rawValue)
@@ -125,16 +211,17 @@ export async function fetchApiKeys(apiUrl: string): Promise<ApiKey[]> {
         if (!usedValues.has(uniqueValue)) {
           usedValues.add(uniqueValue);
           keys.push({
-            name: data.name || "API Key",
+            name: (dataObj.name as string) || "API Key",
             value: uniqueValue,
             originalValue: value,
-            description: data.description || `API key from ${apiUrl}`,
+            description:
+              (dataObj.description as string) || `API key from ${apiUrl}`,
           });
         }
       }
       // Pattern 5: Flatten object properties
       else {
-        Object.entries(data).forEach(([key, value], index) => {
+        Object.entries(dataObj).forEach(([key, value], index) => {
           if (value !== null && value !== undefined) {
             // Handle nested objects properly
             let stringValue: string;
@@ -196,7 +283,6 @@ export async function fetchApiKeys(apiUrl: string): Promise<ApiKey[]> {
 
     return keys;
   } catch (error) {
-    console.error("Error fetching API keys:", error);
     throw new Error(
       `${error instanceof Error ? error.message : "Unknown error"}`,
     );
