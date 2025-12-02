@@ -1,19 +1,19 @@
 import React, { Suspense } from "react";
 import { Typography } from "@/components/ui/Typography";
-import TgBalance from "@/components/dashboard/TgBalance";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import ActiveJobs from "@/components/dashboard/ActiveJobs";
 import DashboardSkeleton from "@/components/skeleton/DashboardSkeleton";
 import { Metadata } from "next";
+import ETHBalance from "@/components/dashboard/ETHBalance";
 
 export const metadata: Metadata = {
   title: "TriggerX Dashboard | Manage Your Automation Tasks",
   description:
-    "Access your job history, manage main and linked jobs, check TG balance, and create new automation tasks—all from one intuitive dashboard.",
+    "Access your job history, manage main and linked jobs, check balance, and create new automation tasks—all from one intuitive dashboard.",
   openGraph: {
     title: "TriggerX Dashboard | Job Management & Token Balances",
     description:
-      "Access your job history, manage main and linked jobs, check TG balance, and create new automation tasks—all from one intuitive dashboard.",
+      "Access your job history, manage main and linked jobs, check balance, and create new automation tasks—all from one intuitive dashboard.",
     url: `https://app.triggerx.network/dashboard`,
     siteName: "TriggerX",
     images: [
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     ],
     type: "website",
   },
-  alternates: {
+  alternates: { 
     canonical: `https://app.triggerx.network/dashboard.png`,
   },
 };
@@ -48,7 +48,7 @@ function Dashboard() {
             <ActiveJobs />
           </div>
           <div className="space-y-6 sm:space-y-8 h-full xl:w-[25%] lg:w-[30%] w-full">
-            <TgBalance />
+            <ETHBalance />
             <QuickActions />
           </div>
         </div>

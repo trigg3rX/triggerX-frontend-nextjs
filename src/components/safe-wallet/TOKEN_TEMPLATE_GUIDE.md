@@ -106,7 +106,7 @@ Add a handler in
 The handler receives `TemplateHandlerContext` containing:
 
 - `createJob` – the function returned from `useCreateJob`
-- Safe wallet metadata (`safeAddress`, `autotopupTG`, `userBalance`, etc.)
+- Safe wallet metadata (`safeAddress`, `autotopupETH`, `userBalance`, etc.)
 - `chainId`
 - `templateParams` – dictionary of string values gathered from the UI component
 

@@ -20,8 +20,8 @@ export async function createBalanceMaintainerJob({
   createJob,
   chainId,
   safeAddress,
-  autotopupTG,
-  fetchTGBalance,
+  autotopupETH,
+  fetchBalance,
   userBalance,
   templateParams,
 }: TemplateHandlerContext) {
@@ -29,11 +29,11 @@ export async function createBalanceMaintainerJob({
     return { success: false, error: "Safe wallet address is required" };
   }
 
-  if (!autotopupTG) {
-    await fetchTGBalance();
-    const tg = Number(userBalance || 0);
-    if (!Number.isFinite(tg) || tg <= 0) {
-      return { success: false, error: "Error: Insufficient TG balance." };
+  if (!autotopupETH) {
+    await fetchBalance();
+    const eth = Number(userBalance || 0);
+    if (!Number.isFinite(eth) || eth <= 0) {
+      return { success: false, error: "Error: Insufficient ETH balance." };
     }
   }
 
@@ -125,7 +125,7 @@ export async function createBalanceMaintainerJob({
     abi: JSON.stringify(SafeModuleAbi),
     dynamicArgumentsScriptUrl: ipfsUrl,
     safeAddress: safeAddress,
-    autotopupTG: Boolean(autotopupTG),
+    autotopupTG: Boolean(autotopupETH),
     walletMode,
     language,
   };

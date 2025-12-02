@@ -16,7 +16,7 @@ import templatesData from "@/data/templates.json";
 import { Template } from "@/types/job";
 import { useCreateJob } from "@/hooks/useCreateJob";
 import toast from "react-hot-toast";
-import { useTGBalance } from "@/contexts/TGBalanceContext";
+import { useTriggerBalance } from "@/contexts/BalanceContext";
 import { filterTemplatesForToken } from "@/utils/tokenTemplateMap";
 import scrollbarStyles from "@/app/styles/scrollbar.module.css";
 import EmptyState from "@/components/common/EmptyState";
@@ -53,8 +53,8 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
     null,
   );
   const [isCreating, setIsCreating] = useState(false);
-  const { fetchTGBalance, userBalance } = useTGBalance();
-  const [autotopupTG, setAutotopupTG] = useState<boolean>(true);
+  const { fetchBalance, userBalance } = useTriggerBalance();
+  const [autotopupETH, setAutotopupETH] = useState<boolean>(true);
   const [templateParams, setTemplateParams] = useState<
     Record<string, TemplateParams>
   >({});
@@ -103,8 +103,8 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
           tokenSymbol: token?.symbol,
           chainId,
           safeAddress,
-          autotopupTG,
-          fetchTGBalance,
+          autotopupETH,
+          fetchBalance,
           userBalance,
           templateParams: templateParams[selectedTemplate.id],
         });
@@ -125,9 +125,9 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
             toast.error(`Transaction denied by user`);
           } else if (
             message.toLowerCase().includes("insufficient") &&
-            message.toLowerCase().includes("tg")
+            message.toLowerCase().includes("eth")
           ) {
-            toast.error(`Insufficient TG balance`);
+            toast.error(`Insufficient ETH balance`);
           } else {
             toast.error(message);
           }
@@ -229,8 +229,8 @@ const CreateJobModal: React.FC<CreateJobModalProps> = ({
                       isExpanded={expandedTemplate === template.id}
                       onToggle={() => handleTemplateToggle(template.id)}
                       token={token}
-                      autotopupTG={autotopupTG}
-                      onToggleAutotopup={() => setAutotopupTG((v) => !v)}
+                      autotopupETH={autotopupETH}
+                      onToggleAutotopup={() => setAutotopupETH((v) => !v)}
                       params={templateParams[template.id]}
                       onParamsChange={(params) =>
                         handleTemplateParamsChange(template.id, params)

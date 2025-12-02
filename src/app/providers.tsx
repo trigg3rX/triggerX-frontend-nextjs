@@ -9,7 +9,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { config } from "@/lib/wagmiConfig";
 import { useState } from "react";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
-import { TGBalanceProvider } from "@/contexts/TGBalanceContext";
+import { BalanceProvider } from "@/contexts/BalanceContext";
 
 const customTheme = darkTheme({
   accentColor: "#F8FF7C",
@@ -23,11 +23,11 @@ function InnerProviders({ children }: { children: React.ReactNode }) {
   if (!stakeRegistryAddress) return null; // or a loading spinner
 
   return (
-    <TGBalanceProvider>
+    <BalanceProvider>
       <WalletConnectionProvider>
         <WalletProvider>{children}</WalletProvider>
       </WalletConnectionProvider>
-    </TGBalanceProvider>
+    </BalanceProvider>
   );
 }
 
