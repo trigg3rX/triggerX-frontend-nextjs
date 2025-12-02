@@ -15,7 +15,7 @@ const DashboardSkeleton = () => {
           </div>
         </div>
         <div className="space-y-6 sm:space-y-8 h-full xl:w-[25%] lg:w-[30%] w-full">
-          {/* TgBalance Skeleton */}
+          {/* ETHBalance Skeleton */}
           <Skeleton height={120} borderRadius={12} />
           {/* QuickActions Skeleton */}
           <Skeleton height={120} borderRadius={12} />

@@ -19,7 +19,7 @@ const JobLogsSkeleton: React.FC = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              {["ID", "Timestamp", "Status", "TG Used", "Tx Hash"].map(
+              {["ID", "Timestamp", "Status", "ETH Used", "Tx Hash"].map(
                 (header, i) => (
                   <TableHead key={i}>
                     <div className="h-4 w-20"></div>
@@ -52,7 +52,7 @@ const JobLogsSkeleton: React.FC = () => {
         {[...Array(1)].map((_, index) => (
           <Card key={index} className="p-4">
             <div className="space-y-3">
-              {["ID", "Timestamp", "Status", "TG Used", "Tx Hash"].map(
+              {["ID", "Timestamp", "Status", "ETH Used", "Tx Hash"].map(
                 (label, i) => (
                   <div key={i} className="flex justify-between">
                     <div className="w-full">

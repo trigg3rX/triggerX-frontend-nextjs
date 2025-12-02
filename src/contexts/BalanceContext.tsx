@@ -14,24 +14,23 @@ import {
   getRpcUrl,
 } from "@/utils/contractAddresses";
 
-interface TGBalanceContextType {
+interface BalanceContextType {
   userBalance: string;
   setUserBalance: React.Dispatch<React.SetStateAction<string>>;
-  fetchTGBalance: () => Promise<void>;
+  fetchBalance: () => Promise<void>;
 }
 
-const TGBalanceContext = createContext<TGBalanceContextType | undefined>(
-  undefined,
-);
+const BalanceContext = createContext<BalanceContextType | undefined>(undefined);
 
-export const TGBalanceProvider: React.FC<{
+export const BalanceProvider: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
   const [userBalance, setUserBalance] = useState<string>("0");
   const { address } = useAccount();
   const chainId = useChainId();
 
-  const fetchTGBalance = useCallback(async () => {
+  const fetchBalance = useCallback(async () => {
+    devLog("fetchhh");
     if (typeof window.ethereum == "undefined") return;
 
     // Get the address for the current chain
@@ -64,7 +63,7 @@ export const TGBalanceProvider: React.FC<{
         const chainId = Number(network.chainId);
         const rpcUrl = getRpcUrl(chainId);
 
-        devLog("[TGBalance] Using RPC URL:", rpcUrl);
+        devLog("[Balance] Using RPC URL:", rpcUrl);
 
         // Create JSON RPC provider using the RPC URL
         const jsonRpcProvider = new ethers.JsonRpcProvider(rpcUrl);
@@ -72,19 +71,18 @@ export const TGBalanceProvider: React.FC<{
         // Use JSON RPC provider for contract interactions
         const stakeRegistryContract = new ethers.Contract(
           currentStakeRegistryAddress,
-          ["function getBalance(address) view returns (uint256, uint256)"],
+          ["function getBalance(address) view returns (uint256)"],
           jsonRpcProvider,
         );
-        const [, tgBalance] =
-          await stakeRegistryContract.getBalance(userAddress);
-        setUserBalance(ethers.formatEther(tgBalance));
+        const ethAmount = await stakeRegistryContract.getBalance(userAddress);
+        setUserBalance(ethers.formatEther(ethAmount));
         devLog(
-          "[TGBalance] TG Balance after chain change:",
-          ethers.formatEther(tgBalance),
+          "[Balance] Balance after chain change:",
+          ethers.formatEther(ethAmount),
         );
       }
     } catch (error) {
-      console.error("Error fetching TG balance:", error);
+      console.error("Error fetching balance:", error);
     }
   }, [chainId]);
 
@@ -95,7 +93,7 @@ export const TGBalanceProvider: React.FC<{
       ethers.isAddress(currentStakeRegistryAddress) &&
       address
     ) {
-      fetchTGBalance();
+      fetchBalance();
     }
     const handleAccountsChanged = (accounts: string[]) => {
       if (
@@ -103,13 +101,13 @@ export const TGBalanceProvider: React.FC<{
         currentStakeRegistryAddress &&
         ethers.isAddress(currentStakeRegistryAddress)
       ) {
-        fetchTGBalance();
+        fetchBalance();
       } else if (accounts.length === 0) {
         setUserBalance("0");
       }
     };
     const handleChainChanged = () => {
-      fetchTGBalance();
+      fetchBalance();
     };
     if (window.ethereum && window.ethereum.on) {
       window.ethereum.on("accountsChanged", handleAccountsChanged);
@@ -124,21 +122,21 @@ export const TGBalanceProvider: React.FC<{
         window.ethereum.removeListener("chainChanged", handleChainChanged);
       }
     };
-  }, [chainId, fetchTGBalance, address]);
+  }, [chainId, fetchBalance, address]);
 
   return (
-    <TGBalanceContext.Provider
-      value={{ userBalance, setUserBalance, fetchTGBalance }}
+    <BalanceContext.Provider
+      value={{ userBalance, setUserBalance, fetchBalance }}
     >
       {children}
-    </TGBalanceContext.Provider>
+    </BalanceContext.Provider>
   );
 };
 
-export function useTGBalance() {
-  const context = useContext(TGBalanceContext);
+export function useTriggerBalance() {
+  const context = useContext(BalanceContext);
   if (context === undefined) {
-    throw new Error("useTGBalance must be used within a TGBalanceProvider");
+    throw new Error("useTriggerBalance must be used within a BalanceProvider");
   }
   return context;
 }

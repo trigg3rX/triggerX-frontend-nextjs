@@ -13,27 +13,27 @@ import { Typography } from "../ui/Typography";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
-import { useTGBalance } from "@/contexts/TGBalanceContext";
+import { useTriggerBalance } from "@/contexts/BalanceContext";
 import { devLog } from "@/lib/devLog";
 
-interface WithdrawTgDialogProps {
+interface WithdrawETHDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   withdrawAmount: string;
   setWithdrawAmount: (value: string) => void;
-  // tgBalance: string;
-  // fetchTGBalance: () => Promise<void>;
+  // ETHBalance: string;
+  // fetchBalance: () => Promise<void>;
 }
 
-const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
+const WithdrawETHDialog: React.FC<WithdrawETHDialogProps> = ({
   open,
   onOpenChange,
   withdrawAmount,
   setWithdrawAmount,
-  // tgBalance,
-  // fetchTGBalance,
+  // ETHBalance,
+  // fetchBalance,
 }) => {
-  const { fetchTGBalance, userBalance } = useTGBalance();
+  const { fetchBalance, userBalance } = useTriggerBalance();
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
@@ -45,7 +45,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
     onOpenChange(open);
   };
 
-  // Initiate on-chain redemption of TG to ETH; guard on zero/insufficient balance
+  // Initiate on-chain withdrawal of ETH; guard on zero/insufficient balance
   const handleWithdraw = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -55,7 +55,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
       const signer = await provider.getSigner();
       const stakingContract = new ethers.Contract(
         stakeRegistryAddress,
-        ["function claimETHForTG(uint256 tgAmount) external"],
+        ["function withdrawETHBalance(uint256 ethAmount) external"],
         signer,
       );
       const withdrawAmountInWei = ethers.parseEther(withdrawAmount.toString());
@@ -63,19 +63,19 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
         throw new Error("Withdraw amount must be greater than zero.");
       }
       if (withdrawAmountInWei > ethers.parseEther(userBalance || "0")) {
-        throw new Error("Insufficient TG balance.");
+        throw new Error("Insufficient ETH balance.");
       }
-      const tx = await stakingContract.claimETHForTG(withdrawAmountInWei);
+      const tx = await stakingContract.withdrawETHBalance(withdrawAmountInWei);
       await tx.wait();
       // Add a small delay to allow the node to update state
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      await fetchTGBalance();
+      await fetchBalance();
       toast.success("Withdrawal successful!");
       onOpenChange(false);
       setWithdrawAmount("");
     } catch (error: unknown) {
-      devLog((error as Error).message || "Error withdrawing TG");
-      toast.error("Error withdrawing TG");
+      devLog((error as Error).message || "Error withdrawing ETH");
+      toast.error("Error withdrawing ETH");
     } finally {
       setIsWithdrawing(false);
     }
@@ -85,16 +85,16 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Withdraw TG</DialogTitle>
+          <DialogTitle>Withdraw ETH</DialogTitle>
           <DialogDescription>
-            Withdraw TG back to ETH. 1 ETH = 1000 TG
+            Withdraw ETH back to your wallet.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleWithdraw} className="space-y-6 ">
           <div>
             <label className="block mb-2">
               <Typography variant="body" color="gray" align="left">
-                Amount (TG)
+                Amount (ETH)
               </Typography>
             </label>
             <div className="relative w-full">
@@ -102,7 +102,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 type="number"
                 value={withdrawAmount}
                 onChange={setWithdrawAmount}
-                placeholder="Enter TG amount"
+                placeholder="Enter ETH amount"
                 className="rounded-xl w-full pr-16"
               />
               <button
@@ -121,9 +121,9 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
               align="left"
               className="mt-3"
             >
-              Your TG Balance:{" "}
+              Your ETH Balance:{" "}
               <span className="text-white">
-                {userBalance ? Number(userBalance).toFixed(2) : "0.00"} TG
+                {userBalance ? Number(userBalance).toFixed(4) : "0.0000"} ETH
               </span>
             </Typography>
 
@@ -134,14 +134,14 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                 align="left"
                 className="!m-0"
               >
-                <strong>Note:</strong> If TG is insufficient, the job will not
+                <strong>Note:</strong> If ETH is insufficient, the job will not
                 be executed.
               </Typography>
             </div>
             {withdrawAmount && Number(withdrawAmount) > 0 && (
               <div className="mt-3 p-3 bg-[#242323] rounded-xl flex flex-col">
                 <Typography variant="body" color="gray" align="left">
-                  Estimated ETH
+                  Amount to Withdraw
                 </Typography>
                 <Typography
                   variant="h3"
@@ -149,7 +149,7 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
                   align="left"
                   className="mt-1 font-bold tracking-wider"
                 >
-                  {(Number(withdrawAmount) / 1000).toFixed(6)}
+                  {Number(withdrawAmount).toFixed(6)}
                 </Typography>
               </div>
             )}
@@ -176,8 +176,8 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
               {isWithdrawing
                 ? "Withdrawing..."
                 : Number(withdrawAmount) > Number(userBalance || 0)
-                  ? "Insufficient TG"
-                  : "Withdraw TG"}
+                  ? "Insufficient ETH"
+                  : "Withdraw ETH"}
             </Button>
           </DialogFooter>
         </form>
@@ -186,4 +186,4 @@ const WithdrawTgDialog: React.FC<WithdrawTgDialogProps> = ({
   );
 };
 
-export default WithdrawTgDialog;
+export default WithdrawETHDialog;
