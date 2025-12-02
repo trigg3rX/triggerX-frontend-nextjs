@@ -43,21 +43,18 @@ function updateDropdownOptions(block: Blockly.Block): void {
   if (field) {
     const currentValue = field.getValue();
     const newOptions = getSafeWalletOptions();
-    const input = block.inputList[0];
 
-    if (input) {
-      // Create a new dropdown field with updated options
-      const newField = new Blockly.FieldDropdown(newOptions);
-      input.removeField("SAFE_WALLET");
-      input.appendField(newField, "SAFE_WALLET");
+    // Update the dropdown's options in place instead of appending new fields
+    (
+      field as unknown as { menuGenerator_: [string, string][] }
+    ).menuGenerator_ = newOptions;
 
-      // If current value is not in new options, set to first option
-      const validOptions = newOptions.map((opt: [string, string]) => opt[1]);
-      if (!currentValue || !validOptions.includes(currentValue)) {
-        newField.setValue(newOptions[0][1]);
-      } else {
-        newField.setValue(currentValue);
-      }
+    // If current value is not in new options, set to first option
+    const validValues = newOptions.map((opt: [string, string]) => opt[1]);
+    if (!currentValue || !validValues.includes(currentValue)) {
+      field.setValue(newOptions[0][1]);
+    } else {
+      field.setValue(currentValue);
     }
   }
 }

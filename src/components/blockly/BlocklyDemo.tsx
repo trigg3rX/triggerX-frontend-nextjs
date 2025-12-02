@@ -218,7 +218,6 @@ export default function BlocklyDemo() {
 
   // Handle import safe wallet
   const handleImportSafe = useCallback(() => {
-    console.log("Import Safe button clicked in BlocklyDemo");
     setShowImportDialog(true);
   }, []);
 
@@ -245,23 +244,15 @@ export default function BlocklyDemo() {
 
   // Set up the handlers for the Blockly block buttons
   useEffect(() => {
-    console.log("Setting up create safe handler in BlocklyDemo");
     setCreateSafeHandler(handleCreateNewSafe);
-    return () => {
-      console.log("Cleaning up create safe handler");
-    };
   }, [handleCreateNewSafe]);
 
   useEffect(() => {
-    console.log("Setting up import safe handler in BlocklyDemo");
     setImportSafeHandler(handleImportSafe);
-    return () => {
-      console.log("Cleaning up import safe handler");
-    };
   }, [handleImportSafe]);
 
   const handleCreateJob = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
 
       // Reset all errors
@@ -318,7 +309,7 @@ export default function BlocklyDemo() {
       }
 
       // All validation passed - sync Blockly blocks to JobFormContext
-      const syncSuccess = syncBlocklyToJobForm(xml, jobFormContext);
+      const syncSuccess = await syncBlocklyToJobForm(xml, jobFormContext);
 
       if (!syncSuccess) {
         setWorkspaceError("Failed to sync workspace data. Please try again.");

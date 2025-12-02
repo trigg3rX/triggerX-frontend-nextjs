@@ -30,15 +30,16 @@ const executeThroughSafeWalletJson = {
       spellcheck: false,
     },
   ],
-  message3: "Target Contract %1",
+  message3: "Perform %1",
   args3: [
     {
       type: "input_statement",
-      name: "TARGET_CONTRACT",
+      name: "FUNCTION_CALL",
+      check: "SAFE_TRANSACTION",
     },
   ],
-  previousStatement: null,
-  nextStatement: null,
+  previousStatement: "ACTION",
+  nextStatement: "execute_end",
   colour: "190",
   tooltip:
     "Execute a transaction through a Safe wallet using the Safe Module's execJobFromHub function.",
