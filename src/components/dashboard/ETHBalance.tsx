@@ -2,11 +2,11 @@
 
 import { Card } from "../ui/Card";
 import { Typography } from "../ui/Typography";
-import { useTGBalance } from "@/contexts/TGBalanceContext";
+import { useTriggerBalance } from "@/contexts/BalanceContext";
 import useCountUp from "@/hooks/useCountUp";
 
-const TgBalance = () => {
-  const { userBalance } = useTGBalance();
+const ETHBalance = () => {
+  const { userBalance } = useTriggerBalance();
   const balance = userBalance ? Number(userBalance) : 0;
   const animatedBalance = useCountUp(balance, 1000);
   return (
@@ -16,7 +16,7 @@ const TgBalance = () => {
       </Typography>
       <div className="p-6 bg-[#242323] rounded-xl ">
         <Typography variant="h3" color="gray" align="left" className=" mb-7 ">
-          Total TG Balance
+          Total ETH Balance
         </Typography>
         <Typography
           variant="h2"
@@ -31,4 +31,4 @@ const TgBalance = () => {
   );
 };
 
-export default TgBalance;
+export default ETHBalance;

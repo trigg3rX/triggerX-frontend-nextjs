@@ -36,7 +36,7 @@ const SingleJobCardSkeleton: React.FC = () => {
             <Skeleton width={80} height={20} borderRadius={4} />
           </div>
 
-          {/* TG Used */}
+          {/* ETH Used */}
           <div className="flex items-center justify-between gap-2 py-1.5">
             <Skeleton width={70} height={20} borderRadius={4} />
             <Skeleton width={60} height={20} borderRadius={4} />

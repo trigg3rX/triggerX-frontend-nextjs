@@ -194,17 +194,26 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
       );
       devLog("[IpfsScriptWizard] Request body:", requestBody);
+      devLog(
+        "[IpfsScriptWizard] Request body stringified:",
+        JSON.stringify(requestBody, null, 2),
+      );
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          },
           body: JSON.stringify(requestBody),
         },
       );
 
       if (!res.ok) {
         const text = await res.text();
+        devLog("[IpfsScriptWizard] Validation API error response:", text);
         throw new Error(
           text?.trim() ? text : `Validation failed (${res.status})`,
         );
@@ -243,8 +252,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     const code = script.trim();
     if (!code) {
       setScriptError(
-        `Please paste your ${
-          initialLanguage === "ts" ? "TypeScript" : "Go"
+        `Please paste your ${initialLanguage === "ts" ? "TypeScript" : "Go"
         } code`,
       );
       return false;
@@ -549,7 +557,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
             <Typography variant="body" align="left" color="secondary">
               {`Paste your ${
                 initialLanguage === "ts" ? "TypeScript" : "Golang"
-              } script that returns an array of args for the function call.`}
+                } script that returns an array of args for the function call.`}
             </Typography>
             <textarea
               value={script}

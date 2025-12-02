@@ -14,7 +14,7 @@ import networksData from "@/utils/networks.json";
 import { ethers } from "ethers";
 import { fetchContractABI } from "@/utils/fetchContractABI";
 import { fetchApiKeys } from "@/utils/fetchApiKeys";
-import { useTGBalance } from "./TGBalanceContext";
+import { useTriggerBalance } from "./BalanceContext";
 import toast from "react-hot-toast";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { devLog } from "@/lib/devLog";
@@ -551,6 +551,12 @@ export interface JobFormContextType {
   setEstimatedFee: React.Dispatch<React.SetStateAction<number>>;
   estimatedFeeInWei: bigint | null;
   setEstimatedFeeInWei: React.Dispatch<React.SetStateAction<bigint | null>>;
+  feePerExecution: bigint | null;
+  setFeePerExecution: React.Dispatch<React.SetStateAction<bigint | null>>;
+  desiredExecutions: number;
+  setDesiredExecutions: React.Dispatch<React.SetStateAction<number>>;
+  calculatedExecutions: number | null;
+  setCalculatedExecutions: React.Dispatch<React.SetStateAction<number | null>>;
   isModalOpen: boolean;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   estimateFee: (
@@ -571,7 +577,7 @@ export interface JobFormContextType {
   >;
   lastJobId: string | undefined;
   setLastJobId: React.Dispatch<React.SetStateAction<string | undefined>>;
-  handleStakeTG: () => Promise<boolean>;
+  handleTopUpETH: () => Promise<boolean>;
   handleCreateJob: (jobId?: string) => Promise<boolean>;
   handleSetABI: (contractKey: string, value: string) => void;
   handleSetContractDetails: (
@@ -678,6 +684,11 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   const [estimatedFeeInWei, setEstimatedFeeInWei] = useState<bigint | null>(
     null,
   );
+  const [feePerExecution, setFeePerExecution] = useState<bigint | null>(null);
+  const [desiredExecutions, setDesiredExecutions] = useState<number>(5);
+  const [calculatedExecutions, setCalculatedExecutions] = useState<
+    number | null
+  >(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isJobCreated, setIsJobCreated] = useState<boolean>(false);
@@ -707,6 +718,24 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     }));
   }, [executionMode]);
 
+  // Update total fee when desiredExecutions changes (for non-time-interval jobs)
+  React.useEffect(() => {
+    if (feePerExecution && calculatedExecutions === null) {
+      // Only recalculate for non-time-interval jobs
+      const totalFeeWei = feePerExecution * BigInt(desiredExecutions);
+      setEstimatedFeeInWei(totalFeeWei);
+      const totalFeeETH = Number(totalFeeWei) / 1e18;
+      setEstimatedFee(totalFeeETH);
+      devLog(
+        "Updated total fee for",
+        desiredExecutions,
+        "executions:",
+        totalFeeWei.toString(),
+        "Wei",
+      );
+    }
+  }, [desiredExecutions, feePerExecution, calculatedExecutions]);
+
   // Error refs (must be stable, not recreated on every render)
   const jobTitleErrorRef = React.useRef<HTMLDivElement | null>(null);
   const errorFrameRef = React.useRef<HTMLDivElement | null>(null);
@@ -720,15 +749,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     Record<string, string | null>
   >({});
 
-  // Get TG balance context
-  const { fetchTGBalance } = useTGBalance();
+  // Get ETH balance context
+  const { fetchBalance } = useTriggerBalance();
   const { stakeRegistryAddress } = useStakeRegistry();
   const chainId = useChainId();
 
-  // Refetch TG balance when selectedNetwork changes
+  // Refetch ETH balance when selectedNetwork changes
   React.useEffect(() => {
-    fetchTGBalance();
-  }, [selectedNetwork, fetchTGBalance]);
+    fetchBalance();
+  }, [selectedNetwork, fetchBalance]);
 
   // Refetch ABI for all contracts when selectedNetwork changes
   React.useEffect(() => {
@@ -1392,81 +1421,120 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     argType: number,
   ) => {
     try {
-      let executionCount;
-      if (jobType === 1) {
+      const taskDefinitionId = getTaskDefinitionId(
+        argType === 1 ? "static" : "dynamic",
+        jobType,
+      );
+
+      // Calculate execution count based on task definition ID
+      let executionCount: number;
+
+      // For time-interval based jobs (taskDefinitionId 1, 2)
+      // Task definition 1: Time-based static
+      // Task definition 2: Time-based dynamic
+      if (taskDefinitionId === 1 || taskDefinitionId === 2) {
         executionCount = Math.floor(timeframeInSeconds / intervalInSeconds);
+        setCalculatedExecutions(executionCount);
         devLog(
-          "execution count",
+          "Calculated execution count for time-interval job:",
           executionCount,
-          "timeframe in seconds",
+          "timeframe:",
           timeframeInSeconds,
-          "interval in seconds",
+          "interval:",
           intervalInSeconds,
         );
       } else {
-        executionCount = recurring ? 10 : 1;
+        // For other job types (condition-based, event-based), use desiredExecutions (default 5)
+        executionCount = desiredExecutions;
+        setCalculatedExecutions(null); // Not auto-calculated
+        devLog("Using desired execution count:", executionCount);
       }
 
-      let totalFeeWei: bigint = BigInt(0);
-      devLog("argType", argType);
-      if (argType === 2) {
-        if (codeUrls) {
-          try {
-            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-            if (!API_BASE_URL) {
-              throw new Error(
-                "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
-              );
-            }
+      // Get contract details from contractInteractions
+      const contract = contractInteractions.contract;
+      const networkId = getNetworkIdByName(selectedNetwork);
 
-            const response = await fetch(
-              `${API_BASE_URL}/api/fees?ipfs_url=${encodeURIComponent(codeUrls)}`,
-              {
-                method: "GET",
-                headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
-              },
-            );
-            if (!response.ok) throw new Error("Failed to get fees");
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
+      if (!contract.address || !contract.abi || !contract.targetFunction) {
+        throw new Error("Contract details are incomplete");
+      }
 
-            // Backend now returns big.Int in Wei, so we multiply by execution count
-            const feePerExecutionWei = BigInt(data.total_fee);
-            totalFeeWei = feePerExecutionWei * BigInt(executionCount);
-
-            devLog(
-              "Total fee required for Dynamic (Wei):",
-              totalFeeWei.toString(),
-              "Wei",
-            );
-
-            setEstimatedFeeInWei(totalFeeWei);
-          } catch (error) {
-            console.error("Error getting task fees:", error);
-          }
-        }
-      } else {
-        // For static jobs, calculate the fee in Wei (0.001 TG * executionCount * 1e15)
-        const staticFeeTG = 0.001 * executionCount;
-        totalFeeWei = BigInt(Math.floor(staticFeeTG * 1e15));
-        devLog(
-          "Total fee required for static (Wei):",
-          totalFeeWei.toString(),
-          "Wei",
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!API_BASE_URL) {
+        throw new Error(
+          "NEXT_PUBLIC_API_BASE_URL is not defined in your environment variables.",
         );
-        setEstimatedFeeInWei(totalFeeWei);
       }
 
-      // Convert Wei to TG for display purposes (divide by 1e15)
-      const totalFeeTG = Number(totalFeeWei) / 1e15;
-      setEstimatedFee(totalFeeTG);
+      // Prepare arguments array
+      const args = contract.argumentValues || [];
+
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (codeUrls) params.append("ipfs_url", codeUrls);
+      params.append("task_definition_id", taskDefinitionId.toString());
+      params.append("target_chain_id", networkId?.toString() || "");
+      params.append("target_contract_address", contract.address);
+      params.append("target_function", contract.targetFunction.split("(")[0]);
+      params.append("abi", contract.abi);
+      if (args.length > 0) {
+        params.append("args", JSON.stringify(args));
+      }
+
+      devLog("Fetching fee estimation with params:", {
+        ipfs_url: codeUrls,
+        task_definition_id: taskDefinitionId,
+        target_chain_id: networkId,
+        target_contract_address: contract.address,
+        target_function: contract.targetFunction.split("(")[0],
+        args: args,
+      });
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/fees?${params.toString()}`,
+        {
+          method: "GET",
+          headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get fees: ${errorText}`);
+      }
+
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // Backend returns job_cost_prediction in Wei per execution
+      const feePerExecutionWei = BigInt(
+        data.job_cost_prediction || data.total_fee || 0,
+      );
+      const totalFeeWei = feePerExecutionWei * BigInt(executionCount);
+
+      devLog(
+        "Fee per execution (Wei):",
+        feePerExecutionWei.toString(),
+        "Total fee for",
+        executionCount,
+        "executions (Wei):",
+        totalFeeWei.toString(),
+      );
+
+      setFeePerExecution(feePerExecutionWei);
+      setEstimatedFeeInWei(totalFeeWei);
+
+      // Convert Wei to ETH for display purposes (divide by 1e18)
+      const totalFeeETH = Number(totalFeeWei) / 1e18;
+      setEstimatedFee(totalFeeETH);
+
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error estimating fee:", error);
+      toast.error("Failed to estimate fee: " + (error as Error).message);
     }
   };
 
-  const handleStakeTG = async (): Promise<boolean> => {
+  const handleTopUpETH = async (): Promise<boolean> => {
     setIsSubmitting(true);
 
     try {
@@ -1490,29 +1558,27 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const contract = new ethers.Contract(
         stakeRegistryAddress,
-        [
-          "function purchaseTG(uint256 amount) external payable returns (uint256)",
-        ],
+        ["function depositETH(uint256 ethAmount) external payable"],
         signer,
       );
 
       devLog("Staking ETH amount:", requiredEth.toString());
       devLog("Staking Wei amount:", estimatedFeeInWei.toString());
 
-      const tx = await contract.purchaseTG(estimatedFeeInWei, {
+      const tx = await contract.depositETH(estimatedFeeInWei, {
         value: estimatedFeeInWei,
       });
       await tx.wait();
       devLog("Stake transaction confirmed: ", tx.hash);
 
-      await fetchTGBalance();
+      await fetchBalance();
 
       // After successful staking, proceed to create job
       // await handleCreateJob();
       return true;
     } catch (error) {
-      devLog("Error topping up TG: " + (error as Error).message);
-      toast.error("Error topping up TG");
+      devLog("Error topping up ETH: " + (error as Error).message);
+      toast.error("Error topping up ETH");
 
       return false;
     } finally {
@@ -2301,6 +2367,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     setLinkedJobs({});
     setEstimatedFee(0);
     setEstimatedFeeInWei(null);
+    setFeePerExecution(null);
+    setDesiredExecutions(5);
+    setCalculatedExecutions(null);
     setContractErrors({});
     setIsModalOpen(false);
     setIsJobCreated(false);
@@ -2378,6 +2447,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setEstimatedFee,
         estimatedFeeInWei,
         setEstimatedFeeInWei,
+        feePerExecution,
+        setFeePerExecution,
+        desiredExecutions,
+        setDesiredExecutions,
+        calculatedExecutions,
+        setCalculatedExecutions,
         isModalOpen,
         setIsModalOpen,
         estimateFee,
@@ -2389,7 +2464,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setContractInteractionSuccessful,
         lastJobId,
         setLastJobId,
-        handleStakeTG,
+        handleTopUpETH,
         handleCreateJob,
         handleSetABI,
         handleSetContractDetails,

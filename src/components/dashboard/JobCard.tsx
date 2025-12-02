@@ -171,7 +171,7 @@ const JobCard: React.FC<JobCardProps> = ({
           </div>
           <div className="flex items-center justify-between gap-2 py-1.5">
             <Typography variant="body" color="white" align="left">
-              TG Used :
+              ETH Used :
             </Typography>
             <Typography variant="body" color="gray" align="right">
               {isNaN(parseFloat(job.job_cost_actual))
