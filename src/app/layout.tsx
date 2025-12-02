@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "./providers";
 import { Toaster } from "react-hot-toast";
-import { TGBalanceProvider } from "@/contexts/TGBalanceContext";
+import { BalanceProvider } from "@/contexts/BalanceContext";
 import { TooltipProvider } from "@/components/common/TooltipWrap";
 import Header from "@/components/common/Header";
 import ScrollToTop from "@/components/common/ScrollToTop";
@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className={`antialiated font-actay`}>
         <TooltipProvider>
           <Providers>
-            <TGBalanceProvider>
+            <BalanceProvider>
               <Header />
               <ScrollToTop />
               <StickySocialIcons />
@@ -36,7 +36,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
-            </TGBalanceProvider>
+            </BalanceProvider>
           </Providers>
           <div id="modal-root"></div>
           <Toaster

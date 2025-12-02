@@ -14,7 +14,7 @@ interface ExpandableTemplateSectionProps {
   isExpanded: boolean;
   onToggle: () => void;
   token: TokenBalance | null;
-  autotopupTG: boolean;
+  autotopupETH: boolean;
   onToggleAutotopup: () => void;
   params?: TemplateParams;
   onParamsChange?: (params: TemplateParams) => void;
@@ -26,7 +26,7 @@ const ExpandableTemplateSection: React.FC<ExpandableTemplateSectionProps> = ({
   isExpanded,
   onToggle,
   token,
-  autotopupTG,
+  autotopupETH,
   onToggleAutotopup,
   params,
   onParamsChange,
@@ -77,7 +77,7 @@ const ExpandableTemplateSection: React.FC<ExpandableTemplateSectionProps> = ({
               <input
                 type="checkbox"
                 className="mt-0.5"
-                checked={autotopupTG}
+                checked={autotopupETH}
                 onChange={onToggleAutotopup}
               />
               <Typography
@@ -86,7 +86,7 @@ const ExpandableTemplateSection: React.FC<ExpandableTemplateSectionProps> = ({
                 align="left"
                 className="!m-0"
               >
-                Auto-topup TG if balance is insufficient
+                Auto-top-up ETH if balance is insufficient
               </Typography>
             </label>
           </div>

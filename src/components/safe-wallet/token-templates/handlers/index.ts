@@ -10,8 +10,8 @@ export interface TemplateHandlerContext {
   tokenSymbol?: string;
   chainId: number | string;
   safeAddress: string; // Required - always use safe wallet in safe-wallet directory
-  autotopupTG: boolean;
-  fetchTGBalance: () => Promise<void>;
+  autotopupETH: boolean;
+  fetchBalance: () => Promise<void>;
   userBalance: number | string | null | undefined;
   templateParams?: Record<string, string | undefined>;
 }
