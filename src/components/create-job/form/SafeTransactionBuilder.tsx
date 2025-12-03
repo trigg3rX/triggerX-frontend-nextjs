@@ -362,8 +362,31 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   const encodeContractCallWithArgs = useCallback(
     (index: number, parsedFunction: ParsedFunction, inputs: string[]) => {
       const state = transactionStates[index];
-      const abiSource =
-        state?.abi || state?.manualABI || JSON.stringify([parsedFunction]);
+
+      // Convert ParsedFunction to proper ABI format if needed
+      let abiSource = state?.abi || state?.manualABI;
+      if (!abiSource) {
+        // Create a proper ABI item from ParsedFunction
+        const abiItem = {
+          type: "function",
+          name: parsedFunction.name,
+          inputs: parsedFunction.inputs.map((input) => ({
+            name: input.name || "",
+            type: input.type,
+            internalType: input.internalType,
+            components: input.components,
+          })),
+          outputs:
+            parsedFunction.outputs?.map((output) => ({
+              name: output.name || "",
+              type: output.type,
+              internalType: output.internalType,
+              components: output.components,
+            })) || [],
+          stateMutability: parsedFunction.stateMutability || "nonpayable",
+        };
+        abiSource = JSON.stringify([abiItem]);
+      }
 
       try {
         const parsedABI =
@@ -394,8 +417,23 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
           parsedArgs.push(parsedValue);
         }
 
-        const encodedData = contractInterface.encodeFunctionData(
+        // Use full function signature to avoid ambiguity with overloaded functions
+        const functionSignature = getFunctionSignature(
           parsedFunction.name,
+          parsedFunction.inputs,
+        );
+        // Get the function fragment first, then encode it
+        const functionFragment =
+          contractInterface.getFunction(functionSignature);
+        if (!functionFragment) {
+          devLog(
+            "[encodeContractCallWithArgs] Function not found:",
+            functionSignature,
+          );
+          return;
+        }
+        const encodedData = contractInterface.encodeFunctionData(
+          functionFragment,
           parsedArgs,
         );
         updateTransaction(index, { data: encodedData });
@@ -771,8 +809,19 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         parsedArgs.push(parsedValue);
       }
 
-      const encodedData = contractInterface.encodeFunctionData(
+      // Use full function signature to avoid ambiguity with overloaded functions
+      const functionSignature = getFunctionSignature(
         selectedFunc.name,
+        selectedFunc.inputs,
+      );
+      // Get the function fragment first, then encode it
+      const functionFragment = contractInterface.getFunction(functionSignature);
+      if (!functionFragment) {
+        devLog("[encodeContractCall] Function not found:", functionSignature);
+        return;
+      }
+      const encodedData = contractInterface.encodeFunctionData(
+        functionFragment,
         parsedArgs,
       );
 

@@ -8,6 +8,7 @@ import { useJob } from "@/contexts/JobContext";
 import { getSafeModuleAddress } from "@/utils/contractAddresses";
 import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
 import AavePoolArtifact from "@/artifacts/AavePool.json";
+import ERC20Artifact from "@/artifacts/ERC20.json";
 
 // Contract addresses on OP Sepolia
 const AAVE_POOL_ADDRESS = "0xb50201558B00496A145fE76f7424749556E326D8";
@@ -49,30 +50,39 @@ const CreateJobButton: React.FC = () => {
   const { handleCreateCustomJob } = useJob();
 
   const handleCreateJob = async () => {
+    console.log("[AavePosition] Starting job setup...");
+
     // Switch to custom job form
     handleCreateCustomJob();
 
     // Set TriggerX type to condition-based (2)
     jobForm.setJobType(2);
+    console.log("[AavePosition] Job type set to: 2 (condition-based)");
 
     // Set job title
     jobForm.setJobTitle("Aave Health Factor Guard");
+    console.log("[AavePosition] Job title set to: Aave Health Factor Guard");
 
     // Set network to OP Sepolia
     jobForm.setSelectedNetwork("OP Sepolia");
+    console.log("[AavePosition] Network set to: OP Sepolia");
 
     // Set timeframe to 1 day
     jobForm.setTimeframe({ days: 1, hours: 0, minutes: 0 });
+    console.log("[AavePosition] Timeframe set to: 1 day");
 
     // Set recurring to false
     jobForm.setRecurring(false);
+    console.log("[AavePosition] Recurring set to: false");
 
     // Set execution mode to Safe wallet
     jobForm.setExecutionMode("safe");
+    console.log("[AavePosition] Execution mode set to: safe");
 
     // Configure Safe module address and ABI
     const moduleAddress = getSafeModuleAddress(OP_SEPOLIA_CHAIN_ID);
     if (moduleAddress) {
+      console.log("[AavePosition] Setting Safe module address:", moduleAddress);
       jobForm.handleSetContractDetails(
         "contract",
         moduleAddress,
@@ -87,19 +97,24 @@ const CreateJobButton: React.FC = () => {
     const execJobFunction =
       "execJobFromHub(address,address,uint256,bytes,uint8)";
     jobForm.handleFunctionChange("contract", execJobFunction);
+    console.log("[AavePosition] Function set to:", execJobFunction);
 
     // Set argument type to static
     jobForm.handleArgumentTypeChange("contract", "static");
+    console.log("[AavePosition] Argument type set to: static");
 
     // Configure condition-based settings
     // Source type is already "api" by default
     jobForm.handleSourceTypeChange("contract", "api");
+    console.log("[AavePosition] Source type set to: api");
 
     // Set condition type to less than or equal to
     jobForm.handleConditionTypeChange("contract", "less_equal");
+    console.log("[AavePosition] Condition type set to: less_equal");
 
     // Set value to 1.2
     jobForm.handleUpperLimitChange("contract", "1.2");
+    console.log("[AavePosition] Upper limit set to: 1.2");
 
     // Pre-populate two Safe transactions
     const safeTransactions = [
@@ -109,6 +124,7 @@ const CreateJobButton: React.FC = () => {
         data: "0x",
         defaultFunctionSignature: "approve(address,uint256)",
         defaultArgumentValues: [AAVE_POOL_ADDRESS, MAX_UINT256],
+        defaultAbi: JSON.stringify(ERC20Artifact.abi),
       },
       {
         to: AAVE_POOL_ADDRESS,
@@ -125,7 +141,19 @@ const CreateJobButton: React.FC = () => {
       },
     ];
 
+    console.log("[AavePosition] Safe transactions configured:", {
+      transactionCount: safeTransactions.length,
+      transactions: safeTransactions.map((tx, idx) => ({
+        index: idx,
+        to: tx.to,
+        function: tx.defaultFunctionSignature,
+        args: tx.defaultArgumentValues,
+        hasAbi: !!tx.defaultAbi,
+      })),
+    });
+
     jobForm.handleSafeTransactionsChange("contract", safeTransactions);
+    console.log("[AavePosition] Job setup completed!");
   };
 
   return (
