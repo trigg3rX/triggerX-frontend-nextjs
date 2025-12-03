@@ -5,6 +5,7 @@ import { useJobFormContext } from "@/hooks/useJobFormContext";
 import "./customToolbox";
 import { validateBlocklyWorkspace } from "./validateBlocklyWorkspace";
 import JobFeeModal from "../create-job/JobFeeModal";
+import { IpfsScriptWizard } from "../create-job/form/IpfsScriptWizard";
 import { useAccount } from "wagmi";
 import { syncBlocklyToJobForm } from "./utils/syncBlocklyToJobForm";
 import {
@@ -20,6 +21,10 @@ import {
   setLoadingWallets,
   setOnBlockAddedCallback,
 } from "./blocks/utility/safe-wallet/select_safe_wallet";
+import {
+  setOpenDynamicArgsWizardHandler,
+  updateDynamicArgsIpfsUrl,
+} from "./blocks/utility/contract/dynamic_arguments";
 import { useCreateSafeWallet } from "@/hooks/useCreateSafeWallet";
 import SafeCreationProgressModal from "../safe-wallet/SafeWalletCreationDialog";
 import SafeWalletImportDialog from "../safe-wallet/import-wallet-modal/SafeWalletImportDialog";
@@ -85,6 +90,9 @@ export default function BlocklyDemo() {
   const { safeWallets, isLoading, refetch } = useSafeWallets();
   const { createSafeWallet, signEnableModule, submitEnableModule } =
     useCreateSafeWallet();
+
+  // IPFS Script Wizard (for dynamic_arguments block)
+  const [isIpfsWizardOpen, setIsIpfsWizardOpen] = useState(false);
 
   // Update loading state in the select block
   useEffect(() => {
@@ -251,6 +259,13 @@ export default function BlocklyDemo() {
     setImportSafeHandler(handleImportSafe);
   }, [handleImportSafe]);
 
+  // Set up handler for opening the IPFS Script Wizard from the dynamic_arguments block
+  useEffect(() => {
+    setOpenDynamicArgsWizardHandler(() => {
+      setIsIpfsWizardOpen(true);
+    });
+  }, []);
+
   const handleCreateJob = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -381,6 +396,16 @@ export default function BlocklyDemo() {
           isOpen={isModalOpen}
           setIsOpen={setIsModalOpen}
           estimatedFee={estimatedFee}
+        />
+
+        {/* IPFS Script Wizard for dynamic arguments block */}
+        <IpfsScriptWizard
+          isOpen={isIpfsWizardOpen}
+          onClose={() => setIsIpfsWizardOpen(false)}
+          onComplete={(url) => {
+            updateDynamicArgsIpfsUrl(url);
+            setIsIpfsWizardOpen(false);
+          }}
         />
 
         {/* Safe Wallet Creation Progress Dialog */}
