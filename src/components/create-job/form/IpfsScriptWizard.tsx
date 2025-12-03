@@ -169,12 +169,12 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       if (isSafeMode && selectedSafeWallet && targetFunction) {
         return {
           ...base,
-          IsSafe: true,
+          is_safe: true,
           selected_safe: selectedSafeWallet,
           target_function: targetFunction,
         };
       }
-      return { ...base, IsSafe: false, target_function: targetFunction };
+      return { ...base, is_safe: false, target_function: targetFunction };
     },
     [
       isSafeMode,
