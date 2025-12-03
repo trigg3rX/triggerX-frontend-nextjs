@@ -82,6 +82,18 @@ function extractJobDetails(
   userSafeWallets?: string[],
   customScriptUrl?: string,
 ): JobDetails {
+  console.log(
+    "[extractJobDetails] Starting job details extraction for contractKey:",
+    contractKey,
+  );
+  console.log("[extractJobDetails] Input parameters:", {
+    jobTitle,
+    jobType,
+    executionMode,
+    selectedSafeWallet,
+    networkId,
+    chainId,
+  });
   let triggerContractAddress = "0x0000000000000000000000000000000000000000";
   let triggerEvent = "NULL";
   let eventFilterParaName = "";
@@ -128,9 +140,19 @@ function extractJobDetails(
     c.argumentType === "static" &&
     contractKey === "contract" // Only for main contract, not event contract
   ) {
+    console.log("[extractJobDetails] Processing Safe wallet transactions...");
     // Use user-provided safeTransactions from UI if available
     if (c.safeTransactions && c.safeTransactions.length > 0) {
       safeTransactions = c.safeTransactions;
+      console.log("[extractJobDetails] Using provided safeTransactions:", {
+        count: safeTransactions.length,
+        transactions: safeTransactions.map((tx, idx) => ({
+          index: idx,
+          to: tx.to,
+          value: tx.value,
+          dataLength: tx.data?.length || 0,
+        })),
+      });
     } else {
       // Fallback: build from static arguments (legacy behavior)
       const fullFunctionSignature = c.targetFunction || "";
@@ -152,8 +174,16 @@ function extractJobDetails(
     if (safeTransactions && safeTransactions.length > 0) {
       try {
         encodedMultiSendData = encodeMultisendData(safeTransactions);
+        console.log("[extractJobDetails] Encoded multisend data:", {
+          length: encodedMultiSendData?.length || 0,
+          preview: encodedMultiSendData?.substring(0, 66) + "...",
+        });
       } catch (error) {
         devLog(
+          "[extractJobDetails] Failed to encode Safe multisend data:",
+          error,
+        );
+        console.error(
           "[extractJobDetails] Failed to encode Safe multisend data:",
           error,
         );
@@ -186,6 +216,14 @@ function extractJobDetails(
           encodedMultiSendData,
           "1",
         ];
+        console.log(
+          "[extractJobDetails] Updated argsArray for Safe execution:",
+          {
+            safeWallet: selectedSafeWallet,
+            multiSendAddress: multiSendCallOnlyAddress,
+            encodedDataLength: encodedMultiSendData?.length || 0,
+          },
+        );
       }
     }
   }
@@ -197,7 +235,7 @@ function extractJobDetails(
   //   finalJobTitle = `${jobTitle} - Linked Job ${linkedJobId}`;
   // }
 
-  return {
+  const jobDetails: JobDetails = {
     user_address: userAddress || "",
     ether_balance: 0,
     token_balance: 0,
@@ -243,13 +281,31 @@ function extractJobDetails(
     safe_name:
       executionMode === "safe" && selectedSafeWallet && chainId
         ? getWalletDisplayName(
-            selectedSafeWallet,
-            chainId,
-            userSafeWallets || [],
-          )
+          selectedSafeWallet,
+          chainId,
+          userSafeWallets || [],
+        )
         : undefined,
     safe_transactions: safeTransactions,
   };
+
+  console.log("[extractJobDetails] Final job details prepared:", {
+    job_title: jobDetails.job_title,
+    task_definition_id: jobDetails.task_definition_id,
+    target_contract_address: jobDetails.target_contract_address,
+    target_function: jobDetails.target_function,
+    execution_mode: executionMode,
+    is_safe: jobDetails.is_safe,
+    safe_address: jobDetails.safe_address,
+    safe_transactions_count: jobDetails.safe_transactions?.length || 0,
+    arguments_count: jobDetails.arguments?.length || 0,
+    condition_type: jobDetails.condition_type,
+    upper_limit: jobDetails.upper_limit,
+    value_source_type: jobDetails.value_source_type,
+    value_source_url: jobDetails.value_source_url,
+  });
+
+  return jobDetails;
 }
 
 function getTimeframeInSeconds(timeframe: Timeframe): number {
@@ -559,14 +615,7 @@ export interface JobFormContextType {
   setCalculatedExecutions: React.Dispatch<React.SetStateAction<number | null>>;
   isModalOpen: boolean;
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  estimateFee: (
-    jobType: number,
-    timeframeInSeconds: number,
-    intervalInSeconds: number,
-    codeUrls: string,
-    recurring: boolean,
-    argType: number,
-  ) => Promise<void>;
+  estimateFee: (jobDetails: JobDetails) => Promise<void>;
   isSubmitting: boolean;
   setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
   isJobCreated: boolean;
@@ -1140,12 +1189,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 // Initialize selection so downstream submission has a value even if user doesn't click
                 selectedApiKey:
                   prev[contractKey].selectedApiKey &&
-                  prev[contractKey].selectedApiKey !== ""
+                    prev[contractKey].selectedApiKey !== ""
                     ? prev[contractKey].selectedApiKey
                     : defaultSelectedValue,
                 selectedApiKeyValue:
                   prev[contractKey].selectedApiKeyValue &&
-                  prev[contractKey].selectedApiKeyValue !== ""
+                    prev[contractKey].selectedApiKeyValue !== ""
                     ? prev[contractKey].selectedApiKeyValue
                     : defaultActualValue,
               },
@@ -1412,28 +1461,42 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     return null;
   };
 
-  const estimateFee = async (
-    jobType: number,
-    timeframeInSeconds: number,
-    intervalInSeconds: number,
-    codeUrls: string,
-    recurring: boolean,
-    argType: number,
-  ) => {
+  const estimateFee = async (jobDetails: JobDetails) => {
     try {
-      const taskDefinitionId = getTaskDefinitionId(
-        argType === 1 ? "static" : "dynamic",
-        jobType,
-      );
+      if (!jobDetails) {
+        throw new Error("Job details are required to estimate fee");
+      }
+
+      const {
+        task_definition_id: taskDefinitionId,
+        time_frame: timeframeInSeconds,
+        time_interval: intervalInSeconds,
+        dynamic_arguments_script_url: codeUrls,
+        target_chain_id: targetChainId,
+        target_contract_address: targetContractAddress,
+        target_function: targetFunction,
+        abi: contractAbi,
+        arguments: jobArguments,
+      } = jobDetails;
+
+      if (!taskDefinitionId) {
+        throw new Error("Task definition ID is missing");
+      }
+      if (!targetContractAddress || !targetFunction || !contractAbi) {
+        throw new Error("Job details are missing contract information");
+      }
 
       // Calculate execution count based on task definition ID
       let executionCount: number;
-
+      const intervalSeconds = intervalInSeconds || 0;
       // For time-interval based jobs (taskDefinitionId 1, 2)
-      // Task definition 1: Time-based static
-      // Task definition 2: Time-based dynamic
       if (taskDefinitionId === 1 || taskDefinitionId === 2) {
-        executionCount = Math.floor(timeframeInSeconds / intervalInSeconds);
+        if (!intervalSeconds || intervalSeconds <= 0) {
+          throw new Error("Time interval must be greater than 0 for this job");
+        }
+        executionCount = Math.floor(
+          (timeframeInSeconds || 0) / intervalSeconds,
+        );
         setCalculatedExecutions(executionCount);
         devLog(
           "Calculated execution count for time-interval job:",
@@ -1450,14 +1513,6 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         devLog("Using desired execution count:", executionCount);
       }
 
-      // Get contract details from contractInteractions
-      const contract = contractInteractions.contract;
-      const networkId = getNetworkIdByName(selectedNetwork);
-
-      if (!contract.address || !contract.abi || !contract.targetFunction) {
-        throw new Error("Contract details are incomplete");
-      }
-
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
       if (!API_BASE_URL) {
         throw new Error(
@@ -1465,28 +1520,33 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       }
 
-      // Prepare arguments array
-      const args = contract.argumentValues || [];
+      // Prepare arguments array for fee estimation using job details
+      const args = jobArguments || [];
+      const argsToSend = args.length > 0 ? args : [];
 
       // Build query parameters
       const params = new URLSearchParams();
       if (codeUrls) params.append("ipfs_url", codeUrls);
       params.append("task_definition_id", taskDefinitionId.toString());
-      params.append("target_chain_id", networkId?.toString() || "");
-      params.append("target_contract_address", contract.address);
-      params.append("target_function", contract.targetFunction.split("(")[0]);
-      params.append("abi", contract.abi);
-      if (args.length > 0) {
-        params.append("args", JSON.stringify(args));
-      }
+      params.append("target_chain_id", targetChainId?.toString() || "");
+      params.append("target_contract_address", targetContractAddress);
+      params.append("target_function", targetFunction);
+      params.append(
+        "abi",
+        typeof contractAbi === "string"
+          ? contractAbi
+          : JSON.stringify(contractAbi),
+      );
+      // Always append args, even if empty array
+      params.append("args", JSON.stringify(argsToSend));
 
       devLog("Fetching fee estimation with params:", {
         ipfs_url: codeUrls,
         task_definition_id: taskDefinitionId,
-        target_chain_id: networkId,
-        target_contract_address: contract.address,
-        target_function: contract.targetFunction.split("(")[0],
-        args: args,
+        target_chain_id: targetChainId,
+        target_contract_address: targetContractAddress,
+        target_function: targetFunction,
+        args: argsToSend,
       });
 
       const response = await fetch(
@@ -1649,17 +1709,48 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Invalid network selected");
       }
 
+      console.log("[handleCreateJob] Starting job creation process...");
+      console.log("[handleCreateJob] Job configuration:", {
+        jobTitle,
+        jobType,
+        executionMode,
+        selectedNetwork,
+        networkId,
+        selectedSafeWallet,
+        chainId,
+        timeframe,
+        timeInterval,
+        recurring,
+        language,
+      });
+
       // Extract all job details from contract interactions
       const allJobDetails: JobDetails[] = [];
       const linkedJobDetails: JobDetails[] = [];
+
+      console.log("[handleCreateJob] Processing contract interactions:", {
+        contractKeys: Object.keys(contractInteractions),
+        contractCount: Object.keys(contractInteractions).length,
+      });
 
       // Extract job details for each contract interaction
       Object.keys(contractInteractions).forEach((contractKey) => {
         const contract = contractInteractions[contractKey];
 
+        console.log("[handleCreateJob] Processing contract:", contractKey, {
+          hasTargetFunction: !!contract.targetFunction,
+          hasAbi: !!contract.abi,
+          hasSafeTransactions: !!contract.safeTransactions,
+          safeTransactionsCount: contract.safeTransactions?.length || 0,
+        });
+
         // Skip contracts that don't have required data
         // For jobType 4 (custom script), we don't need targetFunction or abi
         if (jobType !== 4 && (!contract.targetFunction || !contract.abi)) {
+          console.log(
+            "[handleCreateJob] Skipping contract (missing targetFunction or ABI):",
+            contractKey,
+          );
           return;
         }
 
@@ -1687,9 +1778,16 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         // Check if this is a linked job (contractKey format: "jobType-jobId")
         if (contractKey.includes("-")) {
           linkedJobDetails.push(jobDetails);
+          console.log("[handleCreateJob] Added linked job:", contractKey);
         } else {
           allJobDetails.push(jobDetails);
+          console.log("[handleCreateJob] Added main job:", contractKey);
         }
+      });
+
+      console.log("[handleCreateJob] Job details extracted:", {
+        mainJobsCount: allJobDetails.length,
+        linkedJobsCount: linkedJobDetails.length,
       });
 
       const updatedJobDetails: Array<
@@ -1709,6 +1807,27 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         is_imua: process.env.NEXT_PUBLIC_IS_IMUA === "true",
         created_chain_id: networkId.toString(),
       }));
+
+      console.log(
+        "[handleCreateJob] Final job details prepared for submission:",
+        {
+          mainJobs: updatedJobDetails.map((jd) => ({
+            job_title: jd.job_title,
+            task_definition_id: jd.task_definition_id,
+            target_contract: jd.target_contract_address,
+            target_function: jd.target_function,
+            is_safe: jd.is_safe,
+            safe_address: jd.safe_address,
+            safe_transactions_count: jd.safe_transactions?.length || 0,
+            arguments: jd.arguments,
+            condition_type: jd.condition_type,
+            upper_limit: jd.upper_limit,
+            value_source_url: jd.value_source_url,
+          })),
+          linkedJobsCount: updatedLinkedJobDetails.length,
+          estimatedFee,
+        },
+      );
 
       // --- ENCODING LOGIC FOR CONTRACT CALL ---
       let encodedData: string = "0x";
@@ -1888,7 +2007,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               jd.task_definition_id !== 7 &&
               (!jd.target_contract_address ||
                 jd.target_contract_address ===
-                  "0x0000000000000000000000000000000000000000")
+                "0x0000000000000000000000000000000000000000")
             ) {
               console.log("[JobForm] ERROR: Invalid target contract address");
               throw new Error("Target contract address is required");
@@ -2188,7 +2307,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         const errorText = await response.text();
         throw new Error(
           errorText ||
-            (jobId ? "Failed to update job" : "Failed to create job"),
+          (jobId ? "Failed to update job" : "Failed to create job"),
         );
       }
 
@@ -2203,7 +2322,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       devLog(
         (jobId ? "Error updating job: " : "Error creating job: ") +
-          (error as Error).message,
+        (error as Error).message,
       );
       toast.error(jobId ? "Error updating job: " : "Error creating job: ");
       setIsJobCreated(false);

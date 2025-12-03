@@ -61,9 +61,14 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     desiredExecutions,
     setDesiredExecutions,
     calculatedExecutions,
+    executionMode,
+    selectedSafeWallet,
+    userSafeWallets,
+    language,
   } = useJobForm();
   const router = useRouter();
   const { address, chain } = useAccount();
+  const chainId = chain?.id;
   const prevAddress = useRef<string | undefined>(address);
   const [topUpFailed, setTopUpFailed] = useState(false);
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
@@ -95,6 +100,11 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
       address,
       networkId,
       jobType,
+      language || "go",
+      executionMode,
+      selectedSafeWallet,
+      chainId,
+      userSafeWallets,
     );
   }, [
     contractInteractions,
@@ -103,9 +113,14 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     timeInterval,
     recurring,
     address,
+    chainId,
     getNetworkIdByName,
     selectedNetwork,
     jobType,
+    language,
+    executionMode,
+    selectedSafeWallet,
+    userSafeWallets,
     extractJobDetails,
     getTimeframeInSeconds,
     getIntervalInSeconds,
@@ -132,14 +147,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
         // Call estimateFee and wait for it to finish
         const doEstimate = async () => {
           const jobDetails = getJobDetailsForEstimate();
-          await estimateFee(
-            jobType,
-            getTimeframeInSeconds(timeframe),
-            getIntervalInSeconds(timeInterval),
-            jobDetails.dynamic_arguments_script_url || "",
-            recurring,
-            Number(jobDetails.arg_type),
-          );
+          await estimateFee(jobDetails);
           setFeeEstimated(true);
           setTimeout(() => {
             setIsStepperVisible(false);
