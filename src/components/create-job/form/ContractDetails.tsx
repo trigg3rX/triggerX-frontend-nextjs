@@ -2,14 +2,12 @@ import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { TextInput } from "../../ui/TextInput";
 import { Typography } from "../../ui/Typography";
 import { Dropdown, DropdownOption } from "../../ui/Dropdown";
-import React, { useState } from "react";
-import { IpfsScriptWizard } from "./IpfsScriptWizard";
+import React from "react";
+import { IpfsScriptInput } from "./IpfsScriptInput";
 import { SafeTransactionBuilder } from "./SafeTransactionBuilder";
 import { FunctionInput } from "@/types/job";
 import { RadioGroup } from "../../ui/RadioGroup";
 import { FormErrorMessage } from "@/components/common/FormErrorMessage";
-import { ExternalLinkIcon, LucideCircleArrowOutUpLeft } from "lucide-react";
-import Link from "next/link";
 
 interface ContractDetailsProps {
   contractKey: string;
@@ -184,7 +182,6 @@ export const ContractDetails = ({
   };
 
   const targetDropdownId = `${contractKey}-target-dropdown`;
-  const [isIpfsWizardOpen, setIsIpfsWizardOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -542,71 +539,24 @@ export const ContractDetails = ({
 
       {/* IPFS Code URL Field */}
       {contract.argumentType === "dynamic" && (
-        <div className="space-y-auto">
-          {contract.ipfsCodeUrl ? (
-            <TextInput
-              label="IPFS Code URL"
-              value={contract.ipfsCodeUrl || ""}
-              onChange={() => {}}
-              placeholder="IPFS URL"
-              error={ipfsError ?? null}
-              type="text"
-              id={`contract-ipfs-code-url-${contractKey}`}
-              disabled
-              endAdornment={
-                <Link
-                  href={(() => {
-                    const url = contract.ipfsCodeUrl;
-                    if (url.startsWith("ipfs://")) {
-                      const cid = url.replace("ipfs://", "");
-                      return `https://ipfs.io/ipfs/${cid}`;
-                    }
-                    return url;
-                  })()}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-white/70 hover:text-white"
-                  aria-label="Open IPFS URL"
-                >
-                  <ExternalLinkIcon className="w-4 h-4" />
-                </Link>
-              }
-            />
-          ) : (
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-6">
-              <Typography
-                variant="h4"
-                color="secondary"
-                className="text-nowrap"
-              >
-                IPFS Code URL
-              </Typography>
-              <div className="w-full md:w-[70%]">
-                <button
-                  type="button"
-                  onClick={() => !readOnly && setIsIpfsWizardOpen(true)}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white hover:bg-white/10 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={readOnly}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm sm:text-base">
-                      Upload or Validate Script
-                    </span>
-                    <LucideCircleArrowOutUpLeft className="w-4 h-4 text-white/50" />
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-          <div className="w-full md:w-[70%] ml-auto pl-3 mt-3 flex flex-wrap gap-2">
-            <FormErrorMessage error={ipfsError ?? null} className="mb-1" />
-            {contract.ipfsCodeUrlError && (
-              <Typography variant="caption" color="error" align="left">
-                {contract.ipfsCodeUrlError}
-              </Typography>
-            )}
-          </div>
-        </div>
+        <IpfsScriptInput
+          value={contract.ipfsCodeUrl || ""}
+          onChange={(url) => handleIpfsCodeUrlChange(contractKey, url)}
+          error={ipfsError}
+          urlError={contract.ipfsCodeUrlError}
+          onClearError={() =>
+            setContractErrors((prev) => ({
+              ...prev,
+              [`${contractKey}Ipfs`]: null,
+            }))
+          }
+          readOnly={readOnly}
+          isSafeMode={isSafeMode}
+          selectedSafeWallet={selectedSafeWallet}
+          targetFunction={contract.targetFunction || ""}
+          label="IPFS Code URL"
+          inputId={`contract-ipfs-code-url-${contractKey}`}
+        />
       )}
 
       {jobType === 2 && (
@@ -856,25 +806,6 @@ export const ContractDetails = ({
             </>
           )}
         </>
-      )}
-
-      {/* IPFS Script Wizard */}
-      {contract.argumentType === "dynamic" && (
-        <IpfsScriptWizard
-          isOpen={isIpfsWizardOpen}
-          onClose={() => setIsIpfsWizardOpen(false)}
-          onComplete={(url) => {
-            handleIpfsCodeUrlChange(contractKey, url);
-            setContractErrors((prev) => ({
-              ...prev,
-              [`${contractKey}Ipfs`]: null,
-            }));
-            setIsIpfsWizardOpen(false);
-          }}
-          isSafeMode={isSafeMode}
-          selectedSafeWallet={selectedSafeWallet}
-          targetFunction={contract.targetFunction || ""}
-        />
       )}
     </div>
   );

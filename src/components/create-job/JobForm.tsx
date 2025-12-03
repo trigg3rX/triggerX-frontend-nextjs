@@ -23,6 +23,7 @@ import { useJobs } from "@/hooks/useJobs";
 import { fetchContractABI } from "@/utils/fetchContractABI";
 import { useChainId } from "wagmi";
 import { devLog } from "@/lib/devLog";
+import { IpfsScriptInput } from "./form/IpfsScriptInput";
 
 const networkIcons = Object.fromEntries(
   Object.entries(networksData.networkIcons).map(([name, icon]) => [
@@ -125,6 +126,8 @@ export const JobForm: React.FC = () => {
     setPermissionError,
     executionMode,
     selectedSafeWallet,
+    customScriptUrl,
+    setCustomScriptUrl,
   } = useJobFormContext();
 
   const { isConnected } = useWalletConnectionContext();
@@ -162,6 +165,7 @@ export const JobForm: React.FC = () => {
             "Time-based": 1,
             "Condition-based": 2,
             "Event-based": 3,
+            "Custom-script": 4,
           };
           const triggerType = triggerTypeMap[job.taskDefinitionId] || 1;
           jobForm.setJobType(triggerType);
@@ -240,6 +244,7 @@ export const JobForm: React.FC = () => {
       validateABI,
       executionMode,
       selectedSafeWallet,
+      customScriptUrl,
     });
     if (validationResult) {
       const { errorKey, errorValue, scrollToId } = validationResult;
@@ -290,16 +295,18 @@ export const JobForm: React.FC = () => {
                 />
                 {/* <NetworkSelector disabled={isUpdateMode} /> */}
                 <NetworkSelector />
-                <SafeWalletSelector
-                  disabled={isUpdateMode}
-                  error={contractErrors.safeWallet ?? null}
-                  onClearError={() =>
-                    setContractErrors((prev) => ({
-                      ...prev,
-                      safeWallet: null,
-                    }))
-                  }
-                />
+                {jobType !== 4 && (
+                  <SafeWalletSelector
+                    disabled={isUpdateMode}
+                    error={contractErrors.safeWallet ?? null}
+                    onClearError={() =>
+                      setContractErrors((prev) => ({
+                        ...prev,
+                        safeWallet: null,
+                      }))
+                    }
+                  />
+                )}
                 <TimeframeInputs
                   timeframe={timeframe}
                   onTimeframeChange={handleTimeframeChange}
@@ -307,7 +314,7 @@ export const JobForm: React.FC = () => {
                   ref={errorFrameRef}
                   onClearError={() => setErrorFrame(null)}
                 />
-                {jobType === 1 ? (
+                {jobType === 1 || jobType === 4 ? (
                   <TimeIntervalInputs
                     timeInterval={timeInterval}
                     onTimeIntervalChange={handleTimeIntervalChange}
@@ -329,24 +336,43 @@ export const JobForm: React.FC = () => {
                   />
                 )}
                 {/* Contract Address Error Display and Scroll Anchor */}
-                <ContractDetails
-                  contractKey="contract"
-                  label="Contract Address"
-                  error={contractErrors["contractAddress"]}
-                  abiError={contractErrors["contractABI"]}
-                  targetError={contractErrors["contractTarget"]}
-                  ipfsError={contractErrors["contractIpfs"]}
-                  argsError={contractErrors["contractArgs"]}
-                  sourceUrlError={contractErrors["contractSourceUrl"]}
-                  conditionTypeError={contractErrors["contractConditionType"]}
-                  limitsError={contractErrors["contractLimits"]}
-                  safeTransactionsError={
-                    contractErrors["safeTransaction"] ||
-                    contractErrors["safeTransactions"] ||
-                    null
-                  }
-                  readOnly={isUpdateMode}
-                />
+                {jobType !== 4 && (
+                  <ContractDetails
+                    contractKey="contract"
+                    label="Contract Address"
+                    error={contractErrors["contractAddress"]}
+                    abiError={contractErrors["contractABI"]}
+                    targetError={contractErrors["contractTarget"]}
+                    ipfsError={contractErrors["contractIpfs"]}
+                    argsError={contractErrors["contractArgs"]}
+                    sourceUrlError={contractErrors["contractSourceUrl"]}
+                    conditionTypeError={contractErrors["contractConditionType"]}
+                    limitsError={contractErrors["contractLimits"]}
+                    safeTransactionsError={
+                      contractErrors["safeTransaction"] ||
+                      contractErrors["safeTransactions"] ||
+                      null
+                    }
+                    readOnly={isUpdateMode}
+                  />
+                )}
+                {/* Custom Script IPFS URL for jobType 4 - independent field */}
+                {jobType === 4 && (
+                  <IpfsScriptInput
+                    value={customScriptUrl}
+                    onChange={(url) => setCustomScriptUrl(url)}
+                    error={contractErrors["customScriptUrl"]}
+                    onClearError={() =>
+                      setContractErrors((prev) => ({
+                        ...prev,
+                        customScriptUrl: null,
+                      }))
+                    }
+                    readOnly={isUpdateMode}
+                    label="IPFS Script URL"
+                    inputId="ipfs-script-url-section"
+                  />
+                )}
               </Card>
 
               {linkedJobs[jobType]?.length > 0 && (

@@ -95,7 +95,7 @@ const Header: React.FC = () => {
               />
             </div>
 
-            <nav className="relative bg-[#181818F0] rounded-xl z-10">
+            <nav className="relative bg-[#181818F0] backdrop-blur-[20px] rounded-2xl z-10">
               <HoverHighlight>
                 {navItems.map((item) => (
                   <NavLink

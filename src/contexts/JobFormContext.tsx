@@ -80,6 +80,7 @@ function extractJobDetails(
   selectedSafeWallet?: string | null,
   chainId?: number,
   userSafeWallets?: string[],
+  customScriptUrl?: string,
 ): JobDetails {
   let triggerContractAddress = "0x0000000000000000000000000000000000000000";
   let triggerEvent = "NULL";
@@ -107,7 +108,9 @@ function extractJobDetails(
   const contractABI = c.abi;
   const argType = getArgType(c.argumentType || "static");
   let argsArray = [...(c.argumentValues || [])];
-  const ipfsCodeUrl = c.ipfsCodeUrl || "";
+  // For jobType 4 (custom script), use customScriptUrl instead of contract's ipfsCodeUrl
+  const ipfsCodeUrl =
+    jobType === 4 ? customScriptUrl || "" : c.ipfsCodeUrl || "";
   const targetFunction = c.targetFunction ? c.targetFunction.split("(")[0] : "";
   const taskDefinitionId = getTaskDefinitionId(
     c.argumentType || "static",
@@ -270,6 +273,11 @@ function getNetworkIdByName(name: string): number | undefined {
 }
 
 function getTaskDefinitionId(argumentType: string, jobType: number): number {
+  // Custom script trigger always uses task definition ID 7
+  if (jobType === 4) {
+    return 7;
+  }
+
   return argumentType === "static"
     ? jobType === 1
       ? 1
@@ -350,6 +358,16 @@ function encodeJobType4or6Data(recurringJob: boolean, ipfsHash: string) {
   return ethers.AbiCoder.defaultAbiCoder().encode(
     ["bool", "bytes32"],
     [recurringJob, toBytes32(ipfsHash)],
+  );
+}
+function encodeJobType7Data(
+  timeInterval: number,
+  ipfsHash: string,
+  language: string,
+) {
+  return ethers.AbiCoder.defaultAbiCoder().encode(
+    ["uint256", "bytes32", "string"],
+    [timeInterval, toBytes32(ipfsHash), language],
   );
 }
 
@@ -467,6 +485,8 @@ export interface JobFormContextType {
   setUserSafeWallets: React.Dispatch<React.SetStateAction<string[]>>;
   language: string;
   setLanguage: React.Dispatch<React.SetStateAction<string>>;
+  customScriptUrl: string;
+  setCustomScriptUrl: React.Dispatch<React.SetStateAction<string>>;
   handleJobTypeChange: (
     e: React.MouseEvent<HTMLButtonElement>,
     type: number,
@@ -674,6 +694,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
   );
   const [userSafeWallets, setUserSafeWallets] = useState<string[]>([]);
   const [language, setLanguage] = useState<string>("");
+  const [customScriptUrl, setCustomScriptUrl] = useState<string>("");
 
   React.useEffect(() => {
     setContractInteractions((prev) => ({
@@ -1571,7 +1592,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         const contract = contractInteractions[contractKey];
 
         // Skip contracts that don't have required data
-        if (!contract.targetFunction || !contract.abi) {
+        // For jobType 4 (custom script), we don't need targetFunction or abi
+        if (jobType !== 4 && (!contract.targetFunction || !contract.abi)) {
           return;
         }
 
@@ -1593,6 +1615,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           selectedSafeWallet,
           chainId,
           userSafeWallets,
+          customScriptUrl,
         );
 
         // Check if this is a linked job (contractKey format: "jobType-jobId")
@@ -1647,6 +1670,14 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           encodedData = encodeJobType4or6Data(
             jd.recurring,
             jd.dynamic_arguments_script_url || "",
+          );
+        } else if (taskDefinitionId === 7) {
+          // Custom script: time interval + IPFS hash + language
+          const ipfsBytes32 = ethers.id(jd.dynamic_arguments_script_url || "");
+          encodedData = encodeJobType7Data(
+            jd.time_interval,
+            ipfsBytes32,
+            jd.language || "typescript",
           );
         } else {
           throw new Error(`Unknown task definition ID: ${taskDefinitionId}`);
@@ -1705,6 +1736,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               oldEncodedData = encodeJobType4or6Data(
                 Boolean(oldDataDecoded.recurring ?? false),
                 oldDataDecoded.dynamic_arguments_script_url ?? "",
+              );
+            } else if (oldJobTypeNum === 7) {
+              oldEncodedData = encodeJobType7Data(
+                Number(oldDataDecoded.timeInterval ?? 0),
+                oldDataDecoded.dynamic_arguments_script_url ?? "",
+                oldDataDecoded.language ?? "typescript",
               );
             }
 
@@ -1780,30 +1817,36 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               console.log("[JobForm] ERROR: Empty job title");
               throw new Error("Job title cannot be empty");
             }
+            // Task definition ID 7 (custom script) doesn't require a target contract address
             if (
-              !jd.target_contract_address ||
-              jd.target_contract_address ===
-                "0x0000000000000000000000000000000000000000"
+              jd.task_definition_id !== 7 &&
+              (!jd.target_contract_address ||
+                jd.target_contract_address ===
+                  "0x0000000000000000000000000000000000000000")
             ) {
               console.log("[JobForm] ERROR: Invalid target contract address");
               throw new Error("Target contract address is required");
             }
 
-            // Check for time interval requirement for task definition ID 2 (Time-based with IPFS)
-            if (jd.task_definition_id === 2 && jd.time_interval <= 0) {
+            // Check for time interval requirement for task definition IDs 2, 7 (Time-based with IPFS)
+            if (
+              (jd.task_definition_id === 2 || jd.task_definition_id === 7) &&
+              jd.time_interval <= 0
+            ) {
               console.log(
-                "[JobForm] ERROR: Time interval must be greater than 0 for task definition ID 2",
+                `[JobForm] ERROR: Time interval must be greater than 0 for task definition ID ${jd.task_definition_id}`,
               );
               throw new Error(
-                "Time interval must be greater than 0 for task definition ID 2",
+                `Time interval must be greater than 0 for task definition ID ${jd.task_definition_id}`,
               );
             }
 
-            // Check for IPFS hash requirement for task definition IDs 2, 4, 6 (require IPFS)
+            // Check for IPFS hash requirement for task definition IDs 2, 4, 6, 7 (require IPFS)
             if (
               (jd.task_definition_id === 2 ||
                 jd.task_definition_id === 4 ||
-                jd.task_definition_id === 6) &&
+                jd.task_definition_id === 6 ||
+                jd.task_definition_id === 7) &&
               (!jd.dynamic_arguments_script_url ||
                 jd.dynamic_arguments_script_url.trim() === "")
             ) {
@@ -1939,6 +1982,16 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 linkedJob.recurring,
                 linkedJob.dynamic_arguments_script_url || "",
               );
+            } else if (linkedTaskDefinitionId === 7) {
+              // Custom script: time interval + IPFS hash + language
+              const ipfsBytes32 = ethers.id(
+                linkedJob.dynamic_arguments_script_url || "",
+              );
+              linkedEncodedData = encodeJobType7Data(
+                linkedJob.time_interval,
+                ipfsBytes32,
+                linkedJob.language || "typescript",
+              );
             }
 
             // Create linked job on contract
@@ -1958,7 +2011,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               linkedJob.job_title,
               linkedJob.task_definition_id,
               linkedJob.time_frame,
-              linkedJob.target_contract_address,
+              linkedJob.task_definition_id === 7
+                ? ""
+                : linkedJob.target_contract_address, // Use empty string for custom script jobs
               linkedEncodedData,
             );
             const linkedReceipt = await linkedTx.wait();
@@ -2258,6 +2313,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     setSelectedSafeWallet(null);
     setUserSafeWallets([]);
     setLanguage("");
+    setCustomScriptUrl("");
   };
 
   return (
@@ -2349,6 +2405,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setUserSafeWallets,
         language,
         setLanguage,
+        customScriptUrl,
+        setCustomScriptUrl,
         resetContractInteractionState,
         reset,
       }}
@@ -2374,4 +2432,5 @@ type OldDataDecoded = {
   timeInterval?: number | string;
   dynamic_arguments_script_url?: string;
   recurring?: boolean;
+  language?: string;
 };
