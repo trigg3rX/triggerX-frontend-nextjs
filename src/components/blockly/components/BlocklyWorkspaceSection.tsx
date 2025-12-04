@@ -4,10 +4,7 @@ import React, { useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import * as Blockly from "blockly/core";
 import DisableInteractions from "@/app/DisableInteractions";
-import {
-  setConnectedChainId,
-  setConnectedWalletAddress,
-} from "../blocks/default_blocks";
+import { setConnectedChainId } from "../blocks/default_blocks";
 import { setImportSafeChainId } from "../blocks/utility/safe-wallet/import_safe_wallet";
 
 // react-blockly uses window, so ensure client-only dynamic import
@@ -150,6 +147,21 @@ export function BlocklyWorkspaceSection({
           colour: "110",
           contents: [{ kind: "block", type: "condition_monitor" }],
         },
+        // --- CONTRACT UTILITIES ---
+        {
+          kind: "category",
+          name: "Contract",
+          colour: "190",
+          contents: [
+            {
+              kind: "block",
+              type: "execute_through_safe_wallet",
+            },
+            { kind: "block", type: "execute_function" },
+            { kind: "block", type: "static_arguments" },
+            { kind: "block", type: "dynamic_arguments" },
+          ],
+        },
         // --- SAFE WALLET CATEGORY ---
         // Tools for creating and managing Safe wallets
         {
@@ -171,19 +183,16 @@ export function BlocklyWorkspaceSection({
             },
           ],
         },
-        // --- CONTRACT UTILITIES ---
+        // --- SAFE TRANSACTION CATEGORY ---
         {
           kind: "category",
-          name: "Contract",
-          colour: "190",
+          name: "Safe Transaction",
+          colour: "#9C27B0",
           contents: [
             {
               kind: "block",
-              type: "execute_through_safe_wallet",
+              type: "safe_transaction",
             },
-            { kind: "block", type: "execute_function" },
-            { kind: "block", type: "static_arguments" },
-            { kind: "block", type: "dynamic_arguments" },
           ],
         },
       ],
@@ -268,11 +277,6 @@ export function BlocklyWorkspaceSection({
         }
       }
     });
-  }, [connectedAddress]);
-
-  // Update the global connected wallet address for wallet blocks
-  useEffect(() => {
-    setConnectedWalletAddress(connectedAddress || null);
   }, [connectedAddress]);
 
   // Update the global connected chain ID for validation and import safe button

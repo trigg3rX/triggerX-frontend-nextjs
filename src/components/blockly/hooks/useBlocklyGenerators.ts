@@ -26,6 +26,7 @@ import { createSafeWalletGenerator } from "../blocks/utility/safe-wallet/create_
 import { importSafeWalletGenerator } from "../blocks/utility/safe-wallet/import_safe_wallet";
 import { selectSafeWalletGenerator } from "../blocks/utility/safe-wallet/select_safe_wallet";
 import { executeThroughSafeWalletGenerator } from "../blocks/utility/safe-wallet/execute_through_safe_wallet";
+import { safeTransactionGenerator } from "../blocks/utility/safe-wallet/safe_transaction";
 
 // Custom hook to register all Blockly block generators
 export function useBlocklyGenerators() {
@@ -67,5 +68,6 @@ export function useBlocklyGenerators() {
       selectSafeWalletGenerator;
     javascriptGenerator.forBlock["execute_through_safe_wallet"] =
       executeThroughSafeWalletGenerator;
+    javascriptGenerator.forBlock["safe_transaction"] = safeTransactionGenerator;
   }, []);
 }

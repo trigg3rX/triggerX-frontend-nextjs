@@ -1,10 +1,16 @@
 import { JobFormContextType } from "@/contexts/JobFormContext";
+import { SafeTransaction } from "@/types/job";
 import networksData from "@/utils/networks.json";
+import { ethers } from "ethers";
+import { fetchContractABI } from "@/utils/fetchContractABI";
+import { extractFunctions, findFunctionBySignature } from "@/utils/abiUtils";
+import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
+import { getSafeModuleAddress } from "@/utils/contractAddresses";
 
-export function syncBlocklyToJobForm(
+export async function syncBlocklyToJobForm(
   xml: string,
   formContext: JobFormContextType,
-): boolean {
+): Promise<boolean> {
   try {
     const parser = new DOMParser();
     const doc = parser.parseFromString(xml, "text/xml");
@@ -334,6 +340,49 @@ export function syncBlocklyToJobForm(
       // Set execution mode to "safe"
       formContext.setExecutionMode("safe");
 
+      // Resolve chain ID from the main chain_selection block
+      let safeChainId: number | null = null;
+      if (chainBlock) {
+        const chainIdStr = getField(chainBlock, "CHAIN_ID");
+        if (chainIdStr) {
+          safeChainId = parseInt(chainIdStr, 10);
+        }
+      }
+
+      // If we know the chain, configure the Safe Module contract details
+      if (safeChainId !== null) {
+        const moduleAddress = getSafeModuleAddress(safeChainId);
+        if (moduleAddress) {
+          // Set the Safe Module address + ABI on the main contract slot
+          formContext.handleSetContractDetails(
+            "contract",
+            moduleAddress,
+            JSON.stringify(TriggerXSafeModuleArtifact.abi),
+          );
+
+          // Safe execution uses static arguments with pre-encoded multisend data
+          formContext.handleArgumentTypeChange("contract", "static");
+
+          // Pre-select execJobFromHub on the Safe Module, mirroring ContractDetails
+          const execJobFunc = (
+            TriggerXSafeModuleArtifact.abi as {
+              type?: string;
+              name?: string;
+              inputs?: { type: string }[];
+            }[]
+          ).find(
+            (item) =>
+              item.type === "function" && item.name === "execJobFromHub",
+          );
+          if (execJobFunc) {
+            const signature = `execJobFromHub(${(execJobFunc.inputs || [])
+              .map((input) => input.type)
+              .join(",")})`;
+            formContext.handleFunctionChange("contract", signature);
+          }
+        }
+      }
+
       // Check for created Safe wallet
       if (createSafeWalletBlock) {
         // Try to get the wallet address from the block's data attribute
@@ -370,6 +419,157 @@ export function syncBlocklyToJobForm(
           console.log(
             "Safe wallet execution mode enabled with selected wallet:",
             selectedWallet,
+          );
+        }
+      }
+
+      // 9a. Extract Safe transactions from safe_transaction blocks
+      const safeTransactionBlocks: Element[] = [];
+
+      // Find all safe_transaction blocks
+      blockNodes.forEach((block) => {
+        if (block.getAttribute("type") === "safe_transaction") {
+          safeTransactionBlocks.push(block);
+        }
+      });
+
+      // Sort by transaction index
+      safeTransactionBlocks.sort((a, b) => {
+        const indexA = Number(getField(a, "TRANSACTION_INDEX") || "0");
+        const indexB = Number(getField(b, "TRANSACTION_INDEX") || "0");
+        return indexA - indexB;
+      });
+
+      if (safeTransactionBlocks.length > 0) {
+        const safeTransactions: SafeTransaction[] = [];
+
+        // Get chain ID for ABI fetching
+        let chainId: number | null = null;
+        if (chainBlock) {
+          const chainIdStr = getField(chainBlock, "CHAIN_ID");
+          if (chainIdStr) {
+            chainId = parseInt(chainIdStr, 10);
+          }
+        }
+
+        // Process each safe_transaction block
+        for (const txBlock of safeTransactionBlocks) {
+          const targetAddress = getField(txBlock, "TARGET_ADDRESS") || "";
+          const functionName = getField(txBlock, "FUNCTION_NAME") || "";
+          const valueStr = getField(txBlock, "VALUE") || "0";
+
+          // Convert value to wei (string)
+          let valueInWei = "0";
+          try {
+            if (valueStr && parseFloat(valueStr) > 0) {
+              valueInWei = ethers.parseEther(valueStr).toString();
+            }
+          } catch {
+            valueInWei = "0";
+          }
+
+          // Initialize transaction data
+          let transactionData = "0x";
+
+          // If function is selected and not empty (not ETH transfer)
+          if (functionName && functionName !== "" && chainId) {
+            try {
+              // Fetch ABI for the contract
+              const abiString = await fetchContractABI(
+                targetAddress,
+                chainId,
+                false,
+              );
+
+              if (abiString) {
+                const functions = extractFunctions(abiString);
+                const selectedFunc = findFunctionBySignature(
+                  functions,
+                  functionName,
+                );
+
+                if (selectedFunc) {
+                  // Extract parameter values from fields (VALUE_0, VALUE_1, etc.)
+                  const parameterValues: string[] = [];
+                  for (let i = 0; i < selectedFunc.inputs.length; i++) {
+                    const field = Array.from(
+                      txBlock.getElementsByTagName("field"),
+                    ).find((f) => f.getAttribute("name") === `VALUE_${i}`);
+
+                    if (field) {
+                      parameterValues.push((field.textContent || "").trim());
+                    } else {
+                      parameterValues.push("");
+                    }
+                  }
+
+                  // Parse and encode arguments
+                  const parsedABI =
+                    typeof abiString === "string"
+                      ? JSON.parse(abiString)
+                      : abiString;
+                  const contractInterface = new ethers.Interface(parsedABI);
+
+                  const parsedArgs: unknown[] = [];
+                  for (let i = 0; i < selectedFunc.inputs.length; i++) {
+                    const input = selectedFunc.inputs[i];
+                    const argValue = parameterValues[i] || "";
+
+                    if (!argValue) {
+                      // Skip encoding if missing required parameter
+                      throw new Error(`Missing parameter ${i + 1}`);
+                    }
+
+                    let parsedValue: unknown = argValue;
+                    if (
+                      input.type.startsWith("uint") ||
+                      input.type.startsWith("int")
+                    ) {
+                      parsedValue = BigInt(argValue);
+                    } else if (input.type === "bool") {
+                      parsedValue = argValue.toLowerCase() === "true";
+                    } else if (input.type === "address") {
+                      parsedValue = argValue;
+                    } else if (input.type.startsWith("bytes")) {
+                      parsedValue = argValue;
+                    } else if (input.type === "string") {
+                      parsedValue = argValue;
+                    }
+
+                    parsedArgs.push(parsedValue);
+                  }
+
+                  // Encode function call
+                  transactionData = contractInterface.encodeFunctionData(
+                    selectedFunc.name,
+                    parsedArgs,
+                  );
+                }
+              }
+            } catch (error) {
+              console.error(
+                "Error encoding Safe transaction contract call:",
+                error,
+              );
+              // Continue with empty data
+            }
+          }
+
+          // Create SafeTransaction object
+          const safeTx: SafeTransaction = {
+            to: targetAddress || "0x0000000000000000000000000000000000000000",
+            value: valueInWei,
+            data: transactionData,
+          };
+
+          safeTransactions.push(safeTx);
+        }
+
+        // Set Safe transactions in the form context
+        if (safeTransactions.length > 0) {
+          formContext.handleSafeTransactionsChange(
+            "contract",
+            safeTransactions,
           );
         }
       }
