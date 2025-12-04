@@ -47,7 +47,7 @@ export const HoverHighlight: React.FC<HoverHighlightProps> = ({
   return (
     <nav
       ref={navRef}
-      className={`relative bg-[#181818F0] rounded-xl z-10 ${className}`}
+      className={`relative bg-[#181818F0] rounded-2xl z-10 ${className}`}
       onMouseLeave={handleMouseLeave}
     >
       <div

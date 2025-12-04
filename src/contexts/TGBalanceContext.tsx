@@ -32,7 +32,6 @@ export const TGBalanceProvider: React.FC<{
   const chainId = useChainId();
 
   const fetchTGBalance = useCallback(async () => {
-    devLog("fetchhh");
     if (typeof window.ethereum == "undefined") return;
 
     // Get the address for the current chain

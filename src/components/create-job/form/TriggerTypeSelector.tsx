@@ -33,6 +33,12 @@ const options: TriggerOption[] = [
     icon: eventBasedSvg,
     selectedIcon: eventBasedGif,
   },
+  // {
+  //   value: 4,
+  //   label: "Custom Script Trigger",
+  //   icon: conditionBasedSvg,
+  //   selectedIcon: conditionBasedGif,
+  // }
 ];
 
 export const TriggerTypeSelector = ({

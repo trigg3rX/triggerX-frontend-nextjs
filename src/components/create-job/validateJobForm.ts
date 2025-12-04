@@ -14,6 +14,7 @@ interface ValidateJobFormArgs {
   validateABI: (contractKey: string) => string | null;
   executionMode?: "contract" | "safe";
   selectedSafeWallet?: string | null;
+  customScriptUrl?: string;
 }
 
 export function validateJobForm({
@@ -29,6 +30,7 @@ export function validateJobForm({
   validateABI,
   executionMode = "contract",
   selectedSafeWallet = null,
+  customScriptUrl = "",
 }: ValidateJobFormArgs): null | {
   errorKey: string;
   errorValue: string;
@@ -115,6 +117,32 @@ export function validateJobForm({
       };
     }
   }
+
+  // Custom script (jobType 4) - only requires IPFS script URL (independent field)
+  if (jobType === 4) {
+    if (!customScriptUrl || customScriptUrl.trim() === "") {
+      return {
+        errorKey: "customScriptUrl",
+        errorValue: "IPFS Script URL is required for custom script trigger.",
+        scrollToId: "ipfs-script-url-section",
+      };
+    }
+    // Validate IPFS URL format
+    const isIpfs = customScriptUrl.startsWith("ipfs://");
+    const isGateway =
+      /^https?:\/\//.test(customScriptUrl) && /\/ipfs\//.test(customScriptUrl);
+    if (!isIpfs && !isGateway) {
+      return {
+        errorKey: "customScriptUrl",
+        errorValue:
+          "Invalid IPFS URL format. Use ipfs://<cid> or https://<gateway>/ipfs/<cid>",
+        scrollToId: "ipfs-script-url-section",
+      };
+    }
+    // Skip all other validations for custom script - only needs IPFS URL
+    return null;
+  }
+
   // Main contract
   const contract = contractInteractions.contract;
   if (!contract.address || contract.address.trim() === "") {

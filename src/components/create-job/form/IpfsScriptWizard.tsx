@@ -63,8 +63,13 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
   selectedSafeWallet = null,
   targetFunction = "",
 }) => {
-  const { language: formLanguage, setLanguage: setFormLanguage } =
-    useJobFormContext();
+  const {
+    language: formLanguage,
+    setLanguage: setFormLanguage,
+    jobType,
+    contractInteractions,
+    getTaskDefinitionId,
+  } = useJobFormContext();
   const initialLanguage: SupportedLanguage =
     formLanguage === "ts" ? "ts" : "go";
   const [mode, setMode] = useState<"url" | "pinata">("url");
@@ -150,9 +155,16 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
 
   const buildValidationRequestBody = useCallback(
     (code: string) => {
+      // Get argumentType from contractInteractions
+      const argumentType =
+        contractInteractions.contract?.argumentType || "dynamic";
+      // Calculate task_definition_id using the context function
+      const taskDefinitionId = getTaskDefinitionId(argumentType, jobType);
+
       const base = {
         code,
         language: initialLanguage,
+        task_definition_id: taskDefinitionId,
       } as Record<string, unknown>;
       if (isSafeMode && selectedSafeWallet && targetFunction) {
         return {
@@ -164,7 +176,15 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       }
       return { ...base, IsSafe: false, target_function: targetFunction };
     },
-    [isSafeMode, selectedSafeWallet, targetFunction, initialLanguage],
+    [
+      isSafeMode,
+      selectedSafeWallet,
+      targetFunction,
+      initialLanguage,
+      jobType,
+      contractInteractions,
+      getTaskDefinitionId,
+    ],
   );
 
   const callValidationApi = useCallback(
