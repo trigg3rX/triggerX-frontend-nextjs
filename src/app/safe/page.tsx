@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: "TriggerX",
     images: [
       {
-        url: `https://app.triggerx.network/OGImages/build.png`,
+        url: `https://app.triggerx.network/OGImages/safewallet.png`,
         width: 1200,
         height: 630,
         alt: "TriggerX Safe Wallet interface showing wallet creation, token balances, job automation, and TriggerX module management",
