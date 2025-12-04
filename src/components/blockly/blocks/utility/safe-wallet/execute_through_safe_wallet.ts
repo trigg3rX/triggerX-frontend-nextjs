@@ -30,7 +30,7 @@ const executeThroughSafeWalletJson = {
       spellcheck: false,
     },
   ],
-  message3: "Perform %1",
+  message3: "and values from %1",
   args3: [
     {
       type: "input_statement",
@@ -39,7 +39,7 @@ const executeThroughSafeWalletJson = {
     },
   ],
   previousStatement: "ACTION",
-  nextStatement: "execute_end",
+  nextStatement: "EXECUTE_END",
   colour: "190",
   tooltip:
     "Execute a transaction through a Safe wallet using the Safe Module's execJobFromHub function.",

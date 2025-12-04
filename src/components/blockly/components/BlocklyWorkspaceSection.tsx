@@ -4,7 +4,10 @@ import React, { useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import * as Blockly from "blockly/core";
 import DisableInteractions from "@/app/DisableInteractions";
-import { setConnectedChainId } from "../blocks/default_blocks";
+import {
+  setConnectedChainId,
+  setConnectedWalletAddress,
+} from "../blocks/default_blocks";
 import { setImportSafeChainId } from "../blocks/utility/safe-wallet/import_safe_wallet";
 
 // react-blockly uses window, so ensure client-only dynamic import
@@ -158,6 +161,7 @@ export function BlocklyWorkspaceSection({
               type: "execute_through_safe_wallet",
             },
             { kind: "block", type: "execute_function" },
+            { kind: "block", type: "safe_transaction" },
             { kind: "block", type: "static_arguments" },
             { kind: "block", type: "dynamic_arguments" },
           ],
@@ -180,18 +184,6 @@ export function BlocklyWorkspaceSection({
             {
               kind: "block",
               type: "select_safe_wallet",
-            },
-          ],
-        },
-        // --- SAFE TRANSACTION CATEGORY ---
-        {
-          kind: "category",
-          name: "Safe Transaction",
-          colour: "#9C27B0",
-          contents: [
-            {
-              kind: "block",
-              type: "safe_transaction",
             },
           ],
         },
@@ -262,12 +254,15 @@ export function BlocklyWorkspaceSection({
 
   // Sync wallet blocks with connected address
   useEffect(() => {
+    // Update global wallet address so new wallet_selection blocks can use it on creation
+    setConnectedWalletAddress(connectedAddress || null);
+
     if (!workspaceRef.current || !connectedAddress) return;
 
     const workspace = workspaceRef.current;
     const allBlocks = workspace.getAllBlocks(false);
 
-    // Update all wallet_selection blocks with the connected address
+    // Update all existing wallet_selection blocks with the connected address
     allBlocks.forEach((block) => {
       if (block.type === "wallet_selection") {
         const currentValue = block.getFieldValue("WALLET_ADDRESS");

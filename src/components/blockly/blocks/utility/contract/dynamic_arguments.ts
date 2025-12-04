@@ -9,6 +9,7 @@ export function setOpenDynamicArgsWizardHandler(handler: () => void): void {
 }
 
 // Helper to push the selected IPFS URL back into all dynamic_arguments blocks
+// We store it in `block.data` so it is hidden in the UI but persisted in XML.
 export function updateDynamicArgsIpfsUrl(ipfsUrl: string): void {
   try {
     const workspace = Blockly.getMainWorkspace();
@@ -17,33 +18,31 @@ export function updateDynamicArgsIpfsUrl(ipfsUrl: string): void {
     const allBlocks = workspace.getAllBlocks(false);
     allBlocks.forEach((block) => {
       if (block.type === "dynamic_arguments") {
-        block.setFieldValue(ipfsUrl, "IPFS_URL");
+        block.data = ipfsUrl;
       }
     });
   } catch (error) {
-     
     console.error("Error updating dynamic arguments IPFS URL:", error);
   }
 }
 
 const dynamicArgumentsJson = {
   type: "dynamic_arguments",
-  message0: "fetch values dynmically from %1 %2",
-  args0: [
-    {
-      type: "field_input",
-      name: "IPFS_URL",
-      text: "ipfs://...",
-    },
+  message0: "fetch values dynmically from script",
+  message1: "%1",
+  args1: [
     {
       // Custom button field (registered in create_safe_wallet.ts)
       type: "field_button",
       name: "OPEN_WIZARD",
-      text: "Open Wizard",
+      text: "Upload Script",
     },
   ],
-  previousStatement: null,
-  nextStatement: null,
+  // No visible IPFS URL field here – URL is only shown in the Job Form UI,
+  // and is stored in block.data for syncing.
+  // Use SAFE_TRANSACTION connection type so it can plug into execute_through_safe_wallet
+  previousStatement: "SAFE_TRANSACTION",
+  nextStatement: "ARGUMENTS_END",
   colour: 190,
   tooltip:
     "Specify (or generate) the IPFS URL link from which the values of arguments have to be fetched.",
@@ -70,10 +69,39 @@ Blockly.Blocks["dynamic_arguments"] = {
         if (openDynamicArgsWizardHandler) {
           openDynamicArgsWizardHandler();
         } else {
-           
           console.warn("Dynamic arguments IPFS wizard handler not set");
         }
       });
+    }
+  },
+
+  // Ensure this block is only used under execute_function or execute_through_safe_wallet
+  onchange: function (event: Blockly.Events.Abstract) {
+    if (!this.workspace || this.isInFlyout) {
+      return;
+    }
+
+    if (
+      event.type !== Blockly.Events.BLOCK_MOVE &&
+      event.type !== Blockly.Events.BLOCK_CREATE
+    ) {
+      return;
+    }
+
+    const parent = this.getParent();
+    const allowedParents = ["execute_function", "execute_through_safe_wallet"];
+
+    if (parent && !allowedParents.includes(parent.type)) {
+      this.setWarningText(
+        "Dynamic Arguments can only be used under an Execute Function or Execute Through Safe Wallet block.",
+      );
+
+      // Detach from invalid parent while keeping stack intact
+      setTimeout(() => {
+        this.unplug(true);
+      }, 0);
+    } else {
+      this.setWarningText(null);
     }
   },
 };
@@ -82,7 +110,7 @@ export const dynamicArgumentsGenerator = function (
   block: Blockly.Block,
 ): [string, Order] {
   const functionName = block.getFieldValue("FUNCTION_NAME");
-  const ipfsUrl = block.getFieldValue("IPFS_URL");
+  const ipfsUrl = (block.data as string) || "";
 
   const json = JSON.stringify({
     function_name: functionName,

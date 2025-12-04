@@ -18,10 +18,11 @@ const formatFunctionSignature = (
 
 const safeTransactionJson = {
   type: "safe_transaction",
-  message0: "Target Address %1",
-  message1: "Function %1",
-  message2: "Value (ETH) %1",
-  args0: [
+  message0: "Perform safe transaction with",
+  message1: "Target Address %1",
+  message2: "Function %1",
+  message3: "Value (ETH) %1",
+  args1: [
     {
       type: "field_input",
       name: "TARGET_ADDRESS",
@@ -29,14 +30,14 @@ const safeTransactionJson = {
       spellcheck: false,
     },
   ],
-  args1: [
+  args2: [
     {
       type: "field_dropdown",
       name: "FUNCTION_NAME",
       options: [["Select function", ""]],
     },
   ],
-  args2: [
+  args3: [
     {
       type: "field_number",
       name: "VALUE",
@@ -46,7 +47,7 @@ const safeTransactionJson = {
   ],
   previousStatement: "SAFE_TRANSACTION",
   nextStatement: "SAFE_TRANSACTION",
-  colour: "#9C27B0",
+  colour: "190",
   tooltip:
     "Define a Safe transaction with target address, function, parameters, and value.",
   helpUrl: "",

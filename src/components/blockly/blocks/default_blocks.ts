@@ -61,14 +61,6 @@ Blockly.Blocks["wallet_selection"] = {
       return;
     }
 
-    // Cast to BlockCreate event to access blockId
-    const createEvent = event as Blockly.Events.BlockCreate;
-
-    // Check if this event is for this block
-    if (createEvent.blockId !== this.id) {
-      return;
-    }
-
     // If block is in the flyout, keep it as "0x..."
     if (this.isInFlyout) {
       const currentValue = this.getFieldValue("WALLET_ADDRESS");
