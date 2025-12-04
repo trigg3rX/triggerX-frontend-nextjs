@@ -436,9 +436,32 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
           functionFragment,
           parsedArgs,
         );
-        updateTransaction(index, { data: encodedData });
+
+        // Ensure data is properly formatted (should already have 0x prefix from ethers)
+        if (!encodedData || typeof encodedData !== "string") {
+          devLog(
+            "[encodeContractCallWithArgs] Invalid encoded data:",
+            encodedData,
+          );
+          return;
+        }
+
+        // Normalize data to ensure it has 0x prefix
+        const normalizedData = encodedData.startsWith("0x")
+          ? encodedData
+          : `0x${encodedData}`;
+
+        devLog(
+          `[encodeContractCallWithArgs] Encoded data for tx ${index}:`,
+          normalizedData.substring(0, 66) +
+            (normalizedData.length > 66 ? "..." : ""),
+        );
+
+        updateTransaction(index, { data: normalizedData });
       } catch (err) {
         devLog("[encodeContractCallWithArgs] Error encoding:", err);
+        // On error, set data to empty to prevent invalid state
+        updateTransaction(index, { data: "0x" });
       }
     },
     [transactionStates, updateTransaction],
@@ -752,82 +775,16 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     newInputs[paramIndex] = value;
     updateState(index, { functionInputs: newInputs });
 
-    // Try to encode
-    encodeContractCall(index);
-  };
-
-  // Encode the contract call
-  const encodeContractCall = (index: number) => {
-    const state = transactionStates[index];
-    if (!state || !state.abi || !state.selectedFunction) return;
-
-    try {
-      const parsedABI =
-        typeof state.abi === "string" ? JSON.parse(state.abi) : state.abi;
-      const contractInterface = new ethers.Interface(parsedABI);
-
-      // Use the utility function to find the selected function
+    // Encode immediately using the latest inputs to avoid state update lag
+    if (state.selectedFunction) {
       const selectedFunc = findFunctionBySignature(
         state.functions,
         state.selectedFunction,
       );
 
-      if (!selectedFunc) return;
-
-      // Parse arguments
-      const parsedArgs: unknown[] = [];
-      for (let i = 0; i < selectedFunc.inputs.length; i++) {
-        const input = selectedFunc.inputs[i];
-        const argValue = state.functionInputs[i] || "";
-
-        if (!argValue) {
-          // Don't update data if args are incomplete
-          return;
-        }
-
-        let parsedValue: unknown = argValue;
-        if (input.type.startsWith("uint") || input.type.startsWith("int")) {
-          if (
-            selectedFunc.name.toLowerCase() === "supply" &&
-            i === 1 &&
-            argValue !== ""
-          ) {
-            parsedValue = ethers.parseUnits(argValue, 18);
-          } else {
-            parsedValue = BigInt(argValue);
-          }
-        } else if (input.type === "bool") {
-          parsedValue = argValue.toLowerCase() === "true";
-        } else if (input.type === "address") {
-          parsedValue = argValue;
-        } else if (input.type.startsWith("bytes")) {
-          parsedValue = argValue;
-        } else if (input.type === "string") {
-          parsedValue = argValue;
-        }
-
-        parsedArgs.push(parsedValue);
+      if (selectedFunc) {
+        encodeContractCallWithArgs(index, selectedFunc, newInputs);
       }
-
-      // Use full function signature to avoid ambiguity with overloaded functions
-      const functionSignature = getFunctionSignature(
-        selectedFunc.name,
-        selectedFunc.inputs,
-      );
-      // Get the function fragment first, then encode it
-      const functionFragment = contractInterface.getFunction(functionSignature);
-      if (!functionFragment) {
-        devLog("[encodeContractCall] Function not found:", functionSignature);
-        return;
-      }
-      const encodedData = contractInterface.encodeFunctionData(
-        functionFragment,
-        parsedArgs,
-      );
-
-      updateTransaction(index, { data: encodedData });
-    } catch (err) {
-      devLog("[encodeContractCall] Error encoding:", err);
     }
   };
 
