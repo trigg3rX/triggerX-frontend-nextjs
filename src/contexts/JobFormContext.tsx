@@ -609,6 +609,14 @@ export interface JobFormContextType {
   setEstimatedFeeInWei: React.Dispatch<React.SetStateAction<bigint | null>>;
   feePerExecution: bigint | null;
   setFeePerExecution: React.Dispatch<React.SetStateAction<bigint | null>>;
+  currentFeePerExecution: bigint | null;
+  setCurrentFeePerExecution: React.Dispatch<
+    React.SetStateAction<bigint | null>
+  >;
+  maxFeePerExecution: bigint | null;
+  setMaxFeePerExecution: React.Dispatch<React.SetStateAction<bigint | null>>;
+  feeTopUpPercentage: number;
+  setFeeTopUpPercentage: React.Dispatch<React.SetStateAction<number>>;
   desiredExecutions: number;
   setDesiredExecutions: React.Dispatch<React.SetStateAction<number>>;
   calculatedExecutions: number | null;
@@ -734,6 +742,13 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     null,
   );
   const [feePerExecution, setFeePerExecution] = useState<bigint | null>(null);
+  const [currentFeePerExecution, setCurrentFeePerExecution] = useState<
+    bigint | null
+  >(null);
+  const [maxFeePerExecution, setMaxFeePerExecution] = useState<bigint | null>(
+    null,
+  );
+  const [feeTopUpPercentage, setFeeTopUpPercentage] = useState<number>(100); // Default to max fee
   const [desiredExecutions, setDesiredExecutions] = useState<number>(5);
   const [calculatedExecutions, setCalculatedExecutions] = useState<
     number | null
@@ -784,6 +799,52 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       );
     }
   }, [desiredExecutions, feePerExecution, calculatedExecutions]);
+
+  // Update fee when slider percentage changes
+  React.useEffect(() => {
+    if (currentFeePerExecution && maxFeePerExecution) {
+      // Calculate selected fee based on slider percentage
+      const calculateSelectedFee = (
+        current: bigint,
+        max: bigint,
+        percentage: number,
+      ): bigint => {
+        if (current >= max) return max;
+        const diff = max - current;
+        return current + (diff * BigInt(percentage)) / BigInt(100);
+      };
+
+      const selectedFeeWei = calculateSelectedFee(
+        currentFeePerExecution,
+        maxFeePerExecution,
+        feeTopUpPercentage,
+      );
+      setFeePerExecution(selectedFeeWei);
+
+      // Recalculate total based on execution count
+      const executionCount = calculatedExecutions ?? desiredExecutions;
+      const totalFeeWei = selectedFeeWei * BigInt(executionCount);
+      setEstimatedFeeInWei(totalFeeWei);
+      const totalFeeETH = Number(totalFeeWei) / 1e18;
+      setEstimatedFee(totalFeeETH);
+
+      devLog(
+        "Slider updated to",
+        feeTopUpPercentage,
+        "% - Fee per exec:",
+        (Number(selectedFeeWei) / 1e18).toFixed(8),
+        "ETH, Total:",
+        totalFeeETH.toFixed(8),
+        "ETH",
+      );
+    }
+  }, [
+    feeTopUpPercentage,
+    currentFeePerExecution,
+    maxFeePerExecution,
+    calculatedExecutions,
+    desiredExecutions,
+  ]);
 
   // Error refs (must be stable, not recreated on every render)
   const jobTitleErrorRef = React.useRef<HTMLDivElement | null>(null);
@@ -1565,22 +1626,56 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       const data = await response.json();
       if (data.error) throw new Error(data.error);
 
-      // Backend returns job_cost_prediction in Wei per execution
-      const feePerExecutionWei = BigInt(
-        data.job_cost_prediction || data.total_fee || 0,
+      // Backend returns both current and max fees in Wei per execution
+      // current_total_fee_wei: fee at current gas prices
+      // total_fee_wei: max fee with buffer for gas price spikes
+      const maxFeeWei = BigInt(data.total_fee_wei || data.total_fee || 0);
+      const currentFeeWei = BigInt(
+        data.current_total_fee_wei || data.current_total_fee || maxFeeWei,
       );
-      const totalFeeWei = feePerExecutionWei * BigInt(executionCount);
 
       devLog(
-        "Fee per execution (Wei):",
-        feePerExecutionWei.toString(),
+        "Current fee per execution (Wei):",
+        currentFeeWei.toString(),
+        "Max fee per execution (Wei):",
+        maxFeeWei.toString(),
+      );
+
+      // Store both fee values
+      setCurrentFeePerExecution(currentFeeWei);
+      setMaxFeePerExecution(maxFeeWei);
+
+      // Calculate selected fee based on slider percentage (default 100% = max fee)
+      const calculateSelectedFee = (
+        current: bigint,
+        max: bigint,
+        percentage: number,
+      ): bigint => {
+        if (current >= max) return max;
+        const diff = max - current;
+        return current + (diff * BigInt(percentage)) / BigInt(100);
+      };
+
+      const selectedFeeWei = calculateSelectedFee(
+        currentFeeWei,
+        maxFeeWei,
+        feeTopUpPercentage,
+      );
+      const totalFeeWei = selectedFeeWei * BigInt(executionCount);
+
+      devLog(
+        "Selected fee per execution (Wei):",
+        selectedFeeWei.toString(),
+        "at",
+        feeTopUpPercentage,
+        "% buffer",
         "Total fee for",
         executionCount,
         "executions (Wei):",
         totalFeeWei.toString(),
       );
 
-      setFeePerExecution(feePerExecutionWei);
+      setFeePerExecution(selectedFeeWei);
       setEstimatedFeeInWei(totalFeeWei);
 
       // Convert Wei to ETH for display purposes (divide by 1e18)
@@ -2568,6 +2663,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setEstimatedFeeInWei,
         feePerExecution,
         setFeePerExecution,
+        currentFeePerExecution,
+        setCurrentFeePerExecution,
+        maxFeePerExecution,
+        setMaxFeePerExecution,
+        feeTopUpPercentage,
+        setFeeTopUpPercentage,
         desiredExecutions,
         setDesiredExecutions,
         calculatedExecutions,
