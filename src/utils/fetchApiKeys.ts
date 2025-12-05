@@ -49,26 +49,55 @@ export async function fetchApiKeys(apiUrl: string): Promise<ApiKey[]> {
     }
 
     if (!response.ok) {
-      // Try to get error body
+      // Try to get error body - prioritize showing actual error message
+      let errorMessage = `HTTP error! status: ${response.status}`;
+
       try {
         const errorText = await response.text();
 
-        // If using proxy, check if it's a proxy error
+        // If using proxy, extract the error message from proxy response
         if (isCrossOrigin && typeof window !== "undefined") {
           try {
             const errorData = JSON.parse(errorText);
-            if (errorData.error) {
-              throw new Error(`Proxy error: ${errorData.error}`);
+            // Prioritize error field, then message field
+            if (errorData.error && typeof errorData.error === "string") {
+              errorMessage = errorData.error;
+            } else if (
+              errorData.message &&
+              typeof errorData.message === "string"
+            ) {
+              errorMessage = errorData.message;
             }
           } catch {
-            // Not JSON or no error field, use original error
+            // If not JSON, use error text if it's reasonable
+            if (errorText && errorText.trim() && errorText.length < 500) {
+              errorMessage = errorText;
+            }
+          }
+        } else {
+          // For non-proxy errors, try to parse error text
+          try {
+            const errorData = JSON.parse(errorText);
+            if (errorData.error && typeof errorData.error === "string") {
+              errorMessage = errorData.error;
+            } else if (
+              errorData.message &&
+              typeof errorData.message === "string"
+            ) {
+              errorMessage = errorData.message;
+            }
+          } catch {
+            // If not JSON, use error text if it's reasonable
+            if (errorText && errorText.trim() && errorText.length < 500) {
+              errorMessage = errorText;
+            }
           }
         }
       } catch {
-        // Could not read error body
+        // If we can't read error body, use default message
       }
 
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(errorMessage);
     }
 
     let data: unknown;

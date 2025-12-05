@@ -4,6 +4,21 @@ import { NextRequest, NextResponse } from "next/server";
  * API route to proxy API key requests from external APIs
  * This bypasses CORS restrictions by making the request server-side
  */
+
+// SSRF Protection: Block internal/localhost IPs
+const BLOCKED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0", "::1"];
+
+function isBlockedHost(hostname: string): boolean {
+  const lowerHostname = hostname.toLowerCase();
+  return (
+    BLOCKED_HOSTS.some((blocked) => lowerHostname === blocked) ||
+    lowerHostname.includes("localhost") ||
+    lowerHostname.includes("127.0.0.1") ||
+    lowerHostname.startsWith("192.168.") ||
+    lowerHostname.startsWith("10.")
+  );
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const targetUrl = searchParams.get("url");
@@ -15,13 +30,22 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Validate URL format
+  // Validate URL format and SSRF protection
+  let url: URL;
   try {
-    const url = new URL(targetUrl);
+    url = new URL(targetUrl);
     if (!["http:", "https:"].includes(url.protocol)) {
       return NextResponse.json(
         { error: "Invalid URL protocol. Only http and https are allowed." },
         { status: 400 },
+      );
+    }
+
+    // SSRF Protection: Block internal/localhost hosts
+    if (isBlockedHost(url.hostname)) {
+      return NextResponse.json(
+        { error: "Access to internal/localhost addresses is not allowed." },
+        { status: 403 },
       );
     }
   } catch {
@@ -55,7 +79,8 @@ export async function GET(req: NextRequest) {
     let data: unknown;
 
     if (contentType?.includes("application/json")) {
-      data = await response.json();
+      const text = await response.text();
+      data = JSON.parse(text);
     } else {
       const text = await response.text();
       try {

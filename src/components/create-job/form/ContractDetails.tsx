@@ -715,8 +715,8 @@ export const ContractDetails = ({
                   />
                 ) : contract.sourceUrl && !contract.isFetchingApiKeys ? (
                   <Typography variant="body" color="error" align="left">
-                    No key : value pair found from the provided API, Please
-                    enter valid API.
+                    {contract.apiKeysError ||
+                      "No key : value pair found from the provided API, Please enter valid API."}
                   </Typography>
                 ) : null}
               </div>
