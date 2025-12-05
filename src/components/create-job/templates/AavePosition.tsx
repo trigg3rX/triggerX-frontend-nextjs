@@ -5,10 +5,12 @@ import TemplateInfoSection from "./components/TemplateInfoSection";
 import { Button } from "../../ui/Button";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import { useJob } from "@/contexts/JobContext";
-import { getSafeModuleAddress } from "@/utils/contractAddresses";
+import { getSafeModuleAddress, getRpcUrl } from "@/utils/contractAddresses";
 import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
 import AavePoolArtifact from "@/artifacts/AavePool.json";
 import ERC20Artifact from "@/artifacts/ERC20.json";
+import { ethers } from "ethers";
+import { useChainId } from "wagmi";
 
 // Contract addresses on OP Sepolia
 const AAVE_POOL_ADDRESS = "0xb50201558B00496A145fE76f7424749556E326D8";
@@ -45,9 +47,46 @@ const AavePosition = () => {
   );
 };
 
+// Helper function to fetch WETH balance for a Safe wallet (returns in ETH format)
+const fetchWETHBalance = async (
+  safeAddress: string,
+  chainId: number,
+): Promise<string> => {
+  try {
+    const rpcUrl = getRpcUrl(chainId);
+    if (!rpcUrl) {
+      throw new Error(`No RPC URL configured for chain ${chainId}`);
+    }
+
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    const wethContract = new ethers.Contract(
+      WETH_ADDRESS,
+      [
+        "function balanceOf(address owner) view returns (uint256)",
+        "function decimals() view returns (uint8)",
+      ],
+      provider,
+    );
+
+    // Fetch balance and decimals
+    const [balance, decimals] = await Promise.all([
+      wethContract.balanceOf(safeAddress),
+      wethContract.decimals().catch(() => 18), // Default to 18 if decimals() fails
+    ]);
+
+    // Convert to ETH format for display
+    return ethers.formatUnits(balance, decimals);
+  } catch (error) {
+    console.error("[AavePosition] Failed to fetch WETH balance:", error);
+    // Return 0 if fetch fails
+    return "0";
+  }
+};
+
 const CreateJobButton: React.FC = () => {
   const jobForm = useJobFormContext();
   const { handleCreateCustomJob } = useJob();
+  const chainId = useChainId();
 
   const handleCreateJob = async () => {
     console.log("[AavePosition] Starting job setup...");
@@ -116,6 +155,22 @@ const CreateJobButton: React.FC = () => {
     jobForm.handleUpperLimitChange("contract", "1.2");
     console.log("[AavePosition] Upper limit set to: 1.2");
 
+    // Fetch WETH balance for the selected Safe wallet
+    let wethBalance = "0";
+    const selectedSafeWallet = jobForm.selectedSafeWallet;
+    if (selectedSafeWallet) {
+      console.log(
+        "[AavePosition] Fetching WETH balance for Safe wallet:",
+        selectedSafeWallet,
+      );
+      wethBalance = await fetchWETHBalance(selectedSafeWallet, chainId);
+      console.log("[AavePosition] WETH balance fetched:", wethBalance, "ETH");
+    } else {
+      console.log(
+        "[AavePosition] No Safe wallet selected, using MAX_UINT256 as default",
+      );
+    }
+
     // Pre-populate two Safe transactions
     const safeTransactions = [
       {
@@ -123,7 +178,10 @@ const CreateJobButton: React.FC = () => {
         value: "0",
         data: "0x",
         defaultFunctionSignature: "approve(address,uint256)",
-        defaultArgumentValues: [AAVE_POOL_ADDRESS, MAX_UINT256],
+        defaultArgumentValues: [
+          AAVE_POOL_ADDRESS,
+          wethBalance !== "0" ? wethBalance : MAX_UINT256, // Store in ETH format, will be converted to wei during encoding
+        ],
         defaultAbi: JSON.stringify(ERC20Artifact.abi),
       },
       {
@@ -133,7 +191,7 @@ const CreateJobButton: React.FC = () => {
         defaultFunctionSignature: "supply(address,uint256,address,uint16)",
         defaultArgumentValues: [
           "__TOKEN_TX2_ADDRESS__",
-          "",
+          "0.1", // Default to 0.1 ETH - user enters in ETH, will be converted to wei automatically
           "__CONNECTED_EOA__",
           "0",
         ],

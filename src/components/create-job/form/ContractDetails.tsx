@@ -535,6 +535,7 @@ export const ContractDetails = ({
                 }
                 selectedNetwork={selectedNetwork}
                 error={safeTransactionsError}
+                selectedSafeWallet={selectedSafeWallet}
               />
             )}
         </>

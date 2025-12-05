@@ -19,13 +19,15 @@ import {
   findFunctionBySignature,
   type ParsedFunction,
 } from "@/utils/abiUtils";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
+import { getRpcUrl } from "@/utils/contractAddresses";
 
 interface SafeTransactionBuilderProps {
   transactions: SafeTransaction[];
   onChange: (transactions: SafeTransaction[]) => void;
   selectedNetwork: string;
   error?: string | null;
+  selectedSafeWallet?: string | null;
 }
 
 type AddressType = "contract" | "eoa" | "detecting";
@@ -39,6 +41,24 @@ const AAVE_POOL_PROXY_ADDRESSES = new Set(
 const MAX_UINT256_STRING = ethers.MaxUint256.toString();
 const PLACEHOLDER_TX2_TOKEN_ADDRESS = "__TOKEN_TX2_ADDRESS__";
 const PLACEHOLDER_CONNECTED_EOA = "__CONNECTED_EOA__";
+// const PLACEHOLDER_SAFE_WETH_BALANCE = "__SAFE_WETH_BALANCE__";
+// WETH address on OP Sepolia (and other chains)
+const WETH_ADDRESS = "0x4200000000000000000000000000000000000006";
+
+// Helper to check if a parameter is likely an amount (should be converted from ETH to wei)
+const isAmountParameter = (input: { name?: string; type: string }): boolean => {
+  const name = (input.name || "").toLowerCase();
+  const type = input.type.toLowerCase();
+  // Check if it's a uint256/uint128/etc and has amount-related names
+  return (
+    (type.startsWith("uint") || type.startsWith("int")) &&
+    (name.includes("amount") ||
+      name.includes("value") ||
+      name.includes("quantity") ||
+      name.includes("supply") ||
+      name.includes("deposit"))
+  );
+};
 
 interface TransactionState {
   expanded: boolean;
@@ -59,8 +79,10 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   onChange,
   selectedNetwork,
   error,
+  selectedSafeWallet,
 }) => {
   const { address: connectedEOA } = useAccount();
+  const chainId = useChainId();
   // Track state for each transaction
   const [transactionStates, setTransactionStates] = useState<
     Record<number, TransactionState>
@@ -126,7 +148,27 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
       if (providedDefaults && providedDefaults.length > 0) {
         providedDefaults.forEach((value, idx) => {
           if (value !== undefined && value !== null && value !== "") {
-            nextInputs[idx] = resolveDefaultValue(value);
+            const resolvedValue = resolveDefaultValue(value);
+            const input = selectedFunc.inputs[idx];
+
+            // If it's an amount parameter and the value is in wei, convert to ETH for display
+            if (input && isAmountParameter(input)) {
+              try {
+                // Check if it's a valid wei value (large number)
+                const weiValue = BigInt(resolvedValue);
+                // If it's a reasonable wei value (not a placeholder), convert to ETH
+                if (weiValue > BigInt(0) && weiValue < ethers.MaxUint256) {
+                  nextInputs[idx] = ethers.formatEther(weiValue);
+                } else {
+                  nextInputs[idx] = resolvedValue;
+                }
+              } catch {
+                // If parsing fails, use as-is
+                nextInputs[idx] = resolvedValue;
+              }
+            } else {
+              nextInputs[idx] = resolvedValue;
+            }
           }
         });
       }
@@ -138,6 +180,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         if (!nextInputs[0]) {
           nextInputs[0] = getSupplyAddress();
         }
+        // For approve amount, keep MAX_UINT256 as is (not an amount in ETH sense)
         nextInputs[1] = MAX_UINT256_STRING;
       }
 
@@ -403,7 +446,44 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
 
           let parsedValue: unknown = argValue;
           if (input.type.startsWith("uint") || input.type.startsWith("int")) {
-            parsedValue = BigInt(argValue);
+            // If it's an amount parameter, convert ETH to wei
+            if (isAmountParameter(input)) {
+              try {
+                const ethValue = argValue.trim();
+                if (ethValue === "" || ethValue === ".") {
+                  return; // Invalid input
+                }
+                // Check if the value looks like ETH (has decimal point or is small number)
+                // vs wei (very large number without decimal)
+                const hasDecimal = ethValue.includes(".");
+                const numValue = parseFloat(ethValue);
+
+                // If it has a decimal point or is a reasonable ETH amount (< 1e12), treat as ETH
+                if (
+                  hasDecimal ||
+                  (!isNaN(numValue) && numValue < 1e12 && numValue > 0)
+                ) {
+                  parsedValue = ethers.parseEther(ethValue);
+                } else {
+                  // Otherwise, treat as wei (for backwards compatibility with large numbers)
+                  parsedValue = BigInt(argValue);
+                }
+              } catch (err) {
+                // If parsing fails, try as wei (for backwards compatibility)
+                try {
+                  parsedValue = BigInt(argValue);
+                } catch {
+                  devLog(
+                    `[encodeContractCallWithArgs] Failed to parse amount parameter ${i}:`,
+                    err,
+                  );
+                  return;
+                }
+              }
+            } else {
+              // Not an amount parameter, parse as regular number
+              parsedValue = BigInt(argValue);
+            }
           } else if (input.type === "bool") {
             parsedValue = argValue.toLowerCase() === "true";
           } else if (input.type === "address") {
@@ -762,6 +842,123 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     }
   };
 
+  // Fetch WETH balance when Safe wallet is selected and update approve transaction
+  useEffect(() => {
+    const fetchAndUpdateWETHBalance = async () => {
+      if (!selectedSafeWallet) return;
+
+      // Find the approve transaction for WETH
+      const approveTxIndex = transactions.findIndex(
+        (tx) =>
+          tx.to?.toLowerCase() === WETH_ADDRESS.toLowerCase() &&
+          (tx.defaultFunctionSignature?.toLowerCase().includes("approve") ||
+            transactionStates[transactions.indexOf(tx)]?.selectedFunction
+              ?.toLowerCase()
+              .includes("approve")),
+      );
+
+      if (approveTxIndex === -1) return;
+
+      const approveTx = transactions[approveTxIndex];
+      const state = transactionStates[approveTxIndex];
+
+      // Check if this is an approve transaction
+      const isApprove =
+        approveTx.defaultFunctionSignature?.toLowerCase().includes("approve") ||
+        state?.selectedFunction?.toLowerCase().includes("approve");
+
+      if (!isApprove) return;
+
+      try {
+        const rpcUrl = getRpcUrl(chainId);
+        if (!rpcUrl) {
+          devLog("[SafeTransactionBuilder] No RPC URL for chain", chainId);
+          return;
+        }
+
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const wethContract = new ethers.Contract(
+          WETH_ADDRESS,
+          [
+            "function balanceOf(address owner) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+          ],
+          provider,
+        );
+
+        // Fetch balance and decimals
+        const [balance, decimals] = await Promise.all([
+          wethContract.balanceOf(selectedSafeWallet),
+          wethContract.decimals().catch(() => 18), // Default to 18 if decimals() fails
+        ]);
+
+        // Convert balance to human-readable format (ETH or token units)
+        const balanceFormatted = ethers.formatUnits(balance, decimals);
+        const balanceString = balance.toString(); // Keep wei for defaultArgumentValues
+
+        devLog(
+          "[SafeTransactionBuilder] Fetched WETH balance:",
+          balanceString,
+          "wei =",
+          balanceFormatted,
+          "ETH for Safe:",
+          selectedSafeWallet,
+        );
+
+        // Update the transaction's defaultArgumentValues if it exists
+        // Store in ETH format so it displays correctly
+        if (
+          approveTx.defaultArgumentValues &&
+          approveTx.defaultArgumentValues.length >= 2
+        ) {
+          const updatedTransactions = [...transactions];
+          updatedTransactions[approveTxIndex] = {
+            ...approveTx,
+            defaultArgumentValues: [
+              approveTx.defaultArgumentValues[0],
+              balanceFormatted, // Store in ETH format
+            ],
+          };
+
+          // Also update the function input if the transaction is already initialized
+          if (state?.selectedFunction && state.functionInputs.length >= 2) {
+            const updatedInputs = [...state.functionInputs];
+            updatedInputs[1] = balanceFormatted; // Display in ETH format
+            updateState(approveTxIndex, { functionInputs: updatedInputs });
+
+            // Re-encode the transaction with the new balance
+            // The encoding function will convert ETH to wei automatically
+            const selectedFunc = findFunctionBySignature(
+              state.functions,
+              state.selectedFunction,
+            );
+            if (selectedFunc) {
+              encodeContractCallWithArgs(
+                approveTxIndex,
+                selectedFunc,
+                updatedInputs,
+              );
+            }
+          }
+
+          onChange(updatedTransactions);
+        }
+      } catch (error) {
+        devLog("[SafeTransactionBuilder] Failed to fetch WETH balance:", error);
+      }
+    };
+
+    fetchAndUpdateWETHBalance();
+  }, [
+    selectedSafeWallet,
+    chainId,
+    transactions,
+    transactionStates,
+    onChange,
+    updateState,
+    encodeContractCallWithArgs,
+  ]);
+
   // Handle the parameter change
   const handleParameterChange = (
     index: number,
@@ -1097,29 +1294,37 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                     state.selectedFunction,
                                   );
                                   return selectedFunc?.inputs.map(
-                                    (input, paramIndex) => (
-                                      <div key={paramIndex}>
-                                        <TextInput
-                                          label={`${
-                                            input.name ||
-                                            `Param ${paramIndex + 1}`
-                                          } (${input.type})`}
-                                          value={
-                                            state.functionInputs[paramIndex] ||
-                                            ""
-                                          }
-                                          onChange={(value) =>
-                                            handleParameterChange(
-                                              index,
-                                              paramIndex,
-                                              value,
-                                            )
-                                          }
-                                          placeholder={`Enter ${input.type}`}
-                                          type="text"
-                                        />
-                                      </div>
-                                    ),
+                                    (input, paramIndex) => {
+                                      const isAmount = isAmountParameter(input);
+                                      return (
+                                        <div key={paramIndex}>
+                                          <TextInput
+                                            label={`${
+                                              input.name ||
+                                              `Param ${paramIndex + 1}`
+                                            } (${input.type})`}
+                                            value={
+                                              state.functionInputs[
+                                                paramIndex
+                                              ] || ""
+                                            }
+                                            onChange={(value) =>
+                                              handleParameterChange(
+                                                index,
+                                                paramIndex,
+                                                value,
+                                              )
+                                            }
+                                            placeholder={
+                                              isAmount
+                                                ? "Enter amount"
+                                                : `Enter ${input.type}`
+                                            }
+                                            type="text"
+                                          />
+                                        </div>
+                                      );
+                                    },
                                   );
                                 })()}
                             </>
