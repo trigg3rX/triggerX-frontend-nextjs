@@ -14,6 +14,8 @@ export const CONTRACT_ADDRESSES = {
     SAFE_MULTISEND_CALL_ONLY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
       DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
+    AAVE_POOL_ADDRESS: "0xb50201558B00496A145fE76f7424749556E326D8",
+    WETH_ADDRESS: "0x4200000000000000000000000000000000000006",
     RPC_URL: process.env.NEXT_PUBLIC_OPTIMISM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "op_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Optimism Sepolia", // Add this for display
@@ -37,6 +39,8 @@ export const CONTRACT_ADDRESSES = {
     SAFE_MULTISEND_CALL_ONLY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
       DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
+    AAVE_POOL_ADDRESS: "0x8bAB6d1b75f19e9eD9fCe8b9BD338844fF79aE27",
+    WETH_ADDRESS: "0x4200000000000000000000000000000000000006",
     RPC_URL: process.env.NEXT_PUBLIC_BASE_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "base_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Base Sepolia", // Add this for display
@@ -60,6 +64,8 @@ export const CONTRACT_ADDRESSES = {
     SAFE_MULTISEND_CALL_ONLY_ADDRESS:
       process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
       DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
+    AAVE_POOL_ADDRESS: "0xBfC91D59fdAA134A4ED45f7B584cAf96D7792Eff",
+    WETH_ADDRESS: "0x4200000000000000000000000000000000000006",
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum_sepolia", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum Sepolia", // Add this for display
@@ -85,6 +91,8 @@ export const CONTRACT_ADDRESSES = {
       process.env.NEXT_PUBLIC_MAINNET_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
       process.env.NEXT_PUBLIC_SAFE_MULTISEND_CALL_ONLY_ADDRESS ||
       DEFAULT_SAFE_MULTISEND_CALL_ONLY_ADDRESS,
+    AAVE_POOL_ADDRESS: "0x794a61358D6845594F94dc1DB02A252b5b4814aD",
+    WETH_ADDRESS: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
     RPC_URL: process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || "",
     API_NETWORK_NAME: "arbitrum", // Add this for the API call
     DISPLAY_NETWORK_NAME: "Arbitrum", // Add this for display
@@ -164,4 +172,12 @@ export function getSafeModuleAddress(chainId: number): string {
 
 export function getSafeMultiSendCallOnlyAddress(chainId: number): string {
   return getContractAddress(chainId, "SAFE_MULTISEND_CALL_ONLY_ADDRESS");
+}
+
+export function getAavePoolAddress(chainId: number): string {
+  return getContractAddress(chainId, "AAVE_POOL_ADDRESS");
+}
+
+export function getWethAddress(chainId: number): string {
+  return getContractAddress(chainId, "WETH_ADDRESS");
 }
