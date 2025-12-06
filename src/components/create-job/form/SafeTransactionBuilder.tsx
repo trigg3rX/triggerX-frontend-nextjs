@@ -19,12 +19,19 @@ import {
   findFunctionBySignature,
   type ParsedFunction,
 } from "@/utils/abiUtils";
+import {
+  formatAaveInputForDisplay,
+  parseAaveInputForEncoding,
+  isAaveParameterDisabled,
+  getAaveParameterPlaceholder,
+} from "@/utils/aaveTransactionHelpers";
 
 interface SafeTransactionBuilderProps {
   transactions: SafeTransaction[];
   onChange: (transactions: SafeTransaction[]) => void;
   selectedNetwork: string;
   error?: string | null;
+  selectedSafeWallet?: string | null;
 }
 
 type AddressType = "contract" | "eoa" | "detecting";
@@ -40,6 +47,7 @@ interface TransactionState {
   selectedFunction: string;
   functionInputs: string[];
   valueInput: string;
+  defaultApplied: boolean;
 }
 
 export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
@@ -47,8 +55,8 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
   onChange,
   selectedNetwork,
   error,
+  selectedSafeWallet, // eslint-disable-line @typescript-eslint/no-unused-vars
 }) => {
-  // Track state for each transaction
   const [transactionStates, setTransactionStates] = useState<
     Record<number, TransactionState>
   >({});
@@ -57,13 +65,54 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     index: number | null;
   }>({ open: false, index: null });
 
-  // Initialize states for existing transactions
+  const resolveDefaultValue = useCallback((value: string) => {
+    return value;
+  }, []);
+
+  const computePrefilledInputs = useCallback(
+    (
+      index: number,
+      selectedFunc: ParsedFunction,
+      providedDefaults?: (string | undefined)[],
+    ) => {
+      const nextInputs = new Array(selectedFunc.inputs.length).fill("");
+
+      if (providedDefaults && providedDefaults.length > 0) {
+        providedDefaults.forEach((value, idx) => {
+          if (value !== undefined && value !== null && value !== "") {
+            const resolvedValue = resolveDefaultValue(value);
+            const input = selectedFunc.inputs[idx];
+
+            if (
+              input?.type.startsWith("uint") ||
+              input?.type.startsWith("int")
+            ) {
+              try {
+                nextInputs[idx] = formatAaveInputForDisplay(
+                  selectedFunc.name,
+                  idx,
+                  input.type,
+                  resolvedValue,
+                );
+              } catch {
+                nextInputs[idx] = resolvedValue;
+              }
+            } else {
+              nextInputs[idx] = resolvedValue;
+            }
+          }
+        });
+      }
+      return nextInputs;
+    },
+    [resolveDefaultValue],
+  );
   useEffect(() => {
     const newStates: Record<number, TransactionState> = {};
     transactions.forEach((transaction, index) => {
       if (!transactionStates[index]) {
         newStates[index] = {
-          expanded: index === 0, // First one expanded by default
+          expanded: index === 0,
           addressType: "eoa",
           detectedType: null,
           abi: null,
@@ -76,6 +125,7 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
             transaction.value && transaction.value !== "0"
               ? ethers.formatEther(transaction.value)
               : "0",
+          defaultApplied: false,
         };
       }
     });
@@ -85,11 +135,9 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions.length]);
 
-  // Re-detect address types for existing transactions when component mounts or transactions change
   useEffect(() => {
     transactions.forEach((transaction, index) => {
       const state = transactionStates[index];
-      // Re-detect if we have an address but state hasn't been initialized properly
       if (
         transaction.to &&
         ethers.isAddress(transaction.to) &&
@@ -104,7 +152,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transactions, selectedNetwork, transactionStates]);
 
-  // Add a new transaction
   const addTransaction = () => {
     const newTransaction: SafeTransaction = {
       to: "",
@@ -114,7 +161,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     const newTransactions = [...transactions, newTransaction];
     onChange(newTransactions);
 
-    // Initialize state for new transaction
     setTransactionStates((prev) => ({
       ...prev,
       [newTransactions.length - 1]: {
@@ -128,19 +174,17 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         selectedFunction: "",
         functionInputs: [],
         valueInput: "0",
+        defaultApplied: false,
       },
     }));
   };
 
-  // Remove the transaction
   const removeTransaction = (index: number) => {
     const newTransactions = transactions.filter((_, i) => i !== index);
     onChange(newTransactions);
 
-    // Clean up state
     const newStates = { ...transactionStates };
     delete newStates[index];
-    // Reindex remaining states
     const reindexedStates: Record<number, TransactionState> = {};
     Object.keys(newStates)
       .map(Number)
@@ -170,26 +214,22 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     setDeleteDialog({ open: false, index: null });
   };
 
-  // Update the transaction
-  const updateTransaction = (
-    index: number,
-    updates: Partial<SafeTransaction>,
-  ) => {
-    const newTransactions = [...transactions];
-    newTransactions[index] = { ...newTransactions[index], ...updates };
-    onChange(newTransactions);
-  };
+  const updateTransaction = useCallback(
+    (index: number, updates: Partial<SafeTransaction>) => {
+      const newTransactions = [...transactions];
+      newTransactions[index] = { ...newTransactions[index], ...updates };
+      onChange(newTransactions);
+    },
+    [transactions, onChange],
+  );
 
-  // Handle address change with auto-detection
   const handleAddressChange = (index: number, value: string) => {
     const previousAddress = transactions[index]?.to;
 
     updateTransaction(index, { to: value });
 
-    // Only reset and re-detect if the address actually changed
     if (value !== previousAddress) {
       if (value && ethers.isAddress(value)) {
-        // Reset state and trigger new detection
         updateState(index, {
           addressType: "detecting",
           detectedType: null,
@@ -199,10 +239,10 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
           functions: [],
           selectedFunction: "",
           functionInputs: [],
+          defaultApplied: false,
         });
         detectAddressType(value, index);
       } else if (value === "") {
-        // Reset state when address is cleared
         updateState(index, {
           addressType: "eoa",
           detectedType: null,
@@ -212,12 +252,12 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
           functions: [],
           selectedFunction: "",
           functionInputs: [],
+          defaultApplied: false,
         });
       }
     }
   };
 
-  // Toggle the expanded state for the transaction
   const toggleExpanded = (index: number) => {
     setTransactionStates((prev) => ({
       ...prev,
@@ -228,36 +268,290 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     }));
   };
 
-  // Update the state for the transaction
-  const updateState = (index: number, updates: Partial<TransactionState>) => {
-    setTransactionStates((prev) => {
-      const currentState = prev[index] || {
-        expanded: false,
-        addressType: "eoa" as AddressType,
-        detectedType: null,
-        abi: null,
-        manualABI: "",
-        isCheckingABI: false,
-        functions: [],
-        selectedFunction: "",
-        functionInputs: [],
+  const updateState = useCallback(
+    (index: number, updates: Partial<TransactionState>) => {
+      setTransactionStates((prev) => {
+        const currentState = prev[index] || {
+          expanded: false,
+          addressType: "eoa" as AddressType,
+          detectedType: null,
+          abi: null,
+          manualABI: "",
+          isCheckingABI: false,
+          functions: [],
+          selectedFunction: "",
+          functionInputs: [],
+          valueInput: "0",
+          defaultApplied: false,
+        };
+
+        return {
+          ...prev,
+          [index]: {
+            ...currentState,
+            ...updates,
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const encodeContractCallWithArgs = useCallback(
+    (index: number, parsedFunction: ParsedFunction, inputs: string[]) => {
+      const state = transactionStates[index];
+
+      let abiSource = state?.abi || state?.manualABI;
+      if (!abiSource) {
+        const abiItem = {
+          type: "function",
+          name: parsedFunction.name,
+          inputs: parsedFunction.inputs.map((input) => ({
+            name: input.name || "",
+            type: input.type,
+            internalType: input.internalType,
+            components: input.components,
+          })),
+          outputs:
+            parsedFunction.outputs?.map((output) => ({
+              name: output.name || "",
+              type: output.type,
+              internalType: output.internalType,
+              components: output.components,
+            })) || [],
+          stateMutability: parsedFunction.stateMutability || "nonpayable",
+        };
+        abiSource = JSON.stringify([abiItem]);
+      }
+
+      try {
+        const parsedABI =
+          typeof abiSource === "string" ? JSON.parse(abiSource) : abiSource;
+        const contractInterface = new ethers.Interface(parsedABI);
+
+        const parsedArgs: unknown[] = [];
+        for (let i = 0; i < parsedFunction.inputs.length; i++) {
+          const input = parsedFunction.inputs[i];
+          const argValue = inputs[i];
+          if (!argValue) {
+            return;
+          }
+
+          let parsedValue: unknown = argValue;
+          if (input.type.startsWith("uint") || input.type.startsWith("int")) {
+            const trimmedValue = argValue.trim().toLowerCase();
+            if (trimmedValue === "max") {
+              parsedValue = ethers.MaxUint256;
+            } else {
+              try {
+                parsedValue = parseAaveInputForEncoding(
+                  parsedFunction.name,
+                  i,
+                  input.type,
+                  argValue,
+                );
+              } catch (err) {
+                try {
+                  parsedValue = BigInt(argValue);
+                } catch {
+                  devLog(
+                    `[encodeContractCallWithArgs] Failed to parse uint/int parameter ${i}:`,
+                    err,
+                  );
+                  return;
+                }
+              }
+            }
+          } else if (input.type === "bool") {
+            parsedValue = argValue.toLowerCase() === "true";
+          } else if (input.type === "address") {
+            parsedValue = argValue;
+          } else if (input.type.startsWith("bytes")) {
+            parsedValue = argValue;
+          } else if (input.type === "string") {
+            parsedValue = argValue;
+          }
+
+          parsedArgs.push(parsedValue);
+        }
+
+        const functionSignature = getFunctionSignature(
+          parsedFunction.name,
+          parsedFunction.inputs,
+        );
+        const functionFragment =
+          contractInterface.getFunction(functionSignature);
+        if (!functionFragment) {
+          devLog(
+            "[encodeContractCallWithArgs] Function not found:",
+            functionSignature,
+          );
+          return;
+        }
+        const encodedData = contractInterface.encodeFunctionData(
+          functionFragment,
+          parsedArgs,
+        );
+
+        if (!encodedData || typeof encodedData !== "string") {
+          devLog(
+            "[encodeContractCallWithArgs] Invalid encoded data:",
+            encodedData,
+          );
+          return;
+        }
+
+        const normalizedData = encodedData.startsWith("0x")
+          ? encodedData
+          : `0x${encodedData}`;
+
+        devLog(
+          `[encodeContractCallWithArgs] Encoded data for tx ${index}:`,
+          normalizedData.substring(0, 66) +
+            (normalizedData.length > 66 ? "..." : ""),
+        );
+
+        updateTransaction(index, { data: normalizedData });
+      } catch (err) {
+        devLog("[encodeContractCallWithArgs] Error encoding:", err);
+        updateTransaction(index, { data: "0x" });
+      }
+    },
+    [transactionStates, updateTransaction],
+  );
+
+  const handleFunctionSelect = useCallback(
+    (
+      index: number,
+      functionSig: string,
+      preselectedFunc?: ParsedFunction,
+      providedInputs?: string[],
+      markDefaultApplied = false,
+    ) => {
+      const state = transactionStates[index];
+      if (!state && !preselectedFunc) return;
+
+      const selectedFunc =
+        preselectedFunc ||
+        (state ? findFunctionBySignature(state.functions, functionSig) : null);
+
+      if (!selectedFunc) return;
+
+      const nextFunctionInputs = computePrefilledInputs(
+        index,
+        selectedFunc,
+        providedInputs,
+      );
+
+      const shouldEncodeImmediately = selectedFunc.inputs.every(
+        (_, idx) => !!nextFunctionInputs[idx],
+      );
+
+      const defaultAppliedValue = markDefaultApplied
+        ? true
+        : (state?.defaultApplied ?? false);
+
+      updateState(index, {
+        selectedFunction: functionSig,
+        functionInputs: nextFunctionInputs,
         valueInput: "0",
-      };
+        defaultApplied: defaultAppliedValue,
+      });
+      updateTransaction(index, { value: "0" });
 
-      return {
-        ...prev,
-        [index]: {
-          ...currentState,
-          ...updates,
-        },
-      };
+      if (shouldEncodeImmediately) {
+        encodeContractCallWithArgs(index, selectedFunc, nextFunctionInputs);
+      } else {
+        updateTransaction(index, { data: "0x" });
+      }
+    },
+    [
+      transactionStates,
+      computePrefilledInputs,
+      updateState,
+      updateTransaction,
+      encodeContractCallWithArgs,
+    ],
+  );
+
+  const maybeApplyDefaultFunction = useCallback(
+    (index: number, availableFunctions: ParsedFunction[]) => {
+      const tx = transactions[index];
+      if (!tx) return;
+
+      const state = transactionStates[index];
+      if (state?.defaultApplied) return;
+
+      let targetFunc: ParsedFunction | undefined;
+      const signature: string | undefined = tx.defaultFunctionSignature;
+
+      if (signature) {
+        targetFunc = findFunctionBySignature(availableFunctions, signature);
+      }
+
+      if (!targetFunc || !signature) return;
+
+      const prefilledInputs = computePrefilledInputs(
+        index,
+        targetFunc,
+        tx.defaultArgumentValues,
+      );
+
+      handleFunctionSelect(index, signature, targetFunc, prefilledInputs, true);
+    },
+    [
+      transactions,
+      transactionStates,
+      computePrefilledInputs,
+      handleFunctionSelect,
+    ],
+  );
+
+  const loadDefaultAbi = useCallback(
+    (index: number) => {
+      const tx = transactions[index];
+      const state = transactionStates[index];
+
+      if (!tx?.defaultAbi) return false;
+      if (state?.abi && state.functions.length > 0) return false;
+
+      try {
+        const abiString =
+          typeof tx.defaultAbi === "string"
+            ? tx.defaultAbi
+            : JSON.stringify(tx.defaultAbi);
+        const functions = extractFunctions(abiString);
+
+        updateState(index, {
+          abi: abiString,
+          functions,
+          isCheckingABI: false,
+          addressType: "contract",
+        });
+
+        maybeApplyDefaultFunction(index, functions);
+        return true;
+      } catch (err) {
+        devLog("[loadDefaultAbi] Failed to load default ABI", err);
+        return false;
+      }
+    },
+    [transactions, transactionStates, updateState, maybeApplyDefaultFunction],
+  );
+
+  useEffect(() => {
+    transactions.forEach((_, index) => {
+      loadDefaultAbi(index);
     });
-  };
+  }, [transactions, loadDefaultAbi]);
 
-  // Fetch the ABI for the contract
   const fetchABI = useCallback(
     async (address: string, index: number) => {
       if (!address || !ethers.isAddress(address)) {
+        return;
+      }
+
+      if (loadDefaultAbi(index)) {
         return;
       }
 
@@ -276,7 +570,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         const abiResult = await fetchContractABI(address, chainId);
 
         if (abiResult && typeof abiResult === "string") {
-          // Use the common utility to extract functions
           const functions = extractFunctions(abiResult);
 
           updateState(index, {
@@ -284,6 +577,8 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
             functions,
             isCheckingABI: false,
           });
+
+          maybeApplyDefaultFunction(index, functions);
         } else {
           updateState(index, {
             abi: null,
@@ -300,10 +595,9 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         });
       }
     },
-    [selectedNetwork],
+    [selectedNetwork, updateState, maybeApplyDefaultFunction, loadDefaultAbi],
   );
 
-  // Detect the address type (contract or eoa)
   const detectAddressType = useCallback(
     async (address: string, index: number) => {
       if (!address || !ethers.isAddress(address)) {
@@ -328,20 +622,17 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         }
       } catch (err) {
         devLog("[detectAddressType] Error detecting address type:", err);
-        // On error, default to EOA but mark detection as failed
         updateState(index, {
           addressType: "eoa",
-          detectedType: null, // null means detection failed
+          detectedType: null,
         });
       }
     },
-    [selectedNetwork, fetchABI],
+    [selectedNetwork, fetchABI, updateState],
   );
 
-  // Handle the manual ABI change
   const handleManualABI = (index: number, abiString: string) => {
     try {
-      // Use the common utility to extract functions
       const functions = extractFunctions(abiString);
 
       updateState(index, {
@@ -349,6 +640,8 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
         manualABI: abiString,
         functions,
       });
+
+      maybeApplyDefaultFunction(index, functions);
     } catch {
       updateState(index, {
         manualABI: abiString,
@@ -356,24 +649,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     }
   };
 
-  const handleFunctionSelect = (index: number, functionSig: string) => {
-    const state = transactionStates[index];
-    if (!state) return;
-
-    // Use the utility function to find the selected function
-    const selectedFunc = findFunctionBySignature(state.functions, functionSig);
-
-    if (selectedFunc) {
-      updateState(index, {
-        selectedFunction: functionSig,
-        functionInputs: new Array(selectedFunc.inputs.length).fill(""),
-        valueInput: "0",
-      });
-      updateTransaction(index, { value: "0" });
-    }
-  };
-
-  // Handle the parameter change
   const handleParameterChange = (
     index: number,
     paramIndex: number,
@@ -382,71 +657,20 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     const state = transactionStates[index];
     if (!state) return;
 
+    const selectedFunc = state.selectedFunction
+      ? findFunctionBySignature(state.functions, state.selectedFunction)
+      : null;
+
     const newInputs = [...state.functionInputs];
     newInputs[paramIndex] = value;
     updateState(index, { functionInputs: newInputs });
 
-    // Try to encode
-    encodeContractCall(index);
-  };
-
-  // Encode the contract call
-  const encodeContractCall = (index: number) => {
-    const state = transactionStates[index];
-    if (!state || !state.abi || !state.selectedFunction) return;
-
-    try {
-      const parsedABI =
-        typeof state.abi === "string" ? JSON.parse(state.abi) : state.abi;
-      const contractInterface = new ethers.Interface(parsedABI);
-
-      // Use the utility function to find the selected function
-      const selectedFunc = findFunctionBySignature(
-        state.functions,
-        state.selectedFunction,
-      );
-
-      if (!selectedFunc) return;
-
-      // Parse arguments
-      const parsedArgs: unknown[] = [];
-      for (let i = 0; i < selectedFunc.inputs.length; i++) {
-        const input = selectedFunc.inputs[i];
-        const argValue = state.functionInputs[i] || "";
-
-        if (!argValue) {
-          // Don't update data if args are incomplete
-          return;
-        }
-
-        let parsedValue: unknown = argValue;
-        if (input.type.startsWith("uint") || input.type.startsWith("int")) {
-          parsedValue = BigInt(argValue);
-        } else if (input.type === "bool") {
-          parsedValue = argValue.toLowerCase() === "true";
-        } else if (input.type === "address") {
-          parsedValue = argValue;
-        } else if (input.type.startsWith("bytes")) {
-          parsedValue = argValue;
-        } else if (input.type === "string") {
-          parsedValue = argValue;
-        }
-
-        parsedArgs.push(parsedValue);
-      }
-
-      const encodedData = contractInterface.encodeFunctionData(
-        selectedFunc.name,
-        parsedArgs,
-      );
-
-      updateTransaction(index, { data: encodedData });
-    } catch (err) {
-      devLog("[encodeContractCall] Error encoding:", err);
+    // Encode immediately using the latest inputs to avoid state update lag
+    if (state.selectedFunction && selectedFunc) {
+      encodeContractCallWithArgs(index, selectedFunc, newInputs);
     }
   };
 
-  // Handle the value change
   const handleValueChange = (index: number, valueInEth: string) => {
     updateState(index, { valueInput: valueInEth });
 
@@ -465,7 +689,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
     }
   };
 
-  // Get the transaction summary
   const getTransactionSummary = (
     tx: SafeTransaction,
     state: TransactionState,
@@ -488,7 +711,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
 
   return (
     <div className="space-y-6" id="safe-transactions-section">
-      {/* Title Section */}
       <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-6">
         <Typography variant="h3" color="primary">
           Safe Transactions
@@ -520,7 +742,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                   key={index}
                   className="border border-white/10 rounded-lg bg-white/5 mb-4"
                 >
-                  {/* Transaction Header */}
                   <div
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-[var(--color-background-secondary)] transition-colors"
                     onClick={() => toggleExpanded(index)}
@@ -559,10 +780,8 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                     </div>
                   </div>
 
-                  {/* Transaction Fields */}
                   {state.expanded && (
                     <div className="p-4 border-t border-white/10 space-y-4">
-                      {/* Target Address */}
                       <div>
                         <label className="block mb-2">
                           <Typography variant="body" color="gray" align="left">
@@ -581,10 +800,8 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                         />
                       </div>
 
-                      {/* Contract Mode */}
                       {state.addressType === "contract" && (
                         <>
-                          {/* ABI Status Display */}
                           <div>
                             <label className="block mb-2">
                               <Typography
@@ -650,7 +867,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                             </div>
                           </div>
 
-                          {/* Manual ABI Input */}
                           {!state.isCheckingABI &&
                             (!state.abi || state.functions.length === 0) && (
                               <div>
@@ -690,10 +906,8 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                               </div>
                             )}
 
-                          {/* ABI with functions available */}
                           {state.abi && state.functions.length > 0 && (
                             <>
-                              {/* Function Selector */}
                               <div>
                                 <label className="block mb-2">
                                   <Typography
@@ -728,7 +942,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                   className="!w-full"
                                   onChange={(option) => {
                                     if (option.id === "") {
-                                      // Clear function selection
                                       updateState(index, {
                                         selectedFunction: "",
                                         functionInputs: [],
@@ -746,8 +959,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                 />
                               </div>
 
-                              {/* Function Arguments is kept in grid of 2 columns, does not like other inputs in the form*/}
-                              {/* Function Parameters */}
                               {state.selectedFunction &&
                                 (() => {
                                   const selectedFunc = findFunctionBySignature(
@@ -755,29 +966,48 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                                     state.selectedFunction,
                                   );
                                   return selectedFunc?.inputs.map(
-                                    (input, paramIndex) => (
-                                      <div key={paramIndex}>
-                                        <TextInput
-                                          label={`${
-                                            input.name ||
-                                            `Param ${paramIndex + 1}`
-                                          } (${input.type})`}
-                                          value={
-                                            state.functionInputs[paramIndex] ||
-                                            ""
-                                          }
-                                          onChange={(value) =>
-                                            handleParameterChange(
-                                              index,
+                                    (input, paramIndex) => {
+                                      const isDisabled =
+                                        isAaveParameterDisabled(
+                                          selectedFunc.name,
+                                          paramIndex,
+                                          input.type,
+                                        );
+                                      const displayValue =
+                                        formatAaveInputForDisplay(
+                                          selectedFunc.name,
+                                          paramIndex,
+                                          input.type,
+                                          state.functionInputs[paramIndex] ||
+                                            "",
+                                        );
+
+                                      return (
+                                        <div key={paramIndex}>
+                                          <TextInput
+                                            label={`${
+                                              input.name ||
+                                              `Param ${paramIndex + 1}`
+                                            } (${input.type})`}
+                                            value={displayValue}
+                                            onChange={(value) =>
+                                              handleParameterChange(
+                                                index,
+                                                paramIndex,
+                                                value,
+                                              )
+                                            }
+                                            placeholder={getAaveParameterPlaceholder(
+                                              selectedFunc.name,
                                               paramIndex,
-                                              value,
-                                            )
-                                          }
-                                          placeholder={`Enter ${input.type}`}
-                                          type="text"
-                                        />
-                                      </div>
-                                    ),
+                                              input.type,
+                                            )}
+                                            type="text"
+                                            disabled={isDisabled}
+                                          />
+                                        </div>
+                                      );
+                                    },
                                   );
                                 })()}
                             </>
@@ -785,7 +1015,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
                         </>
                       )}
 
-                      {/* Value - Common for both EOA and Contract */}
                       <div>
                         <label className="block mb-2">
                           <Typography variant="body" color="gray" align="left">
@@ -814,7 +1043,6 @@ export const SafeTransactionBuilder: React.FC<SafeTransactionBuilderProps> = ({
             })}
           </div>
 
-          {/* Add Transaction Button */}
           <div className="w-full">
             <button
               onClick={(e) => {

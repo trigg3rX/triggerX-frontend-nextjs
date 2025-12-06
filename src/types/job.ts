@@ -96,4 +96,8 @@ export interface SafeTransaction {
   to: string;
   value: string;
   data: string;
+  operation?: number; // 0 = CALL, 1 = DELEGATECALL (optional, defaults to 0)
+  defaultFunctionSignature?: string;
+  defaultArgumentValues?: string[];
+  defaultAbi?: string | Record<string, unknown>;
 }

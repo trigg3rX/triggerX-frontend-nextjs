@@ -329,6 +329,19 @@ export function validateJobForm({
           scrollToId: "safe-transactions-section",
         };
       }
+
+      // If transaction has a function signature, data should not be empty (unless it's a payable function with value > 0)
+      if (
+        tx.defaultFunctionSignature &&
+        tx.data === "0x" &&
+        (tx.value === "0" || tx.value === undefined || tx.value === null)
+      ) {
+        return {
+          errorKey: "safeTransaction",
+          errorValue: `Transaction ${i + 1}: Function call data cannot be empty. Please fill in all required parameters for ${tx.defaultFunctionSignature}.`,
+          scrollToId: "safe-transactions-section",
+        };
+      }
     }
   }
 
