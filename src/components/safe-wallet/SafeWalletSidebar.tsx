@@ -27,6 +27,7 @@ import SafeWalletImportDialog from "@/components/safe-wallet/import-wallet-modal
 import ModuleActionDialog from "@/components/safe-wallet/ModuleActionDialog";
 import { getSafeWebAppUrl } from "@/utils/safeChains";
 import scrollbarStyles from "@/app/styles/scrollbar.module.css";
+import { devLog } from "@/lib/devLog";
 
 const SafeWalletSidebar: React.FC = () => {
   const chainId = useChainId();
@@ -65,7 +66,7 @@ const SafeWalletSidebar: React.FC = () => {
   const handleOpenInSafeApp = async () => {
     if (!selection.selectedSafe) return;
     const url = await getSafeWebAppUrl(chainId, selection.selectedSafe);
-    console.log("safe url", url);
+    devLog("safe url", url);
     if (url) {
       window.open(url, "_blank");
     }

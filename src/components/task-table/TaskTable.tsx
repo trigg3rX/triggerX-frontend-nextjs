@@ -13,6 +13,7 @@ import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
 import { ExternalLink, ChevronDownIcon } from "lucide-react";
 import scrollbarStyles from "@/app/styles/scrollbar.module.css";
+import Skeleton from "../ui/Skeleton";
 
 export interface TaskData {
   id: string;
@@ -22,15 +23,62 @@ export interface TaskData {
   timestamp: string;
   status: "completed" | "failed" | "processing";
   operationCost: number;
+  jobId?: string;
+  performerId?: number;
+  attesterIds?: number[];
 }
 
 interface TaskTableProps {
   tasks: TaskData[];
   error?: string;
+  loading?: boolean;
 }
 
+// Table Row Skeleton Component
+const TableRowSkeleton: React.FC = () => {
+  return (
+    <TableRow>
+      <TableCell className="px-6 py-4">
+        <Skeleton height={20} width="60px" borderRadius={4} />
+      </TableCell>
+      <TableCell>
+        <Skeleton height={20} width="120px" borderRadius={4} />
+      </TableCell>
+      <TableCell>
+        <Skeleton height={20} width="150px" borderRadius={4} />
+      </TableCell>
+      <TableCell>
+        <Skeleton height={24} width="80px" borderRadius={12} />
+      </TableCell>
+      <TableCell>
+        <Skeleton height={24} width="100px" borderRadius={12} />
+      </TableCell>
+    </TableRow>
+  );
+};
+
+// Mobile Card Skeleton Component
+const MobileCardSkeleton: React.FC = () => {
+  return (
+    <Card className="mb-2">
+      <div className="flex flex-col gap-2">
+        {[...Array(5)].map((_, index) => (
+          <div key={index} className="flex justify-between py-1">
+            <Skeleton height={16} width="100px" borderRadius={4} />
+            <Skeleton height={16} width="80px" borderRadius={4} />
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+};
+
 /** Mobile-friendly card view of tasks */
-const TaskMobileView: React.FC<TaskTableProps> = ({ tasks, error }) => {
+const TaskMobileView: React.FC<TaskTableProps> = ({
+  tasks,
+  error,
+  loading,
+}) => {
   const shouldScroll = tasks.length > 10;
 
   return (
@@ -39,7 +87,9 @@ const TaskMobileView: React.FC<TaskTableProps> = ({ tasks, error }) => {
         className={`grid grid-cols-1 gap-4 ${shouldScroll ? `max-h-[600px] overflow-y-auto ${scrollbarStyles.customScrollbar}` : ""}`}
         style={shouldScroll ? { maxHeight: 600 } : {}}
       >
-        {error ? (
+        {loading ? (
+          [...Array(3)].map((_, index) => <MobileCardSkeleton key={index} />)
+        ) : error ? (
           <Card className="mb-4">
             <Typography className="text-center text-red-400">
               {error}
@@ -129,7 +179,11 @@ const TaskMobileView: React.FC<TaskTableProps> = ({ tasks, error }) => {
   );
 };
 
-const TaskTable: React.FC<TaskTableProps> = ({ tasks, error }) => {
+const TaskTable: React.FC<TaskTableProps> = ({
+  tasks,
+  error,
+  loading = false,
+}) => {
   const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">(
     "desc",
   );
@@ -199,7 +253,11 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, error }) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {error ? (
+                {loading ? (
+                  [...Array(5)].map((_, index) => (
+                    <TableRowSkeleton key={index} />
+                  ))
+                ) : error ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-red-400">
                       {error}
@@ -207,7 +265,10 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, error }) => {
                   </TableRow>
                 ) : tasks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-gray-400"
+                    >
                       No tasks found.
                     </TableCell>
                   </TableRow>
@@ -317,7 +378,7 @@ const TaskTable: React.FC<TaskTableProps> = ({ tasks, error }) => {
         </Card>
       </div>
       {/* Mobile/card view */}
-      <TaskMobileView tasks={sortedTasks} error={error} />
+      <TaskMobileView tasks={sortedTasks} error={error} loading={loading} />
     </>
   );
 };

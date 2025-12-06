@@ -12,6 +12,7 @@ import { Typography } from "../ui/Typography";
 import { Card } from "../ui/Card";
 import { ExternalLink, ChevronDownIcon } from "lucide-react";
 import scrollbarStyles from "@/app/styles/scrollbar.module.css";
+import { devLog } from "@/lib/devLog";
 
 interface JobLogsTableProps {
   logs: JobLog[];
@@ -163,7 +164,7 @@ const JobLogsTable: React.FC<JobLogsTableProps> = ({
   taskDefinitionId,
 }) => {
   // Debug logging for visibility into data flow; safe to keep as low-noise
-  console.log("JobLogsTable props:", {
+  devLog("JobLogsTable props:", {
     logs,
     error,
     isConnected,

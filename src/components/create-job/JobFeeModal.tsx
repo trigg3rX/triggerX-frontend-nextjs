@@ -17,6 +17,7 @@ import { useAccount, useBalance } from "wagmi";
 import JobProcessing from "./JobProcessing";
 import { useSearchParams } from "next/navigation";
 import GameCanvas from "./GameCanvas";
+import { devLog } from "@/lib/devLog";
 
 interface JobFeeModalProps {
   isOpen: boolean;
@@ -196,7 +197,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     const balance = Number(userBalance);
     const epsilon = 1e-6;
     const result = fee - balance <= epsilon;
-    console.log(
+    devLog(
       "estimatedFee:",
       fee,
       "userBalance:",

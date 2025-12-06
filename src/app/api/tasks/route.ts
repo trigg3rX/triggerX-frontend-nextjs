@@ -1,7 +1,8 @@
+import { devLog } from "@/lib/devLog";
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_TABLEDATA_URL;
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY_TASKTABLE_ADMIN;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -32,7 +33,8 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  if (!filterType || !filterValue) {
+  // Recent tasks endpoint doesn't require filterValue
+  if (filterType !== "recent" && (!filterType || !filterValue)) {
     return NextResponse.json(
       { error: "Missing filterType or filterValue" },
       { status: 400 },
@@ -42,6 +44,9 @@ export async function GET(req: NextRequest) {
   let apiUrl = "";
 
   switch (filterType) {
+    case "recent":
+      apiUrl = `${API_BASE_URL}/api/tasks/recent`;
+      break;
     case "user_address":
       apiUrl = `${API_BASE_URL}/api/tasks/user/${filterValue}`;
       break;
@@ -71,7 +76,7 @@ export async function GET(req: NextRequest) {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": API_KEY,
+        "X-Api-Key": API_KEY,
       },
     });
 
@@ -92,10 +97,10 @@ export async function GET(req: NextRequest) {
     // console.log("Data structure keys:", Object.keys(data));
     // console.log("Is array?:", Array.isArray(data));
     if (data.task_groups) {
-      console.log("task_groups length:", data.task_groups?.length);
+      devLog("task_groups length:", data.task_groups?.length);
     }
     if (data.tasks) {
-      console.log("tasks length:", data.tasks?.length);
+      devLog("tasks length:", data.tasks?.length);
     }
     return NextResponse.json(data);
   } catch (error) {
