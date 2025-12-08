@@ -162,6 +162,7 @@ export function BlocklyWorkspaceSection({
             },
             { kind: "block", type: "execute_function" },
             { kind: "block", type: "safe_transaction" },
+            { kind: "block", type: "safe_transaction2" },
             { kind: "block", type: "static_arguments" },
             { kind: "block", type: "dynamic_arguments" },
           ],
