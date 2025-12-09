@@ -314,7 +314,7 @@ const GameCanvas: React.FC = () => {
 
   return (
     <>
-      <div className="w-full h-max mx-auto bg-red-500 rounded-xl flex flex-col gap-2 shadow-lg border border-gray-600 overflow-hidden">
+      <div className="w-full h-max mx-auto bg-black rounded-xl flex flex-col gap-2 shadow-lg border border-gray-600 overflow-hidden">
         <canvas
           ref={canvasRef}
           onClick={handleCanvasClick}
