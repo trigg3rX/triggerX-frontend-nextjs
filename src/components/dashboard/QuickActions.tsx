@@ -2,8 +2,8 @@
 import React from "react";
 import { Button } from "../ui/Button";
 import { Typography } from "../ui/Typography";
-import TopUpTgDialog from "./TopUpTgDialog";
-import WithdrawTgDialog from "./WithdrawTgDialog";
+import TopUpETHDialog from "@/components/dashboard/TopUpETHDialog";
+import WithdrawETHDialog from "@/components/dashboard/WithdrawETHDialog";
 import { Card } from "../ui/Card";
 import { useWalletConnectionContext } from "@/contexts/WalletConnectionContext";
 import { useRouter } from "next/navigation";
@@ -33,35 +33,35 @@ export const QuickActions = () => {
             onClick={() => setIsDialogOpen(true)}
             disabled={!isConnected}
           >
-            Top Up TG
+            Top Up ETH
           </Button>
           <Button
             className="w-full"
             onClick={() => setIsWithdrawDialogOpen(true)}
             disabled={!isConnected}
           >
-            Withdraw TG
+            Withdraw ETH
           </Button>
           <Button className="w-full" onClick={() => router.push("/")}>
             Create New Job
           </Button>
         </div>
 
-        <TopUpTgDialog
+        <TopUpETHDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           stakeAmount={stakeAmount}
           setStakeAmount={setStakeAmount}
           // accountBalance={accountBalance}
-          // fetchTGBalance={fetchTGBalance}
+          // fetchBalance={fetchBalance}
         />
-        <WithdrawTgDialog
+        <WithdrawETHDialog
           open={isWithdrawDialogOpen}
           onOpenChange={setIsWithdrawDialogOpen}
           withdrawAmount={withdrawAmount}
           setWithdrawAmount={setWithdrawAmount}
-          // tgBalance={userBalance}
-          // fetchTGBalance={fetchTGBalance}
+          // ETHBalance={userBalance}
+          // fetchBalance={fetchBalance}
         />
       </Card>
       <AlertEmail user_address={address || ""} />

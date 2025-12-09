@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 
-const gridSize = 17;
 const tileSize = 24;
 
 const GameCanvas: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  const [gridSize, setGridSize] = useState<{ cols: number; rows: number }>({
+    cols: 17,
+    rows: 17,
+  });
   const [character, setCharacter] = useState([{ x: 10, y: 10 }]);
   const [food, setFood] = useState({ x: 15, y: 15 });
   const [direction, setDirection] = useState("RIGHT");
@@ -34,6 +37,46 @@ const GameCanvas: React.FC = () => {
     const img = new window.Image();
     img.src = "/images/character/token.svg";
     return img;
+  }, []);
+
+  // Size canvas to full width and 40vh height and derive grid dynamically from tile size
+  useEffect(() => {
+    const resizeCanvas = () => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const parentWidth =
+        canvas.parentElement?.clientWidth || window.innerWidth;
+      const targetHeight = Math.max(window.innerHeight * 0.4, 240);
+      const rawWidth = Math.max(parentWidth, tileSize * 5); // guard tiny widths
+      const rawHeight = Math.max(targetHeight, tileSize * 5);
+
+      // Snap canvas to whole tiles so there is no invisible wall gap
+      const cols = Math.max(5, Math.floor(rawWidth / tileSize));
+      const rows = Math.max(5, Math.floor(rawHeight / tileSize));
+      const snappedWidth = cols * tileSize;
+      const snappedHeight = rows * tileSize;
+
+      canvas.width = snappedWidth;
+      canvas.height = snappedHeight;
+
+      setGridSize({ cols, rows });
+
+      // Keep character/food inside bounds after resize
+      setCharacter((prev) =>
+        prev.map((seg) => ({
+          x: Math.min(seg.x, cols - 1),
+          y: Math.min(seg.y, rows - 1),
+        })),
+      );
+      setFood((prev) => ({
+        x: Math.min(prev.x, cols - 1),
+        y: Math.min(prev.y, rows - 1),
+      }));
+    };
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+    return () => window.removeEventListener("resize", resizeCanvas);
   }, []);
 
   // Keyboard controls
@@ -80,9 +123,9 @@ const GameCanvas: React.FC = () => {
         // Check if character hits the boundary
         if (
           head.x < 0 ||
-          head.x >= gridSize ||
+          head.x >= gridSize.cols ||
           head.y < 0 ||
-          head.y >= gridSize
+          head.y >= gridSize.rows
         ) {
           setGameOver(true);
           return prevCharacter;
@@ -92,8 +135,8 @@ const GameCanvas: React.FC = () => {
         if (head.x === food.x && head.y === food.y) {
           setScore((prev) => prev + 0.5);
           setFood({
-            x: Math.floor(Math.random() * gridSize),
-            y: Math.floor(Math.random() * gridSize),
+            x: Math.floor(Math.random() * gridSize.cols),
+            y: Math.floor(Math.random() * gridSize.rows),
           });
           setFoodEatenAnimation({ x: food.x, y: food.y });
           setTimeout(() => setFoodEatenAnimation(null), 500);
@@ -106,7 +149,7 @@ const GameCanvas: React.FC = () => {
     };
     const gameLoop = setInterval(moveCharacter, 200);
     return () => clearInterval(gameLoop);
-  }, [direction, food, gameOver, gameStarted]);
+  }, [direction, food, gameOver, gameStarted, gridSize.cols, gridSize.rows]);
 
   // Drawing logic
   useEffect(() => {
@@ -116,84 +159,90 @@ const GameCanvas: React.FC = () => {
     if (!ctx) return;
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    // Draw Character
-    const currentFrame = characterFrames[frameIndex];
-    character.forEach((segment) => {
-      ctx.save();
-      ctx.translate(
-        segment.x * tileSize + tileSize / 2,
-        segment.y * tileSize + tileSize / 2,
-      );
-      if (direction === "LEFT") ctx.scale(-1, 1);
+    // Draw boundary to make walls obvious
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, canvas.width - 2, canvas.height - 2);
+    // Draw Character and food only during active play (hide when showing text overlays)
+    if (gameStarted && !gameOver) {
+      const currentFrame = characterFrames[frameIndex];
+      character.forEach((segment) => {
+        ctx.save();
+        ctx.translate(
+          segment.x * tileSize + tileSize / 2,
+          segment.y * tileSize + tileSize / 2,
+        );
+        if (direction === "LEFT") ctx.scale(-1, 1);
+        ctx.drawImage(
+          currentFrame,
+          direction === "LEFT" ? -tileSize / 2 : -tileSize / 2,
+          -tileSize / 2,
+          tileSize,
+          tileSize,
+        );
+        ctx.restore();
+      });
+      // Draw Ethereum token
       ctx.drawImage(
-        currentFrame,
-        direction === "LEFT" ? -tileSize / 2 : -tileSize / 2,
-        -tileSize / 2,
+        ethImage,
+        food.x * tileSize,
+        food.y * tileSize,
         tileSize,
         tileSize,
       );
-      ctx.restore();
-    });
-    // Draw Ethereum token
-    ctx.drawImage(
-      ethImage,
-      food.x * tileSize,
-      food.y * tileSize,
-      tileSize,
-      tileSize,
-    );
-    // Draw "+1" animation
-    if (foodEatenAnimation) {
-      ctx.fillStyle = "white";
-      ctx.font = "12px Arial";
-      ctx.fillText(
-        "+1",
-        foodEatenAnimation.x * tileSize + tileSize / 4,
-        foodEatenAnimation.y * tileSize + tileSize / 1.5,
-      );
+      // Draw "+1" animation
+      if (foodEatenAnimation) {
+        ctx.fillStyle = "white";
+        ctx.font = "12px Arial";
+        ctx.fillText(
+          "+1",
+          foodEatenAnimation.x * tileSize + tileSize / 4,
+          foodEatenAnimation.y * tileSize + tileSize / 1.5,
+        );
+      }
     }
     if (!gameStarted) {
       ctx.fillStyle = "yellow";
-      ctx.font = "14px Arial";
+      ctx.font = "12px Arial";
       ctx.fillText(
         "Fee-ding time! Tap to start the token tango",
         canvas.width / 5 - 7,
-        canvas.height / 3 + 30,
+        canvas.height / 3 + 10,
       );
       ctx.fillText(
         "while we calculate your job fees.",
-        canvas.width / 5 + 30,
-        canvas.height / 3 + 60,
+        canvas.width / 5 + 20,
+        canvas.height / 3 + 30,
       );
       ctx.fillText(
         "Use arrow keys to feast!🍀",
-        canvas.width / 5 + 50,
+        canvas.width / 5 + 30,
         canvas.height / 3 + 100,
       );
     }
     if (gameOver) {
       ctx.fillStyle = "yellow";
-      ctx.font = "14px Arial";
+      ctx.font = "12px Arial";
       ctx.fillText(
         "Fee-ding frenzy finished!",
-        canvas.width / 4 + 30,
-        canvas.height / 3 + 30,
+        canvas.width / 5 + 40,
+        canvas.height / 3,
       );
       ctx.fillText(
         "Still brewing up your job fees... almost there!🍀⌛",
-        canvas.width / 10,
-        canvas.height / 3 + 60,
+        canvas.width / 10 + 20,
+        canvas.height / 3 + 30,
       );
       ctx.fillText(
         `Score: ${score}`,
-        canvas.width / 3 + 50,
-        canvas.height / 2 + 30,
+        canvas.width / 3 + 30,
+        canvas.height / 2 + 20,
       );
       ctx.fillStyle = "#82fbd0";
-      ctx.font = "16px Arial";
+      ctx.font = "14px Arial";
       ctx.fillText(
         "Tap to Restart",
-        canvas.width / 3 + 29,
+        canvas.width / 3 + 20,
         canvas.height / 2 + 80,
       );
     }
@@ -214,19 +263,29 @@ const GameCanvas: React.FC = () => {
   useEffect(() => {
     setGameStarted(false);
     setGameOver(false);
-    setCharacter([{ x: 10, y: 10 }]);
-    setFood({ x: 15, y: 15 });
+    const startX = Math.max(2, Math.floor(gridSize.cols / 2));
+    const startY = Math.max(2, Math.floor(gridSize.rows / 2));
+    setCharacter([{ x: startX, y: startY }]);
+    setFood({
+      x: Math.max(1, Math.min(gridSize.cols - 2, startX + 2)),
+      y: Math.max(1, Math.min(gridSize.rows - 2, startY)),
+    });
     setDirection("RIGHT");
     setScore(0);
     setFrameIndex(0);
     setFoodEatenAnimation(null);
-  }, []);
+  }, [gridSize]);
 
   const handleCanvasClick = () => {
     if (!gameStarted || gameOver) {
       setGameStarted(true);
-      setCharacter([{ x: 10, y: 10 }]);
-      setFood({ x: 15, y: 15 });
+      const startX = Math.max(2, Math.floor(gridSize.cols / 2));
+      const startY = Math.max(2, Math.floor(gridSize.rows / 2));
+      setCharacter([{ x: startX, y: startY }]);
+      setFood({
+        x: Math.max(1, Math.min(gridSize.cols - 2, startX + 2)),
+        y: Math.max(1, Math.min(gridSize.rows - 2, startY)),
+      });
       setDirection("RIGHT");
       setGameOver(false);
       setScore(0);
@@ -255,13 +314,11 @@ const GameCanvas: React.FC = () => {
 
   return (
     <>
-      <div className="w-full bg-black rounded-xl flex flex-col gap-2 shadow-lg border border-gray-600 overflow-hidden">
+      <div className="w-full h-max mx-auto bg-black rounded-xl flex flex-col gap-2 shadow-lg border border-gray-600 overflow-hidden">
         <canvas
           ref={canvasRef}
-          width={gridSize * tileSize}
-          height={gridSize * tileSize}
           onClick={handleCanvasClick}
-          className="w-full h-auto"
+          className="w-full h-[40vh]"
         />
       </div>
       {/* Mobile Controls */}
@@ -276,9 +333,7 @@ const GameCanvas: React.FC = () => {
           </span>
         )}
       </div>
-      <div className="text-white text-center py-2 text-sm sm:text-base">
-        Score: {score}
-      </div>
+      <div className="text-white text-center py-1 text-sm">Score: {score}</div>
     </>
   );
 };

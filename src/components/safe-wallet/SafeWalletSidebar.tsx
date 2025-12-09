@@ -73,13 +73,17 @@ const SafeWalletSidebar: React.FC = () => {
 
   // Base Sepolia chain ID
   const BASE_SEPOLIA_CHAIN_ID = 84532;
-  const isBaseSepolia = chainId === BASE_SEPOLIA_CHAIN_ID;
+  // Arbitrum One chain ID
+  const ARBITRUM_ONE_CHAIN_ID = 42161;
 
-  // Show "Open in Safe App" only when Safe is selected AND chain is Base Sepolia
-  const shouldShowOpenInSafeApp = selection.selectedSafe && isBaseSepolia;
+  const isSupportedChain =
+    chainId === BASE_SEPOLIA_CHAIN_ID || chainId === ARBITRUM_ONE_CHAIN_ID;
 
-  // Show "Import Safe Wallet" only on Base Sepolia
-  const shouldShowImportSafeWallet = isBaseSepolia;
+  // Show "Open in Safe App" only when Safe is selected AND chain is supported
+  const shouldShowOpenInSafeApp = selection.selectedSafe && isSupportedChain;
+
+  // Show "Import Safe Wallet" only on supported chains
+  const shouldShowImportSafeWallet = isSupportedChain;
 
   return (
     <div className="space-y-6 sm:space-y-8 xl:min-h-[500px]">

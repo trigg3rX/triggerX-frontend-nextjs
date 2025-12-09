@@ -6,11 +6,11 @@ import React, {
   useCallback,
 } from "react";
 import { Modal } from "../ui/Modal";
-import { FiInfo } from "react-icons/fi";
+import { FiInfo, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { Typography } from "../ui/Typography";
 import { Button } from "../ui/Button";
 import Tooltip from "../ui/Tooltip";
-import { useTGBalance } from "@/contexts/TGBalanceContext";
+import { useTriggerBalance } from "@/contexts/BalanceContext";
 import { useJobForm } from "@/contexts/JobFormContext";
 import { useRouter } from "next/navigation";
 import { useAccount, useBalance } from "wagmi";
@@ -35,11 +35,11 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   setIsOpen,
   estimatedFee,
 }) => {
-  const { userBalance, fetchTGBalance } = useTGBalance();
+  const { userBalance, fetchBalance } = useTriggerBalance();
   const {
     isSubmitting,
     isJobCreated,
-    handleStakeTG,
+    handleTopUpETH,
     handleCreateJob,
     setIsJobCreated,
     estimateFee,
@@ -57,9 +57,22 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     resetContractInteractionState,
     reset,
     estimatedFeeInWei,
+    feePerExecution,
+    currentFeePerExecution,
+    maxFeePerExecution,
+    feeTopUpPercentage,
+    setFeeTopUpPercentage,
+    desiredExecutions,
+    setDesiredExecutions,
+    calculatedExecutions,
+    executionMode,
+    selectedSafeWallet,
+    userSafeWallets,
+    language,
   } = useJobForm();
   const router = useRouter();
   const { address, chain } = useAccount();
+  const chainId = chain?.id;
   const prevAddress = useRef<string | undefined>(address);
   const [topUpFailed, setTopUpFailed] = useState(false);
   const [isCheckingBalance, setIsCheckingBalance] = useState(false);
@@ -75,6 +88,34 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isStepperVisible, setIsStepperVisible] = useState(true);
   const [feeEstimated, setFeeEstimated] = useState(false);
+  const [ethPrice, setEthPrice] = useState<number | null>(null);
+  const [isFeeDetailsExpanded, setIsFeeDetailsExpanded] = useState(false);
+
+  // Fetch ETH price
+  useEffect(() => {
+    const fetchEthPrice = async () => {
+      try {
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
+        );
+        const data = await response.json();
+        setEthPrice(data.ethereum?.usd || null);
+      } catch (error) {
+        console.error("Failed to fetch ETH price:", error);
+      }
+    };
+    if (isOpen) {
+      fetchEthPrice();
+      setFeeTopUpPercentage(20);
+    }
+  }, [isOpen, setFeeTopUpPercentage]);
+
+  // Force executions to 1 if not recurring
+  useEffect(() => {
+    if (!recurring) {
+      setDesiredExecutions(1);
+    }
+  }, [recurring, setDesiredExecutions]);
 
   // Prepare job details for fee estimation
   const getJobDetailsForEstimate = useCallback(() => {
@@ -91,6 +132,11 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
       address,
       networkId,
       jobType,
+      language || "go",
+      executionMode,
+      selectedSafeWallet,
+      chainId,
+      userSafeWallets,
     );
   }, [
     contractInteractions,
@@ -99,9 +145,14 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     timeInterval,
     recurring,
     address,
+    chainId,
     getNetworkIdByName,
     selectedNetwork,
     jobType,
+    language,
+    executionMode,
+    selectedSafeWallet,
+    userSafeWallets,
     extractJobDetails,
     getTimeframeInSeconds,
     getIntervalInSeconds,
@@ -128,14 +179,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
         // Call estimateFee and wait for it to finish
         const doEstimate = async () => {
           const jobDetails = getJobDetailsForEstimate();
-          await estimateFee(
-            jobType,
-            getTimeframeInSeconds(timeframe),
-            getIntervalInSeconds(timeInterval),
-            jobDetails.dynamic_arguments_script_url || "",
-            recurring,
-            Number(jobDetails.arg_type),
-          );
+          await estimateFee(jobDetails);
           setFeeEstimated(true);
           setTimeout(() => {
             setIsStepperVisible(false);
@@ -184,12 +228,12 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   // Refetch balances and reset modal state on address or network change
   useEffect(() => {
     if (isOpen && (address || chain)) {
-      fetchTGBalance(); // Refetch TG balance
+      fetchBalance(); // Refetch ETH balance
       setIsJobCreated(false);
       setTopUpFailed(false);
       setJobCreateFailed(false);
     }
-  }, [address, chain, isOpen, fetchTGBalance, setIsJobCreated]);
+  }, [address, chain, isOpen, fetchBalance, setIsJobCreated]);
 
   const hasEnoughBalance = useMemo(() => {
     const fee = Number(estimatedFee);
@@ -208,12 +252,16 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   }, [estimatedFee, userBalance]);
 
   const requiredEth = useMemo(() => {
-    if (estimatedFeeInWei) {
-      // Convert Wei to ETH for display
-      return (Number(estimatedFeeInWei) / 1e18).toFixed(6);
+    if (estimatedFeeInWei && userBalance) {
+      // Calculate the difference needed
+      const balanceInWei = BigInt(Math.floor(Number(userBalance) * 1e18));
+      const difference = estimatedFeeInWei - balanceInWei;
+      if (difference > 0) {
+        return (Number(difference) / 1e18).toFixed(8);
+      }
     }
-    return (0.001 * estimatedFee).toFixed(6);
-  }, [estimatedFee, estimatedFeeInWei]);
+    return "0.00000000";
+  }, [estimatedFeeInWei, userBalance]);
 
   const hasEnoughEthToStake = useMemo(() => {
     if (!ethBalance || !estimatedFeeInWei) return false;
@@ -221,7 +269,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   }, [ethBalance, estimatedFeeInWei]);
   const isDisabled = false;
 
-  const handleStake = async (e: React.MouseEvent) => {
+  const handleTopUp = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setJobCreateFailed(false);
 
@@ -234,9 +282,9 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
       const success = await handleCreateJob(jobId || undefined);
       setJobCreateFailed(!success);
       setTopUpFailed(false);
-      fetchTGBalance();
+      fetchBalance();
     } else {
-      const success = await handleStakeTG();
+      const success = await handleTopUpETH();
       setTopUpFailed(!success);
       if (success) {
         setIsCheckingBalance(true);
@@ -244,12 +292,12 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     }
   };
 
-  // Poll TG balance after top-up until hasEnoughBalance is true
+  // Poll ETH balance after top-up until hasEnoughBalance is true
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
     if (isCheckingBalance && !hasEnoughBalance) {
       interval = setInterval(() => {
-        fetchTGBalance();
+        fetchBalance();
       }, 1200);
     }
     if (isCheckingBalance && hasEnoughBalance) {
@@ -258,7 +306,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isCheckingBalance, hasEnoughBalance, fetchTGBalance]);
+  }, [isCheckingBalance, hasEnoughBalance, fetchBalance]);
 
   useEffect(() => {
     if (!isOpen) setTopUpFailed(false);
@@ -279,13 +327,13 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
     }
   }, [isOpen, resetContractInteractionState]);
 
-  const handleClose = (e?: React.MouseEvent) => {
+  const handleClose = (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (e) e.preventDefault();
     setIsOpen(false);
     setIsJobCreated(false);
   };
 
-  const handleDashboardClick = (e: React.MouseEvent) => {
+  const handleDashboardClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     // Redirect to dashboard or perform desired action
     setIsOpen(false);
@@ -294,7 +342,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
+    <Modal isOpen={isOpen} onClose={handleClose} className="!max-h-[98vh]">
       {/* Stepper and Game Canvas */}
       {isStepperVisible && (
         <JobProcessing
@@ -308,16 +356,22 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
       {/* Fee summary and buttons, only after stepper is done */}
       {!isStepperVisible && !isJobCreated && (
         <>
-          <Typography variant="h2" className="mb-6">
+          <Typography variant="h3" color="secondary" className="mb-3">
             Estimated Fee
           </Typography>
-          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-            <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center">
+          <div className="space-y-2 pr-2 max-h-[200px] overflow-y-auto custom-scrollbar">
+            {/* Total Required ETH Header (Collapsible Trigger) */}
+            <div
+              className="flex flex-row justify-between items-center bg-white/5 p-2 rounded-lg cursor-pointer hover:bg-white/10 transition-colors"
+              onClick={() => setIsFeeDetailsExpanded(!isFeeDetailsExpanded)}
+            >
               <div className="flex items-center">
-                <Typography variant="body">Required TG</Typography>
+                <Typography variant="body" className="font-semibold">
+                  Total Required ETH
+                </Typography>
                 <Tooltip
                   title={
-                    "TriggerGas (TG) is the standard unit for calculating computational and resource costs on the TriggerX platform."
+                    "Total ETH needed to fund all executions. Unused funds can be withdrawn anytime."
                   }
                   placement="bottom"
                 >
@@ -327,28 +381,260 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                   />
                 </Tooltip>
               </div>
-              <Typography variant="body" color="secondary">
-                {estimatedFee && estimatedFee > 0
-                  ? ` ${estimatedFee.toFixed(6)} TG`
-                  : "Something went wrong"}
-              </Typography>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right ">
+                  <Typography variant="body" color="secondary" align="right">
+                    {estimatedFee && estimatedFee > 0
+                      ? `${estimatedFee.toFixed(6)} ETH`
+                      : "Calculating..."}
+                  </Typography>
+                  {estimatedFee && estimatedFee > 0 && ethPrice && (
+                    <Typography
+                      variant="caption"
+                      className="text-xs text-gray-400"
+                      align="right"
+                    >
+                      ≈ ${(estimatedFee * ethPrice).toFixed(2)}
+                    </Typography>
+                  )}
+                </div>
+                {isFeeDetailsExpanded ? <FiChevronUp /> : <FiChevronDown />}
+              </div>
             </div>
 
-            <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center">
-              <Typography variant="body">Your TG Balance</Typography>
-              <Typography variant="body" color="secondary">
-                {userBalance ? Number(userBalance).toFixed(6) : "0.000000"}
+            {/* Collapsible Breakdown */}
+            {isFeeDetailsExpanded && (
+              <div className="space-y-3 pl-2 border-l-2 border-white/10 ml-1 mt-2">
+                {/* Current Fee per execution */}
+                <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center">
+                  <div className="flex items-center">
+                    <Typography variant="body" className="text-sm">
+                      Current Fee per Execution
+                    </Typography>
+                    <Tooltip
+                      title={
+                        "Fee at current gas prices. This is the minimum cost for each job execution."
+                      }
+                      placement="bottom"
+                    >
+                      <FiInfo
+                        className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
+                        size={14}
+                      />
+                    </Tooltip>
+                  </div>
+                  <Typography
+                    variant="body"
+                    color="secondary"
+                    className="text-sm"
+                  >
+                    {currentFeePerExecution
+                      ? `${(Number(currentFeePerExecution) / 1e18).toFixed(8)} ETH`
+                      : "Calculating..."}
+                  </Typography>
+                </div>
+
+                {/* Max Fee per execution */}
+                <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center">
+                  <div className="flex items-center">
+                    <Typography variant="body" className="text-sm">
+                      Max Fee per Execution
+                    </Typography>
+                    <Tooltip
+                      title={
+                        "Recommended fee with buffer for gas price spikes. Ensures smoother executions during unpredictable network conditions."
+                      }
+                      placement="bottom"
+                    >
+                      <FiInfo
+                        className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
+                        size={14}
+                      />
+                    </Tooltip>
+                  </div>
+                  <Typography
+                    variant="body"
+                    color="secondary"
+                    className="text-sm"
+                  >
+                    {maxFeePerExecution
+                      ? `${(Number(maxFeePerExecution) / 1e18).toFixed(8)} ETH`
+                      : "Calculating..."}
+                  </Typography>
+                </div>
+
+                {/* Fee Buffer Slider */}
+                {currentFeePerExecution &&
+                  maxFeePerExecution &&
+                  currentFeePerExecution < maxFeePerExecution && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <Typography variant="body" className="text-sm">
+                            Gas Spike Buffer
+                          </Typography>
+                          <Tooltip
+                            title={
+                              "Adjust the buffer for gas price fluctuations. Any unused funds can be withdrawn anytime."
+                            }
+                            placement="bottom"
+                          >
+                            <FiInfo
+                              className="text-gray-400 hover:text-white cursor-pointer ml-2"
+                              size={14}
+                            />
+                          </Tooltip>
+                        </div>
+                        <Typography
+                          variant="body"
+                          color="secondary"
+                          className="text-sm font-bold"
+                        >
+                          {feeTopUpPercentage}%
+                        </Typography>
+                      </div>
+
+                      {/* Slider */}
+                      <div className="relative py-1">
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={feeTopUpPercentage}
+                          onChange={(
+                            e: React.ChangeEvent<HTMLInputElement>,
+                          ) => {
+                            setFeeTopUpPercentage(parseInt(e.target.value));
+                          }}
+                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer fee-slider"
+                          style={{
+                            background: `linear-gradient(to right, #C07AF6 0%, #C07AF6 ${feeTopUpPercentage}%, rgba(255,255,255,0.15) ${feeTopUpPercentage}%, rgba(255,255,255,0.15) 100%)`,
+                          }}
+                        />
+                        <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                          <span>0% (Current)</span>
+                          <span>100% (Max)</span>
+                        </div>
+                      </div>
+
+                      {/* Selected fee display */}
+                      <div className="flex justify-between items-center">
+                        <Typography
+                          variant="caption"
+                          color="secondary"
+                          className="text-xs"
+                        >
+                          Selected Fee:
+                        </Typography>
+                        <div className="flex items-center gap-2">
+                          <Typography
+                            variant="body"
+                            color="secondary"
+                            className="text-sm font-semibold"
+                          >
+                            {feePerExecution
+                              ? `${(Number(feePerExecution) / 1e18).toFixed(8)} ETH`
+                              : "Calculating..."}
+                          </Typography>
+                          {feePerExecution && ethPrice && (
+                            <Typography
+                              variant="caption"
+                              className="text-xs text-gray-500"
+                            >
+                              ($
+                              {(
+                                (Number(feePerExecution) / 1e18) *
+                                ethPrice
+                              ).toFixed(2)}
+                              )
+                            </Typography>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Warning only at 0% */}
+                      {feeTopUpPercentage === 0 && (
+                        <Typography
+                          variant="caption"
+                          className="text-xs text-yellow-400 block mt-1"
+                        >
+                          ⚠ No buffer selected. Executions may be delayed during
+                          high gas periods.
+                        </Typography>
+                      )}
+                    </div>
+                  )}
+              </div>
+            )}
+
+            {/* Number of Executions (Only if recurring) */}
+            {recurring && (
+              <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center px-2">
+                <div className="flex items-center">
+                  <Typography variant="body">Number of Executions</Typography>
+                  <Tooltip
+                    title={
+                      calculatedExecutions !== null
+                        ? "Auto-calculated based on timeframe/interval for time-based jobs"
+                        : "Number of times you want to fund this job for"
+                    }
+                    placement="bottom"
+                  >
+                    <FiInfo
+                      className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
+                      size={15}
+                    />
+                  </Tooltip>
+                </div>
+                {calculatedExecutions !== null ? (
+                  <Typography variant="body" color="secondary">
+                    {calculatedExecutions}
+                  </Typography>
+                ) : (
+                  <input
+                    type="number"
+                    min="1"
+                    value={desiredExecutions}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const value = Math.max(1, parseInt(e.target.value) || 1);
+                      setDesiredExecutions(value);
+                    }}
+                    className="w-24 px-2 py-1 text-right bg-white/10 border border-white/20 rounded text-white focus:outline-none focus:border-purple-500"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Your ETH balance */}
+            <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center border-t border-white/10 pt-3 px-2">
+              <div className="flex items-center">
+                <Typography variant="caption" color="secondary">
+                  Your ETH Balance
+                </Typography>
+                <Tooltip
+                  title={"Balance in the TriggerGasRegistry contract"}
+                  placement="bottom"
+                >
+                  <FiInfo
+                    className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
+                    size={15}
+                  />
+                </Tooltip>
+              </div>
+              <Typography variant="caption" color="secondary">
+                {userBalance ? Number(userBalance).toFixed(8) : "0.000000"}
               </Typography>
             </div>
 
             {!hasEnoughBalance && (
-              <div className="text-gray-300 flex flex-row justify-between gap-1 sm:gap-0 items-center">
+              <div className="text-gray-300 flex flex-row justify-between gap-1 sm:gap-0 items-center px-2">
                 <div className="flex items-center">
-                  <Typography variant="body">Required ETH to TG</Typography>
+                  <Typography variant="caption" color="secondary">
+                    Required ETH to top-up
+                  </Typography>
                   <Tooltip
-                    title={
-                      "Required ETH to Stake is based on the total TriggerXGas consumed and TriggerXGas Unit Price."
-                    }
+                    title={"Additional ETH needed to fund this job."}
                     placement="top"
                   >
                     <FiInfo
@@ -357,17 +643,19 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                     />
                   </Tooltip>
                 </div>
-                <Typography variant="body" color="secondary">
+                <Typography variant="caption" color="secondary">
                   {requiredEth} ETH
                 </Typography>
               </div>
             )}
           </div>
-          <div className="flex flex-row gap-3 sm:gap-4">
+
+          {/* buttons */}
+          <div className="flex flex-row gap-3 sm:gap-4 mt-4">
             {hasEnoughBalance ? (
               <Button
                 color="purple"
-                onClick={handleStake}
+                onClick={handleTopUp}
                 disabled={isDisabled || !estimatedFee}
                 className="flex-1"
               >
@@ -379,7 +667,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               </Button>
             ) : (
               <Button
-                onClick={handleStake}
+                onClick={handleTopUp}
                 disabled={
                   isSubmitting ||
                   isCheckingBalance ||
@@ -391,11 +679,11 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                 {isSubmitting
                   ? "Topping Up..."
                   : isCheckingBalance
-                    ? "Checking TG Balance..."
+                    ? "Checking ETH Balance..."
                     : topUpFailed
                       ? "Try Again"
                       : hasEnoughEthToStake && !hasEnoughBalance
-                        ? "Top Up TG"
+                        ? "Top Up ETH"
                         : "Insufficient ETH"}
               </Button>
             )}
@@ -406,27 +694,34 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Cancel
             </Button>
           </div>
+
+          {/* error messages */}
+          {/* unable to estimate fee error */}
           {!estimatedFee && (
             <Typography
               variant="caption"
               color="secondary"
               className="mt-6 opacity-50"
             >
-              Unable to estimate the required TG fee. Please try again later or
+              Unable to estimate the required ETH fee. Please try again later or
               check your network connection.
             </Typography>
           )}
+
+          {/* topping up failed error */}
           {topUpFailed && (
             <Typography
               variant="caption"
               color="secondary"
               className="mt-6 opacity-50"
             >
-              😕 Oops! Something went wrong while topping up your TG.
+              😕 Oops! Something went wrong while topping up your ETH.
               <br />
               Please check your wallet and try again.
             </Typography>
           )}
+
+          {/* wallet is empty error */}
           {!hasEnoughEthToStake &&
             !hasEnoughBalance &&
             !isSubmitting &&
@@ -439,6 +734,8 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                 🚫 Uh oh! Looks like your wallet is empty.
               </Typography>
             )}
+
+          {/* job create failed error */}
           {jobCreateFailed && (
             <Typography
               variant="caption"
@@ -450,6 +747,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
           )}
         </>
       )}
+
       {/* Success state */}
       {!isStepperVisible && isJobCreated && (
         <div className="flex flex-col items-center gap-3 sm:gap-4 mt-4 sm:mt-5">
@@ -481,7 +779,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Go to Dashboard
             </Button>
             <Button
-              onClick={(e) => {
+              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.preventDefault();
                 reset();
                 handleClose();

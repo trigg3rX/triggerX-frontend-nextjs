@@ -169,12 +169,12 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
       if (isSafeMode && selectedSafeWallet && targetFunction) {
         return {
           ...base,
-          IsSafe: true,
+          is_safe: true,
           selected_safe: selectedSafeWallet,
           target_function: targetFunction,
         };
       }
-      return { ...base, IsSafe: false, target_function: targetFunction };
+      return { ...base, is_safe: false, target_function: targetFunction };
     },
     [
       isSafeMode,
@@ -194,17 +194,26 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
       );
       devLog("[IpfsScriptWizard] Request body:", requestBody);
+      devLog(
+        "[IpfsScriptWizard] Request body stringified:",
+        JSON.stringify(requestBody, null, 2),
+      );
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/code/validate`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          },
           body: JSON.stringify(requestBody),
         },
       );
 
       if (!res.ok) {
         const text = await res.text();
+        devLog("[IpfsScriptWizard] Validation API error response:", text);
         throw new Error(
           text?.trim() ? text : `Validation failed (${res.status})`,
         );

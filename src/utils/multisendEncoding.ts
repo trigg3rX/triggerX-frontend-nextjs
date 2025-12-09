@@ -26,85 +26,54 @@ export function encodeMultisendData(transactions: SafeTransaction[]): string {
 
   devLog("[encodeMultisendData] Encoding", transactions.length, "transactions");
 
+  // Multisend format: for each transaction, encode as:
+  // operation (1 byte) + to (20 bytes) + value (32 bytes) + dataLength (32 bytes) + data (variable)
   let encodedTransactions = "";
 
   for (let i = 0; i < transactions.length; i++) {
     const tx = transactions[i];
-
-    // Validate transaction
-    if (!tx.to || !ethers.isAddress(tx.to)) {
-      throw new Error(
-        `Transaction ${i + 1}: Invalid or missing 'to' address: ${tx.to}`,
-      );
-    }
-
-    if (tx.value === undefined || tx.value === null) {
-      throw new Error(`Transaction ${i + 1}: Missing 'value' field`);
-    }
-
-    if (tx.data === undefined || tx.data === null) {
-      throw new Error(`Transaction ${i + 1}: Missing 'data' field`);
-    }
-
-    // Convert value to BigInt
-    let value: bigint;
-    try {
-      value = ethers.toBigInt(tx.value);
-    } catch {
-      throw new Error(
-        `Transaction ${i + 1}: Invalid value format: ${tx.value}`,
-      );
-    }
+    const to = tx.to;
+    const value = ethers.toBigInt(tx.value);
+    const data = tx.data;
 
     // Remove 0x prefix from data if present
-    const dataWithoutPrefix = tx.data.startsWith("0x")
-      ? tx.data.slice(2)
-      : tx.data;
+    const dataWithoutPrefix = data.startsWith("0x") ? data.slice(2) : data;
+    const dataLength = ethers.toBigInt(dataWithoutPrefix.length / 2);
 
-    // Calculate data length in bytes (each hex char = 0.5 byte)
-    const dataLength = BigInt(dataWithoutPrefix.length / 2);
-
-    // Encode each field
-    // operation: uint8 (1 byte) - always CALL (0) for internal multisend txs
-    const operationHex = "00";
-
-    // to: address (20 bytes = 40 hex chars)
-    const toHex = tx.to.toLowerCase().replace(/^0x/, "").padStart(40, "0");
-
-    // value: uint256 (32 bytes = 64 hex chars)
+    // Encode each field and concatenate
+    // operation: uint8 (1 byte)
+    const operation = typeof tx.operation === "number" ? tx.operation : 0;
+    if (operation < 0 || operation > 1) {
+      throw new Error(
+        `Transaction ${i + 1}: Invalid Safe transaction operation: ${operation}. Expected 0 (CALL) or 1 (DELEGATECALL).`,
+      );
+    }
+    const operationHex = operation.toString(16).padStart(2, "0");
+    // to: address (20 bytes)
+    const toHex = to.toLowerCase().replace(/^0x/, "").padStart(40, "0");
+    // value: uint256 (32 bytes)
     const valueHex = value.toString(16).padStart(64, "0");
-
-    // dataLength: uint256 (32 bytes = 64 hex chars)
+    // dataLength: uint256 (32 bytes)
     const dataLengthHex = dataLength.toString(16).padStart(64, "0");
+    // data: bytes (variable length)
 
-    // Concatenate: operation + to + value + dataLength + data
     encodedTransactions +=
       operationHex + toHex + valueHex + dataLengthHex + dataWithoutPrefix;
 
     devLog(
       `[encodeMultisendData] Transaction ${i + 1} encoded:`,
-      `op=CALL, to=${tx.to}, value=${tx.value}, dataLength=${dataLength}`,
+      `op=${operation === 0 ? "CALL" : "DELEGATECALL"}, to=${tx.to}, value=${tx.value}, dataLength=${dataLength}, dataPreview=${data.substring(0, 66)}${data.length > 66 ? "..." : ""}`,
     );
   }
 
-  // Create the packed transactions bytes
   const packedTransactions = `0x${encodedTransactions}`;
-
-  // Encode as multiSend(bytes transactions)
   const multiSendInterface = new ethers.Interface([
     "function multiSend(bytes transactions)",
   ]);
 
-  const encodedMultiSend = multiSendInterface.encodeFunctionData("multiSend", [
+  return multiSendInterface.encodeFunctionData("multiSend", [
     packedTransactions,
   ]);
-
-  devLog(
-    "[encodeMultisendData] MultiSend encoded successfully:",
-    encodedMultiSend.substring(0, 100) + "...",
-  );
-
-  return encodedMultiSend;
 }
 
 /**
@@ -147,6 +116,26 @@ export function validateSafeTransaction(
       isValid: false,
       error: `${prefix}Missing 'data' field`,
     };
+  }
+
+  // Validate data is a string
+  if (typeof tx.data !== "string") {
+    return {
+      isValid: false,
+      error: `${prefix}Invalid 'data' type, expected string but got ${typeof tx.data}`,
+    };
+  }
+
+  // Empty data (0x) is valid for ETH transfers
+  // Non-empty data should be a valid hex string
+  if (tx.data !== "0x" && tx.data !== "") {
+    // Validate hex string format
+    if (!/^0x[0-9a-fA-F]*$/.test(tx.data)) {
+      return {
+        isValid: false,
+        error: `${prefix}Invalid 'data' format, must be a valid hex string`,
+      };
+    }
   }
 
   return { isValid: true };

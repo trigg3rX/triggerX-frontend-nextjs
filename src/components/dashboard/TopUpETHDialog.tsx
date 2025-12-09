@@ -14,17 +14,17 @@ import { Typography } from "../ui/Typography";
 import { useStakeRegistry } from "@/hooks/useStakeRegistry";
 import { ethers } from "ethers";
 import toast from "react-hot-toast";
-import { useTGBalance } from "@/contexts/TGBalanceContext";
+import { useTriggerBalance } from "@/contexts/BalanceContext";
 import { useAccount, useBalance } from "wagmi";
 
-interface TopUpTgDialogProps {
+interface TopUpETHDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stakeAmount: string;
   setStakeAmount: (value: string) => void;
 }
 
-const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
+const TopUpETHDialog: React.FC<TopUpETHDialogProps> = ({
   open,
   onOpenChange,
   stakeAmount,
@@ -32,7 +32,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
 }) => {
   const { stakeRegistryAddress } = useStakeRegistry();
   const [isStaking, setIsStaking] = useState(false);
-  const { fetchTGBalance } = useTGBalance();
+  const { fetchBalance } = useTriggerBalance();
   const { address } = useAccount();
   const { data: accountBalance } = useBalance({
     address: address,
@@ -46,7 +46,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
     onOpenChange(open);
   };
 
-  // Initiate on-chain purchase of TG using ETH; refresh balances on success
+  // Initiate on-chain deposit of ETH; refresh balances on success
   const handleStake = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -57,31 +57,28 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
       const signer = await provider.getSigner();
       const stakingContract = new ethers.Contract(
         stakeRegistryAddress,
-        [
-          "function purchaseTG(uint256 amount) external payable returns (uint256)",
-        ],
+        ["function depositETH(uint256 ethAmount) external payable"],
         signer,
       );
 
-      const stakeAmountInEth = Number(stakeAmount) / 1000;
-      const stakeAmountInWei = ethers.parseEther(stakeAmountInEth.toString());
+      const stakeAmountInWei = ethers.parseEther(stakeAmount || "0");
       if (stakeAmountInWei === BigInt(0)) {
-        throw new Error("TG amount must be greater than zero.");
+        throw new Error("Amount must be greater than zero.");
       }
-      const tx = await stakingContract.purchaseTG(stakeAmountInWei, {
+      const tx = await stakingContract.depositETH(stakeAmountInWei, {
         value: stakeAmountInWei,
       });
       await tx.wait();
       // Add a small delay to allow the node to update state
       await new Promise((resolve) => setTimeout(resolve, 3000));
-      await fetchTGBalance();
-      toast.success("Top Up TG successful!");
+      await fetchBalance();
+      toast.success("Top-up ETH successful!");
       onOpenChange(false);
       setStakeAmount("");
     } catch (error) {
       console.log(error);
       setIsStaking(false);
-      toast.error("Top Up TG failed!");
+      toast.error("Top-up ETH failed!");
     } finally {
       setIsStaking(false);
     }
@@ -91,24 +88,23 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Top Up TG</DialogTitle>
+          <DialogTitle>Deposit ETH</DialogTitle>
           <DialogDescription>
-            Exchange ETH to TG (Flue of your job) to automate jobs on TriggerX 1
-            ETH = 1000 TG
+            Deposit ETH to automate jobs on TriggerX.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleStake} className="space-y-6 ">
           <div>
             <label className="block mb-2">
               <Typography variant="body" color="gray" align="left">
-                Amount (TG)
+                Amount (ETH)
               </Typography>
             </label>
             <InputField
               type="number"
               value={stakeAmount}
               onChange={setStakeAmount}
-              placeholder="Enter TG amount"
+              placeholder="Enter ETH amount"
               className="rounded-xl"
             />
 
@@ -138,7 +134,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
                     align="left"
                     className="mt-1 font-bold tracking-wider"
                   >
-                    {(Number(stakeAmount) / 1000).toFixed(6)}
+                    {Number(stakeAmount).toFixed(6)}
                   </Typography>
                 </div>
               </>
@@ -157,13 +153,9 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
                 Cancel
               </Button>
               {(() => {
-                // Convert TG to ETH
-                const stakeAmountInEth = Number(stakeAmount) / 1000;
                 let stakeAmountInWei: bigint = BigInt(0);
                 try {
-                  stakeAmountInWei = ethers.parseEther(
-                    stakeAmountInEth.toString() || "0",
-                  );
+                  stakeAmountInWei = ethers.parseEther(stakeAmount || "0");
                 } catch {
                   stakeAmountInWei = BigInt(0);
                 }
@@ -182,7 +174,7 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
                       ? "Topping Up..."
                       : hasInsufficientEth
                         ? "Insufficient ETH"
-                        : "Top Up TG"}
+                        : "Deposit ETH"}
                   </Button>
                 );
               })()}
@@ -194,4 +186,4 @@ const TopUpTgDialog: React.FC<TopUpTgDialogProps> = ({
   );
 };
 
-export default TopUpTgDialog;
+export default TopUpETHDialog;

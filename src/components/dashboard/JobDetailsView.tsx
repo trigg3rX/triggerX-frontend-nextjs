@@ -425,7 +425,7 @@ const JobDetailsView: React.FC<JobDetailsViewProps> = ({
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 items-start sm:items-center justify-between p-3 rounded-lg bg-[#2A2A2A]/50 transition-colors duration-200">
                   <Typography variant="body" color="primary" align="left">
-                    TG Used:
+                    ETH Used:
                   </Typography>
                   <Typography
                     variant="body"

@@ -35,7 +35,7 @@ const LinkedJobCard: React.FC<LinkedJobCardProps> = ({ job, onClick }) => {
         </div>
         <div className="flex items-center justify-between">
           <Typography variant="body" color="gray">
-            TG Used:
+            ETH Used:
           </Typography>
           <Typography variant="body" color="primary">
             {isNaN(parseFloat(job.job_cost_actual))

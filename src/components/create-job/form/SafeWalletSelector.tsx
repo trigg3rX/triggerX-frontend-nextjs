@@ -11,7 +11,7 @@ import { FormErrorMessage } from "@/components/common/FormErrorMessage";
 import { getSafeModuleAddress } from "@/utils/contractAddresses";
 import { getSafeChainInfo } from "@/utils/safeChains";
 import TriggerXSafeModuleArtifact from "@/artifacts/TriggerXSafeModule.json";
-import networksData from "@/utils/networks.json";
+
 import SafeCreationProgressModal from "@/components/safe-wallet/SafeWalletCreationDialog";
 import SafeWalletImportDialog from "@/components/safe-wallet/import-wallet-modal/SafeWalletImportDialog";
 import {
@@ -221,12 +221,6 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
     ? getWalletDisplayName(selectedSafeWallet, chainId, userSafeWallets)
     : "Select a Safe Wallet";
 
-  // Check if the connected network is a mainnet
-  const currentNetwork = networksData.supportedNetworks.find(
-    (network) => network.id === chainId,
-  );
-  const isMainnet = currentNetwork?.type === "mainnet";
-
   return (
     <div className="space-y-6">
       <RadioGroup
@@ -236,7 +230,6 @@ export const SafeWalletSelector: React.FC<SafeWalletSelectorProps> = ({
           {
             label: "Smart Contract Wallet",
             value: "safe",
-            disabled: isMainnet,
           },
         ]}
         value={executionMode}
