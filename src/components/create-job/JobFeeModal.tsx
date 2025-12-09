@@ -342,7 +342,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose}>
+    <Modal isOpen={isOpen} onClose={handleClose} className="!max-h-[98vh]">
       {/* Stepper and Game Canvas */}
       {isStepperVisible && (
         <JobProcessing
@@ -356,41 +356,35 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
       {/* Fee summary and buttons, only after stepper is done */}
       {!isStepperVisible && !isJobCreated && (
         <>
-          <Typography variant="h2" className="mb-6">
+          <Typography variant="h3" color="secondary" className="mb-3">
             Estimated Fee
           </Typography>
-          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2 pr-2 max-h-[200px] overflow-y-auto custom-scrollbar">
             {/* Total Required ETH Header (Collapsible Trigger) */}
             <div
-              className="flex flex-row justify-between items-center bg-white/5 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-colors"
+              className="flex flex-row justify-between items-center bg-white/5 p-2 rounded-lg cursor-pointer hover:bg-white/10 transition-colors"
               onClick={() => setIsFeeDetailsExpanded(!isFeeDetailsExpanded)}
             >
-              <div className="flex flex-col">
-                <div className="flex items-center">
-                  <Typography variant="body" className="font-semibold">
-                    Total Required ETH
-                  </Typography>
-                  <Tooltip
-                    title={
-                      "Total ETH needed to fund all executions. Unused funds can be withdrawn anytime."
-                    }
-                    placement="bottom"
-                  >
-                    <FiInfo
-                      className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
-                      size={15}
-                    />
-                  </Tooltip>
-                </div>
+              <div className="flex items-center">
+                <Typography variant="body" className="font-semibold">
+                  Total Required ETH
+                </Typography>
+                <Tooltip
+                  title={
+                    "Total ETH needed to fund all executions. Unused funds can be withdrawn anytime."
+                  }
+                  placement="bottom"
+                >
+                  <FiInfo
+                    className="text-gray-400 hover:text-white cursor-pointer ml-2 mb-1"
+                    size={15}
+                  />
+                </Tooltip>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <Typography
-                    variant="body"
-                    color="secondary"
-                    className="font-semibold"
-                  >
+                <div className="text-right ">
+                  <Typography variant="body" color="secondary" align="right">
                     {estimatedFee && estimatedFee > 0
                       ? `${estimatedFee.toFixed(6)} ETH`
                       : "Calculating..."}
@@ -399,6 +393,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                     <Typography
                       variant="caption"
                       className="text-xs text-gray-400"
+                      align="right"
                     >
                       ≈ ${(estimatedFee * ethPrice).toFixed(2)}
                     </Typography>
@@ -575,7 +570,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
 
             {/* Number of Executions (Only if recurring) */}
             {recurring && (
-              <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center mt-4">
+              <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center px-2">
                 <div className="flex items-center">
                   <Typography variant="body">Number of Executions</Typography>
                   <Tooltip
@@ -612,9 +607,11 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
             )}
 
             {/* Your ETH balance */}
-            <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center border-t border-white/10 pt-3 mt-4">
+            <div className="flex flex-row justify-between gap-1 sm:gap-0 items-center border-t border-white/10 pt-3 px-2">
               <div className="flex items-center">
-                <Typography variant="body">Your ETH Balance</Typography>
+                <Typography variant="caption" color="secondary">
+                  Your ETH Balance
+                </Typography>
                 <Tooltip
                   title={"Balance in the TriggerGasRegistry contract"}
                   placement="bottom"
@@ -625,15 +622,17 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                   />
                 </Tooltip>
               </div>
-              <Typography variant="body" color="secondary">
+              <Typography variant="caption" color="secondary">
                 {userBalance ? Number(userBalance).toFixed(8) : "0.000000"}
               </Typography>
             </div>
 
             {!hasEnoughBalance && (
-              <div className="text-gray-300 flex flex-row justify-between gap-1 sm:gap-0 items-center">
+              <div className="text-gray-300 flex flex-row justify-between gap-1 sm:gap-0 items-center px-2">
                 <div className="flex items-center">
-                  <Typography variant="body">Required ETH to top-up</Typography>
+                  <Typography variant="caption" color="secondary">
+                    Required ETH to top-up
+                  </Typography>
                   <Tooltip
                     title={"Additional ETH needed to fund this job."}
                     placement="top"
@@ -644,13 +643,15 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                     />
                   </Tooltip>
                 </div>
-                <Typography variant="body" color="secondary">
+                <Typography variant="caption" color="secondary">
                   {requiredEth} ETH
                 </Typography>
               </div>
             )}
           </div>
-          <div className="flex flex-row gap-3 sm:gap-4">
+
+          {/* buttons */}
+          <div className="flex flex-row gap-3 sm:gap-4 mt-4">
             {hasEnoughBalance ? (
               <Button
                 color="purple"
@@ -693,6 +694,9 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Cancel
             </Button>
           </div>
+
+          {/* error messages */}
+          {/* unable to estimate fee error */}
           {!estimatedFee && (
             <Typography
               variant="caption"
@@ -703,6 +707,8 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               check your network connection.
             </Typography>
           )}
+
+          {/* topping up failed error */}
           {topUpFailed && (
             <Typography
               variant="caption"
@@ -714,6 +720,8 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
               Please check your wallet and try again.
             </Typography>
           )}
+
+          {/* wallet is empty error */}
           {!hasEnoughEthToStake &&
             !hasEnoughBalance &&
             !isSubmitting &&
@@ -726,6 +734,8 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
                 🚫 Uh oh! Looks like your wallet is empty.
               </Typography>
             )}
+
+          {/* job create failed error */}
           {jobCreateFailed && (
             <Typography
               variant="caption"
@@ -737,6 +747,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
           )}
         </>
       )}
+
       {/* Success state */}
       {!isStepperVisible && isJobCreated && (
         <div className="flex flex-col items-center gap-3 sm:gap-4 mt-4 sm:mt-5">

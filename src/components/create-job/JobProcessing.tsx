@@ -14,10 +14,8 @@ const JobProcessing: React.FC<JobProcessingProps> = ({
 }) => {
   return (
     <>
-      <div className="flex items-center justify-between mb-6 gap-2">
-        <h3 className="text-white text-lg sm:text-xl text-center">
-          Creating Job
-        </h3>
+      <div className="flex items-center justify-between mb-3 gap-2">
+        <h3 className="text-white text-base text-center">Creating Job</h3>
         {isStepperVisible && (
           <JobProgressBar currentStep={currentStep} steps={steps} />
         )}
