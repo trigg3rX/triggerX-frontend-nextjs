@@ -3,6 +3,11 @@
 import React, { useMemo, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import * as Blockly from "blockly/core";
+import {
+  ContinuousFlyout,
+  ContinuousMetrics,
+  ContinuousToolbox,
+} from "@blockly/continuous-toolbox";
 import DisableInteractions from "@/app/DisableInteractions";
 import {
   setConnectedChainId,
@@ -225,6 +230,11 @@ export function BlocklyWorkspaceSection({
             // Set autoClose to false
             flyout.autoClose = false;
 
+            // Remove spacing between blocks in flyout
+            if ("spacing" in flyout) {
+              (flyout as { spacing: number }).spacing = 0;
+            }
+
             // Disable click-to-place by overriding the createBlock method
             // This forces users to drag blocks instead of clicking them
             const originalCreateBlock = flyout.createBlock;
@@ -318,6 +328,20 @@ export function BlocklyWorkspaceSection({
         onXmlChange={onXmlChange}
         workspaceConfiguration={{
           theme: triggerxTheme,
+          // Continuous toolbox + scrollable workspace
+          plugins: {
+            toolbox: ContinuousToolbox,
+            flyoutsVerticalToolbox: ContinuousFlyout,
+            metricsManager: ContinuousMetrics,
+          },
+          move: {
+            scrollbars: {
+              horizontal: true,
+              vertical: true,
+            },
+            drag: true,
+            wheel: true,
+          },
           zoom: {
             controls: false,
             wheel: false,

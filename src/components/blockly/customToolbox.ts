@@ -2,6 +2,10 @@
 
 import * as Blockly from "blockly/core";
 import {
+  ContinuousCategory,
+  registerContinuousToolbox,
+} from "@blockly/continuous-toolbox";
+import {
   FaWallet,
   FaLink,
   FaBriefcase,
@@ -40,8 +44,11 @@ const B = Blockly as unknown as BlocklyExports;
 const ICON_BG_SIZE = "30px"; // circular icon size
 const CATEGORY_WIDTH_PX = 72; // compact vertical category width
 
+// Ensure continuous toolbox plugins are registered before overriding category
+registerContinuousToolbox();
+
 // Custom toolbox category class
-class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
+class CustomCategory extends (ContinuousCategory as unknown as ToolboxCtor) {
   /** @override */
   createDom_() {
     // @ts-expect-error - calling parent method
@@ -256,11 +263,17 @@ class CustomCategory extends (B.ToolboxCategory as ToolboxCtor) {
   }
 }
 
-// Register and override the default ToolboxCategory globally
+// Register and override the default ToolboxCategory (continuous variant) globally
+const registrationName =
+  (ContinuousCategory as unknown as { registrationName?: string })
+    .registrationName ||
+  // Fallback to core registration name
+  (Blockly as unknown as { ToolboxCategory: { registrationName: string } })
+    .ToolboxCategory.registrationName;
+
 B.registry.register(
   B.registry.Type.TOOLBOX_ITEM,
-  (Blockly as unknown as { ToolboxCategory: { registrationName: string } })
-    .ToolboxCategory.registrationName,
+  registrationName,
   CustomCategory,
   true,
 );
