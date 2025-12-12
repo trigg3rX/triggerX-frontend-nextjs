@@ -12227,9 +12227,9 @@ scrollmirror@^1.2.4:
   resolved "https://registry.npmjs.org/scrollmirror/-/scrollmirror-1.2.4.tgz#d61631f9b538fe5d5a262305f4a4e8967d24c9fd"
   integrity sha512-UkEHHOV6j5cE3IsObQRK6vO4twSuhE4vtLD4UmX+doHgrtg2jRwXkz4O6cz0jcoxK5NGU7rFjyvLcWHzw7eQ5A==
 
-sdk-triggerx@^0.1.27:
+sdk-triggerx@^0.1.35:
   version "0.1.35"
-  resolved "https://registry.npmjs.org/sdk-triggerx/-/sdk-triggerx-0.1.35.tgz#db64cec08829c34e57ac96535565328ce498dab2"
+  resolved "https://registry.yarnpkg.com/sdk-triggerx/-/sdk-triggerx-0.1.35.tgz#db64cec08829c34e57ac96535565328ce498dab2"
   integrity sha512-57vi9gBoV8OLx7khjBV5Fal+eEpQFSktmLeOY+uEY88OPi5OFtx0rYGsL+8yj4vD9gcuMGYcZ6kbvCgLZrmqYQ==
   dependencies:
     axios "^1.11.0"
