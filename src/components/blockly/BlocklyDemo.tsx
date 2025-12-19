@@ -78,6 +78,10 @@ export default function BlocklyDemo() {
   const [workspaceError, setWorkspaceError] = useState<string | null>(null);
   const permissionCheckboxRef = useRef<HTMLDivElement | null>(null);
 
+  // Contract validation state (before opening fee modal)
+  const [isValidatingContractData, setIsValidatingContractData] =
+    useState<boolean>(false);
+
   // Safe wallet creation state
   const [showCreateFlow, setShowCreateFlow] = useState(false);
   const [createStep, setCreateStep] = useState<SafeCreationStepStatus>("idle");
@@ -298,6 +302,9 @@ export default function BlocklyDemo() {
       setPermissionError(null);
       setWorkspaceError(null);
 
+      // Start validation state
+      setIsValidatingContractData(true);
+
       // Validate workspace blocks
       const validationResult = validateBlocklyWorkspace({
         xml,
@@ -315,6 +322,7 @@ export default function BlocklyDemo() {
           // For workspace-related errors
           setWorkspaceError(errorValue);
         }
+        setIsValidatingContractData(false);
         return;
       }
 
@@ -330,6 +338,7 @@ export default function BlocklyDemo() {
             block: "center",
           });
         }, 100);
+        setIsValidatingContractData(false);
         return;
       }
 
@@ -338,13 +347,15 @@ export default function BlocklyDemo() {
 
       if (!syncSuccess) {
         setWorkspaceError("Failed to sync workspace data. Please try again.");
+        setIsValidatingContractData(false);
         return;
       }
 
       // Wait for contract data to be synced (with timeout)
-      // This ensures ABI fetching and function setting from syncBlocklyToJobForm completes
+      // This ensures ABI fetching and function setting from syncBlocklyToJobForm completes,
+      // but we won't hard-fail if it times out.
       const waitForContractData = async (
-        maxWaitTime = 3000,
+        maxWaitTime = 8000,
       ): Promise<boolean> => {
         const startTime = Date.now();
         const checkInterval = 100; // Check every 100ms
@@ -407,7 +418,7 @@ export default function BlocklyDemo() {
         });
       };
 
-      // Wait for contract data to be ready
+      // Wait for contract data to be ready (best-effort; ignore result)
       await waitForContractData();
 
       // Blur any active input fields before opening the modal
@@ -437,6 +448,7 @@ export default function BlocklyDemo() {
       // Open fee modal - JobFeeModal will handle fee estimation and job creation
       setEstimatedFee(0);
       setIsModalOpen(true);
+      setIsValidatingContractData(false);
     },
     [
       setJobTitleError,
@@ -510,6 +522,7 @@ export default function BlocklyDemo() {
           setJobTitleError={setJobTitleError}
           jobTitleErrorRef={jobTitleErrorRef}
           isModalOpen={isModalOpen}
+          isValidating={isValidatingContractData}
           onCreateJob={handleCreateJob}
         />
 

@@ -9,6 +9,7 @@ interface BlocklyHeaderProps {
   setJobTitleError: (error: string | null) => void;
   jobTitleErrorRef: React.RefObject<HTMLDivElement | null>;
   isModalOpen: boolean;
+  isValidating: boolean;
   onCreateJob: (e: React.FormEvent) => void;
 }
 
@@ -19,6 +20,7 @@ export function BlocklyHeader({
   setJobTitleError,
   jobTitleErrorRef,
   isModalOpen,
+  isValidating,
   onCreateJob,
 }: BlocklyHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -160,10 +162,14 @@ export function BlocklyHeader({
           color="yellow"
           className="min-w-[120px] md:min-w-[170px]"
           onClick={onCreateJob}
-          disabled={isModalOpen}
+          disabled={isModalOpen || isValidating}
           data-tour-id="create-job-button"
         >
-          {isModalOpen ? "Estimating fees..." : "Create Job"}
+          {isValidating
+            ? "Validating data..."
+            : isModalOpen
+              ? "Estimating fees..."
+              : "Create Job"}
         </Button>
       </div>
     </Card>
