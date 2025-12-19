@@ -936,6 +936,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           isProxy: false,
           implementationAddress: undefined,
           proxyType: undefined,
+          // Preserve IPFS URL and argument type if they exist
+          ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+          argumentType: prev[contractKey]?.argumentType || "",
         },
       }));
 
@@ -1015,6 +1018,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 isProxy: proxyInfo.isProxy,
                 implementationAddress: proxyInfo.implementationAddress,
                 proxyType: proxyInfo.proxyType,
+                // Preserve IPFS URL and argument type if they exist
+                ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+                argumentType: prev[contractKey]?.argumentType || "",
               },
             }));
           } else {
@@ -1029,6 +1035,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 isProxy: proxyInfo.isProxy,
                 implementationAddress: proxyInfo.implementationAddress,
                 proxyType: proxyInfo.proxyType,
+                // Preserve IPFS URL and argument type if they exist
+                ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+                argumentType: prev[contractKey]?.argumentType || "",
               },
             }));
           }
@@ -1044,6 +1053,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               isProxy: proxyInfo.isProxy,
               implementationAddress: proxyInfo.implementationAddress,
               proxyType: proxyInfo.proxyType,
+              // Preserve IPFS URL and argument type if they exist
+              ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+              argumentType: prev[contractKey]?.argumentType || "",
             },
           }));
         }

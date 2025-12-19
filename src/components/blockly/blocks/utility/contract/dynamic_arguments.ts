@@ -9,7 +9,7 @@ export function setOpenDynamicArgsWizardHandler(handler: () => void): void {
 }
 
 // Helper to push the selected IPFS URL back into all dynamic_arguments blocks
-// We store it in `block.data` so it is hidden in the UI but persisted in XML.
+// We store it in `block.data` and mirror it into a visible field for validation.
 export function updateDynamicArgsIpfsUrl(ipfsUrl: string): void {
   try {
     const workspace = Blockly.getMainWorkspace();
@@ -19,6 +19,10 @@ export function updateDynamicArgsIpfsUrl(ipfsUrl: string): void {
     allBlocks.forEach((block) => {
       if (block.type === "dynamic_arguments") {
         block.data = ipfsUrl;
+        const field = block.getField("IPFS_URL");
+        if (field) {
+          field.setValue(ipfsUrl);
+        }
       }
     });
   } catch (error) {
@@ -36,6 +40,14 @@ const dynamicArgumentsJson = {
       type: "field_button",
       name: "OPEN_WIZARD",
       text: "Upload Script",
+    },
+  ],
+  message2: "ipfs url %1",
+  args2: [
+    {
+      type: "field_input",
+      name: "IPFS_URL",
+      text: "ipfs://...",
     },
   ],
   // No visible IPFS URL field here – URL is only shown in the Job Form UI,
@@ -56,6 +68,12 @@ Blockly.Blocks["dynamic_arguments"] = {
     // Attach click handler to the button field to open the React wizard
     const buttonField = this.getField("OPEN_WIZARD") as Blockly.Field | null;
 
+    // Keep the field value in sync with block.data when the block loads
+    const ipfsField = this.getField("IPFS_URL") as Blockly.Field | null;
+    if (ipfsField && this.data) {
+      ipfsField.setValue(this.data);
+    }
+
     // The actual class is ButtonField from create_safe_wallet.ts, which exposes setClickHandler.
     // We access it via `any` to avoid a hard dependency here.
     if (
@@ -72,6 +90,29 @@ Blockly.Blocks["dynamic_arguments"] = {
           console.warn("Dynamic arguments IPFS wizard handler not set");
         }
       });
+    }
+  },
+
+  // Serialize the IPFS URL to XML using mutationToDom
+  mutationToDom: function (): Element {
+    const container = Blockly.utils.xml.createElement("mutation");
+    const ipfsUrl =
+      (this.data as string) || this.getFieldValue("IPFS_URL") || "";
+    if (ipfsUrl && ipfsUrl !== "ipfs://...") {
+      container.setAttribute("ipfs_url", ipfsUrl);
+    }
+    return container;
+  },
+
+  // Deserialize the IPFS URL from XML using domToMutation
+  domToMutation: function (xmlElement: Element): void {
+    const ipfsUrl = xmlElement.getAttribute("ipfs_url") || "";
+    if (ipfsUrl) {
+      this.data = ipfsUrl;
+      const ipfsField = this.getField("IPFS_URL");
+      if (ipfsField) {
+        ipfsField.setValue(ipfsUrl);
+      }
     }
   },
 
@@ -110,7 +151,8 @@ export const dynamicArgumentsGenerator = function (
   block: Blockly.Block,
 ): [string, Order] {
   const functionName = block.getFieldValue("FUNCTION_NAME");
-  const ipfsUrl = (block.data as string) || "";
+  const ipfsUrl =
+    block.getFieldValue("IPFS_URL") || (block.data as string) || "";
 
   const json = JSON.stringify({
     function_name: functionName,

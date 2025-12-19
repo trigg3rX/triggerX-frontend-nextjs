@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useRef, useState, useEffect } from "react";
+import * as Blockly from "blockly/core";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import "./customToolbox";
 import { validateBlocklyWorkspace } from "./validateBlocklyWorkspace";
@@ -42,6 +43,12 @@ import { ErrorCard } from "./components/ErrorCard";
 import { PermissionCard } from "./components/PermissionCard";
 import { BlocklyWorkspaceSection } from "./components/BlocklyWorkspaceSection";
 import { MobileWarning } from "./MobileWarning";
+import { VisualBuilderTour } from "./components/VisualBuilderTour";
+import Link from "next/link";
+import Image from "next/image";
+import logo from "@/assets/logo.svg";
+import BalanceDisplay from "../ui/BalanceDisplay";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 export default function BlocklyDemo() {
   const workspaceScopeRef = useRef<HTMLDivElement | null>(null);
@@ -93,6 +100,7 @@ export default function BlocklyDemo() {
 
   // IPFS Script Wizard (for dynamic_arguments block)
   const [isIpfsWizardOpen, setIsIpfsWizardOpen] = useState(false);
+  const [wizardTargetFunction, setWizardTargetFunction] = useState("");
 
   // Update loading state in the select block
   useEffect(() => {
@@ -262,6 +270,21 @@ export default function BlocklyDemo() {
   // Set up handler for opening the IPFS Script Wizard from the dynamic_arguments block
   useEffect(() => {
     setOpenDynamicArgsWizardHandler(() => {
+      try {
+        const workspace = Blockly.getMainWorkspace();
+        const allBlocks = workspace?.getAllBlocks(false) || [];
+        const execBlock = allBlocks.find(
+          (b) =>
+            b.type === "execute_function" ||
+            b.type === "execute_through_safe_wallet",
+        );
+        const func = execBlock?.getFieldValue("FUNCTION_NAME") || "";
+        setWizardTargetFunction(func);
+      } catch (err) {
+        console.error("Failed to read target function from Blockly", err);
+        setWizardTargetFunction("");
+      }
+
       setIsIpfsWizardOpen(true);
     });
   }, []);
@@ -274,19 +297,6 @@ export default function BlocklyDemo() {
       setJobTitleError(null);
       setPermissionError(null);
       setWorkspaceError(null);
-
-      // Check job title first
-      if (!jobTitle || jobTitle.trim() === "") {
-        setJobTitleError("Job title is required.");
-        // Scroll to job title input
-        setTimeout(() => {
-          jobTitleErrorRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-        }, 100);
-        return;
-      }
 
       // Validate workspace blocks
       const validationResult = validateBlocklyWorkspace({
@@ -331,6 +341,99 @@ export default function BlocklyDemo() {
         return;
       }
 
+      // Wait for contract data to be synced (with timeout)
+      // This ensures ABI fetching and function setting from syncBlocklyToJobForm completes
+      const waitForContractData = async (
+        maxWaitTime = 3000,
+      ): Promise<boolean> => {
+        const startTime = Date.now();
+        const checkInterval = 100; // Check every 100ms
+
+        return new Promise((resolve) => {
+          const checkData = () => {
+            // Get latest values from context each time we check
+            const currentContract =
+              jobFormContext.contractInteractions["contract"];
+            const currentJobType = jobFormContext.jobType;
+
+            if (!currentContract) {
+              // If no contract yet, continue waiting
+              if (Date.now() - startTime >= maxWaitTime) {
+                resolve(false);
+                return;
+              }
+              setTimeout(checkData, checkInterval);
+              return;
+            }
+
+            // For custom script jobs (jobType 4), we don't need contract info
+            if (currentJobType === 4) {
+              resolve(true);
+              return;
+            }
+
+            // Check if required contract fields are populated
+            const hasAddress = Boolean(
+              currentContract.address &&
+              currentContract.address.trim() !== "" &&
+              currentContract.address !==
+                "0x0000000000000000000000000000000000000000",
+            );
+            const hasTargetFunction = Boolean(
+              currentContract.targetFunction &&
+              currentContract.targetFunction.trim() !== "",
+            );
+            const hasAbi = Boolean(
+              currentContract.abi !== null &&
+              currentContract.abi !== undefined &&
+              currentContract.abi !== "",
+            );
+
+            if (hasAddress && hasTargetFunction && hasAbi) {
+              resolve(true);
+              return;
+            }
+
+            if (Date.now() - startTime >= maxWaitTime) {
+              // Timeout reached, resolve anyway (will show error in modal if data missing)
+              resolve(false);
+              return;
+            }
+
+            setTimeout(checkData, checkInterval);
+          };
+
+          checkData();
+        });
+      };
+
+      // Wait for contract data to be ready
+      await waitForContractData();
+
+      // Blur any active input fields before opening the modal
+      // Use setTimeout to ensure blur happens before modal renders
+      setTimeout(() => {
+        if (document.activeElement instanceof HTMLElement) {
+          const activeElement = document.activeElement;
+          if (
+            activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "TEXTAREA" ||
+            activeElement.isContentEditable
+          ) {
+            activeElement.blur();
+          }
+        }
+        // Also blur all focused inputs
+        const allInputs = document.querySelectorAll(
+          "input:focus, textarea:focus",
+        );
+        allInputs.forEach((input) => {
+          if (input instanceof HTMLElement) {
+            input.blur();
+          }
+        });
+      }, 0);
+
       // Open fee modal - JobFeeModal will handle fee estimation and job creation
       setEstimatedFee(0);
       setIsModalOpen(true);
@@ -341,7 +444,6 @@ export default function BlocklyDemo() {
       xml,
       jobTitle,
       address,
-      jobTitleErrorRef,
       setEstimatedFee,
       setIsModalOpen,
       setPermissionError,
@@ -350,13 +452,57 @@ export default function BlocklyDemo() {
     ],
   );
 
+  // Clear workspace errors automatically when wallet connects
+  useEffect(() => {
+    if (address) {
+      setWorkspaceError(null);
+    }
+  }, [address, setWorkspaceError]);
+
   return (
     <>
+      <div className="my-6 md:my-8 header flex items-center justify-between">
+        <Link href="/">
+          <Image
+            src={logo}
+            alt="TriggerX"
+            width={180}
+            height={40}
+            className="w-[130px] xl:w-[160px] h-auto mb-4 cursor-pointer"
+          />
+        </Link>
+        <div className="flex items-center lg:gap-[5px]">
+          <ConnectButton
+            chainStatus="icon"
+            accountStatus="address"
+            showBalance={false}
+          />
+          <BalanceDisplay />
+        </div>
+      </div>
+
       {/* Mobile/Tablet Warning - Show below 768px */}
       <MobileWarning />
 
+      {/* On-page guided tour */}
+      <VisualBuilderTour />
+
       {/* Desktop View - Show 768px and above */}
       <div className="hidden md:flex flex-col gap-2">
+        <PermissionCard
+          hasConfirmedPermission={hasConfirmedPermission}
+          setHasConfirmedPermission={setHasConfirmedPermission}
+          permissionError={permissionError}
+          setPermissionError={setPermissionError}
+          permissionCheckboxRef={permissionCheckboxRef}
+          selectedNetwork={selectedNetwork}
+        />
+
+        <ErrorCard
+          error={workspaceError}
+          onClose={() => setWorkspaceError(null)}
+        />
+
         <BlocklyHeader
           jobTitle={jobTitle}
           setJobTitle={setJobTitle}
@@ -367,21 +513,7 @@ export default function BlocklyDemo() {
           onCreateJob={handleCreateJob}
         />
 
-        <ErrorCard
-          error={workspaceError}
-          onClose={() => setWorkspaceError(null)}
-        />
-
-        <PermissionCard
-          hasConfirmedPermission={hasConfirmedPermission}
-          setHasConfirmedPermission={setHasConfirmedPermission}
-          permissionError={permissionError}
-          setPermissionError={setPermissionError}
-          permissionCheckboxRef={permissionCheckboxRef}
-          selectedNetwork={selectedNetwork}
-        />
-
-        <div className="flex gap-2 h-[80vh]">
+        <div className="flex gap-2 h-[80vh]" data-tour-id="workspace-area">
           <BlocklyWorkspaceSection
             xml={xml}
             onXmlChange={onXmlChange}
@@ -406,6 +538,11 @@ export default function BlocklyDemo() {
             updateDynamicArgsIpfsUrl(url);
             setIsIpfsWizardOpen(false);
           }}
+          targetFunction={
+            wizardTargetFunction ||
+            jobFormContext.contractInteractions.contract?.targetFunction ||
+            ""
+          }
         />
 
         {/* Safe Wallet Creation Progress Dialog */}

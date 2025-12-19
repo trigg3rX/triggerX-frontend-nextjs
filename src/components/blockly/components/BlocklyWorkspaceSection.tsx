@@ -167,7 +167,6 @@ export function BlocklyWorkspaceSection({
             },
             { kind: "block", type: "execute_function" },
             { kind: "block", type: "safe_transaction" },
-            { kind: "block", type: "safe_transaction2" },
             { kind: "block", type: "static_arguments" },
             { kind: "block", type: "dynamic_arguments" },
           ],
@@ -254,6 +253,39 @@ export function BlocklyWorkspaceSection({
               return originalCreateBlock.call(flyout, originalBlock);
             };
           }
+          // Tag toolbox and flyout for guided tour selectors
+          const tagTourTargets = () => {
+            const ws = workspaceRef.current;
+            if (!ws) return false;
+
+            // Toolbox DOM
+            const toolboxDiv =
+              (
+                ws.getToolbox() as unknown as {
+                  getHtmlDiv?: () => HTMLElement | null;
+                }
+              )?.getHtmlDiv?.() ||
+              workspaceScopeRef.current?.querySelector(".blocklyToolbox") ||
+              workspaceScopeRef.current?.querySelector(".blocklyToolboxDiv");
+            toolboxDiv?.setAttribute("data-tour-id", "toolbox");
+
+            // Flyout SVG group (use svg element so we can highlight its bounds)
+            const flyout = ws.getFlyout() as unknown as {
+              svgGroup_?: SVGElement | null;
+            };
+            const flyoutSvg = flyout?.svgGroup_;
+            if (flyoutSvg) {
+              flyoutSvg.setAttribute("data-tour-id", "flyout");
+            }
+
+            return Boolean(toolboxDiv && flyoutSvg);
+          };
+
+          // Attempt immediately and retry shortly in case Blockly hasn't rendered yet
+          const tagged = tagTourTargets();
+          if (!tagged) {
+            setTimeout(() => tagTourTargets(), 300);
+          }
         }
       } catch (error) {
         console.error("Error configuring flyout:", error);
@@ -261,7 +293,7 @@ export function BlocklyWorkspaceSection({
     }, 500); // Wait for workspace to be fully initialized
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [workspaceScopeRef]);
 
   // Sync wallet blocks with connected address
   useEffect(() => {
@@ -340,7 +372,7 @@ export function BlocklyWorkspaceSection({
               vertical: true,
             },
             drag: true,
-            wheel: true,
+            wheel: false,
           },
           zoom: {
             controls: false,

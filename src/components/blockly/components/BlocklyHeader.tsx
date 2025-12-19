@@ -78,7 +78,7 @@ export function BlocklyHeader({
   };
 
   return (
-    <Card className="flex items-center justify-between gap-4 !border-0 !p-3 mt-10">
+    <Card className="flex items-center justify-between gap-4 !border-0 !p-3">
       <div
         className="flex items-center gap-6 w-full md:w-auto"
         ref={jobTitleErrorRef}
@@ -89,6 +89,7 @@ export function BlocklyHeader({
             type="text"
             placeholder="Untitled Job"
             value={isEditing ? tempTitle : jobTitle}
+            data-tour-id="job-title-input"
             onChange={(e) => {
               const value = e.target.value;
               if (isEditing) {
@@ -160,6 +161,7 @@ export function BlocklyHeader({
           className="min-w-[120px] md:min-w-[170px]"
           onClick={onCreateJob}
           disabled={isModalOpen}
+          data-tour-id="create-job-button"
         >
           {isModalOpen ? "Estimating fees..." : "Create Job"}
         </Button>

@@ -1,8 +1,15 @@
-// Polyfill for indexedDB during SSR
-// This provides a stub so that code trying to access indexedDB during SSR doesn't crash
+// Polyfill for indexedDB during SSR/Node.
+// Some libraries (e.g. Blockly) touch indexedDB at module-evaluation time.
+// Ensure the global exists so imports don't throw ReferenceError on the server.
+const globalObject =
+  typeof globalThis !== "undefined"
+    ? (globalThis as { indexedDB?: IDBFactory | undefined })
+    : undefined;
 
-// Export a no-op object that matches the indexedDB interface structure
-export const indexedDB =
-  typeof window !== "undefined"
-    ? window.indexedDB
-    : (undefined as unknown as IDBFactory);
+if (globalObject && typeof globalObject.indexedDB === "undefined") {
+  // Prefer the browser implementation when available, otherwise stub as undefined.
+  globalObject.indexedDB =
+    typeof window !== "undefined" ? window.indexedDB : undefined;
+}
+
+export const indexedDB = globalObject?.indexedDB;

@@ -33,7 +33,7 @@ export function PermissionCard({
   };
 
   return (
-    <div ref={permissionCheckboxRef}>
+    <div ref={permissionCheckboxRef} data-tour-id="permission-card">
       <Card
         className="flex flex-col items-start gap-2 mt-4 cursor-pointer hover:border-white/20"
         onClick={handleToggle}

@@ -178,6 +178,25 @@ async function checkProxyFunctions(
   provider: ethers.Provider,
 ): Promise<ProxyInfo> {
   try {
+    const safeCall = async <T>(fn: () => Promise<T>): Promise<T | null> => {
+      try {
+        return await fn();
+      } catch (error) {
+        // Some proxy functions (e.g. Transparent proxies) revert for non-admin callers.
+        const err = error as { code?: string; message?: string };
+        if (err?.code === "CALL_EXCEPTION") {
+          devLog(
+            `Proxy function call reverted (likely restricted to admin): ${err.message}`,
+          );
+        } else {
+          devLog(
+            `Proxy function call failed: ${err?.message ?? "Unknown error"}`,
+          );
+        }
+        return null;
+      }
+    };
+
     const contract = new ethers.Contract(
       contractAddress,
       [
@@ -189,63 +208,52 @@ async function checkProxyFunctions(
     );
 
     // Try to call implementation() function
-    try {
-      const implementationAddress = await contract.implementation();
-      if (
-        ethers.isAddress(implementationAddress) &&
-        implementationAddress !== ethers.ZeroAddress
-      ) {
-        devLog(
-          `Found proxy via implementation() function: ${implementationAddress}`,
-        );
-        return {
-          isProxy: true,
-          implementationAddress,
-          proxyType: "Function-based",
-        };
-      }
-    } catch (error) {
-      console.log("error", error);
-      // implementation() function doesn't exist or failed
+    const implementationAddress = await safeCall(
+      contract.implementation.bind(contract),
+    );
+    if (
+      implementationAddress &&
+      ethers.isAddress(implementationAddress) &&
+      implementationAddress !== ethers.ZeroAddress
+    ) {
+      devLog(
+        `Found proxy via implementation() function: ${implementationAddress}`,
+      );
+      return {
+        isProxy: true,
+        implementationAddress,
+        proxyType: "Function-based",
+      };
     }
 
     // Try to call admin() function (common in OpenZeppelin proxies)
-    try {
-      const adminAddress = await contract.admin();
-      if (
-        ethers.isAddress(adminAddress) &&
-        adminAddress !== ethers.ZeroAddress
-      ) {
-        devLog(`Found proxy via admin() function: ${adminAddress}`);
-        return {
-          isProxy: true,
-          implementationAddress: contractAddress, // For admin-based proxies, the contract itself might be the implementation
-          proxyType: "Admin-based",
-        };
-      }
-    } catch (error) {
-      console.log("error", error);
-      // admin() function doesn't exist or failed
+    const adminAddress = await safeCall(contract.admin.bind(contract));
+    if (
+      adminAddress &&
+      ethers.isAddress(adminAddress) &&
+      adminAddress !== ethers.ZeroAddress
+    ) {
+      devLog(`Found proxy via admin() function: ${adminAddress}`);
+      return {
+        isProxy: true,
+        implementationAddress: contractAddress, // For admin-based proxies, the contract itself might be the implementation
+        proxyType: "Admin-based",
+      };
     }
 
     // Try to call proxiableUUID() function (EIP-1822)
-    try {
-      const uuid = await contract.proxiableUUID();
-      if (
-        uuid &&
-        uuid !==
-          "0x0000000000000000000000000000000000000000000000000000000000000000"
-      ) {
-        devLog(`Found EIP-1822 proxy via proxiableUUID(): ${uuid}`);
-        return {
-          isProxy: true,
-          implementationAddress: contractAddress, // For EIP-1822, we need to check storage
-          proxyType: "EIP-1822",
-        };
-      }
-    } catch (error) {
-      console.log("error", error);
-      // proxiableUUID() function doesn't exist or failed
+    const uuid = await safeCall(contract.proxiableUUID.bind(contract));
+    if (
+      uuid &&
+      uuid !==
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ) {
+      devLog(`Found EIP-1822 proxy via proxiableUUID(): ${uuid}`);
+      return {
+        isProxy: true,
+        implementationAddress: contractAddress, // For EIP-1822, we need to check storage
+        proxyType: "EIP-1822",
+      };
     }
 
     return { isProxy: false };

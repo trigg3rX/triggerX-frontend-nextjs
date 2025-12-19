@@ -31,6 +31,15 @@ export function validateBlocklyWorkspace({
   jobTitle,
   connectedAddress,
 }: ValidateBlocklyWorkspaceArgs): BlocklyValidationError | null {
+  // Ensure wallet is connected in the dApp
+  if (!connectedAddress) {
+    return {
+      errorKey: "walletConnection",
+      errorValue:
+        "No wallet connected. Use the Connect Wallet button in the header to connect before continuing.",
+    };
+  }
+
   // Validate job title
   if (!jobTitle || jobTitle.trim() === "") {
     return {
@@ -236,7 +245,7 @@ export function validateBlocklyWorkspace({
       const argsType = argsBlock.getAttribute("type");
       if (argsType === "dynamic_arguments") {
         const ipfsUrl = getFieldValue(argsBlock, "IPFS_URL");
-        if (!ipfsUrl || ipfsUrl === "ipfs://..." || ipfsUrl.trim() === "") {
+        if (!ipfsUrl || ipfsUrl.trim() === "" || ipfsUrl === "ipfs://...") {
           return {
             errorKey: errorContext,
             errorValue:
@@ -244,11 +253,15 @@ export function validateBlocklyWorkspace({
           };
         }
 
-        if (!ipfsUrl.startsWith("ipfs://")) {
+        const isIpfsScheme = ipfsUrl.startsWith("ipfs://");
+        const isGatewayUrl = ipfsUrl.startsWith("https://");
+        const looksLikeCid = ipfsUrl.length >= 46 && !ipfsUrl.includes(" ");
+
+        if (!(isIpfsScheme || isGatewayUrl || looksLikeCid)) {
           return {
             errorKey: errorContext,
             errorValue:
-              "Invalid IPFS URL format in dynamic arguments block. It should start with ipfs://",
+              "Invalid IPFS URL format in dynamic arguments block. Use ipfs://, https:// gateway, or a CID.",
           };
         }
       } else if (argsType !== "static_arguments") {

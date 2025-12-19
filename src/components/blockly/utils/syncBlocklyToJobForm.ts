@@ -172,6 +172,7 @@ export async function syncBlocklyToJobForm(
       }
 
       // Determine argument type from child blocks
+      // If static_arguments block exists -> static, if dynamic_arguments block exists -> dynamic
       const staticArgsBlock = findFirstBlockByType("static_arguments");
       const dynamicArgsBlock = findFirstBlockByType("dynamic_arguments");
 
@@ -187,12 +188,54 @@ export async function syncBlocklyToJobForm(
         formContext.handleArgumentTypeChange("contract", argumentType);
       }
 
-      // If dynamic arguments, set IPFS URL
+      // Extract IPFS URL if dynamic arguments block exists
+      let ipfsUrl = "";
       if (dynamicArgsBlock) {
-        const ipfsUrl = getField(dynamicArgsBlock, "IPFS_URL") || "";
-        if (ipfsUrl) {
-          formContext.handleIpfsCodeUrlChange("contract", ipfsUrl);
+        // Check field value first
+        ipfsUrl = getField(dynamicArgsBlock, "IPFS_URL") || "";
+
+        // If empty or placeholder, check mutation element (from mutationToDom)
+        if (!ipfsUrl || ipfsUrl === "ipfs://...") {
+          const mutation = dynamicArgsBlock.getElementsByTagName("mutation")[0];
+          if (mutation) {
+            const mutationUrl = mutation.getAttribute("ipfs_url");
+            if (mutationUrl && mutationUrl.trim() !== "") {
+              ipfsUrl = mutationUrl.trim();
+            }
+          }
         }
+
+        // If still empty, check data attribute (fallback)
+        if (!ipfsUrl || ipfsUrl === "ipfs://...") {
+          const dataAttr = dynamicArgsBlock.getAttribute("data");
+          if (dataAttr && dataAttr.trim() !== "") {
+            ipfsUrl = dataAttr.trim();
+          }
+        }
+      }
+
+      // Set argument type first
+      if (argumentType) {
+        formContext.handleArgumentTypeChange("contract", argumentType);
+      }
+
+      // For dynamic arguments, set IPFS URL after a delay to ensure it happens after ABI fetching
+      // This is different from static arguments which don't need IPFS URL
+      if (argumentType === "dynamic" && ipfsUrl && ipfsUrl !== "ipfs://...") {
+        // Set IPFS URL after contract address change and ABI fetching completes
+        // Use multiple timeouts to ensure it persists through all state updates
+        setTimeout(() => {
+          formContext.handleIpfsCodeUrlChange("contract", ipfsUrl);
+        }, 800);
+
+        // Also set it again after a longer delay to ensure it persists
+        setTimeout(() => {
+          formContext.handleIpfsCodeUrlChange("contract", ipfsUrl);
+        }, 1500);
+      } else if (argumentType === "dynamic") {
+        console.warn(
+          "[syncBlocklyToJobForm] Dynamic arguments block found but IPFS URL is empty!",
+        );
       }
 
       // If static arguments, set argument values
@@ -390,10 +433,6 @@ export async function syncBlocklyToJobForm(
 
         if (dataAttr && dataAttr.trim() !== "") {
           formContext.setSelectedSafeWallet(dataAttr);
-          console.log(
-            "Safe wallet execution mode enabled with created wallet:",
-            dataAttr,
-          );
         }
       }
       // Check for imported Safe wallet
@@ -403,10 +442,6 @@ export async function syncBlocklyToJobForm(
 
         if (dataAttr && dataAttr.trim() !== "") {
           formContext.setSelectedSafeWallet(dataAttr);
-          console.log(
-            "Safe wallet execution mode enabled with imported wallet:",
-            dataAttr,
-          );
         }
       }
       // Check for selected Safe wallet
@@ -416,10 +451,6 @@ export async function syncBlocklyToJobForm(
 
         if (selectedWallet && selectedWallet.trim() !== "") {
           formContext.setSelectedSafeWallet(selectedWallet);
-          console.log(
-            "Safe wallet execution mode enabled with selected wallet:",
-            selectedWallet,
-          );
         }
       }
 
@@ -454,7 +485,7 @@ export async function syncBlocklyToJobForm(
 
         // Process each safe_transaction block
         for (const txBlock of safeTransactionBlocks) {
-          const targetAddress = getField(txBlock, "TARGET_ADDRESS") || "";
+          const targetAddress = getField(txBlock, "CONTRACT_ADDRESS") || "";
           const functionName = getField(txBlock, "FUNCTION_NAME") || "";
           const valueStr = getField(txBlock, "VALUE") || "0";
 

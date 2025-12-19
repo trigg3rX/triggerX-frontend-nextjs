@@ -11,7 +11,7 @@ export function ErrorCard({ error, onClose }: ErrorCardProps) {
   if (!error) return null;
 
   return (
-    <Card className="mt-4 border-l-4 !border-l-red-500 !border-t-white/10 !border-r-white/10 !border-b-white/10">
+    <Card className="border-l-4 !border-l-red-500 !border-t-white/10 !border-r-white/10 !border-b-white/10">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-2">
           <Typography variant="h3" color="error" align="left">

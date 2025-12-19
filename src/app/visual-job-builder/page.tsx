@@ -1,9 +1,6 @@
 import React from "react";
-import BlocklyDemo from "@/components/blockly/BlocklyDemo";
-import { JobProvider } from "@/contexts/JobContext";
-import { JobFormProvider } from "@/contexts/JobFormContext";
-import templatesData from "@/data/templates.json";
 import { Metadata } from "next";
+import VisualJobBuilderEntry from "./VisualJobBuilderEntry";
 
 export const metadata: Metadata = {
   title: "TriggerX App | Build Automated Jobs with Visual Block Builder",
@@ -32,11 +29,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return (
-    <JobProvider templates={templatesData.templates}>
-      <JobFormProvider>
-        <BlocklyDemo />
-      </JobFormProvider>
-    </JobProvider>
-  );
+  return <VisualJobBuilderEntry />;
 }

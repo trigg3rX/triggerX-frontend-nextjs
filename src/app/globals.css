@@ -381,3 +381,11 @@ body {
 .blocklyToolbox * {
   font-family: "Actay", "Sharp Grotesk", sans-serif !important;
 }
+
+/* Ensure inputs don't appear above modals */
+body.modal-open input,
+body.modal-open textarea,
+body.modal-open [contenteditable="true"] {
+  z-index: 1 !important;
+  position: relative;
+}
