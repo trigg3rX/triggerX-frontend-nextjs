@@ -8,7 +8,6 @@ import { validateBlocklyWorkspace } from "./validateBlocklyWorkspace";
 import JobFeeModal from "../create-job/JobFeeModal";
 import { IpfsScriptWizard } from "../create-job/form/IpfsScriptWizard";
 import { useAccount } from "wagmi";
-import { syncBlocklyToJobForm } from "./utils/syncBlocklyToJobForm";
 import {
   setCreateSafeHandler,
   updateCreatedWalletAddress,
@@ -342,85 +341,7 @@ export default function BlocklyDemo() {
         return;
       }
 
-      // All validation passed - sync Blockly blocks to JobFormContext
-      const syncSuccess = await syncBlocklyToJobForm(xml, jobFormContext);
-
-      if (!syncSuccess) {
-        setWorkspaceError("Failed to sync workspace data. Please try again.");
-        setIsValidatingContractData(false);
-        return;
-      }
-
-      // Wait for contract data to be synced (with timeout)
-      // This ensures ABI fetching and function setting from syncBlocklyToJobForm completes,
-      // but we won't hard-fail if it times out.
-      const waitForContractData = async (
-        maxWaitTime = 8000,
-      ): Promise<boolean> => {
-        const startTime = Date.now();
-        const checkInterval = 100; // Check every 100ms
-
-        return new Promise((resolve) => {
-          const checkData = () => {
-            // Get latest values from context each time we check
-            const currentContract =
-              jobFormContext.contractInteractions["contract"];
-            const currentJobType = jobFormContext.jobType;
-
-            if (!currentContract) {
-              // If no contract yet, continue waiting
-              if (Date.now() - startTime >= maxWaitTime) {
-                resolve(false);
-                return;
-              }
-              setTimeout(checkData, checkInterval);
-              return;
-            }
-
-            // For custom script jobs (jobType 4), we don't need contract info
-            if (currentJobType === 4) {
-              resolve(true);
-              return;
-            }
-
-            // Check if required contract fields are populated
-            const hasAddress = Boolean(
-              currentContract.address &&
-              currentContract.address.trim() !== "" &&
-              currentContract.address !==
-                "0x0000000000000000000000000000000000000000",
-            );
-            const hasTargetFunction = Boolean(
-              currentContract.targetFunction &&
-              currentContract.targetFunction.trim() !== "",
-            );
-            const hasAbi = Boolean(
-              currentContract.abi !== null &&
-              currentContract.abi !== undefined &&
-              currentContract.abi !== "",
-            );
-
-            if (hasAddress && hasTargetFunction && hasAbi) {
-              resolve(true);
-              return;
-            }
-
-            if (Date.now() - startTime >= maxWaitTime) {
-              // Timeout reached, resolve anyway (will show error in modal if data missing)
-              resolve(false);
-              return;
-            }
-
-            setTimeout(checkData, checkInterval);
-          };
-
-          checkData();
-        });
-      };
-
-      // Wait for contract data to be ready (best-effort; ignore result)
-      await waitForContractData();
-
+      // All validation passed - data is already synced automatically on block changes
       // Blur any active input fields before opening the modal
       // Use setTimeout to ensure blur happens before modal renders
       setTimeout(() => {
@@ -460,7 +381,6 @@ export default function BlocklyDemo() {
       setIsModalOpen,
       setPermissionError,
       setWorkspaceError,
-      jobFormContext,
     ],
   );
 
@@ -533,6 +453,7 @@ export default function BlocklyDemo() {
             workspaceScopeRef={workspaceScopeRef}
             connectedAddress={address}
             connectedChainId={chain?.id}
+            jobFormContext={jobFormContext}
           />
         </div>
 

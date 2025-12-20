@@ -389,3 +389,34 @@ body.modal-open [contenteditable="true"] {
   z-index: 1 !important;
   position: relative;
 }
+
+/* Blockly Connection Feedback Animations */
+@keyframes blockly-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes blockly-success-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}

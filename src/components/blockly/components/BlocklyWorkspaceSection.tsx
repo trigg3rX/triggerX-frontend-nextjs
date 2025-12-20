@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import * as Blockly from "blockly/core";
 import {
@@ -14,6 +14,9 @@ import {
   setConnectedWalletAddress,
 } from "../blocks/default_blocks";
 import { setImportSafeChainId } from "../blocks/utility/safe-wallet/import_safe_wallet";
+import { SmartSuggestions } from "./SmartSuggestions";
+import { syncBlocklyToJobForm } from "../utils/syncBlocklyToJobForm";
+import { JobFormContextType } from "@/contexts/JobFormContext";
 
 // react-blockly uses window, so ensure client-only dynamic import
 const BlocklyWorkspace = dynamic(
@@ -47,6 +50,7 @@ interface BlocklyWorkspaceSectionProps {
   workspaceScopeRef: React.RefObject<HTMLDivElement | null>;
   connectedAddress?: string;
   connectedChainId?: number;
+  jobFormContext: JobFormContextType;
 }
 
 export function BlocklyWorkspaceSection({
@@ -55,8 +59,10 @@ export function BlocklyWorkspaceSection({
   workspaceScopeRef,
   connectedAddress,
   connectedChainId,
+  jobFormContext,
 }: BlocklyWorkspaceSectionProps) {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const toolboxJson = useMemo(
     () => ({
@@ -197,14 +203,83 @@ export function BlocklyWorkspaceSection({
     [connectedChainId],
   );
 
+  // Sync function with debouncing
+  const syncToJobForm = useCallback(
+    async (workspaceXml: string) => {
+      // Clear any pending sync
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+
+      // Debounce sync calls - wait 500ms after last change
+      syncTimeoutRef.current = setTimeout(async () => {
+        try {
+          await syncBlocklyToJobForm(workspaceXml, jobFormContext);
+        } catch (error) {
+          console.error(
+            "Error syncing Blockly to JobForm on block change:",
+            error,
+          );
+        }
+      }, 500);
+    },
+    [jobFormContext],
+  );
+
   // Keep flyout always open and disable click-to-place
   useEffect(() => {
+    let workspaceChangeListener:
+      | ((event: Blockly.Events.Abstract) => void)
+      | null = null;
+    let workspace: Blockly.WorkspaceSvg | null = null;
+
     const timer = setTimeout(() => {
       try {
         // Get the primary workspace
-        const workspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg;
+        workspace = Blockly.getMainWorkspace() as Blockly.WorkspaceSvg;
         if (workspace && workspace.getToolbox()) {
           workspaceRef.current = workspace;
+
+          // Set up workspace change listener to sync on block changes
+          workspaceChangeListener = (event: Blockly.Events.Abstract) => {
+            // Only sync on meaningful changes that affect job configuration
+            let shouldSync = false;
+
+            if (event.type === Blockly.Events.BLOCK_CHANGE) {
+              // Field value changes - always sync
+              shouldSync = true;
+            } else if (event.type === Blockly.Events.BLOCK_CREATE) {
+              // New blocks added - always sync
+              shouldSync = true;
+            } else if (event.type === Blockly.Events.BLOCK_DELETE) {
+              // Blocks removed - always sync
+              shouldSync = true;
+            } else if (event.type === Blockly.Events.BLOCK_MOVE) {
+              // Only sync on block moves if blocks are being connected/disconnected
+              // (not just repositioning)
+              const moveEvent = event as Blockly.Events.BlockMove;
+              if (
+                moveEvent.newParentId !== moveEvent.oldParentId ||
+                moveEvent.newInputName !== moveEvent.oldInputName
+              ) {
+                // Block connection changed - sync
+                shouldSync = true;
+              }
+              // Otherwise, it's just repositioning - don't sync
+            } else if (event.type === Blockly.Events.FINISHED_LOADING) {
+              // Workspace loaded - sync initial state
+              shouldSync = true;
+            }
+
+            if (shouldSync && workspace) {
+              // Get current XML and sync
+              const currentXml = Blockly.Xml.workspaceToDom(workspace);
+              const xmlText = Blockly.Xml.domToText(currentXml);
+              syncToJobForm(xmlText);
+            }
+          };
+
+          workspace.addChangeListener(workspaceChangeListener);
 
           // Get the toolbox and select the first category to open the flyout
           const toolbox = workspace.getToolbox() as unknown as Blockly.Toolbox;
@@ -292,8 +367,17 @@ export function BlocklyWorkspaceSection({
       }
     }, 500); // Wait for workspace to be fully initialized
 
-    return () => clearTimeout(timer);
-  }, [workspaceScopeRef]);
+    return () => {
+      clearTimeout(timer);
+      if (syncTimeoutRef.current) {
+        clearTimeout(syncTimeoutRef.current);
+      }
+      // Remove workspace change listener if it was added
+      if (workspace && workspaceChangeListener) {
+        workspace.removeChangeListener(workspaceChangeListener);
+      }
+    };
+  }, [workspaceScopeRef, syncToJobForm]);
 
   // Sync wallet blocks with connected address
   useEffect(() => {
@@ -344,51 +428,54 @@ export function BlocklyWorkspaceSection({
   }, [connectedChainId]);
 
   return (
-    <div
-      className="h-full overflow-hidden w-full rounded-2xl"
-      ref={workspaceScopeRef}
-    >
-      <DisableInteractions
-        scopeRef={
-          workspaceScopeRef as unknown as React.MutableRefObject<HTMLElement | null>
-        }
-      />
-      <BlocklyWorkspace
-        className="w-full h-full bg-[#141414]"
-        toolboxConfiguration={toolboxJson}
-        initialXml={xml}
-        onXmlChange={onXmlChange}
-        workspaceConfiguration={{
-          theme: triggerxTheme,
-          // Continuous toolbox + scrollable workspace
-          plugins: {
-            toolbox: ContinuousToolbox,
-            flyoutsVerticalToolbox: ContinuousFlyout,
-            metricsManager: ContinuousMetrics,
-          },
-          move: {
-            scrollbars: {
-              horizontal: true,
-              vertical: true,
+    <>
+      <div
+        className="h-full overflow-hidden w-full rounded-2xl"
+        ref={workspaceScopeRef}
+      >
+        <DisableInteractions
+          scopeRef={
+            workspaceScopeRef as unknown as React.MutableRefObject<HTMLElement | null>
+          }
+        />
+        <BlocklyWorkspace
+          className="w-full h-full bg-[#141414]"
+          toolboxConfiguration={toolboxJson}
+          initialXml={xml}
+          onXmlChange={onXmlChange}
+          workspaceConfiguration={{
+            theme: triggerxTheme,
+            // Continuous toolbox + scrollable workspace
+            plugins: {
+              toolbox: ContinuousToolbox,
+              flyoutsVerticalToolbox: ContinuousFlyout,
+              metricsManager: ContinuousMetrics,
             },
-            drag: true,
-            wheel: false,
-          },
-          zoom: {
-            controls: false,
-            wheel: false,
-            pinch: false,
-            startScale: 0.6,
-            maxScale: 1,
-            minScale: 1,
-            scaleSpeed: 1,
-          },
-          grid: { spacing: 25, length: 3, colour: "#1f1f1f", snap: true },
-          renderer: "zelos",
-          trashcan: false,
-          sounds: false,
-        }}
-      />
-    </div>
+            move: {
+              scrollbars: {
+                horizontal: true,
+                vertical: true,
+              },
+              drag: true,
+              wheel: false,
+            },
+            zoom: {
+              controls: false,
+              wheel: false,
+              pinch: false,
+              startScale: 0.6,
+              maxScale: 1,
+              minScale: 1,
+              scaleSpeed: 1,
+            },
+            grid: { spacing: 25, length: 3, colour: "#1f1f1f", snap: true },
+            renderer: "zelos",
+            trashcan: false,
+            sounds: false,
+          }}
+        />
+      </div>
+      <SmartSuggestions workspace={workspaceRef.current} />
+    </>
   );
 }
