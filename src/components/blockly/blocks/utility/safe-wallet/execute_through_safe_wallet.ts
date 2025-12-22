@@ -17,6 +17,7 @@ const executeThroughSafeWalletJson = {
     {
       type: "field_input",
       name: "MODULE_ADDRESS",
+      editable: false,
       text: "",
       spellcheck: false,
     },
@@ -26,6 +27,7 @@ const executeThroughSafeWalletJson = {
     {
       type: "field_input",
       name: "FUNCTION",
+      editable: false,
       text: "",
       spellcheck: false,
     },

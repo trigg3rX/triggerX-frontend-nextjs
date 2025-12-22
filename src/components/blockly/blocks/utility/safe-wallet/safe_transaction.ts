@@ -175,17 +175,18 @@ const fetchAndUpdateABI = async (
 
 const safeTransactionJson = {
   type: "safe_transaction",
-  message0: "Perform safe transaction for %1",
-  message1: "from Target Address %1",
-  message2: "and value (in ETH) %1",
-  args0: [
+  message0: "Perform safe transaction",
+  message1: "for %1",
+  message2: "from Target Address %1",
+  message3: "and value (in ETH) %1",
+  args1: [
     {
       type: "field_dropdown",
       name: "FUNCTION_NAME",
       options: [["select a function", ""]],
     },
   ],
-  args1: [
+  args2: [
     {
       type: "field_input",
       name: "CONTRACT_ADDRESS",
@@ -193,7 +194,7 @@ const safeTransactionJson = {
       spellcheck: false,
     },
   ],
-  args2: [
+  args3: [
     {
       type: "field_input",
       name: "VALUE",

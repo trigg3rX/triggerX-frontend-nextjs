@@ -14,7 +14,6 @@ import {
   setConnectedWalletAddress,
 } from "../blocks/default_blocks";
 import { setImportSafeChainId } from "../blocks/utility/safe-wallet/import_safe_wallet";
-import { SmartSuggestions } from "./SmartSuggestions";
 import { syncBlocklyToJobForm } from "../utils/syncBlocklyToJobForm";
 import { JobFormContextType } from "@/contexts/JobFormContext";
 
@@ -463,7 +462,7 @@ export function BlocklyWorkspaceSection({
               controls: false,
               wheel: false,
               pinch: false,
-              startScale: 0.6,
+              startScale: 0.7,
               maxScale: 1,
               minScale: 1,
               scaleSpeed: 1,
@@ -475,7 +474,6 @@ export function BlocklyWorkspaceSection({
           }}
         />
       </div>
-      <SmartSuggestions workspace={workspaceRef.current} />
     </>
   );
 }

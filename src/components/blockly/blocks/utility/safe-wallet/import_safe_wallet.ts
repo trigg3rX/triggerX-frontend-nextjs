@@ -144,7 +144,7 @@ Blockly.fieldRegistry.register("field_button_import", ButtonField);
 
 const importSafeWalletJson = {
   type: "import_safe_wallet",
-  message0: "Import Safe Wallet %1 %2 %3",
+  message0: "Import and use %1 %2 %3",
   args0: [
     {
       type: "field_button_import",

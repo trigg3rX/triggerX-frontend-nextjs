@@ -5,6 +5,7 @@ import { Order } from "blockly/javascript";
 let globalSafeWallets: string[] = [];
 let isLoadingWallets: boolean = false;
 let onBlockAddedCallback: (() => void) | null = null;
+let isWalletConnected = false;
 
 export function setOnBlockAddedCallback(callback: () => void): void {
   onBlockAddedCallback = callback;
@@ -22,17 +23,31 @@ export function setSafeWallets(wallets: string[]): void {
   updateAllSelectSafeWalletDropdowns();
 }
 
+export function setWalletConnected(connected: boolean): void {
+  isWalletConnected = connected;
+  updateAllSelectSafeWalletDropdowns();
+}
+
 function updateAllSelectSafeWalletDropdowns(): void {
   try {
-    const workspace = Blockly.getMainWorkspace();
-    if (workspace) {
-      const allBlocks = workspace.getAllBlocks(false);
-      allBlocks.forEach((block) => {
+    const mainWorkspace = Blockly.getMainWorkspace() as
+      | Blockly.WorkspaceSvg
+      | null
+      | undefined;
+    const flyoutWorkspace = mainWorkspace?.getFlyout?.()?.getWorkspace?.() as
+      | Blockly.Workspace
+      | null
+      | undefined;
+
+    [mainWorkspace, flyoutWorkspace].forEach((workspace) => {
+      if (!workspace) return;
+      const allBlocks = workspace.getAllBlocks(false) as Blockly.Block[];
+      allBlocks.forEach((block: Blockly.Block) => {
         if (block.type === "select_safe_wallet") {
           updateDropdownOptions(block);
         }
       });
-    }
+    });
   } catch (error) {
     console.error("Error updating select safe wallet dropdowns:", error);
   }
@@ -60,12 +75,16 @@ function updateDropdownOptions(block: Blockly.Block): void {
 }
 
 function getSafeWalletOptions(): [string, string][] {
+  if (!isWalletConnected) {
+    return [["Connect wallet", ""]];
+  }
+
   if (isLoadingWallets) {
     return [["Fetching wallets...", ""]];
   }
 
   if (globalSafeWallets.length === 0) {
-    return [["No Safe Wallets Available", ""]];
+    return [["Not available", ""]];
   }
 
   return globalSafeWallets.map((wallet, index) => {
@@ -76,7 +95,7 @@ function getSafeWalletOptions(): [string, string][] {
 
 const selectSafeWalletJson = {
   type: "select_safe_wallet",
-  message0: "Select Safe Wallet %1",
+  message0: "Use Safe Wallet %1",
   args0: [
     {
       type: "field_dropdown",

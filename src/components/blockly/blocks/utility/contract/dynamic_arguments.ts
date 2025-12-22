@@ -47,12 +47,10 @@ const dynamicArgumentsJson = {
     {
       type: "field_input",
       name: "IPFS_URL",
+      editable: false,
       text: "ipfs://...",
     },
   ],
-  // No visible IPFS URL field here – URL is only shown in the Job Form UI,
-  // and is stored in block.data for syncing.
-  // Use SAFE_TRANSACTION connection type so it can plug into execute_through_safe_wallet
   previousStatement: "SAFE_TRANSACTION",
   nextStatement: "ARGUMENTS_END",
   colour: 190,

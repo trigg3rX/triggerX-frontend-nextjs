@@ -20,6 +20,7 @@ import {
   setSafeWallets,
   setLoadingWallets,
   setOnBlockAddedCallback,
+  setWalletConnected,
 } from "./blocks/utility/safe-wallet/select_safe_wallet";
 import {
   setOpenDynamicArgsWizardHandler,
@@ -109,6 +110,11 @@ export default function BlocklyDemo() {
   useEffect(() => {
     setLoadingWallets(isLoading);
   }, [isLoading]);
+
+  // Update wallet connection state for the select block
+  useEffect(() => {
+    setWalletConnected(!!address);
+  }, [address]);
 
   // Update safe wallets in the select block whenever they change
   useEffect(() => {

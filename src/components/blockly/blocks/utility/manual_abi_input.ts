@@ -3,7 +3,7 @@ import { Order } from "blockly/javascript";
 
 const manualAbiInputJson = {
   type: "manual_abi_input",
-  message0: "Add ABI of the target function %1",
+  message0: "Add ABI %1",
   args0: [
     {
       type: "field_input",
