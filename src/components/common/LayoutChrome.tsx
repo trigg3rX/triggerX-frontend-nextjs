@@ -19,7 +19,7 @@ export function LayoutChrome({ children }: LayoutChromeProps) {
   if (isVisualJobBuilder) {
     return (
       <main className="w-full min-h-screen">
-        <div className="w-[95%] max-w-[1600px] mx-auto py-6">{children}</div>
+        <div className="w-[95%] mx-auto py-6">{children}</div>
       </main>
     );
   }

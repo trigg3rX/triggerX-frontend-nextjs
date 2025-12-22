@@ -7,17 +7,17 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { Sparkles } from "lucide-react";
 
-interface TourStep {
+export interface TourStep {
   id: string;
   title: string;
   description: string;
   selector: string;
 }
 
-const STORAGE_KEY = "blockly-demo-tour-dismissed";
+export const STORAGE_KEY_QUICK = "blockly-demo-tour-dismissed";
 
+// Initial quick orientation tour
 const defaultSteps: TourStep[] = [
   {
     id: "welcome",
@@ -76,18 +76,24 @@ export function VisualBuilderTour({
 
   const currentStep = steps[activeIndex];
 
-  const openTour = useCallback(
-    (startIndex = 0) => {
-      setActiveIndex(startIndex);
-      setIsOpen(true);
-      localStorage.removeItem(STORAGE_KEY);
-    },
-    [setActiveIndex, setIsOpen],
-  );
+  const openTour = useCallback((startIndex = 0) => {
+    setActiveIndex(startIndex);
+    setIsOpen(true);
+    localStorage.removeItem(STORAGE_KEY_QUICK);
+  }, []);
 
   const closeTour = useCallback(() => {
     setIsOpen(false);
-    localStorage.setItem(STORAGE_KEY, "1");
+
+    // Mark the quick tour as dismissed in storage
+    localStorage.setItem(STORAGE_KEY_QUICK, "1");
+
+    // Notify any listeners (e.g. follow-up tours) that the quick tour finished or was skipped
+    try {
+      window.dispatchEvent(new CustomEvent("blockly-quick-tour-closed"));
+    } catch {
+      // no-op in non-browser environments
+    }
   }, []);
 
   const goToStep = useCallback(
@@ -105,27 +111,54 @@ export function VisualBuilderTour({
     [steps.length, closeTour],
   );
 
-  // Block body scroll when tour is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-
-    // Cleanup on unmount
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
+  // (Previously we blocked body scroll here; removed so the page can still scroll while the tour is open.)
 
   // Auto-open once per browser
   useEffect(() => {
-    const hasDismissed = localStorage.getItem(STORAGE_KEY);
-    if (!hasDismissed) {
+    const hasDismissedQuick = localStorage.getItem(STORAGE_KEY_QUICK);
+    if (!hasDismissedQuick) {
+      setActiveIndex(0);
       setIsOpen(true);
     }
   }, []);
+
+  // Allow manual opening from header ("Visual guide" button)
+  useEffect(() => {
+    const handleQuickTourOpen = () => {
+      openTour(0);
+    };
+
+    window.addEventListener(
+      "blockly-quick-tour-open",
+      handleQuickTourOpen as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "blockly-quick-tour-open",
+        handleQuickTourOpen as EventListener,
+      );
+    };
+  }, [openTour]);
+
+  // Allow manual opening from header ("Visual guide" button)
+  useEffect(() => {
+    const handleQuickTourOpen = () => {
+      openTour(0);
+    };
+
+    window.addEventListener(
+      "blockly-quick-tour-open",
+      handleQuickTourOpen as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "blockly-quick-tour-open",
+        handleQuickTourOpen as EventListener,
+      );
+    };
+  }, [openTour]);
 
   // Track target element position
   useLayoutEffect(() => {
@@ -144,11 +177,22 @@ export function VisualBuilderTour({
       }
       const rect = el.getBoundingClientRect();
       setTargetRect(rect);
-      el.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "center",
-      });
+
+      // Only scroll if the element is meaningfully out of view to avoid jarring jumps
+      const viewportHeight = window.innerHeight || 0;
+      const viewportWidth = window.innerWidth || 0;
+      const isVerticallyVisible =
+        rect.top >= 0 && rect.bottom <= viewportHeight;
+      const isHorizontallyVisible =
+        rect.left >= 0 && rect.right <= viewportWidth;
+
+      if (!isVerticallyVisible || !isHorizontallyVisible) {
+        el.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        });
+      }
     };
 
     findTarget();
@@ -219,15 +263,6 @@ export function VisualBuilderTour({
 
   return (
     <>
-      <button
-        type="button"
-        className="fixed bottom-6 right-6 z-[99998] bg-[#C07AF6] hover:bg-[#a46be0] text-white p-3 rounded-full shadow-lg transition-transform hover:translate-y-[-2px] inline-flex items-center justify-center"
-        onClick={() => openTour(0)}
-        aria-label={isOpen ? "Tour running" : "Show quick tour"}
-      >
-        <Sparkles className="w-5 h-5" aria-hidden="true" />
-      </button>
-
       {isOpen && currentStep && (
         <div className="fixed inset-0 z-[99999] pointer-events-none">
           <div className="absolute inset-0 bg-black/60" onClick={closeTour} />

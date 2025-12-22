@@ -44,6 +44,7 @@ import { PermissionCard } from "./components/PermissionCard";
 import { BlocklyWorkspaceSection } from "./components/BlocklyWorkspaceSection";
 import { MobileWarning } from "./MobileWarning";
 import { VisualBuilderTour } from "./components/VisualBuilderTour";
+import { JobCreationTour } from "./components/JobCreationTour";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/assets/logo.svg";
@@ -424,6 +425,7 @@ export default function BlocklyDemo() {
 
       {/* On-page guided tour */}
       <VisualBuilderTour />
+      <JobCreationTour />
 
       {/* Desktop View - Show 768px and above */}
       <div className="hidden md:flex flex-col gap-2">

@@ -130,12 +130,24 @@ class CustomCategory extends (ContinuousCategory as unknown as ToolboxCtor) {
       let customIcon: HTMLElement;
 
       if (categoryName.includes("wallet")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "wallet-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
           React.createElement(FaWallet, { size: 12, color: "white" }),
         );
       } else if (categoryName.includes("chain")) {
+        // Mark the chain category specifically for guided tours
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "chain-category");
+        } catch {
+          // no-op
+        }
+
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(React.createElement(FaLink, { size: 12, color: "white" }));
@@ -143,12 +155,22 @@ class CustomCategory extends (ContinuousCategory as unknown as ToolboxCtor) {
         categoryName.includes("job type") ||
         categoryName.includes("jobtype")
       ) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "job-type-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
           React.createElement(FaBriefcase, { size: 12, color: "white" }),
         );
       } else if (categoryName.includes("duration")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "duration-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(React.createElement(FaClock, { size: 12, color: "white" }));
