@@ -53,7 +53,7 @@ const dynamicArgumentsJson = {
   ],
   previousStatement: "SAFE_TRANSACTION",
   nextStatement: "ARGUMENTS_END",
-  colour: 190,
+  colour: 340,
   tooltip:
     "Specify (or generate) the IPFS URL link from which the values of arguments have to be fetched.",
   helpUrl: "",

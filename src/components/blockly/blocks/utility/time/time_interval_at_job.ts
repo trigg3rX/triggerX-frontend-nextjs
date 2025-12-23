@@ -3,7 +3,7 @@ import { Order } from "blockly/javascript";
 
 const timeIntervalAtJobJson = {
   type: "time_interval_at_job",
-  message0: "At every %1 %2",
+  message0: "After every %1 %2",
   args0: [
     {
       type: "field_number",

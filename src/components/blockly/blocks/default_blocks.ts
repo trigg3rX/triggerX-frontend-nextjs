@@ -44,6 +44,10 @@ const walletSelectionJson = {
 Blockly.Blocks["wallet_selection"] = {
   init: function () {
     this.jsonInit(walletSelectionJson);
+    // Prevent deletion when on workspace (but allow in flyout)
+    if (!this.isInFlyout) {
+      this.setDeletable(false);
+    }
     // Set dynamic tooltip
     this.setTooltip(() => {
       const parentBlock = this.getParent();
@@ -56,6 +60,11 @@ Blockly.Blocks["wallet_selection"] = {
 
   // Hook called when block is created (both in flyout and workspace)
   onchange: function (event: Blockly.Events.Abstract) {
+    // Ensure block is non-deletable when on workspace
+    if (!this.isInFlyout) {
+      this.setDeletable(false);
+    }
+
     // Only process create events
     if (event.type !== Blockly.Events.BLOCK_CREATE) {
       return;
@@ -134,6 +143,10 @@ function validateChainSelection(newValue: string): string | null {
 Blockly.Blocks["chain_selection"] = {
   init: function () {
     this.jsonInit(chainSelectionJson);
+    // Prevent deletion when on workspace (but allow in flyout)
+    if (!this.isInFlyout) {
+      this.setDeletable(false);
+    }
     // Add input connection to receive wallet block output
     this.appendValueInput("WALLET_INPUT")
       .setCheck("wallet_output")
@@ -153,6 +166,14 @@ Blockly.Blocks["chain_selection"] = {
       }
       return "Specify the chain at which your job contract is deployed. Connect the Wallet block to its right. Only the connected chain can be selected.";
     });
+  },
+
+  // Ensure block remains non-deletable when on workspace
+  onchange: function () {
+    // Ensure block is non-deletable when on workspace
+    if (!this.isInFlyout) {
+      this.setDeletable(false);
+    }
   },
 };
 

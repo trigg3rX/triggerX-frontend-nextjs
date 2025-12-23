@@ -30,7 +30,7 @@ const staticArgumentsJson = {
   message0: "static values for the arguments",
   previousStatement: null,
   nextStatement: null,
-  colour: 190,
+  colour: 340,
   tooltip: "Specify the values that will be passed as arguments.",
   helpUrl: "",
 };

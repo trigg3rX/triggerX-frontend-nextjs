@@ -175,6 +175,11 @@ class CustomCategory extends (ContinuousCategory as unknown as ToolboxCtor) {
         const root = createRoot(customIcon);
         root.render(React.createElement(FaClock, { size: 12, color: "white" }));
       } else if (categoryName.includes("recurring")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "recurring-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(React.createElement(FaRedo, { size: 12, color: "white" }));
@@ -185,22 +190,42 @@ class CustomCategory extends (ContinuousCategory as unknown as ToolboxCtor) {
           React.createElement(FaFileCode, { size: 12, color: "white" }),
         );
       } else if (categoryName.includes("time")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "time-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
           React.createElement(FaCalendarAlt, { size: 12, color: "white" }),
         );
       } else if (categoryName.includes("event")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "event-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(React.createElement(FaBolt, { size: 12, color: "white" }));
       } else if (categoryName.includes("condition")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "condition-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
           React.createElement(FaSlidersH, { size: 12, color: "white" }),
         );
-      } else if (categoryName.includes("contract")) {
+      } else if (categoryName.includes("execute")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "execute-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
@@ -210,6 +235,11 @@ class CustomCategory extends (ContinuousCategory as unknown as ToolboxCtor) {
         categoryName.includes("safe wallet") ||
         categoryName.includes("safewallet")
       ) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "safe-wallet-category");
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
@@ -219,10 +249,29 @@ class CustomCategory extends (ContinuousCategory as unknown as ToolboxCtor) {
         categoryName.includes("safe transaction") ||
         categoryName.includes("safetransaction")
       ) {
+        try {
+          self.rowDiv_.setAttribute(
+            "data-tour-id",
+            "safe-transaction-category",
+          );
+        } catch {
+          // no-op
+        }
         customIcon = document.createElement("div");
         const root = createRoot(customIcon);
         root.render(
           React.createElement(FaExchangeAlt, { size: 12, color: "white" }),
+        );
+      } else if (categoryName.includes("function value")) {
+        try {
+          self.rowDiv_.setAttribute("data-tour-id", "function-values-category");
+        } catch {
+          // no-op
+        }
+        customIcon = document.createElement("div");
+        const root = createRoot(customIcon);
+        root.render(
+          React.createElement(FaSlidersH, { size: 12, color: "white" }),
         );
       } else {
         // Use existing icon for other categories

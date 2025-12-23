@@ -62,6 +62,70 @@ export function BlocklyWorkspaceSection({
 }: BlocklyWorkspaceSectionProps) {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const ensureBlocksTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const ensureChainWalletBlocks = useCallback(
+    (workspace: Blockly.WorkspaceSvg) => {
+      // Debounce to avoid rapid create/delete loops
+      if (ensureBlocksTimeoutRef.current) {
+        clearTimeout(ensureBlocksTimeoutRef.current);
+      }
+
+      ensureBlocksTimeoutRef.current = setTimeout(() => {
+        const chainBlocks = workspace.getBlocksByType("chain_selection", false);
+        const walletBlocks = workspace.getBlocksByType(
+          "wallet_selection",
+          false,
+        );
+
+        const chainIdFieldValue = connectedChainId?.toString() || "11155420"; // OP Sepolia default
+
+        // Helper to create a wallet block
+        const createWalletBlock = () => {
+          const walletBlock = workspace.newBlock("wallet_selection");
+          walletBlock.initSvg();
+          walletBlock.render();
+          return walletBlock;
+        };
+
+        // Helper to create a chain block with optional wallet attached
+        const createChainWithWallet = () => {
+          const chainBlock = workspace.newBlock("chain_selection");
+          const chainField = chainBlock.getField("CHAIN_ID");
+          chainField?.setValue(chainIdFieldValue);
+          const walletBlock = createWalletBlock();
+          const walletInput = chainBlock.getInput("WALLET_INPUT");
+          if (walletInput?.connection && walletBlock.outputConnection) {
+            walletInput.connection.connect(walletBlock.outputConnection);
+          }
+          chainBlock.initSvg();
+          chainBlock.render();
+          chainBlock.moveBy(40, 40);
+        };
+
+        if (chainBlocks.length === 0) {
+          // Create both chain and wallet if chain is missing
+          createChainWithWallet();
+          return;
+        }
+
+        // Ensure at least one wallet exists; attach to first chain if possible
+        if (walletBlocks.length === 0) {
+          const walletBlock = createWalletBlock();
+          const firstChain = chainBlocks[0] as Blockly.BlockSvg;
+          const walletInput = firstChain.getInput("WALLET_INPUT");
+          if (walletInput?.connection && walletBlock.outputConnection) {
+            try {
+              walletInput.connection.connect(walletBlock.outputConnection);
+            } catch {
+              // If connection fails, leave wallet unconnected
+            }
+          }
+        }
+      }, 50);
+    },
+    [connectedChainId],
+  );
 
   const toolboxJson = useMemo(
     () => ({
@@ -160,20 +224,14 @@ export function BlocklyWorkspaceSection({
           colour: "110",
           contents: [{ kind: "block", type: "condition_monitor" }],
         },
-        // --- CONTRACT UTILITIES ---
+        // --- EXECUTION CATEGORY ---
         {
           kind: "category",
-          name: "Contract",
+          name: "Execute",
           colour: "190",
           contents: [
-            {
-              kind: "block",
-              type: "execute_through_safe_wallet",
-            },
+            { kind: "block", type: "execute_through_safe_wallet" },
             { kind: "block", type: "execute_function" },
-            { kind: "block", type: "safe_transaction" },
-            { kind: "block", type: "static_arguments" },
-            { kind: "block", type: "dynamic_arguments" },
           ],
         },
         // --- SAFE WALLET CATEGORY ---
@@ -195,6 +253,23 @@ export function BlocklyWorkspaceSection({
               kind: "block",
               type: "select_safe_wallet",
             },
+          ],
+        },
+        // --- SAFE TRANSACTIONS ---
+        {
+          kind: "category",
+          name: "Safe Transaction",
+          colour: "200",
+          contents: [{ kind: "block", type: "safe_transaction" }],
+        },
+        // --- FUNCTION VALUES ---
+        {
+          kind: "category",
+          name: "Function Value",
+          colour: "340",
+          contents: [
+            { kind: "block", type: "static_arguments" },
+            { kind: "block", type: "dynamic_arguments" },
           ],
         },
       ],
@@ -239,6 +314,9 @@ export function BlocklyWorkspaceSection({
         if (workspace && workspace.getToolbox()) {
           workspaceRef.current = workspace;
 
+          // Ensure chain + wallet blocks exist on load
+          ensureChainWalletBlocks(workspace);
+
           // Set up workspace change listener to sync on block changes
           workspaceChangeListener = (event: Blockly.Events.Abstract) => {
             // Only sync on meaningful changes that affect job configuration
@@ -271,6 +349,14 @@ export function BlocklyWorkspaceSection({
             }
 
             if (shouldSync && workspace) {
+              // Ensure chain + wallet always present (handles deletes)
+              if (
+                event.type === Blockly.Events.BLOCK_DELETE ||
+                event.type === Blockly.Events.BLOCK_CREATE
+              ) {
+                ensureChainWalletBlocks(workspace);
+              }
+
               // Get current XML and sync
               const currentXml = Blockly.Xml.workspaceToDom(workspace);
               const xmlText = Blockly.Xml.domToText(currentXml);
@@ -376,7 +462,7 @@ export function BlocklyWorkspaceSection({
         workspace.removeChangeListener(workspaceChangeListener);
       }
     };
-  }, [workspaceScopeRef, syncToJobForm]);
+  }, [workspaceScopeRef, syncToJobForm, ensureChainWalletBlocks]);
 
   // Sync wallet blocks with connected address
   useEffect(() => {
