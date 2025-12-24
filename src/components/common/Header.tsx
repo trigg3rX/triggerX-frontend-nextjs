@@ -28,6 +28,8 @@ const Header: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
+  const isBlocklyDemoPage = pathname === "/visual-job-builder";
+
   useEffect(() => {
     setIsMounted(true);
 
@@ -63,7 +65,6 @@ const Header: React.FC = () => {
   return (
     <header className="fixed top-0 left-0 right-0 w-full headerbg bg-[#0a0a0a]/80 backdrop-blur-md z-50">
       <GlobalBanner visible={bannerVisible} setVisible={setBannerVisible} />
-
       {isDesktop ? (
         /* Desktop Header */
         <div
@@ -79,21 +80,23 @@ const Header: React.FC = () => {
             />
           </div>
           <div className="relative">
-            <div
-              className="absolute z-0 w-[500px] h-max transition-all duration-700 ease-out"
-              style={{
-                top: isScrolled ? -300 : -50,
-                left: "50%",
-                transform: "translateX(-50%)",
-              }}
-            >
-              <LandingImage
-                alt="Navigation Background Design"
-                width={658}
-                height={386}
-                priority={!isScrolled} // Only prioritize when visible
-              />
-            </div>
+            {!isBlocklyDemoPage && (
+              <div
+                className="absolute z-0 w-[500px] h-max transition-all duration-700 ease-out"
+                style={{
+                  top: isScrolled ? -300 : -50,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                }}
+              >
+                <LandingImage
+                  alt="Navigation Background Design"
+                  width={658}
+                  height={386}
+                  priority={!isScrolled} // Only prioritize when visible
+                />
+              </div>
+            )}
 
             <nav className="relative bg-[#181818F0] backdrop-blur-[20px] rounded-2xl z-10">
               <HoverHighlight>

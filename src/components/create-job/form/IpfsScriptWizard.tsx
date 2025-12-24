@@ -252,7 +252,8 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
     const code = script.trim();
     if (!code) {
       setScriptError(
-        `Please paste your ${initialLanguage === "ts" ? "TypeScript" : "Go"
+        `Please paste your ${
+          initialLanguage === "ts" ? "TypeScript" : "Go"
         } code`,
       );
       return false;
@@ -557,7 +558,7 @@ export const IpfsScriptWizard: React.FC<IpfsScriptWizardProps> = ({
             <Typography variant="body" align="left" color="secondary">
               {`Paste your ${
                 initialLanguage === "ts" ? "TypeScript" : "Golang"
-                } script that returns an array of args for the function call.`}
+              } script that returns an array of args for the function call.`}
             </Typography>
             <textarea
               value={script}

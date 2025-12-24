@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     ],
     type: "website",
   },
-  alternates: { 
+  alternates: {
     canonical: `https://app.triggerx.network/dashboard.png`,
   },
 };

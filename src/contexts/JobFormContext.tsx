@@ -39,6 +39,8 @@ export type JobDetails = {
   recurring: boolean;
   timezone: string;
   time_interval: number;
+  cron_expression?: string;
+  specific_schedule?: string;
   trigger_chain_id: string;
   trigger_contract_address: string;
   trigger_event: string;
@@ -80,6 +82,8 @@ function extractJobDetails(
   selectedSafeWallet?: string | null,
   chainId?: number,
   userSafeWallets?: string[],
+  cronExpression?: string,
+  specificSchedule?: string,
   customScriptUrl?: string,
 ): JobDetails {
   console.log(
@@ -245,6 +249,8 @@ function extractJobDetails(
     recurring,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     time_interval: intervalInSeconds,
+    cron_expression: cronExpression || undefined,
+    specific_schedule: specificSchedule || undefined,
     trigger_chain_id: triggerChainId,
     trigger_contract_address: triggerContractAddress,
     trigger_event: triggerEvent,
@@ -281,10 +287,10 @@ function extractJobDetails(
     safe_name:
       executionMode === "safe" && selectedSafeWallet && chainId
         ? getWalletDisplayName(
-          selectedSafeWallet,
-          chainId,
-          userSafeWallets || [],
-        )
+            selectedSafeWallet,
+            chainId,
+            userSafeWallets || [],
+          )
         : undefined,
     safe_transactions: safeTransactions,
   };
@@ -533,6 +539,10 @@ export interface JobFormContextType {
   setTimeInterval: React.Dispatch<React.SetStateAction<TimeInterval>>;
   recurring: boolean;
   setRecurring: React.Dispatch<React.SetStateAction<boolean>>;
+  cronExpression: string;
+  setCronExpression: React.Dispatch<React.SetStateAction<string>>;
+  specificSchedule: string;
+  setSpecificSchedule: React.Dispatch<React.SetStateAction<string>>;
   executionMode: "contract" | "safe";
   setExecutionMode: React.Dispatch<React.SetStateAction<"contract" | "safe">>;
   selectedSafeWallet: string | null;
@@ -673,6 +683,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     seconds: 0,
   });
   const [recurring, setRecurring] = useState<boolean>(true);
+  const [cronExpression, setCronExpression] = useState<string>("");
+  const [specificSchedule, setSpecificSchedule] = useState<string>("");
   const [contractInteractions, setContractInteractions] =
     useState<ContractInteraction>({
       eventContract: {
@@ -924,6 +936,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           isProxy: false,
           implementationAddress: undefined,
           proxyType: undefined,
+          // Preserve IPFS URL and argument type if they exist
+          ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+          argumentType: prev[contractKey]?.argumentType || "",
         },
       }));
 
@@ -1003,6 +1018,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 isProxy: proxyInfo.isProxy,
                 implementationAddress: proxyInfo.implementationAddress,
                 proxyType: proxyInfo.proxyType,
+                // Preserve IPFS URL and argument type if they exist
+                ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+                argumentType: prev[contractKey]?.argumentType || "",
               },
             }));
           } else {
@@ -1017,6 +1035,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 isProxy: proxyInfo.isProxy,
                 implementationAddress: proxyInfo.implementationAddress,
                 proxyType: proxyInfo.proxyType,
+                // Preserve IPFS URL and argument type if they exist
+                ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+                argumentType: prev[contractKey]?.argumentType || "",
               },
             }));
           }
@@ -1032,6 +1053,9 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               isProxy: proxyInfo.isProxy,
               implementationAddress: proxyInfo.implementationAddress,
               proxyType: proxyInfo.proxyType,
+              // Preserve IPFS URL and argument type if they exist
+              ipfsCodeUrl: prev[contractKey]?.ipfsCodeUrl || "",
+              argumentType: prev[contractKey]?.argumentType || "",
             },
           }));
         }
@@ -1250,12 +1274,12 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
                 // Initialize selection so downstream submission has a value even if user doesn't click
                 selectedApiKey:
                   prev[contractKey].selectedApiKey &&
-                    prev[contractKey].selectedApiKey !== ""
+                  prev[contractKey].selectedApiKey !== ""
                     ? prev[contractKey].selectedApiKey
                     : defaultSelectedValue,
                 selectedApiKeyValue:
                   prev[contractKey].selectedApiKeyValue &&
-                    prev[contractKey].selectedApiKeyValue !== ""
+                  prev[contractKey].selectedApiKeyValue !== ""
                     ? prev[contractKey].selectedApiKeyValue
                     : defaultActualValue,
               },
@@ -1867,6 +1891,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
           selectedSafeWallet,
           chainId,
           userSafeWallets,
+          cronExpression,
+          specificSchedule,
           customScriptUrl,
         );
 
@@ -2102,7 +2128,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
               jd.task_definition_id !== 7 &&
               (!jd.target_contract_address ||
                 jd.target_contract_address ===
-                "0x0000000000000000000000000000000000000000")
+                  "0x0000000000000000000000000000000000000000")
             ) {
               console.log("[JobForm] ERROR: Invalid target contract address");
               throw new Error("Target contract address is required");
@@ -2402,7 +2428,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         const errorText = await response.text();
         throw new Error(
           errorText ||
-          (jobId ? "Failed to update job" : "Failed to create job"),
+            (jobId ? "Failed to update job" : "Failed to create job"),
         );
       }
 
@@ -2417,7 +2443,7 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       devLog(
         (jobId ? "Error updating job: " : "Error creating job: ") +
-        (error as Error).message,
+          (error as Error).message,
       );
       toast.error(jobId ? "Error updating job: " : "Error creating job: ");
       setIsJobCreated(false);
@@ -2515,6 +2541,8 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
     setErrorFrame(null);
     setTimeInterval({ hours: 0, minutes: 0, seconds: 0 });
     setRecurring(true);
+    setCronExpression("");
+    setSpecificSchedule("");
     setErrorInterval(null);
     setContractInteractions({
       eventContract: {
@@ -2614,6 +2642,10 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         setTimeInterval,
         recurring,
         setRecurring,
+        cronExpression,
+        setCronExpression,
+        specificSchedule,
+        setSpecificSchedule,
         handleJobTypeChange,
         handleTimeframeChange,
         handleTimeIntervalChange,

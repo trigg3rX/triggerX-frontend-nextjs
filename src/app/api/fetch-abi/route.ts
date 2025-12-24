@@ -32,10 +32,10 @@ export async function GET(req: NextRequest) {
   // 1. Try Blockscout
   if (blockscoutBaseUrl) {
     const blockscoutUrl = `${blockscoutBaseUrl}?module=contract&action=getabi&address=${address}`;
-    devLog(
-      `Fetching ABI from Blockscout-like API for chain ${chainIdNum}:`,
-      blockscoutUrl,
-    );
+    // devLog(
+    //   `Fetching ABI from Blockscout-like API for chain ${chainIdNum}:`,
+    //   blockscoutUrl,
+    // );
     try {
       const response = await fetch(blockscoutUrl);
       const data = await response.json();

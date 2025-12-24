@@ -4,12 +4,9 @@ import Providers from "./providers";
 import { Toaster } from "react-hot-toast";
 import { BalanceProvider } from "@/contexts/BalanceContext";
 import { TooltipProvider } from "@/components/common/TooltipWrap";
-import Header from "@/components/common/Header";
-import ScrollToTop from "@/components/common/ScrollToTop";
-import Footer from "@/components/common/Footer";
-import StickySocialIcons from "@/components/common/StickySocialIcons";
 import { ReactNode } from "react";
 import { GoogleTagManager } from "@next/third-parties/google";
+import { LayoutChrome } from "@/components/common/LayoutChrome";
 
 export const metadata: Metadata = {
   title: "TriggerX",
@@ -29,13 +26,7 @@ export default function RootLayout({
         <TooltipProvider>
           <Providers>
             <BalanceProvider>
-              <Header />
-              <ScrollToTop />
-              <StickySocialIcons />
-              <main className="max-w-[1600px] w-[90%] mx-auto mt-[120px] sm:mt-[150px] lg:mt-[270px] min-h-[500px] relative z-40">
-                {children}
-              </main>
-              <Footer />
+              <LayoutChrome>{children}</LayoutChrome>
             </BalanceProvider>
           </Providers>
           <div id="modal-root"></div>
