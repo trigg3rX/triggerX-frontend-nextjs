@@ -390,6 +390,107 @@ body.modal-open [contenteditable="true"] {
   position: relative;
 }
 
+.blockly-toolbox-guidance {
+  outline: 2px solid #c07af6;
+  border-radius: 16px;
+  box-shadow: 0 0 12px rgba(192, 122, 246, 0.6);
+}
+
+.blockly-guidance-target {
+  filter: drop-shadow(0 0 18px rgba(192, 122, 246, 0.95));
+  animation: blockly-pulse 1.5s ease-in-out infinite;
+}
+
+.blockly-guidance-target path {
+  stroke: #c07af6 !important;
+  stroke-width: 2px !important;
+}
+
+.blockly-guidance-connection-label {
+  pointer-events: none;
+  animation: label-fade 1.6s ease-in-out infinite;
+}
+
+.blockly-guidance-connection-label rect {
+  fill: rgba(20, 20, 20, 0.9);
+  stroke: #c07af6;
+  stroke-width: 1px;
+  rx: 6px;
+  ry: 6px;
+}
+
+.blockly-guidance-connection-label text {
+  fill: #ffffff;
+  font-size: 10px;
+  font-family: "Actay", "Sharp Grotesk", sans-serif;
+}
+
+.step-card-celebrate {
+  animation: step-card-glow 1s ease;
+}
+
+.step-check-celebrate {
+  animation: step-check-pop 0.6s ease;
+}
+
+@keyframes step-card-glow {
+  0% {
+    box-shadow: 0 0 0 rgba(192, 122, 246, 0);
+  }
+  40% {
+    box-shadow: 0 0 18px rgba(192, 122, 246, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(192, 122, 246, 0);
+  }
+}
+
+@keyframes step-check-pop {
+  0% {
+    transform: scale(0.7);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blockly-guidance-target,
+  .blockly-guidance-connection-label,
+  .step-card-celebrate,
+  .step-check-celebrate {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes blockly-pulse {
+  0% {
+    filter: drop-shadow(0 0 12px rgba(192, 122, 246, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(192, 122, 246, 0.95));
+  }
+  100% {
+    filter: drop-shadow(0 0 12px rgba(192, 122, 246, 0.6));
+  }
+}
+
+@keyframes label-fade {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
 /* Blockly Connection Feedback Animations */
 @keyframes blockly-shake {
   0%,

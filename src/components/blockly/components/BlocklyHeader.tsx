@@ -11,6 +11,7 @@ interface BlocklyHeaderProps {
   isModalOpen: boolean;
   isValidating: boolean;
   onCreateJob: (e: React.FormEvent) => void;
+  jobTitleInputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 export function BlocklyHeader({
@@ -22,10 +23,12 @@ export function BlocklyHeader({
   isModalOpen,
   isValidating,
   onCreateJob,
+  jobTitleInputRef,
 }: BlocklyHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempTitle, setTempTitle] = useState(jobTitle);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const internalInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = jobTitleInputRef ?? internalInputRef;
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -36,7 +39,7 @@ export function BlocklyHeader({
         inputRef.current.value.length,
       );
     }
-  }, [isEditing]);
+  }, [isEditing, inputRef]);
 
   const handleEditClick = () => {
     if (isEditing) {
