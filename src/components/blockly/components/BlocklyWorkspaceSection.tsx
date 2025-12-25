@@ -17,6 +17,26 @@ import { setImportSafeChainId } from "../blocks/utility/safe-wallet/import_safe_
 import { syncBlocklyToJobForm } from "../utils/syncBlocklyToJobForm";
 import { JobFormContextType } from "@/contexts/JobFormContext";
 
+export type JobWrapperKind = "time" | "event" | "condition";
+
+export interface WorkspaceStepSnapshot {
+  chainComplete: boolean;
+  jobTypeComplete: boolean;
+  triggerComplete: boolean;
+  executionComplete: boolean;
+  walletComplete: boolean;
+  functionValueComplete: boolean;
+  usesSafeExecution: boolean;
+  jobWrapperKind: JobWrapperKind | null;
+}
+
+interface WorkspaceGuidanceResult {
+  snapshot: WorkspaceStepSnapshot;
+  highlightConnection: Blockly.RenderedConnection | null;
+  guidanceCategoryIds: string[];
+  cursorBlock: Blockly.BlockSvg | null;
+}
+
 // react-blockly uses window, so ensure client-only dynamic import
 const BlocklyWorkspace = dynamic(
   () => import("react-blockly").then((m) => m.BlocklyWorkspace),
@@ -43,6 +63,275 @@ const triggerxTheme = Blockly.Theme.defineTheme("triggerx_theme", {
   },
 });
 
+const JOB_WRAPPER_KIND_MAP: Record<string, JobWrapperKind> = {
+  time_based_job_wrapper: "time",
+  event_based_job_wrapper: "event",
+  condition_based_job_wrapper: "condition",
+};
+
+const TIME_TRIGGER_TYPES = [
+  "time_interval_at_job",
+  "cron_expression",
+  "specific_datetime",
+];
+
+type ExecutionSearchResult = {
+  executeBlock: Blockly.Block | null;
+  pendingConnection: Blockly.RenderedConnection | null;
+};
+
+const ACTION_INPUT_NAMES = new Set(["ACTION", "THEN"]);
+
+const CATEGORY_LABELS: Record<string, string> = {
+  "chain-category": "Chain block",
+  "job-type-category": "Job Type block",
+  "duration-category": "Duration block",
+  "time-category": "Time trigger block",
+  "event-category": "Event Listener block",
+  "condition-category": "Condition block",
+  "execute-category": "Execute block",
+  "function-values-category": "Function Value block",
+  "wallet-category": "Wallet block",
+  "safe-wallet-category": "Safe wallet block",
+};
+
+function asBlockSvg(block: Blockly.Block): block is Blockly.BlockSvg {
+  return "getSvgRoot" in block;
+}
+
+function toBlockSvg(
+  block: Blockly.Block | null | undefined,
+): Blockly.BlockSvg | null {
+  if (!block) return null;
+  return asBlockSvg(block) ? (block as Blockly.BlockSvg) : null;
+}
+
+function getFirstRealBlockOfType(
+  workspace: Blockly.WorkspaceSvg,
+  type: string,
+): Blockly.BlockSvg | null {
+  const blocks = workspace.getBlocksByType(type, false);
+  return (
+    (blocks.find((b) => !b.isInFlyout) as Blockly.BlockSvg | undefined) || null
+  );
+}
+
+function findExecuteBlock(
+  block: Blockly.Block | null,
+  visited = new Set<string>(),
+): ExecutionSearchResult {
+  if (!block || visited.has(block.id)) {
+    return { executeBlock: null, pendingConnection: null };
+  }
+  visited.add(block.id);
+
+  if (
+    block.type === "execute_function" ||
+    block.type === "execute_through_safe_wallet"
+  ) {
+    return { executeBlock: block, pendingConnection: null };
+  }
+
+  for (const input of block.inputList) {
+    if (input.connection && input.connection.type === Blockly.NEXT_STATEMENT) {
+      const target = input.connection.targetBlock();
+      if (target) {
+        const result = findExecuteBlock(target, visited);
+        if (result.executeBlock || result.pendingConnection) {
+          return result;
+        }
+      } else if (ACTION_INPUT_NAMES.has(input.name || "")) {
+        return {
+          executeBlock: null,
+          pendingConnection: input.connection as Blockly.RenderedConnection,
+        };
+      }
+    }
+  }
+
+  const nextBlock = block.getNextBlock();
+  if (nextBlock) {
+    const result = findExecuteBlock(nextBlock, visited);
+    if (result.executeBlock || result.pendingConnection) {
+      return result;
+    }
+  }
+
+  return { executeBlock: null, pendingConnection: null };
+}
+
+function computeWorkspaceStepState(
+  workspace: Blockly.WorkspaceSvg,
+): WorkspaceGuidanceResult {
+  const chainBlock = getFirstRealBlockOfType(workspace, "chain_selection");
+  const renderedChain = toBlockSvg(chainBlock);
+  let walletInputConnection: Blockly.RenderedConnection | null = null;
+  let walletValueValid = false;
+
+  if (chainBlock) {
+    const walletInput = chainBlock.getInput("WALLET_INPUT");
+    walletInputConnection =
+      walletInput?.connection as Blockly.RenderedConnection | null;
+    const walletBlock = walletInputConnection?.targetBlock() || null;
+    const walletAddress = walletBlock?.getFieldValue("WALLET_ADDRESS") || "";
+    walletValueValid =
+      !!walletBlock && !!walletAddress && walletAddress !== "0x...";
+  }
+
+  const jobWrapperBlock = chainBlock?.getNextBlock() || null;
+  const jobWrapperKind = jobWrapperBlock
+    ? JOB_WRAPPER_KIND_MAP[jobWrapperBlock.type] || null
+    : null;
+
+  const jobTypeComplete = Boolean(jobWrapperBlock && jobWrapperKind);
+
+  const timeframeConnection = jobWrapperBlock?.getInput("STATEMENT")
+    ?.connection as Blockly.RenderedConnection | null;
+  const timeframeBlock = timeframeConnection?.targetBlock() || null;
+  const hasTimeframe = timeframeBlock?.type === "timeframe_job";
+
+  const triggerConnection = timeframeBlock?.getInput("STATEMENT")
+    ?.connection as Blockly.RenderedConnection | null;
+  const triggerBlock = triggerConnection?.targetBlock() || null;
+
+  let hasValidTrigger = false;
+  if (jobWrapperKind === "time") {
+    hasValidTrigger = Boolean(
+      triggerBlock && TIME_TRIGGER_TYPES.includes(triggerBlock.type),
+    );
+  } else if (jobWrapperKind === "event") {
+    hasValidTrigger = triggerBlock?.type === "event_listener";
+  } else if (jobWrapperKind === "condition") {
+    hasValidTrigger = triggerBlock?.type === "condition_monitor";
+  }
+
+  const executionSearch = hasValidTrigger
+    ? findExecuteBlock(triggerBlock)
+    : { executeBlock: null, pendingConnection: null };
+  const executionBlock = executionSearch.executeBlock;
+  const executionComplete = Boolean(executionBlock);
+  const usesSafeExecution =
+    executionBlock?.type === "execute_through_safe_wallet";
+
+  let functionValueConnection: Blockly.RenderedConnection | null = null;
+  let functionValueComplete = executionComplete;
+  if (executionBlock?.type === "execute_function") {
+    const argsConn = executionBlock.getInput("ARGUMENTS")
+      ?.connection as Blockly.RenderedConnection | null;
+    functionValueConnection = argsConn;
+    const target = argsConn?.targetBlock();
+    functionValueComplete = Boolean(target);
+  } else if (executionBlock?.type === "execute_through_safe_wallet") {
+    const safeConn = executionBlock.getInput("FUNCTION_CALL")
+      ?.connection as Blockly.RenderedConnection | null;
+    functionValueConnection = safeConn;
+    const target = safeConn?.targetBlock();
+    functionValueComplete = Boolean(target);
+  }
+
+  let walletComplete = walletValueValid;
+  if (usesSafeExecution && executionBlock) {
+    const safeWalletBlock = executionBlock
+      .getInput("SAFE_WALLET")
+      ?.connection?.targetBlock();
+    const safeWalletValue = safeWalletBlock?.getFieldValue("SAFE_WALLET") || "";
+    walletComplete = !!safeWalletBlock && safeWalletValue !== "";
+  }
+
+  const snapshot: WorkspaceStepSnapshot = {
+    chainComplete: Boolean(chainBlock),
+    jobTypeComplete,
+    triggerComplete: Boolean(
+      jobTypeComplete && hasTimeframe && hasValidTrigger,
+    ),
+    executionComplete: Boolean(
+      jobTypeComplete && hasTimeframe && hasValidTrigger && executionComplete,
+    ),
+    functionValueComplete: Boolean(
+      jobTypeComplete &&
+      hasTimeframe &&
+      hasValidTrigger &&
+      executionComplete &&
+      functionValueComplete,
+    ),
+    walletComplete,
+    usesSafeExecution,
+    jobWrapperKind,
+  };
+
+  let highlightConnection: Blockly.RenderedConnection | null = null;
+  let cursorBlock: Blockly.BlockSvg | null = renderedChain || null;
+
+  if (chainBlock) {
+    if (!jobTypeComplete) {
+      highlightConnection = (chainBlock.nextConnection ||
+        null) as Blockly.RenderedConnection | null;
+      cursorBlock = renderedChain;
+    } else if (!hasTimeframe) {
+      highlightConnection = timeframeConnection;
+      cursorBlock = toBlockSvg(jobWrapperBlock);
+    } else if (!triggerBlock || !hasValidTrigger) {
+      highlightConnection = triggerConnection;
+      cursorBlock = toBlockSvg(timeframeBlock);
+    } else if (!executionComplete) {
+      highlightConnection = executionSearch.pendingConnection;
+      cursorBlock = toBlockSvg(triggerBlock);
+    } else if (!functionValueComplete) {
+      highlightConnection = functionValueConnection;
+      cursorBlock = toBlockSvg(executionBlock);
+    } else if (!walletComplete && usesSafeExecution) {
+      const safeWalletConn = executionBlock?.getInput("SAFE_WALLET")
+        ?.connection as Blockly.RenderedConnection | null;
+      highlightConnection = safeWalletConn;
+      cursorBlock = toBlockSvg(executionBlock);
+    } else if (!walletComplete && walletInputConnection) {
+      highlightConnection = walletInputConnection;
+      cursorBlock = renderedChain;
+    } else {
+      cursorBlock = toBlockSvg(executionBlock) || renderedChain;
+    }
+  }
+
+  const guidanceCategoryIds: string[] = [];
+  if (!chainBlock) {
+    guidanceCategoryIds.push("chain-category");
+  } else if (!jobTypeComplete) {
+    guidanceCategoryIds.push("job-type-category");
+  } else if (!hasTimeframe) {
+    guidanceCategoryIds.push("duration-category");
+  } else if (!triggerBlock || !hasValidTrigger) {
+    if (jobWrapperKind === "event") {
+      guidanceCategoryIds.push("event-category");
+    } else if (jobWrapperKind === "condition") {
+      guidanceCategoryIds.push("condition-category");
+    } else {
+      guidanceCategoryIds.push("time-category");
+    }
+  } else if (!executionComplete) {
+    guidanceCategoryIds.push("execute-category");
+  } else if (!functionValueComplete) {
+    guidanceCategoryIds.push("function-values-category");
+  } else if (!walletComplete) {
+    guidanceCategoryIds.push(
+      usesSafeExecution ? "safe-wallet-category" : "wallet-category",
+    );
+  }
+
+  return {
+    snapshot,
+    highlightConnection,
+    guidanceCategoryIds,
+    cursorBlock,
+  };
+}
+
+function getConnectionLabelForCategory(
+  categoryId?: string | null,
+): string | null {
+  if (!categoryId) return null;
+  return CATEGORY_LABELS[categoryId] || null;
+}
+
 interface BlocklyWorkspaceSectionProps {
   xml: string;
   onXmlChange: (newXml: string) => void;
@@ -50,6 +339,7 @@ interface BlocklyWorkspaceSectionProps {
   connectedAddress?: string;
   connectedChainId?: number;
   jobFormContext: JobFormContextType;
+  onWorkspaceStepChange?: (snapshot: WorkspaceStepSnapshot) => void;
 }
 
 export function BlocklyWorkspaceSection({
@@ -59,10 +349,285 @@ export function BlocklyWorkspaceSection({
   connectedAddress,
   connectedChainId,
   jobFormContext,
+  onWorkspaceStepChange,
 }: BlocklyWorkspaceSectionProps) {
   const workspaceRef = useRef<Blockly.WorkspaceSvg | null>(null);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const ensureBlocksTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const highlightedConnectionRef = useRef<Blockly.RenderedConnection | null>(
+    null,
+  );
+  const lastStepSnapshotRef = useRef<WorkspaceStepSnapshot | null>(null);
+  const highlightedCategoryIdsRef = useRef<Set<string>>(new Set());
+  const pendingCategoryHighlightRef = useRef<number | null>(null);
+  const highlightedTargetBlockRef = useRef<Blockly.BlockSvg | null>(null);
+  const cursorSignatureRef = useRef<string | null>(null);
+  const cursorScrollDoneRef = useRef<boolean>(false);
+  const connectionHintRef = useRef<SVGGElement | null>(null);
+  const setHighlightedConnection = useCallback(
+    (conn: Blockly.RenderedConnection | null, labelText?: string | null) => {
+      if (
+        highlightedConnectionRef.current &&
+        highlightedConnectionRef.current !== conn
+      ) {
+        highlightedConnectionRef.current.unhighlight();
+      }
+      if (highlightedTargetBlockRef.current) {
+        highlightedTargetBlockRef.current
+          .getSvgRoot()
+          ?.classList.remove("blockly-guidance-target");
+        highlightedTargetBlockRef.current = null;
+      }
+      if (conn && highlightedConnectionRef.current !== conn) {
+        conn.highlight();
+        const sourceBlock = conn.getSourceBlock();
+        if (sourceBlock && asBlockSvg(sourceBlock)) {
+          sourceBlock.getSvgRoot()?.classList.add("blockly-guidance-target");
+          highlightedTargetBlockRef.current = sourceBlock;
+        }
+      }
+      highlightedConnectionRef.current = conn || null;
+
+      if (!conn) {
+        if (connectionHintRef.current) {
+          connectionHintRef.current.remove();
+          connectionHintRef.current = null;
+        }
+        return;
+      }
+
+      const sourceBlock = conn.getSourceBlock();
+      if (!sourceBlock || !asBlockSvg(sourceBlock)) {
+        return;
+      }
+      const svgRoot = sourceBlock.getSvgRoot();
+      const offset = conn.getOffsetInBlock();
+      if (!svgRoot || !offset) return;
+
+      if (connectionHintRef.current) {
+        connectionHintRef.current.remove();
+        connectionHintRef.current = null;
+      }
+
+      const labelGroup = Blockly.utils.dom.createSvgElement(
+        "g",
+        { class: "blockly-guidance-connection-label" },
+        svgRoot,
+      ) as SVGGElement;
+      labelGroup.setAttribute(
+        "transform",
+        `translate(${offset.x + 14}, ${offset.y - 12})`,
+      );
+      Blockly.utils.dom.createSvgElement(
+        "rect",
+        { width: 150, height: 26 },
+        labelGroup,
+      );
+      const text = Blockly.utils.dom.createSvgElement(
+        "text",
+        { x: 10, y: 16 },
+        labelGroup,
+      );
+      text.textContent = labelText || "Drop next block here";
+      connectionHintRef.current = labelGroup;
+    },
+    [],
+  );
+
+  const clearCategoryHighlights = useCallback(() => {
+    if (typeof document === "undefined") {
+      highlightedCategoryIdsRef.current.clear();
+      return;
+    }
+    highlightedCategoryIdsRef.current.forEach((id) => {
+      const el = document.querySelector(
+        `[data-tour-id="${id}"]`,
+      ) as HTMLElement | null;
+      el?.classList.remove("blockly-toolbox-guidance");
+      el?.removeAttribute("data-guidance-active");
+    });
+    highlightedCategoryIdsRef.current.clear();
+  }, []);
+
+  const highlightCategories = useCallback(
+    (categoryIds: string[], attempt = 0) => {
+      if (typeof document === "undefined") return;
+      const nextIds = new Set(categoryIds.filter(Boolean));
+      const prevIds = highlightedCategoryIdsRef.current;
+      let missing = false;
+
+      prevIds.forEach((id) => {
+        if (!nextIds.has(id)) {
+          const el = document.querySelector(
+            `[data-tour-id="${id}"]`,
+          ) as HTMLElement | null;
+          el?.classList.remove("blockly-toolbox-guidance");
+          el?.removeAttribute("data-guidance-active");
+        }
+      });
+
+      nextIds.forEach((id) => {
+        const el = document.querySelector(
+          `[data-tour-id="${id}"]`,
+        ) as HTMLElement | null;
+        if (!el) {
+          missing = true;
+        } else {
+          el.classList.add("blockly-toolbox-guidance");
+          el.setAttribute("data-guidance-active", "true");
+        }
+      });
+
+      highlightedCategoryIdsRef.current = nextIds;
+
+      if (missing && attempt < 3) {
+        if (pendingCategoryHighlightRef.current) {
+          cancelAnimationFrame(pendingCategoryHighlightRef.current);
+        }
+        pendingCategoryHighlightRef.current = requestAnimationFrame(() =>
+          highlightCategories(categoryIds, attempt + 1),
+        );
+      }
+    },
+    [],
+  );
+
+  const applyCategoryHighlights = useCallback(
+    (categoryIds: string[]) => {
+      if (pendingCategoryHighlightRef.current) {
+        cancelAnimationFrame(pendingCategoryHighlightRef.current);
+        pendingCategoryHighlightRef.current = null;
+      }
+      highlightCategories(categoryIds);
+    },
+    [highlightCategories],
+  );
+
+  const emitWorkspaceSteps = useCallback(
+    (snapshot: WorkspaceStepSnapshot) => {
+      if (!onWorkspaceStepChange) return;
+      const prev = lastStepSnapshotRef.current;
+      const hasChanged =
+        !prev ||
+        prev.chainComplete !== snapshot.chainComplete ||
+        prev.jobTypeComplete !== snapshot.jobTypeComplete ||
+        prev.triggerComplete !== snapshot.triggerComplete ||
+        prev.executionComplete !== snapshot.executionComplete ||
+        prev.walletComplete !== snapshot.walletComplete ||
+        prev.usesSafeExecution !== snapshot.usesSafeExecution ||
+        prev.jobWrapperKind !== snapshot.jobWrapperKind;
+      if (hasChanged) {
+        lastStepSnapshotRef.current = { ...snapshot };
+        onWorkspaceStepChange(snapshot);
+      }
+    },
+    [onWorkspaceStepChange],
+  );
+
+  const isBlockInView = useCallback(
+    (workspace: Blockly.WorkspaceSvg, block: Blockly.BlockSvg) => {
+      const metricsManager = (
+        workspace as unknown as {
+          getMetricsManager?: () => {
+            getViewMetrics?: () => {
+              left?: number;
+              top?: number;
+              width?: number;
+              height?: number;
+            };
+          };
+        }
+      ).getMetricsManager?.();
+
+      const rawMetrics =
+        metricsManager?.getViewMetrics?.() ?? workspace.getMetrics?.();
+
+      if (!rawMetrics) return true;
+
+      const viewLeft =
+        (rawMetrics as { viewLeft?: number; left?: number }).viewLeft ??
+        (rawMetrics as { left?: number }).left ??
+        0;
+      const viewTop =
+        (rawMetrics as { viewTop?: number; top?: number }).viewTop ??
+        (rawMetrics as { top?: number }).top ??
+        0;
+      const viewWidth =
+        (rawMetrics as { viewWidth?: number; width?: number }).viewWidth ??
+        (rawMetrics as { width?: number }).width ??
+        0;
+      const viewHeight =
+        (rawMetrics as { viewHeight?: number; height?: number }).viewHeight ??
+        (rawMetrics as { height?: number }).height ??
+        0;
+
+      const rect = block.getBoundingRectangle();
+      const scale = workspace.scale || 1;
+      const blockLeft = rect.left * scale;
+      const blockRight = rect.right * scale;
+      const blockTop = rect.top * scale;
+      const blockBottom = rect.bottom * scale;
+
+      const viewRight = viewLeft + viewWidth;
+      const viewBottom = viewTop + viewHeight;
+
+      const horizontallyVisible =
+        blockRight >= viewLeft && blockLeft <= viewRight;
+      const verticallyVisible =
+        blockBottom >= viewTop && blockTop <= viewBottom;
+
+      return horizontallyVisible && verticallyVisible;
+    },
+    [],
+  );
+
+  const ensureCursorVisibility = useCallback(
+    (workspace: Blockly.WorkspaceSvg, cursorBlock: Blockly.BlockSvg | null) => {
+      const signature = cursorBlock ? cursorBlock.id : null;
+      if (signature !== cursorSignatureRef.current) {
+        cursorSignatureRef.current = signature;
+        cursorScrollDoneRef.current = false;
+      }
+
+      if (!cursorBlock || cursorScrollDoneRef.current) {
+        return;
+      }
+
+      if (!isBlockInView(workspace, cursorBlock)) {
+        try {
+          workspace.centerOnBlock(cursorBlock.id);
+        } catch {
+          // centerOnBlock unavailable
+        }
+      }
+      cursorScrollDoneRef.current = true;
+    },
+    [isBlockInView],
+  );
+
+  const evaluateWorkspaceSteps = useCallback(
+    (workspace: Blockly.WorkspaceSvg) => {
+      const {
+        snapshot,
+        highlightConnection,
+        guidanceCategoryIds,
+        cursorBlock,
+      } = computeWorkspaceStepState(workspace);
+      emitWorkspaceSteps(snapshot);
+      const connectionLabel = getConnectionLabelForCategory(
+        guidanceCategoryIds[0],
+      );
+      setHighlightedConnection(highlightConnection, connectionLabel);
+      applyCategoryHighlights(guidanceCategoryIds);
+      ensureCursorVisibility(workspace, cursorBlock);
+    },
+    [
+      emitWorkspaceSteps,
+      setHighlightedConnection,
+      applyCategoryHighlights,
+      ensureCursorVisibility,
+    ],
+  );
 
   const ensureChainWalletBlocks = useCallback(
     (workspace: Blockly.WorkspaceSvg) => {
@@ -362,6 +927,7 @@ export function BlocklyWorkspaceSection({
               const currentXml = Blockly.Xml.workspaceToDom(workspace);
               const xmlText = Blockly.Xml.domToText(currentXml);
               syncToJobForm(xmlText);
+              evaluateWorkspaceSteps(workspace);
             }
           };
 
@@ -438,24 +1004,10 @@ export function BlocklyWorkspaceSection({
               (flyout as { spacing: number }).spacing = 0;
             }
 
-            // Disable click-to-place by overriding the createBlock method
-            // This forces users to drag blocks instead of clicking them
-            const originalCreateBlock = flyout.createBlock;
-            flyout.createBlock = function (
-              originalBlock: Blockly.BlockSvg,
-            ): Blockly.BlockSvg {
-              // Only create blocks when dragging, not when clicking
-              // Check if this is a drag operation by checking if there's a current gesture
-              const currentGesture = Blockly.Gesture.inProgress();
-              if (!currentGesture) {
-                // This is a click, not a drag - prevent block creation
-                throw new Error(
-                  "Click-to-place is disabled. Please drag to create blocks.",
-                );
-              }
-              // This is a drag - allow normal behavior
-              return originalCreateBlock.call(flyout, originalBlock);
-            };
+            // Ensure click-to-place works by using Blockly's default createBlock
+            // (users expect clicking a block to insert it into the workspace).
+            flyout.createBlock =
+              Blockly.Flyout.prototype.createBlock.bind(flyout);
           }
           // Tag toolbox and flyout for guided tour selectors
           const tagTourTargets = () => {
@@ -490,6 +1042,7 @@ export function BlocklyWorkspaceSection({
           if (!tagged) {
             setTimeout(() => tagTourTargets(), 300);
           }
+          evaluateWorkspaceSteps(workspace);
         }
       } catch (error) {
         console.error("Error configuring flyout:", error);
@@ -505,8 +1058,24 @@ export function BlocklyWorkspaceSection({
       if (workspace && workspaceChangeListener) {
         workspace.removeChangeListener(workspaceChangeListener);
       }
+      setHighlightedConnection(null);
+      clearCategoryHighlights();
+      if (connectionHintRef.current) {
+        connectionHintRef.current.remove();
+        connectionHintRef.current = null;
+      }
+      if (pendingCategoryHighlightRef.current) {
+        cancelAnimationFrame(pendingCategoryHighlightRef.current);
+      }
     };
-  }, [workspaceScopeRef, syncToJobForm, ensureChainWalletBlocks]);
+  }, [
+    workspaceScopeRef,
+    syncToJobForm,
+    ensureChainWalletBlocks,
+    evaluateWorkspaceSteps,
+    setHighlightedConnection,
+    clearCategoryHighlights,
+  ]);
 
   // Sync wallet blocks with connected address
   useEffect(() => {
@@ -586,16 +1155,16 @@ export function BlocklyWorkspaceSection({
                 vertical: true,
               },
               drag: true,
-              wheel: false,
+              wheel: true,
             },
             zoom: {
-              controls: false,
-              wheel: false,
-              pinch: false,
-              startScale: 0.7,
-              maxScale: 1,
-              minScale: 1,
-              scaleSpeed: 1,
+              controls: true,
+              wheel: true,
+              pinch: true,
+              startScale: 0.85,
+              maxScale: 1.5,
+              minScale: 0.5,
+              scaleSpeed: 1.2,
             },
             grid: { spacing: 25, length: 3, colour: "#1f1f1f", snap: true },
             renderer: "zelos",

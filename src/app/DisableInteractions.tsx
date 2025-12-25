@@ -16,11 +16,6 @@ export default function DisableInteractions({ scopeRef }: Props) {
       return scopeRef.current.contains(eventTarget as Node);
     };
 
-    const handleContextMenu = (e: Event) => {
-      if (!isInsideScope(e.target)) return;
-      e.preventDefault();
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isInsideScope(e.target)) return;
       const isMac = navigator.platform.toUpperCase().includes("MAC");
@@ -42,19 +37,9 @@ export default function DisableInteractions({ scopeRef }: Props) {
 
     // When scoping to an element, attach listeners to document but guard by scope check
     // so that key events from focused elements inside scope are blocked.
-    document.addEventListener(
-      "contextmenu",
-      handleContextMenu as EventListener,
-      captureOptions,
-    );
     document.addEventListener("keydown", handleKeyDown, captureOptions);
 
     return () => {
-      document.removeEventListener(
-        "contextmenu",
-        handleContextMenu as EventListener,
-        captureOptions as unknown as boolean,
-      );
       document.removeEventListener(
         "keydown",
         handleKeyDown,
