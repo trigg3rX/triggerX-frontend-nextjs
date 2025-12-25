@@ -100,7 +100,8 @@ export function BlocklyWorkspaceSection({
           }
           chainBlock.initSvg();
           chainBlock.render();
-          chainBlock.moveBy(40, 40);
+          // Position blocks in the middle between flyout (ends at ~400px) and workspace
+          chainBlock.moveBy(500, 200);
         };
 
         if (chainBlocks.length === 0) {
@@ -366,6 +367,49 @@ export function BlocklyWorkspaceSection({
 
           workspace.addChangeListener(workspaceChangeListener);
 
+          // Remove comment option from context menu
+          try {
+            const ContextMenuRegistry =
+              Blockly.ContextMenuRegistry as unknown as {
+                registry?: Record<
+                  string,
+                  { displayText?: string | (() => string) }
+                >;
+              };
+            if (ContextMenuRegistry?.registry) {
+              const registry = ContextMenuRegistry.registry;
+              // Remove "Add Comment" and "Remove Comment" menu items
+              const commentMenuIds = ["blockComment", "blockCommentRemove"];
+              commentMenuIds.forEach((id) => {
+                if (registry[id]) {
+                  delete registry[id];
+                }
+              });
+              // Also remove any items with comment-related display text
+              Object.keys(registry).forEach((key) => {
+                const item = registry[key];
+                if (item && typeof item === "object" && "displayText" in item) {
+                  const displayText =
+                    typeof item.displayText === "function"
+                      ? item.displayText()
+                      : item.displayText;
+                  if (
+                    displayText === "Add Comment" ||
+                    displayText === "Remove Comment"
+                  ) {
+                    delete registry[key];
+                  }
+                }
+              });
+            }
+          } catch (error) {
+            // Silently fail if context menu registry is not available
+            console.warn(
+              "Could not remove comment option from context menu:",
+              error,
+            );
+          }
+
           // Get the toolbox and select the first category to open the flyout
           const toolbox = workspace.getToolbox() as unknown as Blockly.Toolbox;
           if (toolbox) {
@@ -557,6 +601,7 @@ export function BlocklyWorkspaceSection({
             renderer: "zelos",
             trashcan: false,
             sounds: false,
+            comments: false,
           }}
         />
       </div>

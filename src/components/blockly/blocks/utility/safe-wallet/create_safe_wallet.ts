@@ -115,15 +115,12 @@ Blockly.fieldRegistry.register("field_button", ButtonField);
 
 const createSafeWalletJson = {
   type: "create_safe_wallet",
-  message0: "Create and use %1 %2 %3",
+  message0: "Create and use %1 %2",
   args0: [
     {
       type: "field_button",
       name: "CREATE_BUTTON",
       text: "Create Safe",
-    },
-    {
-      type: "input_dummy",
     },
     {
       type: "field_label",
