@@ -173,19 +173,6 @@ export function BlocklyHeader({
         >
           Visual guide
         </button>
-        <button
-          type="button"
-          onClick={() => {
-            try {
-              window.dispatchEvent(new Event("blockly-job-tour-open"));
-            } catch {
-              // no-op in non-browser environments
-            }
-          }}
-          className="text-xs sm:text-sm text-gray-300 hover:text-white underline underline-offset-4"
-        >
-          Job guide
-        </button>
         <Button
           type="button"
           color="yellow"

@@ -90,7 +90,7 @@ export function StepFlowPanel({
   );
 
   return (
-    <Card className="flex flex-col gap-4 p-4 w-96 bg-[#161616]/80 border border-white/10">
+    <Card className="flex flex-col gap-4 p-4 w-full bg-[#161616]/80 border border-white/10">
       <div>
         <p className="text-sm uppercase tracking-wide text-gray-400">
           Job Builder Flow

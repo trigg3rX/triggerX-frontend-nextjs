@@ -54,7 +54,6 @@ import {
 import { StepFlowPanel, StepId, StepState } from "./components/StepFlowPanel";
 import { MobileWarning } from "./MobileWarning";
 import { VisualBuilderTour } from "./components/VisualBuilderTour";
-import { JobCreationTour } from "./components/JobCreationTour";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/assets/logo.svg";
@@ -594,7 +593,6 @@ export default function BlocklyDemo() {
 
       {/* On-page guided tour */}
       <VisualBuilderTour />
-      <JobCreationTour />
 
       {/* Desktop View - Show 768px and above */}
       <div className="hidden md:flex flex-col gap-2">
@@ -624,8 +622,11 @@ export default function BlocklyDemo() {
           jobTitleInputRef={jobTitleInputRef}
         />
 
-        <div className="flex gap-4 h-[80vh]" data-tour-id="workspace-area">
-          <div className="flex-1 h-full">
+        <div
+          className="w-full flex gap-2 h-[80vh]"
+          data-tour-id="workspace-area"
+        >
+          <div className="w-[calc(100%-300px)] h-full">
             <BlocklyWorkspaceSection
               xml={xml}
               onXmlChange={onXmlChange}
@@ -636,7 +637,7 @@ export default function BlocklyDemo() {
               onWorkspaceStepChange={handleWorkspaceStepChange}
             />
           </div>
-          <div className="w-96 shrink-0">
+          <div className="w-[300px]">
             <StepFlowPanel
               steps={stepFlowSteps}
               onStepClick={handleStepClick}
