@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo } from "react";
 import { Card } from "../../ui/Card";
+import { Typography } from "../../ui/Typography";
 
 export type StepId =
   | "jobTitle"
@@ -29,6 +30,184 @@ interface StepFlowPanelProps {
   onHintClick?: (stepId: StepId) => void;
 }
 
+interface StepItemProps {
+  step: StepState;
+  index: number;
+  isActive: boolean;
+  isComplete: boolean;
+  showDescription: boolean;
+  activeHint: string | null | undefined;
+  onStepClick?: (stepId: StepId) => void;
+  onHintClick?: (stepId: StepId) => void;
+  isMobile?: boolean;
+}
+
+function StepItem({
+  step,
+  index,
+  isActive,
+  isComplete,
+  showDescription,
+  activeHint,
+  onStepClick,
+  onHintClick,
+  isMobile = false,
+}: StepItemProps) {
+  return (
+    <li
+      className={`relative ${isMobile ? "shrink-0" : ""}`}
+      style={isMobile ? { width: "240px" } : undefined}
+    >
+      <button
+        type="button"
+        onClick={() => onStepClick?.(step.id)}
+        className={`w-full text-left rounded-lg border p-2 transition-all duration-200 ${
+          isMobile ? "h-full" : ""
+        } ${
+          isActive
+            ? "bg-white/5 border-[#C07AF6]/50 shadow-sm"
+            : isComplete
+              ? "bg-white/[0.02] border-white/10 hover:border-white/20"
+              : "bg-transparent border-white/10 hover:border-white/20"
+        }`}
+      >
+        <div className="flex flex-col gap-1">
+          {/* Step indicator and label in same row */}
+          <div className="flex items-center gap-3">
+            {/* Step indicator */}
+            <div
+              className={`mb-0.5 pt-0.5 pr-0.5 w-4 h-4 flex items-center justify-center rounded-full border text-[9px] transition-colors ${
+                isComplete
+                  ? "bg-[#C07AF6] border-[#C07AF6] text-white"
+                  : isActive
+                    ? "bg-transparent border-[#C07AF6] text-[#C07AF6]"
+                    : "bg-transparent border-white/30 text-gray-400"
+              }`}
+            >
+              {isComplete ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="8"
+                  height="8"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : (
+                index + 1
+              )}
+            </div>
+
+            {/* Step label */}
+            <div
+              className={`flex items-center gap-2 flex-1 ${isMobile ? "min-w-0" : ""}`}
+            >
+              <Typography
+                variant="caption"
+                color={isActive ? "white" : isComplete ? "secondary" : "gray"}
+                className={`font-medium text-gray-400 ${isMobile ? "truncate" : ""}`}
+                align="left"
+              >
+                {step.label}
+              </Typography>
+              {/* {step.optional && (
+                <Typography
+                  variant="caption"
+                  color="gray"
+                  className={isMobile ? "shrink-0" : ""}
+                  align="left"
+                >
+                  Optional
+                </Typography>
+              )} */}
+            </div>
+          </div>
+
+          {/* Description takes full width */}
+          {isActive && showDescription && (
+            <p
+              className={`text-xs text-gray-400 leading-relaxed ${
+                isMobile ? "line-clamp-2" : ""
+              }`}
+            >
+              {activeHint}
+            </p>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        {isActive && (
+          <div className=" mt-1 pt-1 border-t border-white/10">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onHintClick?.(step.id);
+              }}
+              className="text-[10px] text-[#C07AF6] hover:text-[#C07AF6]/80 transition-colors"
+            >
+              Show me where
+            </button>
+          </div>
+        )}
+      </button>
+    </li>
+  );
+}
+
+interface ProgressLineProps {
+  completedCount: number;
+  totalSteps: number;
+  isHorizontal?: boolean;
+}
+
+function ProgressLine({
+  completedCount,
+  totalSteps,
+  isHorizontal = false,
+}: ProgressLineProps) {
+  const progress = totalSteps > 1 ? (completedCount / totalSteps) * 100 : 0;
+
+  if (isHorizontal) {
+    return (
+      <>
+        <div
+          className="absolute top-0 left-2 right-2 h-[1px] bg-white/10"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute top-0 left-2 h-[1px] bg-[#C07AF6] transition-all duration-500 ease-out"
+          style={{
+            width: progress > 0 ? `calc(${progress}% - 8px)` : "0px",
+          }}
+          aria-hidden="true"
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className="absolute left-0 top-2 bottom-2 w-[1px] bg-white/10"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute left-0 top-2 w-[1px] bg-[#C07AF6] transition-all duration-500 ease-out"
+        style={{
+          height: progress > 0 ? `calc(${progress}% - 8px)` : "0px",
+        }}
+        aria-hidden="true"
+      />
+    </>
+  );
+}
+
 export function StepFlowPanel({
   steps,
   onStepClick,
@@ -36,232 +215,72 @@ export function StepFlowPanel({
   activeHint,
   onHintClick,
 }: StepFlowPanelProps) {
-  const [openHelpStep, setOpenHelpStep] = useState<StepId | null>(null);
-  const [celebratingIds, setCelebratingIds] = useState<Set<StepId>>(
-    () => new Set(),
-  );
-  const prevCompletionRef = useRef<Record<StepId, boolean>>({
-    jobTitle: false,
-    chain: false,
-    jobType: false,
-    trigger: false,
-    execution: false,
-    functionValue: false,
-    wallet: false,
-    ready: false,
-  });
-
-  useEffect(() => {
-    const newlyCompleted: StepId[] = [];
-    steps.forEach((step) => {
-      const prev = prevCompletionRef.current[step.id];
-      if (step.complete && !prev) {
-        newlyCompleted.push(step.id);
-      }
-      prevCompletionRef.current[step.id] = step.complete;
-    });
-
-    if (newlyCompleted.length) {
-      setCelebratingIds((prev) => {
-        const next = new Set(prev);
-        newlyCompleted.forEach((id) => next.add(id));
-        return next;
-      });
-
-      newlyCompleted.forEach((id) => {
-        window.setTimeout(() => {
-          setCelebratingIds((prev) => {
-            const next = new Set(prev);
-            next.delete(id);
-            return next;
-          });
-        }, 1200);
-      });
-    }
-  }, [steps]);
-
-  useEffect(() => {
-    setOpenHelpStep(null);
-  }, [activeStepId]);
-
   const completedCount = useMemo(
     () => steps.filter((step) => step.complete).length,
     [steps],
   );
 
   return (
-    <Card className="flex flex-col gap-4 p-4 w-full bg-[#161616]/80 border border-white/10">
-      <div>
-        <p className="text-sm uppercase tracking-wide text-gray-400">
-          Job Builder Flow
-        </p>
-        <p className="text-base font-semibold text-white">Follow the steps</p>
+    <Card className="flex flex-col gap-3 !p-3 !xl:p-4 !border-none w-full">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium text-gray-400 tracking-wider mb-1">
+          Job Guide
+        </h3>
+        {/* <p className="text-xs text-gray-500">
+          {completedCount} of {steps.length} steps completed
+        </p> */}
       </div>
-      <div className="relative pl-5">
-        <span
-          className="pointer-events-none absolute left-[11px] top-3 bottom-3 w-px bg-white/10"
-          aria-hidden="true"
+      {/* Mobile: Horizontal scrollable layout */}
+      <div className="xl:hidden relative">
+        <ProgressLine
+          completedCount={completedCount}
+          totalSteps={steps.length}
+          isHorizontal={true}
         />
-        <span
-          className="pointer-events-none absolute left-[11px] top-3 w-px bg-gradient-to-b from-[#C07AF6] to-[#c07af6]/20 transition-[height]"
-          style={{
-            height:
-              steps.length > 1
-                ? `calc(${(completedCount / (steps.length - 1)) * 100}% - 8px)`
-                : "0px",
-          }}
-          aria-hidden="true"
+        <div className="overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <ol className="flex gap-2 pt-3">
+            {steps.map((step, index) => (
+              <StepItem
+                key={step.id}
+                step={step}
+                index={index}
+                isActive={activeStepId === step.id}
+                isComplete={step.complete}
+                showDescription={
+                  activeStepId === step.id && Boolean(activeHint)
+                }
+                activeHint={activeHint}
+                onStepClick={onStepClick}
+                onHintClick={onHintClick}
+                isMobile={true}
+              />
+            ))}
+          </ol>
+        </div>
+      </div>
+
+      {/* Desktop: Vertical layout */}
+      <div className="hidden xl:block relative pl-2">
+        <ProgressLine
+          completedCount={completedCount}
+          totalSteps={steps.length}
+          isHorizontal={false}
         />
-        <ol className="flex flex-col gap-3">
-          {steps.map((step, index) => {
-            const isActive = activeStepId === step.id;
-            const isComplete = step.complete;
-            const isCelebrating = celebratingIds.has(step.id);
-            const showDescription = isActive && Boolean(activeHint);
-            const isHelpOpen = openHelpStep === step.id;
-
-            const basePadding = isActive ? "py-4" : "py-2";
-            const cardClasses = [
-              "step-card",
-              "relative",
-              "rounded-2xl",
-              "border",
-              "px-3",
-              basePadding,
-              "transition-all",
-              "duration-300",
-              "focus-within:outline",
-              "focus-within:outline-2",
-              "focus-within:outline-[#C07AF6]",
-            ];
-
-            if (isActive) {
-              cardClasses.push(
-                "bg-[#1f1a26]",
-                "border-[#C07AF6]",
-                "shadow-[0_0_12px_rgba(192,122,246,0.35)]",
-                "animate-none",
-              );
-            }
-
-            if (isComplete) {
-              cardClasses.push(
-                "bg-[#111111]",
-                "border-white/10",
-                "text-gray-200",
-                "step-card-complete",
-              );
-            }
-
-            if (isCelebrating) {
-              cardClasses.push("step-card-celebrate");
-            }
-
-            return (
-              <li key={step.id} className="relative pl-4">
-                {index < steps.length - 1 && (
-                  <span
-                    className={`pointer-events-none absolute left-[11px] top-10 bottom-[-8px] w-px origin-top transition-transform duration-700 ${
-                      isComplete ? "bg-[#C07AF6]" : "bg-white/10"
-                    }`}
-                    style={{
-                      transform: isComplete ? "scaleY(1)" : "scaleY(0)",
-                    }}
-                    aria-hidden="true"
-                  />
-                )}
-                <article className={cardClasses.join(" ")}>
-                  <button
-                    type="button"
-                    onClick={() => onStepClick?.(step.id)}
-                    className="flex w-full items-start gap-3 text-left"
-                  >
-                    <div
-                      className={`mt-1 flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-300 ${
-                        isComplete
-                          ? "bg-[#C07AF6] border-[#C07AF6] text-black"
-                          : "bg-transparent border-white/30 text-gray-300"
-                      } ${isCelebrating ? "step-check-celebrate" : ""}`}
-                    >
-                      {isComplete ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      ) : (
-                        <span className="text-sm font-semibold">
-                          {index + 1}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white">
-                          {step.label}
-                        </span>
-                        {step.optional && (
-                          <span className="text-[10px] uppercase tracking-wide text-gray-400">
-                            Optional
-                          </span>
-                        )}
-                      </div>
-                      {isActive && showDescription && (
-                        <p className="mt-1 text-xs text-gray-200">
-                          {activeHint}
-                        </p>
-                      )}
-                      {isComplete && (
-                        <span className="text-[11px] uppercase tracking-wide text-emerald-300">
-                          Completed
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                  {isActive && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onHintClick?.(step.id);
-                        }}
-                        className="rounded-full border border-[#C07AF6]/60 px-3 py-1 text-xs font-semibold text-[#C07AF6] transition-colors hover:bg-[#C07AF6]/10"
-                      >
-                        Show me where
-                      </button>
-                      <div className="relative">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setOpenHelpStep((prev) =>
-                              prev === step.id ? null : step.id,
-                            )
-                          }
-                          className="rounded-full border border-white/20 px-3 py-1 text-xs text-gray-300 transition-colors hover:bg-white/5"
-                        >
-                          Help
-                        </button>
-                        {isHelpOpen && (
-                          <div className="absolute z-20 mt-2 w-56 rounded-xl border border-white/10 bg-black/90 p-3 text-xs text-gray-200 shadow-lg">
-                            {step.description ||
-                              "Use this step to keep your automation on track."}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </article>
-              </li>
-            );
-          })}
+        <ol className="flex flex-col gap-2">
+          {steps.map((step, index) => (
+            <StepItem
+              key={step.id}
+              step={step}
+              index={index}
+              isActive={activeStepId === step.id}
+              isComplete={step.complete}
+              showDescription={activeStepId === step.id && Boolean(activeHint)}
+              activeHint={activeHint}
+              onStepClick={onStepClick}
+              onHintClick={onHintClick}
+              isMobile={false}
+            />
+          ))}
         </ol>
       </div>
     </Card>

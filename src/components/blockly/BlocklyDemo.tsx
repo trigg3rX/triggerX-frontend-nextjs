@@ -623,10 +623,10 @@ export default function BlocklyDemo() {
         />
 
         <div
-          className="w-full flex gap-2 h-[80vh]"
+          className="w-full flex flex-col-reverse xl:flex-row gap-2"
           data-tour-id="workspace-area"
         >
-          <div className="w-[calc(100%-300px)] h-full">
+          <div className="w-full xl:w-[calc(100%-240px)] h-[80vh]">
             <BlocklyWorkspaceSection
               xml={xml}
               onXmlChange={onXmlChange}
@@ -637,7 +637,7 @@ export default function BlocklyDemo() {
               onWorkspaceStepChange={handleWorkspaceStepChange}
             />
           </div>
-          <div className="w-[300px]">
+          <div className="w-full xl:w-[240px]">
             <StepFlowPanel
               steps={stepFlowSteps}
               onStepClick={handleStepClick}
