@@ -292,9 +292,9 @@ body {
   transform: translateY(-50%) !important;
   border-radius: 17px !important;
   border: 10px solid #1c1c1c;
-  width: 300px !important;
-  min-width: 300px !important;
-  max-width: 300px !important;
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
   flex-shrink: 0 !important;
@@ -306,9 +306,9 @@ body {
 .blocklyFlyout > .blocklyFlyoutBackground {
   border-radius: 17px !important;
   overflow: visible !important;
-  width: 300px !important;
-  min-width: 300px !important;
-  max-width: 300px !important;
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
   flex-shrink: 0 !important;
   flex-grow: 0 !important;
   box-sizing: border-box !important;
@@ -316,14 +316,14 @@ body {
 
 /* Target the SVG path element specifically */
 .blocklyFlyoutBackground {
-  width: 300px !important;
-  min-width: 300px !important;
-  max-width: 300px !important;
+  width: 280px !important;
+  min-width: 280px !important;
+  max-width: 280px !important;
 }
 
 /* Ensure flyout content can scroll horizontally */
 .blocklyFlyout .blocklyFlyoutButton {
-  min-width: 300px !important;
+  min-width: 280px !important;
   width: auto !important;
 }
 
@@ -388,6 +388,107 @@ body.modal-open textarea,
 body.modal-open [contenteditable="true"] {
   z-index: 1 !important;
   position: relative;
+}
+
+.blockly-toolbox-guidance {
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+}
+
+.blockly-guidance-target {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.2));
+  animation: blockly-pulse 2s ease-in-out infinite;
+}
+
+.blockly-guidance-target path {
+  stroke: rgba(255, 255, 255, 0.4) !important;
+  stroke-width: 1px !important;
+}
+
+.blockly-guidance-connection-label {
+  pointer-events: none;
+  animation: label-fade 1.6s ease-in-out infinite;
+}
+
+.blockly-guidance-connection-label rect {
+  fill: rgba(20, 20, 20, 0.9);
+  stroke: rgba(255, 255, 255, 0.3);
+  stroke-width: 1px;
+  rx: 6px;
+  ry: 6px;
+}
+
+.blockly-guidance-connection-label text {
+  fill: #ffffff;
+  font-size: 10px;
+  font-family: "Actay", "Sharp Grotesk", sans-serif;
+}
+
+.step-card-celebrate {
+  animation: step-card-glow 1s ease;
+}
+
+.step-check-celebrate {
+  animation: step-check-pop 0.6s ease;
+}
+
+@keyframes step-card-glow {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  40% {
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+@keyframes step-check-pop {
+  0% {
+    transform: scale(0.7);
+  }
+  70% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blockly-guidance-target,
+  .blockly-guidance-connection-label,
+  .step-card-celebrate,
+  .step-check-celebrate {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes blockly-pulse {
+  0% {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
+  }
+  50% {
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.25));
+  }
+  100% {
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.15));
+  }
+}
+
+@keyframes label-fade {
+  0% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
 }
 
 /* Blockly Connection Feedback Animations */
