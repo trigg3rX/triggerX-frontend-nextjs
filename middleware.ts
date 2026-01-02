@@ -35,10 +35,18 @@ export function middleware(request: NextRequest) {
 
   // Build CSP header - include nonce only if it was generated successfully
   const nonceDirective = nonceGenerated ? ` 'nonce-${nonce}'` : "";
+  const localApi = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const connectSrc =
+    isDevelopment && localApi
+      ? `connect-src 'self' https: wss: ${localApi};`
+      : "connect-src 'self' https: wss;";
+
+  console.log("connect src", connectSrc);
   const cspHeader = `
     default-src 'self';
     script-src 'self'${nonceDirective}${nonceGenerated ? " 'strict-dynamic'" : ""}${unsafeEval} https://www.googletagmanager.com https://www.google-analytics.com https://cdn.sanity.io;
-    connect-src 'self' https: wss:;
+    ${connectSrc}
     style-src 'self' 'unsafe-inline' https:;
     img-src 'self' data: https: blob:;
     font-src 'self' data: https:;
