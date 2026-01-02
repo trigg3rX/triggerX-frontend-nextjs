@@ -11,6 +11,11 @@ import Modal from "../ui/Modal";
 import { Button } from "../ui/Button";
 import JobCardSkeleton from "../skeleton/JobCardSkeleton";
 import { JobType } from "@/hooks/useJobs";
+import {
+  mapJobType,
+  truncateText,
+  formatTimeframe,
+} from "@/utils/jobFormatters";
 
 type JobCardProps = {
   job: JobType;
@@ -18,45 +23,6 @@ type JobCardProps = {
   onClick?: () => void;
   isLoading?: boolean;
   onCardClick?: (jobId: number) => void;
-};
-
-/** Maps internal job type identifiers to human-readable labels. */
-const mapJobType = (type: string) => {
-  const types: { [key: string]: string } = {
-    PRICE_MONITOR: "Price Monitor",
-    GAS_MONITOR: "Gas Monitor",
-  };
-  return types[type] || type;
-};
-
-/** Truncates long text to keep the header single-line on small widths. */
-const truncateText = (text: string) => {
-  return text.length > 20 ? `${text.slice(0, 20)}...` : text;
-};
-
-/** Formats a seconds string to a friendly duration (days/hours/minutes/seconds). */
-const formatTimeframe = (secondsString: string) => {
-  const seconds = parseInt(secondsString, 10);
-  if (isNaN(seconds)) return secondsString;
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  const totalMinutes = (seconds % 3600) / 60;
-  const mins = Math.floor(totalMinutes);
-  const secs = seconds % 60;
-
-  if (days > 0) return `${days} day${days > 1 ? "s" : ""}`;
-  if (hours > 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
-  if (totalMinutes >= 10) return `${mins} min${mins !== 1 ? "s" : ""}`;
-  if (totalMinutes >= 1) {
-    // Show 1 decimal place for minutes under 10
-    const formattedMins = totalMinutes.toFixed(1);
-    // Remove .0 if it's a whole number
-    const displayMins = formattedMins.endsWith(".0")
-      ? formattedMins.slice(0, -2)
-      : formattedMins;
-    return `${displayMins} min${totalMinutes !== 1 ? "s" : ""}`;
-  }
-  return `${secs} sec${secs !== 1 ? "s" : ""}`;
 };
 
 const JobCard: React.FC<JobCardProps> = ({
@@ -122,7 +88,7 @@ const JobCard: React.FC<JobCardProps> = ({
                   align="left"
                   className="font-bold max-w-[200px] truncate block"
                 >
-                  {truncateText(job.jobTitle)}
+                  {truncateText(job.jobTitle, 20)}
                 </Typography>
               </TooltipTrigger>
               <TooltipContent>{job.jobTitle}</TooltipContent>
