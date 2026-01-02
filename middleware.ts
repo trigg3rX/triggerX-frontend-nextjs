@@ -40,7 +40,7 @@ export function middleware(request: NextRequest) {
   const connectSrc =
     isDevelopment && localApi
       ? `connect-src 'self' https: wss: ${localApi};`
-      : "connect-src 'self' https: wss;";
+      : `connect-src 'self' https: wss: ${localApi};`;
 
   console.log("connect src", connectSrc);
   const cspHeader = `
