@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useRef, useState, useEffect } from "react";
+import React, {
+  useCallback,
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+} from "react";
 import * as Blockly from "blockly/core";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import "./customToolbox";
@@ -61,6 +67,17 @@ interface BlocklyDemoContentProps {
 
 function BlocklyDemoContent({ jobTitleInputRef }: BlocklyDemoContentProps) {
   const workspaceScopeRef = useRef<HTMLDivElement | null>(null);
+  const jobTitleInputRef = useRef<HTMLInputElement | null>(null);
+  const [workspaceSteps, setWorkspaceSteps] = useState<WorkspaceStepSnapshot>({
+    chainComplete: false,
+    jobTypeComplete: false,
+    triggerComplete: false,
+    executionComplete: false,
+    functionValueComplete: false,
+    walletComplete: false,
+    usesSafeExecution: false,
+    jobWrapperKind: null,
+  });
 
   // Get full job form context
   const jobFormContext = useJobFormContext();

@@ -7,19 +7,21 @@ import { TooltipProvider } from "@/components/common/TooltipWrap";
 import { ReactNode } from "react";
 import { GoogleTagManager } from "@next/third-parties/google";
 import { LayoutChrome } from "@/components/common/LayoutChrome";
+import { getNonce } from "@/lib/nonce";
 
 export const metadata: Metadata = {
   title: "TriggerX",
   description: "Automate Tasks Effortlessly",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const nonce = await getNonce();
   return (
-    <html lang="en">
+    <html lang="en" nonce={nonce || undefined}>
       <GoogleTagManager gtmId="GTM-N23BN7R5" />
       <head>{/* Other <head> content if needed */}</head>
       <body className={`antialiated font-actay`}>
