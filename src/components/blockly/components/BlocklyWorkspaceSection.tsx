@@ -9,10 +9,7 @@ import {
   ContinuousToolbox,
 } from "@blockly/continuous-toolbox";
 import DisableInteractions from "@/app/DisableInteractions";
-import {
-  setConnectedChainId,
-  setConnectedWalletAddress,
-} from "../blocks/default_blocks";
+import { setConnectedChainId } from "../blocks/default_blocks";
 import { setImportSafeChainId } from "../blocks/utility/safe-wallet/import_safe_wallet";
 import { syncBlocklyToJobForm } from "../utils/syncBlocklyToJobForm";
 import { JobFormContextType } from "@/contexts/JobFormContext";
@@ -91,7 +88,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   "condition-category": "Condition block",
   "execute-category": "Execute block",
   "function-values-category": "Function Value block",
-  "wallet-category": "Wallet block",
   "safe-wallet-category": "Safe wallet block",
 };
 
@@ -165,18 +161,6 @@ function computeWorkspaceStepState(
 ): WorkspaceGuidanceResult {
   const chainBlock = getFirstRealBlockOfType(workspace, "chain_selection");
   const renderedChain = toBlockSvg(chainBlock);
-  let walletInputConnection: Blockly.RenderedConnection | null = null;
-  let walletValueValid = false;
-
-  if (chainBlock) {
-    const walletInput = chainBlock.getInput("WALLET_INPUT");
-    walletInputConnection =
-      walletInput?.connection as Blockly.RenderedConnection | null;
-    const walletBlock = walletInputConnection?.targetBlock() || null;
-    const walletAddress = walletBlock?.getFieldValue("WALLET_ADDRESS") || "";
-    walletValueValid =
-      !!walletBlock && !!walletAddress && walletAddress !== "0x...";
-  }
 
   const jobWrapperBlock = chainBlock?.getNextBlock() || null;
   const jobWrapperKind = jobWrapperBlock
@@ -214,22 +198,55 @@ function computeWorkspaceStepState(
     executionBlock?.type === "execute_through_safe_wallet";
 
   let functionValueConnection: Blockly.RenderedConnection | null = null;
-  let functionValueComplete = executionComplete;
+  // Function value step is complete if static_arguments or dynamic_arguments blocks exist in workspace
+  const staticArgsBlocks = workspace.getBlocksByType("static_arguments", false);
+  const dynamicArgsBlocks = workspace.getBlocksByType(
+    "dynamic_arguments",
+    false,
+  );
+  const safeTransactionBlocks = workspace.getBlocksByType(
+    "safe_transaction",
+    false,
+  );
+  const functionValueComplete =
+    staticArgsBlocks.length > 0 ||
+    dynamicArgsBlocks.length > 0 ||
+    safeTransactionBlocks.length > 0;
+
+  // Set functionValueConnection for highlighting if execution block exists
   if (executionBlock?.type === "execute_function") {
     const argsConn = executionBlock.getInput("ARGUMENTS")
       ?.connection as Blockly.RenderedConnection | null;
     functionValueConnection = argsConn;
-    const target = argsConn?.targetBlock();
-    functionValueComplete = Boolean(target);
   } else if (executionBlock?.type === "execute_through_safe_wallet") {
     const safeConn = executionBlock.getInput("FUNCTION_CALL")
       ?.connection as Blockly.RenderedConnection | null;
     functionValueConnection = safeConn;
-    const target = safeConn?.targetBlock();
-    functionValueComplete = Boolean(target);
+  } else if (staticArgsBlocks.length > 0 || dynamicArgsBlocks.length > 0) {
+    // Find the first execute_function block and use its ARGUMENTS connection
+    const executeFunctionBlocks = workspace.getBlocksByType(
+      "execute_function",
+      false,
+    );
+    if (executeFunctionBlocks.length > 0) {
+      const argsConn = executeFunctionBlocks[0].getInput("ARGUMENTS")
+        ?.connection as Blockly.RenderedConnection | null;
+      functionValueConnection = argsConn;
+    }
+  } else if (safeTransactionBlocks.length > 0) {
+    // Find the first execute_through_safe_wallet block and use its FUNCTION_CALL connection
+    const safeWalletBlocks = workspace.getBlocksByType(
+      "execute_through_safe_wallet",
+      false,
+    );
+    if (safeWalletBlocks.length > 0) {
+      const safeConn = safeWalletBlocks[0].getInput("FUNCTION_CALL")
+        ?.connection as Blockly.RenderedConnection | null;
+      functionValueConnection = safeConn;
+    }
   }
 
-  let walletComplete = walletValueValid;
+  let walletComplete = true; // Wallet is always complete since we use connected address
   if (usesSafeExecution && executionBlock) {
     const safeWalletBlock = executionBlock
       .getInput("SAFE_WALLET")
@@ -244,16 +261,8 @@ function computeWorkspaceStepState(
     triggerComplete: Boolean(
       jobTypeComplete && hasTimeframe && hasValidTrigger,
     ),
-    executionComplete: Boolean(
-      jobTypeComplete && hasTimeframe && hasValidTrigger && executionComplete,
-    ),
-    functionValueComplete: Boolean(
-      jobTypeComplete &&
-      hasTimeframe &&
-      hasValidTrigger &&
-      executionComplete &&
-      functionValueComplete,
-    ),
+    executionComplete: executionComplete, // Just check if execution block exists
+    functionValueComplete: functionValueComplete,
     walletComplete,
     usesSafeExecution,
     jobWrapperKind,
@@ -284,9 +293,6 @@ function computeWorkspaceStepState(
         ?.connection as Blockly.RenderedConnection | null;
       highlightConnection = safeWalletConn;
       cursorBlock = toBlockSvg(executionBlock);
-    } else if (!walletComplete && walletInputConnection) {
-      highlightConnection = walletInputConnection;
-      cursorBlock = renderedChain;
     } else {
       cursorBlock = toBlockSvg(executionBlock) || renderedChain;
     }
@@ -311,10 +317,8 @@ function computeWorkspaceStepState(
     guidanceCategoryIds.push("execute-category");
   } else if (!functionValueComplete) {
     guidanceCategoryIds.push("function-values-category");
-  } else if (!walletComplete) {
-    guidanceCategoryIds.push(
-      usesSafeExecution ? "safe-wallet-category" : "wallet-category",
-    );
+  } else if (!walletComplete && usesSafeExecution) {
+    guidanceCategoryIds.push("safe-wallet-category");
   }
 
   return {
@@ -346,7 +350,6 @@ export function BlocklyWorkspaceSection({
   xml,
   onXmlChange,
   workspaceScopeRef,
-  connectedAddress,
   connectedChainId,
   jobFormContext,
   onWorkspaceStepChange,
@@ -364,6 +367,7 @@ export function BlocklyWorkspaceSection({
   const cursorSignatureRef = useRef<string | null>(null);
   const cursorScrollDoneRef = useRef<boolean>(false);
   const connectionHintRef = useRef<SVGGElement | null>(null);
+
   const setHighlightedConnection = useCallback(
     (conn: Blockly.RenderedConnection | null, labelText?: string | null) => {
       if (
@@ -513,6 +517,7 @@ export function BlocklyWorkspaceSection({
         prev.jobTypeComplete !== snapshot.jobTypeComplete ||
         prev.triggerComplete !== snapshot.triggerComplete ||
         prev.executionComplete !== snapshot.executionComplete ||
+        prev.functionValueComplete !== snapshot.functionValueComplete ||
         prev.walletComplete !== snapshot.walletComplete ||
         prev.usesSafeExecution !== snapshot.usesSafeExecution ||
         prev.jobWrapperKind !== snapshot.jobWrapperKind;
@@ -629,7 +634,7 @@ export function BlocklyWorkspaceSection({
     ],
   );
 
-  const ensureChainWalletBlocks = useCallback(
+  const ensureChainBlock = useCallback(
     (workspace: Blockly.WorkspaceSvg) => {
       // Debounce to avoid rapid create/delete loops
       if (ensureBlocksTimeoutRef.current) {
@@ -638,55 +643,17 @@ export function BlocklyWorkspaceSection({
 
       ensureBlocksTimeoutRef.current = setTimeout(() => {
         const chainBlocks = workspace.getBlocksByType("chain_selection", false);
-        const walletBlocks = workspace.getBlocksByType(
-          "wallet_selection",
-          false,
-        );
-
         const chainIdFieldValue = connectedChainId?.toString() || "11155420"; // OP Sepolia default
 
-        // Helper to create a wallet block
-        const createWalletBlock = () => {
-          const walletBlock = workspace.newBlock("wallet_selection");
-          walletBlock.initSvg();
-          walletBlock.render();
-          return walletBlock;
-        };
-
-        // Helper to create a chain block with optional wallet attached
-        const createChainWithWallet = () => {
+        if (chainBlocks.length === 0) {
+          // Create chain block if missing
           const chainBlock = workspace.newBlock("chain_selection");
           const chainField = chainBlock.getField("CHAIN_ID");
           chainField?.setValue(chainIdFieldValue);
-          const walletBlock = createWalletBlock();
-          const walletInput = chainBlock.getInput("WALLET_INPUT");
-          if (walletInput?.connection && walletBlock.outputConnection) {
-            walletInput.connection.connect(walletBlock.outputConnection);
-          }
           chainBlock.initSvg();
           chainBlock.render();
-          // Position blocks in the middle between flyout (ends at ~400px) and workspace
+          // Position block in the middle between flyout (ends at ~400px) and workspace
           chainBlock.moveBy(500, 200);
-        };
-
-        if (chainBlocks.length === 0) {
-          // Create both chain and wallet if chain is missing
-          createChainWithWallet();
-          return;
-        }
-
-        // Ensure at least one wallet exists; attach to first chain if possible
-        if (walletBlocks.length === 0) {
-          const walletBlock = createWalletBlock();
-          const firstChain = chainBlocks[0] as Blockly.BlockSvg;
-          const walletInput = firstChain.getInput("WALLET_INPUT");
-          if (walletInput?.connection && walletBlock.outputConnection) {
-            try {
-              walletInput.connection.connect(walletBlock.outputConnection);
-            } catch {
-              // If connection fails, leave wallet unconnected
-            }
-          }
         }
       }, 50);
     },
@@ -697,22 +664,6 @@ export function BlocklyWorkspaceSection({
     () => ({
       kind: "categoryToolbox",
       contents: [
-        // --- WALLET CATEGORY ---
-        // Required for job configuration - defines the wallet address
-        {
-          kind: "category",
-          name: "Wallet",
-          colour: "#F57F17",
-          contents: [
-            {
-              kind: "block",
-              type: "wallet_selection",
-              fields: {
-                WALLET_ADDRESS: "0x...", // Always show placeholder in flyout
-              },
-            },
-          ],
-        },
         // --- CHAIN CATEGORY ---
         // Required for job configuration - defines the target blockchain
         {
@@ -881,7 +832,7 @@ export function BlocklyWorkspaceSection({
           workspaceRef.current = workspace;
 
           // Ensure chain + wallet blocks exist on load
-          ensureChainWalletBlocks(workspace);
+          ensureChainBlock(workspace);
 
           // Set up workspace change listener to sync on block changes
           workspaceChangeListener = (event: Blockly.Events.Abstract) => {
@@ -920,14 +871,24 @@ export function BlocklyWorkspaceSection({
                 event.type === Blockly.Events.BLOCK_DELETE ||
                 event.type === Blockly.Events.BLOCK_CREATE
               ) {
-                ensureChainWalletBlocks(workspace);
+                ensureChainBlock(workspace);
               }
 
               // Get current XML and sync
               const currentXml = Blockly.Xml.workspaceToDom(workspace);
               const xmlText = Blockly.Xml.domToText(currentXml);
               syncToJobForm(xmlText);
-              evaluateWorkspaceSteps(workspace);
+
+              // For block creation, add a small delay to ensure block is fully initialized
+              if (event.type === Blockly.Events.BLOCK_CREATE) {
+                setTimeout(() => {
+                  if (workspace) {
+                    evaluateWorkspaceSteps(workspace);
+                  }
+                }, 50);
+              } else {
+                evaluateWorkspaceSteps(workspace);
+              }
             }
           };
 
@@ -1071,33 +1032,11 @@ export function BlocklyWorkspaceSection({
   }, [
     workspaceScopeRef,
     syncToJobForm,
-    ensureChainWalletBlocks,
+    ensureChainBlock,
     evaluateWorkspaceSteps,
     setHighlightedConnection,
     clearCategoryHighlights,
   ]);
-
-  // Sync wallet blocks with connected address
-  useEffect(() => {
-    // Update global wallet address so new wallet_selection blocks can use it on creation
-    setConnectedWalletAddress(connectedAddress || null);
-
-    if (!workspaceRef.current || !connectedAddress) return;
-
-    const workspace = workspaceRef.current;
-    const allBlocks = workspace.getAllBlocks(false);
-
-    // Update all existing wallet_selection blocks with the connected address
-    allBlocks.forEach((block) => {
-      if (block.type === "wallet_selection") {
-        const currentValue = block.getFieldValue("WALLET_ADDRESS");
-        // Only update if different to avoid unnecessary re-renders
-        if (currentValue !== connectedAddress) {
-          block.setFieldValue(connectedAddress, "WALLET_ADDRESS");
-        }
-      }
-    });
-  }, [connectedAddress]);
 
   // Update the global connected chain ID for validation and import safe button
   useEffect(() => {
