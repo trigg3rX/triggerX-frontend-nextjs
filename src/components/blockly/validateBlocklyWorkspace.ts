@@ -64,7 +64,6 @@ export function validateBlocklyWorkspace({
 
     // Required blocks validation
     const chainBlock = findFirstBlockByType(blockNodes, "chain_selection");
-    const walletBlock = findFirstBlockByType(blockNodes, "wallet_selection");
 
     // Check for chain selection
     if (!chainBlock) {
@@ -72,45 +71,6 @@ export function validateBlocklyWorkspace({
         errorKey: "chain",
         errorValue:
           "Chain selection block is required. Please add it from the Chain category.",
-      };
-    }
-
-    // Check for wallet selection
-    if (!walletBlock) {
-      return {
-        errorKey: "wallet",
-        errorValue:
-          "Wallet selection block is required. Please add it from the Wallet category.",
-      };
-    }
-
-    // Validate wallet address
-    const walletAddress = getFieldValue(walletBlock, "WALLET_ADDRESS");
-    if (!walletAddress || walletAddress === "0x..." || walletAddress === "") {
-      return {
-        errorKey: "wallet",
-        errorValue:
-          "Please enter a valid wallet address in the wallet selection block.",
-      };
-    }
-
-    // Validate wallet address format (basic check)
-    if (!walletAddress.startsWith("0x") || walletAddress.length !== 42) {
-      return {
-        errorKey: "wallet",
-        errorValue:
-          "Invalid wallet address format. It should start with 0x and be 42 characters long.",
-      };
-    }
-
-    // Optional: Check if wallet address matches connected wallet (for TG balance)
-    if (
-      connectedAddress &&
-      walletAddress.toLowerCase() !== connectedAddress.toLowerCase()
-    ) {
-      return {
-        errorKey: "wallet",
-        errorValue: `Warning: The wallet address in your workspace (${walletAddress.slice(0, 8)}...${walletAddress.slice(-6)}) does not match your connected wallet (${connectedAddress.slice(0, 8)}...${connectedAddress.slice(-6)}). The TG balance shown is for your connected wallet. Please ensure the workspace wallet has sufficient TG balance.`,
       };
     }
 

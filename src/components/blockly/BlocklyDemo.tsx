@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useCallback,
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import * as Blockly from "blockly/core";
 import { useJobFormContext } from "@/hooks/useJobFormContext";
 import "./customToolbox";
@@ -51,39 +45,22 @@ import {
   BlocklyWorkspaceSection,
   WorkspaceStepSnapshot,
 } from "./components/BlocklyWorkspaceSection";
-import { StepFlowPanel, StepId, StepState } from "./components/StepFlowPanel";
+import { StepFlowPanel } from "./components/StepFlowPanel";
 import { MobileWarning } from "./MobileWarning";
 import { VisualBuilderTour } from "./components/VisualBuilderTour";
+import { StepFlowProvider, useStepFlow } from "./contexts/StepFlowContext";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "@/assets/logo.svg";
 import BalanceDisplay from "../ui/BalanceDisplay";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-type StepCompletionState = {
-  jobTitleComplete: boolean;
-  chainComplete: boolean;
-  jobTypeComplete: boolean;
-  triggerComplete: boolean;
-  executionComplete: boolean;
-  functionValueComplete: boolean;
-  walletComplete: boolean;
-  usesSafeExecution: boolean;
-};
+interface BlocklyDemoContentProps {
+  jobTitleInputRef: React.RefObject<HTMLInputElement | null>;
+}
 
-export default function BlocklyDemo() {
+function BlocklyDemoContent({ jobTitleInputRef }: BlocklyDemoContentProps) {
   const workspaceScopeRef = useRef<HTMLDivElement | null>(null);
-  const jobTitleInputRef = useRef<HTMLInputElement | null>(null);
-  const [workspaceSteps, setWorkspaceSteps] = useState<WorkspaceStepSnapshot>({
-    chainComplete: false,
-    jobTypeComplete: false,
-    triggerComplete: false,
-    executionComplete: false,
-    functionValueComplete: false,
-    walletComplete: false,
-    usesSafeExecution: false,
-    jobWrapperKind: null,
-  });
 
   // Get full job form context
   const jobFormContext = useJobFormContext();
@@ -163,143 +140,19 @@ export default function BlocklyDemo() {
   // Custom hooks
   useBlocklyGenerators();
   const { xml, onXmlChange } = useBlocklyWorkspace();
+  const { updateJobTitle, updateWorkspaceSteps } = useStepFlow();
+
   const handleWorkspaceStepChange = useCallback(
     (snapshot: WorkspaceStepSnapshot) => {
-      setWorkspaceSteps(snapshot);
+      updateWorkspaceSteps(snapshot);
     },
-    [],
+    [updateWorkspaceSteps],
   );
 
-  const jobTitleComplete = jobTitle.trim().length > 0;
-
-  const stepCompletionState = useMemo<StepCompletionState>(
-    () => ({
-      jobTitleComplete,
-      chainComplete: workspaceSteps.chainComplete,
-      jobTypeComplete: workspaceSteps.jobTypeComplete,
-      triggerComplete: workspaceSteps.triggerComplete,
-      executionComplete: workspaceSteps.executionComplete,
-      functionValueComplete: workspaceSteps.functionValueComplete,
-      walletComplete: workspaceSteps.walletComplete,
-      usesSafeExecution: workspaceSteps.usesSafeExecution,
-    }),
-    [jobTitleComplete, workspaceSteps],
-  );
-
-  const stepFlowSteps = useMemo(
-    () => composeStepStates(stepCompletionState),
-    [stepCompletionState],
-  );
-
-  const activeStep = useMemo(() => {
-    if (stepFlowSteps.length === 0) return undefined;
-    const requiredSteps = stepFlowSteps.filter((step) => !step.optional);
-    return (
-      requiredSteps.find((step) => !step.complete) ||
-      stepFlowSteps.find((step) => !step.complete) ||
-      stepFlowSteps[stepFlowSteps.length - 1]
-    );
-  }, [stepFlowSteps]);
-
-  const activeStepHint = useMemo(() => {
-    if (!activeStep) return null;
-    return getStepHint(activeStep.id, workspaceSteps);
-  }, [activeStep, workspaceSteps]);
-
-  const triggerCategoryId = useMemo(() => {
-    if (workspaceSteps.jobWrapperKind === "event") return "event-category";
-    if (workspaceSteps.jobWrapperKind === "condition")
-      return "condition-category";
-    if (workspaceSteps.jobWrapperKind === "time") return "time-category";
-    return "duration-category";
-  }, [workspaceSteps.jobWrapperKind]);
-
-  const focusToolboxCategory = useCallback((dataId?: string | null) => {
-    if (!dataId || typeof document === "undefined") return;
-    const el = document.querySelector(
-      `[data-tour-id="${dataId}"]`,
-    ) as HTMLElement | null;
-    if (!el) return;
-    try {
-      el.scrollIntoView({ block: "nearest" });
-    } catch {
-      // ignore scroll errors
-    }
-    try {
-      el.dispatchEvent(
-        new PointerEvent("pointerdown", { bubbles: true, cancelable: true }),
-      );
-    } catch {
-      // ignore pointer event issues
-    }
-    el.dispatchEvent(
-      new MouseEvent("mousedown", { bubbles: true, cancelable: true }),
-    );
-    el.dispatchEvent(
-      new MouseEvent("click", { bubbles: true, cancelable: true }),
-    );
-  }, []);
-
-  const scrollToSelector = useCallback((selector: string) => {
-    if (typeof document === "undefined") return;
-    const el = document.querySelector(selector) as HTMLElement | null;
-    if (!el) return;
-    try {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.focus?.({ preventScroll: true });
-    } catch {
-      // ignore focus errors
-    }
-  }, []);
-
-  const handleStepClick = useCallback(
-    (stepId: StepId) => {
-      switch (stepId) {
-        case "jobTitle":
-          if (jobTitleInputRef.current) {
-            jobTitleInputRef.current.click();
-            setTimeout(() => {
-              jobTitleInputRef.current?.focus();
-            }, 0);
-          }
-          break;
-        case "chain":
-          focusToolboxCategory("chain-category");
-          break;
-        case "jobType":
-          focusToolboxCategory("job-type-category");
-          break;
-        case "trigger":
-          focusToolboxCategory(triggerCategoryId);
-          break;
-        case "execution":
-          focusToolboxCategory("execute-category");
-          break;
-        case "functionValue":
-          focusToolboxCategory("function-values-category");
-          break;
-        case "wallet":
-          focusToolboxCategory(
-            stepCompletionState.usesSafeExecution
-              ? "safe-wallet-category"
-              : "wallet-category",
-          );
-          break;
-        case "ready":
-          scrollToSelector('[data-tour-id="create-job-button"]');
-          break;
-        default:
-          break;
-      }
-    },
-    [
-      focusToolboxCategory,
-      scrollToSelector,
-      triggerCategoryId,
-      stepCompletionState.usesSafeExecution,
-      jobTitleInputRef,
-    ],
-  );
+  // Update job title in context when it changes
+  useEffect(() => {
+    updateJobTitle(jobTitle);
+  }, [jobTitle, updateJobTitle]);
 
   // Handle enable step - can be called independently for retry
   const handleEnableStep = useCallback(async () => {
@@ -638,13 +491,7 @@ export default function BlocklyDemo() {
             />
           </div>
           <div className="w-full xl:w-[240px]">
-            <StepFlowPanel
-              steps={stepFlowSteps}
-              onStepClick={handleStepClick}
-              activeStepId={activeStep?.id}
-              activeHint={activeStepHint}
-              onHintClick={handleStepClick}
-            />
+            <StepFlowPanel />
           </div>
         </div>
 
@@ -697,109 +544,60 @@ export default function BlocklyDemo() {
   );
 }
 
-function composeStepStates(state: StepCompletionState): StepState[] {
-  const readyComplete =
-    state.jobTitleComplete &&
-    state.chainComplete &&
-    state.jobTypeComplete &&
-    state.triggerComplete &&
-    state.executionComplete &&
-    state.functionValueComplete;
+export default function BlocklyDemo() {
+  const jobTitleInputRef = useRef<HTMLInputElement | null>(null);
 
-  return [
-    {
-      id: "jobTitle",
-      label: "Job Title",
-      description: "Name your automation job.",
-      complete: state.jobTitleComplete,
-    },
-    {
-      id: "chain",
-      label: "Chain",
-      description: "Choose the network where it runs.",
-      complete: state.chainComplete,
-    },
-    {
-      id: "jobType",
-      label: "Job Type",
-      description: "Time, event, or condition trigger.",
-      complete: state.jobTypeComplete,
-    },
-    {
-      id: "trigger",
-      label: "Trigger / Schedule",
-      description: "Define when this job executes.",
-      complete: state.triggerComplete,
-    },
-    {
-      id: "execution",
-      label: "Execution",
-      description: state.usesSafeExecution
-        ? "Runs via Safe wallet."
-        : "Runs a contract function.",
-      complete: state.executionComplete,
-    },
-    {
-      id: "functionValue",
-      label: "Function Value",
-      description: state.usesSafeExecution
-        ? "Add Safe transactions."
-        : "Attach static or dynamic arguments.",
-      complete: state.functionValueComplete,
-    },
-    {
-      id: "wallet",
-      label: "Wallet",
-      optional: true,
-      description: "Confirm the executor address.",
-      complete: state.walletComplete,
-    },
-    {
-      id: "ready",
-      label: "Ready to Create",
-      description: readyComplete
-        ? "All required steps are complete."
-        : "Finish the required steps to continue.",
-      complete: readyComplete,
-    },
-  ];
-}
+  const focusToolboxCategory = useCallback((dataId?: string | null) => {
+    if (!dataId || typeof document === "undefined") return;
 
-function getStepHint(
-  stepId: StepId,
-  snapshot: WorkspaceStepSnapshot,
-): string | null {
-  switch (stepId) {
-    case "jobTitle":
-      return "Name your automation job so you can find it later.";
-    case "chain":
-      return "Connect the wallet block to the Chain block to lock in a network.";
-    case "jobType":
-      return "Pick Time, Event, or Condition from the Job Type category.";
-    case "trigger": {
-      if (snapshot.jobWrapperKind === "event") {
-        return "Add an Event Listener block from the Event category.";
+    // Find the toolbox category element
+    const el = document.querySelector(
+      `[data-tour-id="${dataId}"]`,
+    ) as HTMLElement | null;
+    if (!el) return;
+
+    // 1. Scroll the category into view within the toolbox
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+    // 2. Use a timeout to ensure the scroll has settled before triggering Blockly logic
+    setTimeout(() => {
+      const eventConfig = { bubbles: true, cancelable: true, view: window };
+
+      // Dispatch events to simulate a real user click
+      el.dispatchEvent(new MouseEvent("mousedown", eventConfig));
+      el.dispatchEvent(new MouseEvent("mouseup", eventConfig));
+      el.dispatchEvent(new MouseEvent("click", eventConfig));
+
+      // 3. IMPORTANT: Prevent the browser from jumping to the hidden Blockly input
+      const hiddenInput = document.querySelector(
+        ".blocklyHtmlInput",
+      ) as HTMLElement;
+      if (hiddenInput) {
+        // Focus the input but EXPLICITLY tell the browser not to scroll to it
+        hiddenInput.focus({ preventScroll: true });
       }
-      if (snapshot.jobWrapperKind === "condition") {
-        return "Drop a Condition Monitor block from the Condition category.";
-      }
-      return "Add a scheduling block from the Time category.";
+    }, 100);
+  }, []);
+
+  const scrollToSelector = useCallback((selector: string) => {
+    if (typeof document === "undefined") return;
+    const el = document.querySelector(selector) as HTMLElement | null;
+    if (!el) return;
+    try {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus?.({ preventScroll: true });
+    } catch {
+      // ignore focus errors
     }
-    case "execution":
-      return snapshot.usesSafeExecution
-        ? "Use Execute through Safe Wallet from the Execute category."
-        : "Add an Execute Function block from the Execute category.";
-    case "functionValue":
-      return snapshot.usesSafeExecution
-        ? "Add Safe Transactions under Function Value."
-        : "Attach Static or Dynamic Arguments from Function Value.";
-    case "wallet":
-      return snapshot.usesSafeExecution
-        ? "Select which Safe wallet should execute the job."
-        : "Confirm the wallet block matches your executor address.";
-    case "ready":
-      return "Review the blocks, then click Create Job.";
-    default:
-      return null;
-  }
+  }, []);
+
+  return (
+    <StepFlowProvider
+      jobTitleInputRef={jobTitleInputRef}
+      onFocusToolboxCategory={focusToolboxCategory}
+      onScrollToSelector={scrollToSelector}
+    >
+      <BlocklyDemoContent jobTitleInputRef={jobTitleInputRef} />
+    </StepFlowProvider>
+  );
 }

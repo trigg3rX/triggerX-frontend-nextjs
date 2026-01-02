@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { Card } from "../../ui/Card";
 import { Typography } from "../../ui/Typography";
+import { useStepFlow } from "../contexts/StepFlowContext";
 
 export type StepId =
   | "jobTitle"
@@ -20,14 +21,6 @@ export interface StepState {
   description?: string;
   optional?: boolean;
   complete: boolean;
-}
-
-interface StepFlowPanelProps {
-  steps: StepState[];
-  onStepClick?: (stepId: StepId) => void;
-  activeStepId?: StepId;
-  activeHint?: string | null;
-  onHintClick?: (stepId: StepId) => void;
 }
 
 interface StepItemProps {
@@ -60,7 +53,11 @@ function StepItem({
     >
       <button
         type="button"
-        onClick={() => onStepClick?.(step.id)}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onStepClick?.(step.id);
+        }}
         className={`w-full text-left rounded-lg border p-2 transition-all duration-200 ${
           isMobile ? "h-full" : ""
         } ${
@@ -146,6 +143,7 @@ function StepItem({
             <button
               type="button"
               onClick={(e) => {
+                e.preventDefault();
                 e.stopPropagation();
                 onHintClick?.(step.id);
               }}
@@ -208,17 +206,24 @@ function ProgressLine({
   );
 }
 
-export function StepFlowPanel({
-  steps,
-  onStepClick,
-  activeStepId,
-  activeHint,
-  onHintClick,
-}: StepFlowPanelProps) {
-  const completedCount = useMemo(
-    () => steps.filter((step) => step.complete).length,
-    [steps],
-  );
+export function StepFlowPanel() {
+  const { steps, activeStep, activeHint, handleStepClick, handleHintClick } =
+    useStepFlow();
+
+  const completedCount = useMemo(() => {
+    // Calculate progress based on the last completed step's position
+    // This ensures the progress bar extends toward "ready" even if intermediate steps aren't complete
+    let lastCompletedIndex = -1;
+    for (let i = 0; i < steps.length; i++) {
+      if (steps[i].complete) {
+        lastCompletedIndex = i;
+      } else {
+        // Once we hit an incomplete step, stop
+        break;
+      }
+    }
+    return lastCompletedIndex + 1;
+  }, [steps]);
 
   return (
     <Card className="flex flex-col gap-3 !p-3 !xl:p-4 !border-none w-full">
@@ -244,14 +249,14 @@ export function StepFlowPanel({
                 key={step.id}
                 step={step}
                 index={index}
-                isActive={activeStepId === step.id}
+                isActive={activeStep?.id === step.id}
                 isComplete={step.complete}
                 showDescription={
-                  activeStepId === step.id && Boolean(activeHint)
+                  activeStep?.id === step.id && Boolean(activeHint)
                 }
                 activeHint={activeHint}
-                onStepClick={onStepClick}
-                onHintClick={onHintClick}
+                onStepClick={handleStepClick}
+                onHintClick={handleHintClick}
                 isMobile={true}
               />
             ))}
@@ -272,12 +277,14 @@ export function StepFlowPanel({
               key={step.id}
               step={step}
               index={index}
-              isActive={activeStepId === step.id}
+              isActive={activeStep?.id === step.id}
               isComplete={step.complete}
-              showDescription={activeStepId === step.id && Boolean(activeHint)}
+              showDescription={
+                activeStep?.id === step.id && Boolean(activeHint)
+              }
               activeHint={activeHint}
-              onStepClick={onStepClick}
-              onHintClick={onHintClick}
+              onStepClick={handleStepClick}
+              onHintClick={handleHintClick}
               isMobile={false}
             />
           ))}

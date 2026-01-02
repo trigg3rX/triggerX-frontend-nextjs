@@ -1,10 +1,7 @@
 import { useEffect } from "react";
 import { javascriptGenerator } from "blockly/javascript";
 
-import {
-  chainSelectionGenerator,
-  walletSelectionGenerator,
-} from "../blocks/default_blocks";
+import { chainSelectionGenerator } from "../blocks/default_blocks";
 
 import { timeBasedJobWrapperGenerator } from "../blocks/job-type/time_based_job_wrapper";
 import { eventBasedJobWrapperGenerator } from "../blocks/job-type/event_based_job_wrapper";
@@ -33,7 +30,6 @@ export function useBlocklyGenerators() {
   useEffect(() => {
     // Default blocks
     javascriptGenerator.forBlock["chain_selection"] = chainSelectionGenerator;
-    javascriptGenerator.forBlock["wallet_selection"] = walletSelectionGenerator;
 
     // Job type blocks
     javascriptGenerator.forBlock["time_based_job_wrapper"] =
