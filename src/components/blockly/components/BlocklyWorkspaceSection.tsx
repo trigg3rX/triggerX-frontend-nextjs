@@ -653,7 +653,7 @@ export function BlocklyWorkspaceSection({
           chainBlock.initSvg();
           chainBlock.render();
           // Position block in the middle between flyout (ends at ~400px) and workspace
-          chainBlock.moveBy(500, 200);
+          chainBlock.moveBy(300, 120);
         }
       }, 50);
     },

@@ -475,11 +475,11 @@ function BlocklyDemoContent({ jobTitleInputRef }: BlocklyDemoContentProps) {
           jobTitleInputRef={jobTitleInputRef}
         />
 
-        <div
-          className="w-full flex flex-col-reverse xl:flex-row gap-2"
-          data-tour-id="workspace-area"
-        >
-          <div className="w-full xl:w-[calc(100%-240px)] h-[80vh]">
+        <div className="w-full flex flex-col-reverse xl:flex-row gap-2">
+          <div
+            className="w-full xl:w-[calc(100%-240px)] h-[80vh]"
+            data-tour-id="workspace-area"
+          >
             <BlocklyWorkspaceSection
               xml={xml}
               onXmlChange={onXmlChange}

@@ -521,3 +521,7 @@ body.modal-open [contenteditable="true"] {
     opacity: 0.7;
   }
 }
+
+.blocklyWidgetDiv {
+  z-index: 1 !important;
+}
