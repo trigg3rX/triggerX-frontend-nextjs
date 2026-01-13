@@ -27,6 +27,7 @@ import {
 import { getWalletDisplayName } from "@/utils/safeWalletNames";
 import { extractFunctions, extractEvents, parseABI } from "@/utils/abiUtils";
 import { encodeMultisendData } from "@/utils/multisendEncoding";
+import { generateTraceId } from "@/utils/traceId";
 
 // Utility types and functions moved from JobForm.tsx
 export type JobDetails = {
@@ -1634,11 +1635,19 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
         args: argsToSend,
       });
 
+      const traceId = generateTraceId(
+        "GET",
+        "/api/fees",
+        jobDetails.user_address || "0000000000000000000000000000000000000000",
+      );
       const response = await fetch(
         `${API_BASE_URL}/api/fees?${params.toString()}`,
         {
           method: "GET",
-          headers: { "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "" },
+          headers: {
+            "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+            "X-Trace-ID": traceId,
+          },
         },
       );
 
@@ -2416,10 +2425,21 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         // Create job
         devLog(`[JobForm] Calling CREATE API: ${API_BASE_URL}/api/jobs (POST)`);
+        const traceId = generateTraceId("POST", "/api/jobs", userAddress);
+        if (!traceId || traceId.trim() === "") {
+          throw new Error("Failed to generate trace ID");
+        }
+        devLog(`[JobForm] Generated trace ID: ${traceId}`);
+        const requestHeaders: Record<string, string> = {
+          "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
+          "Content-Type": "application/json",
+          "X-Trace-ID": traceId,
+        };
+        devLog(`[JobForm] Request headers:`, requestHeaders);
         response = await fetch(`${API_BASE_URL}/api/jobs`, {
           method: "POST",
           mode: "cors",
-          headers,
+          headers: requestHeaders,
           body: JSON.stringify(trimmedJobsForSubmission), // send array for create
         });
       }
