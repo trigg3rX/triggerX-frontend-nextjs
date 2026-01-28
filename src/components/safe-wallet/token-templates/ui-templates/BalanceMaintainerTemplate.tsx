@@ -119,7 +119,7 @@ export const BalanceMaintainerTokenTemplate: React.FC<
         timeInterval={timeIntervalNumber}
         targetFunction={
           params.targetFunction ||
-          "execJobFromHub(address,address,uint256,bytes,uint8)"
+          "execJobFromHub(address,address,uint256,bytes,uint8,address)"
         }
         size="sm"
         customContent={contractParamsContent}

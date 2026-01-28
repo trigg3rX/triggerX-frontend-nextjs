@@ -53,7 +53,8 @@ Blockly.Blocks["execute_through_safe_wallet"] = {
     this.jsonInit(executeThroughSafeWalletJson);
 
     let currentModuleAddress = "";
-    let currentFunction = "execJobFromHub(address,address,uint256,bytes,uint8)";
+    let currentFunction =
+      "execJobFromHub(address,address,uint256,bytes,uint8,address)";
 
     // Make module address field non-editable but allow programmatic updates
     const moduleAddressField = this.getField("MODULE_ADDRESS");
@@ -130,9 +131,9 @@ Blockly.Blocks["execute_through_safe_wallet"] = {
         const functionField = this.getField("FUNCTION");
         if (functionField) {
           currentFunction =
-            "execJobFromHub(address,address,uint256,bytes,uint8)";
+            "execJobFromHub(address,address,uint256,bytes,uint8,address)";
           functionField.setValue(
-            "execJobFromHub(address,address,uint256,bytes,uint8)",
+            "execJobFromHub(address,address,uint256,bytes,uint8,address)",
           );
         }
       }

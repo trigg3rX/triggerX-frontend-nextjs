@@ -75,7 +75,7 @@ function extractJobDetails(
   timeframeInSeconds: number,
   intervalInSeconds: number,
   recurring: boolean,
-  userAddress: string | undefined,
+  userAddress: string,
   networkId: number | undefined,
   jobType: number,
   language?: string,
@@ -220,6 +220,7 @@ function extractJobDetails(
           "0",
           encodedMultiSendData,
           "1",
+          userAddress,
         ];
         console.log(
           "[extractJobDetails] Updated argsArray for Safe execution:",
