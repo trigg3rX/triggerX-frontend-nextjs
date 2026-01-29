@@ -51,7 +51,7 @@ export function useApiKeys(address?: string) {
         return;
       }
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys/${addr}`;
-      devLog("[fetchApiKeys] GET", url);
+      devLog("[fetchApiKeys] GET api-keys");
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -93,7 +93,6 @@ export function useApiKeys(address?: string) {
             status: item.status || "Active",
           })),
         );
-        devLog("[fetchApiKeys] setApiKeys (array):", data);
       } else if (data && (data.key || data.apiKey)) {
         setApiKeys([
           {
@@ -117,7 +116,6 @@ export function useApiKeys(address?: string) {
             status: "Inactive",
           },
         ]);
-        devLog("[fetchApiKeys] setApiKeys (none)");
       }
       setIsFetching(false); // <-- done fetching
     } catch (err) {
@@ -146,7 +144,7 @@ export function useApiKeys(address?: string) {
         return null;
       }
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys`;
-      devLog("[generateNewApiKey] POST", url);
+      devLog("[generateNewApiKey] POST api-keys");
       const response = await fetch(url, {
         method: "POST",
         headers: {
@@ -196,7 +194,7 @@ export function useApiKeys(address?: string) {
         return;
       }
       const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/${user}/api-keys/${apiKey}?owner=${address}`;
-      devLog("[deleteApiKey] DELETE", url);
+      devLog("[deleteApiKey] DELETE api-keys");
       const response = await fetch(url, {
         method: "DELETE",
         headers: {

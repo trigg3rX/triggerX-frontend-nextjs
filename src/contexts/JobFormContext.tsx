@@ -1510,8 +1510,15 @@ export const JobFormProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Validation helpers
   const validateTimeframe = (tf: Timeframe = timeframe) => {
-    if (tf.days === 0 && tf.hours === 0 && tf.minutes === 0) {
-      return "Please set a valid timeframe before submitting.";
+    const totalSeconds =
+      (Number(tf.days) || 0) * 86400 +
+      (Number(tf.hours) || 0) * 3600 +
+      (Number(tf.minutes) || 0) * 60;
+    if (totalSeconds < 35) {
+      return "Please set a valid time frame of at least 35 seconds.";
+    }
+    if (totalSeconds > 7 * 24 * 60 * 60) {
+      return "Please set a valid time frame of at most 7 days.";
     }
     return null;
   };

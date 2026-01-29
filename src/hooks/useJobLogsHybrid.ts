@@ -177,7 +177,16 @@ export function useJobLogsHybrid(
               converted_arguments: task.converted_arguments,
             }));
 
-            setLogs(snapshotLogs);
+            // Sort by execution_timestamp descending (recent tasks first)
+            const sorted = [...snapshotLogs].sort((a, b) => {
+              const tA = new Date(a.execution_timestamp || 0).getTime();
+              const tB = new Date(b.execution_timestamp || 0).getTime();
+              if (tB !== tA) return tB - tA;
+              return (
+                (b.task_number ?? b.task_id) - (a.task_number ?? a.task_id)
+              );
+            });
+            setLogs(sorted);
             setInitialLoadComplete(true);
             setLoading(false);
           }
@@ -240,19 +249,18 @@ export function useJobLogsHybrid(
           (log) => log.task_id === data.task_id,
         );
 
+        let next: JobLog[];
         if (existingLogIndex >= 0) {
-          // Update existing log
           const updatedLogs = [...prevLogs];
           updatedLogs[existingLogIndex] = {
             ...updatedLogs[existingLogIndex],
             ...data.changes,
           };
-          return updatedLogs;
+          next = updatedLogs;
         } else {
-          // Create new log from WebSocket data
           const newLog: JobLog = {
             task_id: data.task_id,
-            task_number: data.changes.task_number || data.task_id, // Use task_id as fallback
+            task_number: data.changes.task_number || data.task_id,
             task_opx_cost: data.changes.task_opx_cost || 0,
             execution_timestamp:
               data.changes.execution_timestamp || data.changes.created_at || "",
@@ -260,13 +268,19 @@ export function useJobLogsHybrid(
             task_performer_id: data.changes.task_performer_id || 0,
             task_attester_ids: data.changes.task_attester_ids || null,
             is_accepted: data.changes.is_accepted || false,
-            task_status: data.changes.task_status || "processing", // Default status for new tasks
+            task_status: data.changes.task_status || "processing",
             tx_url: data.changes.tx_url || "",
             converted_arguments: data.changes.converted_arguments,
           };
-
-          return [...prevLogs, newLog];
+          next = [...prevLogs, newLog];
         }
+        // Keep order: newest first (by execution_timestamp, then task_number)
+        return next.sort((a, b) => {
+          const tA = new Date(a.execution_timestamp || 0).getTime();
+          const tB = new Date(b.execution_timestamp || 0).getTime();
+          if (tB !== tA) return tB - tA;
+          return (b.task_number ?? b.task_id) - (a.task_number ?? a.task_id);
+        });
       });
 
       // Mark initial load as complete when we receive first data

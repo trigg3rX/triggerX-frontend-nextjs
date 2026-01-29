@@ -22,14 +22,21 @@ const ActiveJobs = () => {
   const [jobs, setJobs] = useState<JobType[]>([]);
   const chainId = useChainId();
 
-  // Filter fetched jobs to the currently selected chain
+  // Filter fetched jobs to the currently selected chain and sort newest first
   useEffect(() => {
     const currentChainId = Number(chainId);
     const filtered = fetchedJobs.filter((job) => {
       const createdId = Number(job.created_chain_id);
       return !Number.isNaN(createdId) && createdId === currentChainId;
     });
-    setJobs(filtered);
+    // Sort by createdAt descending (recent jobs first), then by id descending
+    const sorted = [...filtered].sort((a, b) => {
+      const tA = Date.parse(a.createdAt) || -Infinity;
+      const tB = Date.parse(b.createdAt) || -Infinity;
+      if (tB !== tA) return tB - tA;
+      return b.id - a.id;
+    });
+    setJobs(sorted);
   }, [fetchedJobs, chainId]);
 
   // Aggregate counts for header badges

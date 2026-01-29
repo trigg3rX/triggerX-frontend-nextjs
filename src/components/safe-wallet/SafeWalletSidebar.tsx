@@ -65,7 +65,6 @@ const SafeWalletSidebar: React.FC = () => {
   const handleOpenInSafeApp = async () => {
     if (!selection.selectedSafe) return;
     const url = await getSafeWebAppUrl(chainId, selection.selectedSafe);
-    console.log("safe url", url);
     if (url) {
       window.open(url, "_blank");
     }

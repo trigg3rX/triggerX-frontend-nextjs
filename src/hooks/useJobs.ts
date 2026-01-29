@@ -53,7 +53,7 @@ export function useJobs() {
         }
 
         const apiUrl = `${API_BASE_URL}/api/jobs/user/${address}/chain/${chainId}`;
-        devLog("[useJobs] Fetching jobs from:", apiUrl, "chain:", chainId);
+        devLog("[useJobs] Fetching jobs for chain:", chainId);
         const headers = {
           "Content-Type": "application/json",
           "X-Api-Key": process.env.NEXT_PUBLIC_API_KEY || "",
