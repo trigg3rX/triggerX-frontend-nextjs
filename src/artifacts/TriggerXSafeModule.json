@@ -47,6 +47,11 @@
           "name": "operation",
           "type": "uint8",
           "internalType": "uint8"
+        },
+        {
+          "name": "jobOwner",
+          "type": "address",
+          "internalType": "address"
         }
       ],
       "outputs": [

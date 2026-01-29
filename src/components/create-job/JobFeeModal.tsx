@@ -129,7 +129,7 @@ const JobFeeModal: React.FC<JobFeeModalProps> = ({
       timeframeInSeconds,
       intervalInSeconds,
       recurring,
-      address,
+      address || "",
       networkId,
       jobType,
       language || "go",

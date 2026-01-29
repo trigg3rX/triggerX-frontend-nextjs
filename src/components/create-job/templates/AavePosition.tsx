@@ -105,7 +105,7 @@ const CreateJobButton: React.FC = () => {
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     const execJobFunction =
-      "execJobFromHub(address,address,uint256,bytes,uint8)";
+      "execJobFromHub(address,address,uint256,bytes,uint8,address)";
     jobForm.handleFunctionChange("contract", execJobFunction);
 
     jobForm.handleArgumentTypeChange("contract", "static");

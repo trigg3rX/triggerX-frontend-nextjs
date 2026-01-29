@@ -121,7 +121,8 @@ export async function createBalanceMaintainerJob({
     timezone,
     chainId: String(chainIdNum),
     targetContractAddress: safeModuleAddress,
-    targetFunction: "execJobFromHub(address,address,uint256,bytes,uint8)",
+    targetFunction:
+      "execJobFromHub(address,address,uint256,bytes,uint8,address)",
     abi: JSON.stringify(SafeModuleAbi),
     dynamicArgumentsScriptUrl: ipfsUrl,
     safeAddress: safeAddress,
